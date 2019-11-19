@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enterprise
+  namespace: starwars
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      context: startrek
+      name: enterprise
+  template:
+    metadata:
+      labels:
+        context: startrek
+        name: enterprise
+    spec:
+      containers:
+      - image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        name: enterprise-container
+        command: ["bash", "-c", "while true; do curl -4 deathstar; sleep $(( ( RANDOM % 10 )  + 1 )); done"]

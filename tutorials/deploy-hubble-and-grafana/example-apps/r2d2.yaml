@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r2d2
+  namespace: starwars
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      context: starwars
+      name: r2d2
+  template:
+    metadata:
+      labels:
+        context: starwars
+        name: r2d2
+    spec:
+      containers:
+      - image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        name: r2d2-container
+        command: ["bash", "-c", "while true; do curl -4 --connect-timeout 2 deathstar:8080; sleep $(( ( RANDOM % 3 )  + 1 )); done"]
+        readinessProbe:
+          exec:
+            command: ["curl", "-4", "-sS", "-o", "/dev/null", "deathstar:8080"]

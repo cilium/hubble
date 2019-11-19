@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deathstar
+  namespace: starwars
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      context: starwars
+      name: deathstar
+  template:
+    metadata:
+      labels:
+        context: starwars
+        name: deathstar
+    spec:
+      containers:
+      - name: deathstar-container
+        image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command: ["curl", "-sS", "-o", "/dev/null", "localhost"]
+        readinessProbe:
+          exec:
+            command: ["curl", "-sS", "-o", "/dev/null", "localhost"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deathstar
+  namespace: starwars
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    context: starwars
+    name: deathstar
+  type: ClusterIP

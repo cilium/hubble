@@ -1,0 +1,28 @@
+# Basic L7 visibility policy on TCP:80 and UDP:53.
+# Uses `default` namespace unless applied with `-n <namespace>`
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+description: "L7 visibility"
+metadata:
+  name: "l7visbility"
+spec:
+  endpointSelector:
+    matchLabels:
+      {}
+  egress:
+  - toEntities:
+    - all
+  - toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      rules:
+        http:
+        - {}
+  - toPorts:
+    - ports:
+      - port: "53"
+        protocol: UDP
+      rules:
+        dns:
+        - matchPattern: '*'

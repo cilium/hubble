@@ -1,0 +1,28 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-starwars-traffic
+  namespace: starwars
+spec:
+  endpointSelector:
+    matchLabels:
+      context: starwars
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        context: starwars
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      rules:
+        http:
+        - {}
+  egress:
+  - toEndpoints:
+    - matchLabels:
+        context: starwars
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
