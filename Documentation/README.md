@@ -13,4 +13,4 @@
  * [Enabling HTTP Visibility](http_visibility.md)
 
 ## Tutorials
- * [Troubleshooting DNS resolution](troubleshooting-dns-resoluton/)
+ * [Troubleshooting DNS resolution](../tutorials/troubleshooting-dns-resoluton/)
