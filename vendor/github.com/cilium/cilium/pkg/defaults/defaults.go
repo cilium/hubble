@@ -130,6 +130,12 @@ const (
 	// EnableIPv6 is the default value for IPv6 enablement
 	EnableIPv6 = true
 
+	// EnableL7Proxy is the default value for L7 proxy enablement
+	EnableL7Proxy = true
+
+	// EnableK8sExternalIPs is the default value for k8s externalIPs feature.
+	EnableK8sExternalIPs = true
+
 	// PreAllocateMaps is the default value for BPF map preallocation
 	PreAllocateMaps = true
 
@@ -159,11 +165,18 @@ const (
 	// DatapathMode is the default value for the datapath mode.
 	DatapathMode = "veth"
 
+	// EnableLocalNodeRoute default value for EnableLocalNodeRoute
+	EnableLocalNodeRoute = true
+
 	// EnableAutoDirectRouting is the default value for EnableAutoDirectRouting
 	EnableAutoDirectRouting = false
 
 	// EnableHealthChecking is the default value for EnableHealthChecking
 	EnableHealthChecking = true
+
+	// EnableEndpointHealthChecking is the default value for
+	// EnableEndpointHealthChecking
+	EnableEndpointHealthChecking = true
 
 	// AlignCheckerName is the BPF object name for the alignchecker.
 	AlignCheckerName = "bpf_alignchecker.o"
@@ -273,6 +286,15 @@ const (
 	// ENIPreAllocation is the default value for
 	// CiliumNode.Spec.ENI.PreAllocate if no value is set
 	ENIPreAllocation = 8
+
+	// ENIParallelWorkers is the default max number of workers that process ENI operations
+	ENIParallelWorkers = 50
+
+	// AWSClientBurst is the default burst value for the AWS client
+	AWSClientBurst = 4
+
+	// AWSClientQPSLimit is the default QPS limit for the AWS client
+	AWSClientQPSLimit = 20.0
 
 	// AutoCreateCiliumNodeResource enables automatic creation of a
 	// CiliumNode resource for the local node

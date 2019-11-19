@@ -139,8 +139,14 @@ func (m *ServiceSpec) UnmarshalBinary(b []byte) error {
 // swagger:model ServiceSpecFlags
 type ServiceSpecFlags struct {
 
+	// Service name  (e.g. Kubernetes service name)
+	Name string `json:"name,omitempty"`
+
+	// Service namespace  (e.g. Kubernetes namespace)
+	Namespace string `json:"namespace,omitempty"`
+
 	// Service type
-	// Enum: [ClusterIP NodePort]
+	// Enum: [ClusterIP NodePort ExternalIPs]
 	Type string `json:"type,omitempty"`
 }
 
@@ -162,7 +168,7 @@ var serviceSpecFlagsTypeTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["ClusterIP","NodePort"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["ClusterIP","NodePort","ExternalIPs"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -177,6 +183,9 @@ const (
 
 	// ServiceSpecFlagsTypeNodePort captures enum value "NodePort"
 	ServiceSpecFlagsTypeNodePort string = "NodePort"
+
+	// ServiceSpecFlagsTypeExternalIPs captures enum value "ExternalIPs"
+	ServiceSpecFlagsTypeExternalIPs string = "ExternalIPs"
 )
 
 // prop value enum

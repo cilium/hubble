@@ -177,6 +177,9 @@ const (
 	// ServiceName is the orchestration framework name for a service
 	ServiceName = "serviceName"
 
+	// ServiceNamespace is the orchestration framework namespace of a service name
+	ServiceNamespace = "serviceNamespace"
+
 	// ClusterName is the name of the cluster
 	ClusterName = "clusterName"
 
@@ -236,6 +239,9 @@ const (
 
 	// Tunnel is the tunnel name
 	Tunnel = "tunnel"
+
+	// Selector is a selector of any sort: endpoint, CIDR, toFQDNs
+	Selector = "Selector"
 
 	// EndpointLabelSelector is a selector for Endpoints by label
 	EndpointLabelSelector = "EndpointLabelSelector"
