@@ -25,11 +25,11 @@ instead of unix domain socket. For example, to listen to port 8080 on localhost:
 
 1. Metrics can be enabled via the `metrics.enabled` helm option:
 
-    helm template hubble \
-        --namespace kube-system \
-        --set metrics.enabled="{dns:query,drop,tcp,flow,port-distribution}" \
-        > hubble.yaml
-    kubectl apply -f hubble.yaml
+        helm template hubble \
+            --namespace kube-system \
+            --set metrics.enabled="{dns:query,drop,tcp,flow,port-distribution}" \
+            > hubble.yaml
+        kubectl apply -f hubble.yaml
 
 2. Deploy Prometheus & Grafana
 
