@@ -63,4 +63,4 @@ The following is an example dashboard. The corresponding [JSON definition].
 
 ![Network Policy](images/network_policy.png)
 
-[JSON definition]: ./tutorials/deploy-hubble-and-grafana/grafana.json
+[JSON definition]: ../tutorials/deploy-hubble-and-grafana/grafana.json
