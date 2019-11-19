@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: x-wing
+  namespace: starwars
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      context: starwars
+      name: x-wing
+  template:
+    metadata:
+      labels:
+        context: starwars
+        name: x-wing
+    spec:
+      containers:
+      - image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        command: ["bash", "-c", "while true; do curl -4 -H 'X-Has-Force: true' deathstar; sleep $(( ( RANDOM % 10 )  + 1 )); done"]
+        livenessProbe:
+          exec:
+            command: ["curl", "-4", "-sS", "-o", "/dev/null", "deathstar"]
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: x-wing-container

@@ -1,0 +1,34 @@
+{{- if .Values.ui.enabled }}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: hubble-grpc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    k8s-app: hubble
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    k8s-app: hubble
+  ports:
+  - targetPort: 50051
+    protocol: TCP
+    port: 50051
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: hubble-ui
+spec:
+  selector:
+    k8s-app: hubble-ui
+  ports:
+    - name: http
+      port: 12000
+      targetPort: 12000
+  type: ClusterIP
+---
+{{- end }}

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vader
+  namespace: starwars
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      context: starwars
+      name: vader
+  template:
+    metadata:
+      labels:
+        context: starwars
+        name: vader
+    spec:
+      containers:
+      - image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        command: ["bash", "-c", "while true; do curl -4 -XPOST deathstar/order; sleep $(( ( RANDOM % 10 )  + 1 )); done"]
+        livenessProbe:
+          exec:
+            command: ["curl", "-4", "-sS", "-H", "X-Has-Force: true", "-o", "/dev/null", "deathstar"]
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: x-wing-container

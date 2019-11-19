@@ -1,0 +1,55 @@
+# image used for hubble server
+image:
+  # repository of the docker image
+  repository: quay.io/cilium/hubble
+  # tag is the container image tag to use
+  tag: latest
+  # pullPolicy is the container image pull policy
+  pullPolicy: Always
+
+# URL to listen to client requests. If this parameter is not specified, it
+# defaults to using unix domain socket.
+listenClientUrls: ~
+
+# Server URL to connect to hubble server. If this parameter is not specified,
+# it defaults to using unix domain socket.
+server: ~
+
+# maxFlows the server will store in memory
+maxFlows: ~
+
+# Namespace in which Cilium is installed
+ciliumNamespace: ~
+
+# Configuration for container runtime interface. When enabled, Hubble uses CRI to get additional
+# metadata such as container name and image name.
+cri:
+  # CRI is disabled if runtime field is set to "". Set this to one of the following values to
+  # enable it.
+  #   - docker
+  runtime: ""
+
+metrics:
+  enabled:
+   - drop
+  address: ":6943"
+
+# Configuration for hubble ui
+ui:
+  enabled: false
+  image:
+    # hubble image used for hubble-ui
+    hubble:
+      # repository of the Hubble docker image
+      repository: quay.io/isovalent/hubble
+      # tag is the container image tag to use
+      tag: latest
+      # pullPolicy is the container image pull policy
+      pullPolicy: Always
+
+    # repository of the docker image
+    repository: quay.io/isovalent/hubble-ui
+    # tag is the container image tag to use
+    tag: latest
+    # pullPolicy is the container image pull policy
+    pullPolicy: Always
