@@ -8,8 +8,24 @@
 
 ## Install Cilium
 
-Install Cilium using the [Install instructions]. If you need help to
-troubleshoot installation issues, ping us on the [Cilium Slack].
+Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0-rc1 via
+Helm, download the chart as follows:
+
+    curl -LO https://github.com/cilium/cilium/archive/v1.7.0-rc1.tar.gz
+    tar xzvf v1.7.0-rc1.tar.gz
+    cd cilium-1.7.0-rc1/install/kubernetes
+
+To install Cilium 1.7.0-rc1, make sure to specify the image tag by setting
+`global.tag=v1.7.0-rc1`:
+
+    helm template cilium \
+      --namespace kube-system \
+      --set global.tag=v1.7.0-rc1 \
+      > cilium.yaml
+    kubectl create -f cilium.yaml
+
+If you need help to troubleshoot installation issues, ping us on the
+[Cilium Slack].
 
 ### Enable Datapath Aggregation
 
