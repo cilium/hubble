@@ -1,0 +1,267 @@
+---
+# Source: hubble/templates/serviceaccount.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hubble
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: kube-system
+  name: hubble-ui
+---
+# Source: hubble/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hubble
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hubble-ui 
+rules:
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - componentstatuses
+      - endpoints
+      - namespaces
+      - nodes
+      - pods
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - cilium.io
+    resources:
+      - "*"
+    verbs:
+      - get
+      - list
+      - watch
+---
+# Source: hubble/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hubble
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hubble
+subjects:
+- kind: ServiceAccount
+  name: hubble
+  namespace: kube-system
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: hubble-ui
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hubble-ui 
+subjects:
+  - kind: ServiceAccount
+    namespace: kube-system
+    name: hubble-ui
+---
+# Source: hubble/templates/svc.yaml
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: hubble-grpc
+  namespace: kube-system
+  labels:
+    k8s-app: hubble
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    k8s-app: hubble
+  ports:
+  - targetPort: 50051
+    protocol: TCP
+    port: 50051
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: kube-system
+  name: hubble-ui
+spec:
+  selector:
+    k8s-app: hubble-ui
+  ports:
+    - name: http
+      port: 12000
+      targetPort: 12000
+  type: ClusterIP
+---
+
+---
+# Source: hubble/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hubble
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: hubble
+      kubernetes.io/cluster-service: "true"
+  template:
+    metadata:
+      annotations:
+        # This annotation plus the CriticalAddonsOnly toleration makes
+        # hubble to be a critical pod in the cluster, which ensures hubble
+        # gets priority scheduling, same as cilium-agent.
+        # https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+        prometheus.io/port: "6943"
+        prometheus.io/scrape: "true"
+      labels:
+        k8s-app: hubble
+        kubernetes.io/cluster-service: "true"
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: "k8s-app"
+                operator: In
+                values:
+                - cilium
+            topologyKey: "kubernetes.io/hostname"
+            namespaces:
+            - cilium
+            - kube-system
+      containers:
+      - name: hubble
+        image: "quay.io/isovalent/hubble:latest"
+        imagePullPolicy: Always
+        command:
+        - hubble
+        args:
+        - serve
+        - --listen-client-urls=0.0.0.0:50051
+        - --listen-client-urls=unix:///var/run/hubble.sock
+        - --metrics-server
+        - ":6943"
+        - --metric=dns:query
+        - --metric=drop
+        - --metric=tcp
+        - --metric=flow
+        - --metric=port-distribution
+        env:
+          - name: HUBBLE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: HUBBLE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+        - containerPort: 6943
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - hubble
+            - status
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /var/run/cilium
+          name: cilium-run
+      restartPolicy: Always
+      serviceAccount: hubble
+      serviceAccountName: hubble
+      terminationGracePeriodSeconds: 1
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          # We need to access Cilium's monitor socket
+          path: /var/run/cilium
+          type: Directory
+        name: cilium-run
+
+---
+# Source: hubble/templates/deployment.yaml
+
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  namespace: kube-system
+  name: hubble-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: hubble-ui
+  template:
+    metadata:
+      labels:
+        k8s-app: hubble-ui
+    spec:
+      serviceAccountName: hubble-ui
+      containers:
+        - name: hubble-ui
+          image: "quay.io/isovalent/hubble-ui:latest"
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: HUBBLE
+              value: "true"
+            - name: HUBBLE_SERVICE
+              value: "hubble-grpc.kube-system.svc.cluster.local"
+            - name: HUBBLE_PORT
+              value: "50051"
+          ports:
+            - containerPort: 12000
+              name: http
+

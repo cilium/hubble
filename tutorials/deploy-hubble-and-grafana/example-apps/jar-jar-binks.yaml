@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jar-jar-binks
+  namespace: starwars
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      context: starwars
+      name: jar-jar-binks
+  template:
+    metadata:
+      labels:
+        context: starwars
+        name: jar-jar-binks
+    spec:
+      containers:
+      - image: docker.io/cilium/json-mock
+        imagePullPolicy: Always
+        name: jar-jar-container
+        command: ["bash", "-c", "while true; do curl -sS -o /dev/null unknown-galaxy; sleep $(( ( RANDOM % 10 )  + 1 )); done"]

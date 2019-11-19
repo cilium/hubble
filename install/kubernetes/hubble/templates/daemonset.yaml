@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hubble
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: hubble
+      kubernetes.io/cluster-service: "true"
+  template:
+    metadata:
+      annotations:
+        # This annotation plus the CriticalAddonsOnly toleration makes
+        # hubble to be a critical pod in the cluster, which ensures hubble
+        # gets priority scheduling, same as cilium-agent.
+        # https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+{{- if .Values.metrics.enabled }}
+        prometheus.io/port: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" | quote }}
+        prometheus.io/scrape: "true"
+{{- end }}
+      labels:
+        k8s-app: hubble
+        kubernetes.io/cluster-service: "true"
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: "k8s-app"
+                operator: In
+                values:
+                - cilium
+            topologyKey: "kubernetes.io/hostname"
+            namespaces:
+            {{- if .Values.ciliumNamespace }}
+            - {{ .Values.ciliumNamespace }}
+            {{- else }}
+            - cilium
+            - kube-system
+            {{- end }}
+      containers:
+      - name: hubble
+{{- if .Values.ui.enabled }}
+        image: "{{ .Values.ui.image.hubble.repository }}:{{ .Values.ui.image.hubble.tag }}"
+        imagePullPolicy: {{ .Values.ui.image.hubble.pullPolicy }}
+{{- else }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{- end }}
+        command:
+        - hubble
+        args:
+        - serve
+{{- range .Values.listenClientUrls }}
+        - --listen-client-urls={{ . }}
+{{- end }}
+{{- if .Values.maxFlows }}
+        - --max-flows
+        - {{ .Values.maxFlows }}
+{{- end }}
+{{- if eq .Values.cri.runtime "docker" }}
+        - --cri-endpoint
+        - "unix:///hostrun/dockershim.sock"
+{{- end }}
+{{- if .Values.metrics.enabled }}
+        - --metrics-server
+        - {{ .Values.metrics.address | quote }}
+{{- range .Values.metrics.enabled }}
+        - --metric={{ . }}
+{{- end }}
+{{- end }}
+        env:
+          - name: HUBBLE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: HUBBLE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+{{- if .Values.metrics.enabled }}
+        - containerPort: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" }}
+          protocol: TCP
+{{- end }}
+        readinessProbe:
+          exec:
+            command:
+            - hubble
+            - status
+  {{- if .Values.server }}
+            - --server={{ .Values.server }}
+  {{- end }}
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /var/run/cilium
+          name: cilium-run
+      restartPolicy: Always
+      serviceAccount: hubble
+      serviceAccountName: hubble
+      terminationGracePeriodSeconds: 1
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          # We need to access Cilium's monitor socket
+          path: /var/run/cilium
+          type: Directory
+        name: cilium-run
+{{- if eq .Values.cri.runtime "docker" }}
+      # Mount /var/run so that hubble can access docker CRI endpoint /var/run/dockershim.sock.
+      - hostPath:
+          path: /var/run
+          type: Directory
+        name: host-run
+{{- end }}
