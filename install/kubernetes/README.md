@@ -36,7 +36,7 @@ instead of unix domain socket. For example, to listen to port 8080 on localhost:
    The following deploys Prometheus and Grafana into the `cilium-monitoring`
    namespace:
 
-       kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.6/examples/kubernetes/addons/prometheus/monitoring-example.yaml
+       kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0-rc1/examples/kubernetes/addons/prometheus/monitoring-example.yaml
 
    Import the dashboard (`install/kubernetes/grafana.json`) via *Create* ->
    *Import*

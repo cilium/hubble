@@ -23,7 +23,7 @@ minikube start --network-plugin=cni --memory=4096
 Install Cilium and Hubble as [DaemonSets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) into your new Kubernetes cluster:
 
 ```
-kubectl create -f https://raw.githubusercontent.com/cilium/cilium/master/install/kubernetes/quick-install.yaml
+kubectl create -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0-rc1/install/kubernetes/quick-install.yaml
 
 kubectl create -f https://raw.githubusercontent.com/cilium/hubble/master/tutorials/deploy-hubble-servicemap/hubble-all-minikube.yaml
 ```
