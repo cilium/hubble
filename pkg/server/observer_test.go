@@ -22,7 +22,8 @@ import (
 	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
@@ -55,11 +56,11 @@ type FakeGRPCServerStream struct {
 }
 
 type FakeGetFlowsServer struct {
-	OnSend func(response *pb.GetFlowsResponse) error
+	OnSend func(response *observer.GetFlowsResponse) error
 	*FakeGRPCServerStream
 }
 
-func (s *FakeGetFlowsServer) Send(response *pb.GetFlowsResponse) error {
+func (s *FakeGetFlowsServer) Send(response *observer.GetFlowsResponse) error {
 	if s.OnSend != nil {
 		// TODO: completely convert this into using pb.Flow
 		return s.OnSend(response)
@@ -151,15 +152,15 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
-	req := &pb.GetFlowsRequest{
+	req := &observer.GetFlowsRequest{
 		Number:       10,
 		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
 		SkipDecoding: true,
 	}
-	got := make([]*pb.GetFlowsResponse, 10, 10)
+	got := make([]*observer.GetFlowsResponse, 10, 10)
 	i := 0
 	fakeServer := &FakeGetFlowsServer{
-		OnSend: func(response *pb.GetFlowsResponse) error {
+		OnSend: func(response *observer.GetFlowsResponse) error {
 			got[i] = response
 			i++
 			return nil
@@ -225,17 +226,17 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
-	req := &pb.GetFlowsRequest{
+	req := &observer.GetFlowsRequest{
 		Number:       10,
 		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
 		Follow:       true,
 		SkipDecoding: true,
 	}
-	got := make([]*pb.GetFlowsResponse, 12, 12)
+	got := make([]*observer.GetFlowsResponse, 12, 12)
 	i := 0
 	receivedFirstBatch, receivedSecondBatch := make(chan struct{}), make(chan struct{})
 	fakeServer := &FakeGetFlowsServer{
-		OnSend: func(response *pb.GetFlowsResponse) error {
+		OnSend: func(response *observer.GetFlowsResponse) error {
 			got[i] = response
 			i++
 			if i == 10 {
@@ -327,7 +328,7 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
-	req := &pb.GetFlowsRequest{
+	req := &observer.GetFlowsRequest{
 		Since:        &types.Timestamp{Seconds: 2, Nanos: 0},
 		Until:        &types.Timestamp{Seconds: 7, Nanos: 0},
 		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
@@ -367,10 +368,10 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 			},
 		},
 	}
-	got := make([]*pb.GetFlowsResponse, 4, 4)
+	got := make([]*observer.GetFlowsResponse, 4, 4)
 	i := 0
 	fakeServer := &FakeGetFlowsServer{
-		OnSend: func(response *pb.GetFlowsResponse) error {
+		OnSend: func(response *observer.GetFlowsResponse) error {
 			got[i] = response
 			i++
 			return nil
@@ -392,11 +393,11 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 }
 
 type FakeObserverGetFlowsServer struct {
-	OnSend func(*pb.GetFlowsResponse) error
+	OnSend func(*observer.GetFlowsResponse) error
 	*FakeGRPCServerStream
 }
 
-func (s *FakeObserverGetFlowsServer) Send(flow *pb.GetFlowsResponse) error {
+func (s *FakeObserverGetFlowsServer) Send(flow *observer.GetFlowsResponse) error {
 	if s.OnSend != nil {
 		return s.OnSend(flow)
 	}
@@ -407,7 +408,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	numFlows := 10
 	count := 0
 	fakeServer := &FakeObserverGetFlowsServer{
-		OnSend: func(_ *pb.GetFlowsResponse) error {
+		OnSend: func(_ *observer.GetFlowsResponse) error {
 			count++
 			return nil
 		},
@@ -449,7 +450,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	}
 	close(ch)
 	<-s.stopped
-	err = s.GetFlows(&pb.GetFlowsRequest{Number: 20}, fakeServer)
+	err = s.GetFlows(&observer.GetFlowsRequest{Number: 20}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
 }
@@ -458,7 +459,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	numFlows := 10
 	count := 0
 	fakeServer := &FakeObserverGetFlowsServer{
-		OnSend: func(res *pb.GetFlowsResponse) error {
+		OnSend: func(res *observer.GetFlowsResponse) error {
 			count++
 			assert.Equal(t, "1.1.1.1", res.GetFlow().GetIP().GetSource())
 			assert.Equal(t, "2.2.2.2", res.GetFlow().GetIP().GetDestination())
@@ -514,7 +515,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	}
 	close(ch)
 	<-s.stopped
-	err = s.GetFlows(&pb.GetFlowsRequest{
+	err = s.GetFlows(&observer.GetFlowsRequest{
 		Number: uint64(numFlows * 3),
 		Whitelist: []*pb.FlowFilter{
 			{SourceIp: []string{"1.1.1.1"}, EventType: allTypes},
@@ -531,7 +532,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 	numFlows := 5
 	count := 0
 	fakeServer := &FakeObserverGetFlowsServer{
-		OnSend: func(_ *pb.GetFlowsResponse) error {
+		OnSend: func(_ *observer.GetFlowsResponse) error {
 			count++
 			return nil
 		},
@@ -593,7 +594,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 			},
 		},
 	}
-	err = s.GetFlows(&pb.GetFlowsRequest{Whitelist: flowFilter, Number: 20}, fakeServer)
+	err = s.GetFlows(&observer.GetFlowsRequest{Whitelist: flowFilter, Number: 20}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
 }
