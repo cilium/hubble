@@ -55,4 +55,5 @@ func TestHostname(t *testing.T) {
 	assert.Equal(t, "a,b", Hostname("", "", "", "", []string{"a", "b"}))
 	EnableIPTranslation = false
 	assert.Equal(t, "1.1.1.1:80", Hostname("1.1.1.1", "80", "default", "pod", []string{}))
+	assert.Equal(t, "1.1.1.1", Hostname("1.1.1.1", "0", "default", "pod", []string{}))
 }
