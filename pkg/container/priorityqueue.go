@@ -18,7 +18,7 @@ import (
 	"container/heap"
 	"time"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 )
 
 // A flowPriorityQueue implements heap.Interface and holds Items.
