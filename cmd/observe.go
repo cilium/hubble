@@ -28,7 +28,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/format"
 	"github.com/cilium/hubble/pkg/logger"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
@@ -338,8 +339,8 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 		bl = ofilter.blacklist.flowFilters()
 	}
 
-	client := pb.NewObserverClient(conn)
-	req := &pb.GetFlowsRequest{
+	client := observer.NewObserverClient(conn)
+	req := &observer.GetFlowsRequest{
 		Number:       last,
 		Follow:       follow,
 		Whitelist:    wl,
@@ -352,7 +353,7 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 	return getFlows(client, req)
 }
 
-func getFlows(client pb.ObserverClient, req *pb.GetFlowsRequest) error {
+func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	b, err := client.GetFlows(ctx, req)
 	if err != nil {
@@ -385,7 +386,7 @@ func getFlows(client pb.ObserverClient, req *pb.GetFlowsRequest) error {
 			return err
 		}
 		if serverMsg := getFlowResponse.GetServerMsg(); serverMsg != nil {
-			if serverMsg.GetInfo().GetType() == pb.ProtocolMessageType_PROGRESS_PROTOCOL_MESSAGE_TYPE {
+			if serverMsg.GetInfo().GetType() == observer.ProtocolMessageType_PROGRESS_PROTOCOL_MESSAGE_TYPE {
 				err := printer.WriteErr(serverMsg.GetInfo().Msg)
 				if err != nil {
 					return err

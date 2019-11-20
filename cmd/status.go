@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"os"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -96,7 +96,7 @@ func getHC(s string) (bool, string, error) {
 	return healthy, status, err
 }
 
-func getStatus(s string) (*pb.ServerStatusResponse, error) {
+func getStatus(s string) (*observer.ServerStatusResponse, error) {
 	conn, err := grpc.Dial(s, grpc.WithInsecure())
 	if err != nil {
 		panic(err)
@@ -106,8 +106,8 @@ func getStatus(s string) (*pb.ServerStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), connTimeout)
 	defer cancel()
 
-	req := &pb.ServerStatusRequest{}
-	res, err := pb.NewObserverClient(conn).ServerStatus(ctx, req)
+	req := &observer.ServerStatusRequest{}
+	res, err := observer.NewObserverClient(conn).ServerStatus(ctx, req)
 	if err != nil {
 		return nil, err
 	}
