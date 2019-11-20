@@ -90,7 +90,7 @@ func Hostname(ip, port string, ns, pod string, names []string) (host string) {
 		}
 	}
 
-	if port != "" {
+	if port != "" && port != "0" {
 		return net.JoinHostPort(host, port)
 	}
 
