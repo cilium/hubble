@@ -17,7 +17,7 @@ package metrics
 import (
 	"net/http"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/metrics/api"
 	_ "github.com/cilium/hubble/pkg/metrics/dns"               // invoke init
 	_ "github.com/cilium/hubble/pkg/metrics/drop"              // invoke init
