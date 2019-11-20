@@ -20,7 +20,7 @@ import (
 
 	"github.com/gogo/protobuf/types"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 )
 
 func newTimeFlow(sec int64, nano int32) *pb.Flow {
