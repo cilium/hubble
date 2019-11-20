@@ -17,7 +17,7 @@ package portdistribution
 import (
 	"fmt"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	"github.com/prometheus/client_golang/prometheus"
