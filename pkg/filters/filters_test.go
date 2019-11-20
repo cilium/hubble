@@ -19,7 +19,7 @@ import (
 	"testing"
 
 	"github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/stretchr/testify/assert"
 )
