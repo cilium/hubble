@@ -30,7 +30,8 @@ import (
 
 	"github.com/google/gops/agent"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/cilium/client"
@@ -277,7 +278,7 @@ func Serve(listenClientUrls []string) error {
 
 	clientGRPC := grpc.NewServer()
 
-	pb.RegisterObserverServer(clientGRPC, s)
+	observer.RegisterObserverServer(clientGRPC, s)
 	healthpb.RegisterHealthServer(clientGRPC, healthSrv)
 
 	for clientListURL, clientList := range clientListeners {
