@@ -541,12 +541,12 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 			},
 		},
 	}
-	fakeK8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
+	fakeIPGetter := &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
 			if ip.Equal(net.ParseIP("1.1.1.1")) {
-				return "default", "foo-bar", true
+				return ipcache.IPIdentity{Namespace: "default", PodName: "foo-bar"}, true
 			}
-			return "", "", false
+			return ipcache.IPIdentity{}, false
 		},
 	}
 
@@ -554,7 +554,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 	ipc := ipcache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeK8sGetter)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter)
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 30)

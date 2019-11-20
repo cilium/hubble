@@ -24,10 +24,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cilium/cilium/pkg/identity"
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/cilium/pkg/proxy/accesslog"
 	"github.com/cilium/cilium/pkg/u8proto"
 	pb "github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/testutils"
 
 	"github.com/gogo/protobuf/types"
@@ -108,10 +110,14 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 			return nil
 		},
 	}
-	k8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
+	IPGetter := &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (id ipcache.IPIdentity, ok bool) {
 			if ip.Equal(net.ParseIP(fakeDestinationEndpoint.IPv4)) {
-				return "default", "pod-1234", true
+				return ipcache.IPIdentity{
+					Identity:  identity.NumericIdentity(fakeDestinationEndpoint.Identity),
+					Namespace: "default",
+					PodName:   "pod-1234",
+				}, true
 			}
 			return
 		},
@@ -122,7 +128,7 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, k8sGetter)
+	parser, err := New(dnsGetter, IPGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -194,9 +200,9 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 			return nil
 		},
 	}
-	k8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
-			return "", "", false
+	ipGetter := &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
+			return ipcache.IPIdentity{}, false
 		},
 	}
 
@@ -205,7 +211,7 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, k8sGetter)
+	parser, err := New(dnsGetter, ipGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -283,18 +289,14 @@ func BenchmarkL7Decode(b *testing.B) {
 			return nil
 		},
 	}
-	k8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
-			return "", "", false
-		},
-	}
+	ipGetter := &testutils.NoopIPGetter
 
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, k8sGetter)
+	parser, err := New(dnsGetter, ipGetter)
 	require.NoError(b, err)
 
 	f := &pb.Flow{}

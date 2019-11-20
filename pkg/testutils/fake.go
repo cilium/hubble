@@ -6,6 +6,7 @@ import (
 	"net"
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/ipcache"
 )
 
 // FakeDNSGetter is used for unit tests that needs DNSGetter.
@@ -48,22 +49,22 @@ var NoopEndpointGetter = FakeEndpointGetter{
 	},
 }
 
-// FakeK8sGetter is used for unit tests that needs K8sGetter.
-type FakeK8sGetter struct {
-	OnGetPodNameOf func(ip net.IP) (ns, pod string, ok bool)
+// FakeIPGetter is used for unit tests that needs IPGetter.
+type FakeIPGetter struct {
+	OnGetIPIdentity func(ip net.IP) (id ipcache.IPIdentity, ok bool)
 }
 
-// GetPodNameOf implements K8sGetter.GetPodNameOf.
-func (f *FakeK8sGetter) GetPodNameOf(ip net.IP) (ns, pod string, ok bool) {
-	if f.OnGetPodNameOf != nil {
-		return f.OnGetPodNameOf(ip)
+// GetIPIdentity implements FakeIPGetter.GetIPIdentity.
+func (f *FakeIPGetter) GetIPIdentity(ip net.IP) (id ipcache.IPIdentity, ok bool) {
+	if f.OnGetIPIdentity != nil {
+		return f.OnGetIPIdentity(ip)
 	}
-	panic("OnGetPodNameOf not set")
+	panic("OnGetIPIdentity not set")
 }
 
-// NoopK8sGetter always returns an empty response.
-var NoopK8sGetter = FakeK8sGetter{
-	OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
-		return "", "", false
+// NoopIPGetter always returns an empty response.
+var NoopIPGetter = FakeIPGetter{
+	OnGetIPIdentity: func(ip net.IP) (id ipcache.IPIdentity, ok bool) {
+		return ipcache.IPIdentity{}, false
 	},
 }

@@ -35,7 +35,6 @@ func TestIPCache_Upsert(t *testing.T) {
 
 	type cache map[string]entry
 	type fields struct {
-		mutex sync.RWMutex
 		cache map[string]entry
 	}
 	type args struct {
@@ -154,7 +153,6 @@ func TestIPCache_Upsert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ipc := &IPCache{
-				mutex: tt.fields.mutex,
 				cache: tt.fields.cache,
 			}
 			ipc.Upsert(tt.args.key, tt.args.id, tt.args.hostIP, tt.args.encryptKey, tt.args.namespace, tt.args.podName)
@@ -230,7 +228,6 @@ func TestIPCache_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ipc := &IPCache{
-				mutex: tt.fields.mutex,
 				cache: tt.fields.cache,
 			}
 			got := ipc.Delete(tt.args.key)
@@ -250,7 +247,6 @@ func TestIPCache_UpsertChecked(t *testing.T) {
 
 	type cache map[string]entry
 	type fields struct {
-		mutex sync.RWMutex
 		cache map[string]entry
 	}
 	type args struct {
@@ -415,7 +411,6 @@ func TestIPCache_UpsertChecked(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ipc := &IPCache{
-				mutex: tt.fields.mutex,
 				cache: tt.fields.cache,
 			}
 			got := ipc.UpsertChecked(tt.args.key, tt.args.newID, tt.args.oldID, tt.args.newHostIP, tt.args.oldHostIP, tt.args.encryptKey, tt.args.namespace, tt.args.podName)
@@ -446,7 +441,6 @@ func TestIPCache_InitializeFrom(t *testing.T) {
 
 	type cache map[string]entry
 	type fields struct {
-		mutex sync.RWMutex
 		cache map[string]entry
 	}
 	type args struct {
@@ -569,7 +563,6 @@ func TestIPCache_InitializeFrom(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ipc := &IPCache{
-				mutex: tt.fields.mutex,
 				cache: tt.fields.cache,
 			}
 			if err := ipc.InitializeFrom(tt.args.entries); (err != nil) != tt.want.hasErr {
@@ -580,7 +573,7 @@ func TestIPCache_InitializeFrom(t *testing.T) {
 	}
 }
 
-func TestIPCache_GetPodNameOf(t *testing.T) {
+func TestIPCache_GetIPIdentity(t *testing.T) {
 	_, cidrv4, err := net.ParseCIDR("1.1.1.1/32")
 	require.NoError(t, err)
 	_, cidrv6, err := net.ParseCIDR("::1/128")
@@ -588,16 +581,14 @@ func TestIPCache_GetPodNameOf(t *testing.T) {
 
 	type cache map[string]entry
 	type fields struct {
-		mutex sync.RWMutex
 		cache map[string]entry
 	}
 	type args struct {
 		ip net.IP
 	}
 	type want struct {
-		ns  string
-		pod string
-		ok  bool
+		id IPIdentity
+		ok bool
 	}
 	tests := []struct {
 		name   string
@@ -621,9 +612,8 @@ func TestIPCache_GetPodNameOf(t *testing.T) {
 				ip: net.ParseIP("1.1.1.1"),
 			},
 			want: want{
-				ns:  "default",
-				pod: "xwing",
-				ok:  true,
+				id: IPIdentity{100, "default", "xwing"},
+				ok: true,
 			},
 		},
 		{
@@ -642,9 +632,8 @@ func TestIPCache_GetPodNameOf(t *testing.T) {
 				ip: net.ParseIP("::1"),
 			},
 			want: want{
-				ns:  "default",
-				pod: "xwing",
-				ok:  true,
+				id: IPIdentity{100, "default", "xwing"},
+				ok: true,
 			},
 		},
 		{
@@ -670,18 +659,14 @@ func TestIPCache_GetPodNameOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ipc := &IPCache{
-				mutex: tt.fields.mutex,
 				cache: tt.fields.cache,
 			}
-			gotNs, gotPod, gotOk := ipc.GetPodNameOf(tt.args.ip)
-			if gotNs != tt.want.ns {
-				t.Errorf("IPCache.GetPodNameOf() gotNs = %v, want %v", gotNs, tt.want.ns)
-			}
-			if gotPod != tt.want.pod {
-				t.Errorf("IPCache.GetPodNameOf() gotPod = %v, want %v", gotPod, tt.want.pod)
+			gotID, gotOk := ipc.GetIPIdentity(tt.args.ip)
+			if gotID != tt.want.id {
+				t.Errorf("IPCache.GetIPIdentity() gotID = %v, want %v", gotID, tt.want.id)
 			}
 			if gotOk != tt.want.ok {
-				t.Errorf("IPCache.GetPodNameOf() gotOk = %v, want %v", gotOk, tt.want.ok)
+				t.Errorf("IPCache.GetIPIdentity() gotOk = %v, want %v", gotOk, tt.want.ok)
 			}
 		})
 	}

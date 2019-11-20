@@ -42,7 +42,7 @@ type Parser struct {
 	endpointGetter getters.EndpointGetter
 	identityGetter getters.IdentityGetter
 	dnsGetter      getters.DNSGetter
-	k8sGetter      getters.K8sGetter
+	ipGetter       getters.IPGetter
 
 	// TODO: consider using a pool of these
 	packet *packet
@@ -67,7 +67,7 @@ func New(
 	endpointGetter getters.EndpointGetter,
 	identityGetter getters.IdentityGetter,
 	dnsGetter getters.DNSGetter,
-	k8sGetter getters.K8sGetter,
+	ipGetter getters.IPGetter,
 ) (*Parser, error) {
 	packet := &packet{}
 	packet.decLayer = gopacket.NewDecodingLayerParser(
@@ -79,7 +79,7 @@ func New(
 		dnsGetter:      dnsGetter,
 		endpointGetter: endpointGetter,
 		identityGetter: identityGetter,
-		k8sGetter:      k8sGetter,
+		ipGetter:       ipGetter,
 		packet:         packet,
 	}, nil
 }
@@ -230,9 +230,10 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoin
 
 	// for remote endpoints, assemble the information via ip and identity
 	var namespace, podName string
-	if p.k8sGetter != nil {
-		if ns, pod, ok := p.k8sGetter.GetPodNameOf(ip); ok {
-			namespace, podName = ns, pod
+	if p.ipGetter != nil {
+		if ipIdentity, ok := p.ipGetter.GetIPIdentity(ip); ok {
+			securityIdentity = uint64(ipIdentity.Identity)
+			namespace, podName = ipIdentity.Namespace, ipIdentity.PodName
 		}
 	}
 	var labels []string

@@ -30,6 +30,7 @@ import (
 	"github.com/cilium/hubble/api/v1/observer"
 	pb "github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -84,10 +85,11 @@ func TestL34Decode(t *testing.T) {
 			return nil
 		},
 	}
-	k8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
-			if ip.Equal(net.ParseIP("10.16.236.178")) {
-				return "default", "pod-10.16.236.178", true
+	ipGetter := &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
+			// pretend IP belongs to a pod on a remote node
+			if ip.Equal(net.ParseIP("192.168.33.11")) {
+				return ipcache.IPIdentity{Namespace: "remote", PodName: "pod-192.168.33.11"}, true
 			}
 			return
 		},
@@ -102,7 +104,7 @@ func TestL34Decode(t *testing.T) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(endpointGetter, identityCache, dnsGetter, k8sGetter)
+	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -118,8 +120,8 @@ func TestL34Decode(t *testing.T) {
 	assert.Equal(t, []string{"host-192.168.33.11"}, f.GetSourceNames())
 	assert.Equal(t, "192.168.33.11", f.GetIP().GetSource())
 	assert.Equal(t, uint32(6443), f.L4.GetTCP().GetSourcePort())
-	assert.Equal(t, "", f.GetSource().GetPodName())
-	assert.Equal(t, "", f.GetSource().GetNamespace())
+	assert.Equal(t, "pod-192.168.33.11", f.GetSource().GetPodName())
+	assert.Equal(t, "remote", f.GetSource().GetNamespace())
 
 	assert.Equal(t, []string(nil), f.GetDestinationNames())
 	assert.Equal(t, "10.16.236.178", f.GetIP().GetDestination())
@@ -168,12 +170,12 @@ func TestL34Decode(t *testing.T) {
 			return nil
 		},
 	}
-	k8sGetter = &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
+	ipGetter = &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
 			return
 		},
 	}
-	parser, err = New(endpointGetter, identityCache, dnsGetter, k8sGetter)
+	parser, err = New(endpointGetter, identityCache, dnsGetter, ipGetter)
 	require.NoError(t, err)
 
 	p = &pb.Payload{
@@ -223,8 +225,8 @@ func BenchmarkL34Decode(b *testing.B) {
 			return nil
 		},
 	}
-	k8sGetter := &testutils.FakeK8sGetter{
-		OnGetPodNameOf: func(ip net.IP) (ns, pod string, ok bool) {
+	ipGetter := &testutils.FakeIPGetter{
+		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
 			return
 		},
 	}
@@ -236,7 +238,7 @@ func BenchmarkL34Decode(b *testing.B) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(endpointGetter, identityCache, dnsGetter, k8sGetter)
+	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter)
 	require.NoError(b, err)
 
 	f := &pb.Flow{}
@@ -287,7 +289,7 @@ func TestDecodeTraceNotify(t *testing.T) {
 		return nil, fmt.Errorf("identity not found for %d", securityIdentity)
 	}}
 
-	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopK8sGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -330,7 +332,7 @@ func TestDecodeDropNotify(t *testing.T) {
 		return nil, fmt.Errorf("identity not found for %d", securityIdentity)
 	}}
 
-	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopK8sGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -431,7 +433,7 @@ func Test_filterCidrLabels(t *testing.T) {
 
 func TestTraceNotifyOriginalIP(t *testing.T) {
 	f := &pb.Flow{}
-	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopK8sGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
 
 	v0 := monitor.TraceNotifyV0{
@@ -468,7 +470,7 @@ func TestTraceNotifyOriginalIP(t *testing.T) {
 }
 
 func TestICMP(t *testing.T) {
-	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopK8sGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
 	message := monitor.TraceNotifyV1{
 		TraceNotifyV0: monitor.TraceNotifyV0{
@@ -539,7 +541,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 		},
 	}
 
-	parser, err := New(endpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopK8sGetter)
+	parser, err := New(endpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
 
 	v0 := monitor.TraceNotifyV0{

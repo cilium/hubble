@@ -19,6 +19,7 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/ipcache"
 )
 
 // DNSGetter ...
@@ -40,8 +41,8 @@ type IdentityGetter interface {
 	GetIdentity(id uint64) (*models.Identity, error)
 }
 
-// K8sGetter fetches per-IP K8s metadata
-type K8sGetter interface {
-	// GetPodNameOf fetches K8s pod and namespace information.
-	GetPodNameOf(ip net.IP) (ns, pod string, ok bool)
+// IPGetter fetches per-IP metadata
+type IPGetter interface {
+	// GetIPIdentity fetches information known about a remote IP.
+	GetIPIdentity(ip net.IP) (identity ipcache.IPIdentity, ok bool)
 }

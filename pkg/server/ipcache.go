@@ -23,8 +23,9 @@ import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"go.uber.org/zap"
 
-	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/cilium/client"
+	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/parser/getters"
 )
 
 const (
@@ -32,34 +33,29 @@ const (
 	ipcacheRefreshInterval   = 5 * time.Minute
 )
 
-type podGetter interface {
-	GetPodNameOf(ip net.IP) (ns, pod string, ok bool)
-}
-
-type endpointGetter interface {
-	GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool)
-}
-
-// LegacyPodGetter implements GetPodNameOf based on the IPCache-backed
-// podGetter, but falls back on obtaining the pod information from the list
+// LegacyPodGetter implements GetIPIdentity based on the IPCache-backed
+// IPGetter, but falls back on obtaining the pod information from the list
 // of endpoints. This is intended to support Cilium 1.6 and older.
 type LegacyPodGetter struct {
-	PodGetter      podGetter
-	EndpointGetter endpointGetter
+	PodGetter      getters.IPGetter
+	EndpointGetter getters.EndpointGetter
 }
 
-// GetPodNameOf fetches K8s pod and namespace information.
-func (l *LegacyPodGetter) GetPodNameOf(ip net.IP) (ns, pod string, ok bool) {
-	if ns, pod, ok := l.PodGetter.GetPodNameOf(ip); ok {
-		return ns, pod, ok
+// GetIPIdentity fetches IP-related information.
+func (l *LegacyPodGetter) GetIPIdentity(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
+	if id, ok := l.PodGetter.GetIPIdentity(ip); ok {
+		return id, true
 	}
 
 	// fallback on local endpoints
 	if ep, ok := l.EndpointGetter.GetEndpoint(ip); ok {
-		return ep.PodNamespace, ep.PodName, ok
+		return ipcache.IPIdentity{
+			Namespace: ep.PodNamespace,
+			PodName:   ep.PodName,
+		}, true
 	}
 
-	return "", "", false
+	return ipcache.IPIdentity{}, false
 }
 
 // fetchIPCache copies over the IP cache from cilium agent

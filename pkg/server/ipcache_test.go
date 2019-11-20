@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/cilium/cilium/api/v1/models"
+	"github.com/cilium/cilium/pkg/identity"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/cilium/pkg/source"
 	"github.com/stretchr/testify/assert"
@@ -27,6 +28,7 @@ import (
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/cilium/hubble/pkg/testutils"
 )
 
@@ -97,24 +99,22 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 	s.syncIPCache(ipCacheEvents)
 	assert.Equal(t, 0, len(ipCacheEvents))
 
+	id100 := identity.NumericIdentity(100)
+
 	tests := []struct {
-		ip  net.IP
-		ns  string
-		pod string
-		ok  bool
+		ip net.IP
+		id ipcache.IPIdentity
+		ok bool
 	}{
-		{ip: net.ParseIP("1.1.1.1"), ns: "ns-1", pod: "pod-1", ok: true},
-		{ip: net.ParseIP("2.2.2.2"), ns: "ns-2", pod: "pod-2", ok: true},
-		{ip: net.ParseIP("3.3.3.3"), ns: "ns-3", pod: "pod-3", ok: true},
+		{ip: net.ParseIP("1.1.1.1"), id: ipcache.IPIdentity{id100, "ns-1", "pod-1"}, ok: true},
+		{ip: net.ParseIP("2.2.2.2"), id: ipcache.IPIdentity{id100, "ns-2", "pod-2"}, ok: true},
+		{ip: net.ParseIP("3.3.3.3"), id: ipcache.IPIdentity{id100, "ns-3", "pod-3"}, ok: true},
 		{ip: net.ParseIP("4.4.4.4"), ok: false},
 	}
 	for _, tt := range tests {
-		gotNs, gotPod, gotOk := ipc.GetPodNameOf(tt.ip)
-		if gotNs != tt.ns {
-			t.Errorf("IPCache.GetPodNameOf() gotNs = %v, want %v", gotNs, tt.ns)
-		}
-		if gotPod != tt.pod {
-			t.Errorf("IPCache.GetPodNameOf() gotPod = %v, want %v", gotPod, tt.pod)
+		gotID, gotOk := ipc.GetIPIdentity(tt.ip)
+		if gotID != tt.id {
+			t.Errorf("IPCache.GetIPIdentity() gotID = %v, want %v", gotID, tt.id)
 		}
 		if gotOk != tt.ok {
 			t.Errorf("IPCache.GetPodNameOf() gotOk = %v, want %v", gotOk, tt.ok)
@@ -124,16 +124,15 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 
 func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 	type fields struct {
-		PodGetter      podGetter
-		EndpointGetter endpointsHandler
+		IPGetter       getters.IPGetter
+		EndpointGetter getters.EndpointGetter
 	}
 	type args struct {
 		ip net.IP
 	}
 	type want struct {
-		ns  string
-		pod string
-		ok  bool
+		id ipcache.IPIdentity
+		ok bool
 	}
 	tests := []struct {
 		name   string
@@ -144,9 +143,9 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 		{
 			name: "available in ipcache",
 			fields: fields{
-				PodGetter: &testutils.FakeK8sGetter{
-					OnGetPodNameOf: func(_ net.IP) (ns, pod string, ok bool) {
-						return "default", "xwing", true
+				IPGetter: &testutils.FakeIPGetter{
+					OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
+						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
 				EndpointGetter: &fakeEndpointsHandler{
@@ -159,19 +158,14 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 				ip: net.ParseIP("1.1.1.15"),
 			},
 			want: want{
-				ns:  "default",
-				pod: "xwing",
-				ok:  true,
+				id: ipcache.IPIdentity{Namespace: "default", PodName: "xwing"},
+				ok: true,
 			},
 		},
 		{
 			name: "available in endpoints",
 			fields: fields{
-				PodGetter: &testutils.FakeK8sGetter{
-					OnGetPodNameOf: func(_ net.IP) (ns, pod string, ok bool) {
-						return "", "", false
-					},
-				},
+				IPGetter: &testutils.NoopIPGetter,
 				EndpointGetter: &fakeEndpointsHandler{
 					fakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
 						return &v1.Endpoint{
@@ -187,17 +181,16 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 				ip: net.ParseIP("1.1.1.15"),
 			},
 			want: want{
-				ns:  "default",
-				pod: "deathstar",
-				ok:  true,
+				id: ipcache.IPIdentity{Namespace: "default", PodName: "deathstar"},
+				ok: true,
 			},
 		},
 		{
 			name: "available in both",
 			fields: fields{
-				PodGetter: &testutils.FakeK8sGetter{
-					OnGetPodNameOf: func(_ net.IP) (ns, pod string, ok bool) {
-						return "default", "xwing", true
+				IPGetter: &testutils.FakeIPGetter{
+					OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
+						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
 				EndpointGetter: &fakeEndpointsHandler{
@@ -215,24 +208,15 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 				ip: net.ParseIP("1.1.1.15"),
 			},
 			want: want{
-				ns:  "default",
-				pod: "xwing",
-				ok:  true,
+				id: ipcache.IPIdentity{Namespace: "default", PodName: "xwing"},
+				ok: true,
 			},
 		},
 		{
 			name: "available in none",
 			fields: fields{
-				PodGetter: &testutils.FakeK8sGetter{
-					OnGetPodNameOf: func(_ net.IP) (ns, pod string, ok bool) {
-						return "", "", false
-					},
-				},
-				EndpointGetter: &fakeEndpointsHandler{
-					fakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
-						return nil, false
-					},
-				},
+				IPGetter:       &testutils.NoopIPGetter,
+				EndpointGetter: &testutils.NoopEndpointGetter,
 			},
 			args: args{
 				ip: net.ParseIP("1.1.1.15"),
@@ -245,19 +229,18 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			l := &LegacyPodGetter{
-				PodGetter:      tt.fields.PodGetter,
+				PodGetter:      tt.fields.IPGetter,
 				EndpointGetter: tt.fields.EndpointGetter,
 			}
-			gotNs, gotPod, gotOk := l.GetPodNameOf(tt.args.ip)
-			if gotNs != tt.want.ns {
-				t.Errorf("LegacyPodGetter.GetPodNameOf() gotNs = %v, want %v", gotNs, tt.want.ns)
-			}
-			if gotPod != tt.want.pod {
-				t.Errorf("LegacyPodGetter.GetPodNameOf() gotPod = %v, want %v", gotPod, tt.want.pod)
+
+			gotID, gotOk := l.GetIPIdentity(tt.args.ip)
+			if gotID != tt.want.id {
+				t.Errorf("IPCache.GetIPIdentity() gotID = %v, want %v", gotID, tt.want.id)
 			}
 			if gotOk != tt.want.ok {
-				t.Errorf("LegacyPodGetter.GetPodNameOf() gotOk = %v, want %v", gotOk, tt.want.ok)
+				t.Errorf("IPCache.GetPodNameOf() gotOk = %v, want %v", gotOk, tt.want.ok)
 			}
+
 		})
 	}
 }

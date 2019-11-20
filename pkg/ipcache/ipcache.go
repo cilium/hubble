@@ -24,6 +24,13 @@ import (
 	"github.com/cilium/cilium/pkg/source"
 )
 
+// IPIdentity contains the data associated with an IP address
+type IPIdentity struct {
+	Identity  identity.NumericIdentity
+	Namespace string
+	PodName   string
+}
+
 type entry struct {
 	CIDR     *net.IPNet
 	Identity identity.NumericIdentity
@@ -38,6 +45,7 @@ type entry struct {
 // IPCache is a mirror of Cilium's ipcache
 type IPCache struct {
 	mutex sync.RWMutex
+	// cache maps a cidr to its metadata
 	cache map[string]entry
 }
 
@@ -173,16 +181,16 @@ func (ipc *IPCache) InitializeFrom(entries []*models.IPListEntry) error {
 	return nil
 }
 
-// GetPodNameOf returns the namespace and pod name for a given IP
-func (ipc *IPCache) GetPodNameOf(ip net.IP) (ns, pod string, ok bool) {
+// GetIPIdentity returns the known information about a given IP
+func (ipc *IPCache) GetIPIdentity(ip net.IP) (id IPIdentity, ok bool) {
 	ipc.mutex.RLock()
 	defer ipc.mutex.RUnlock()
 
 	if e, ok := ipc.cache[ipToCIDR(ip).String()]; ok {
-		return e.Namespace, e.PodName, true
+		return IPIdentity{Identity: e.Identity, Namespace: e.Namespace, PodName: e.PodName}, true
 	}
 
-	return "", "", false
+	return IPIdentity{}, false
 }
 
 // ipToCIDR converts an IP into an equivalent full CIDR.
