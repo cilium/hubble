@@ -27,8 +27,7 @@ import (
 	"github.com/cilium/cilium/pkg/identity"
 	"github.com/cilium/cilium/pkg/monitor"
 	"github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/cilium/hubble/api/v1/observer"
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/testutils"
@@ -202,7 +201,7 @@ func TestL34Decode(t *testing.T) {
 	assert.Equal(t, int32(api.MessageTypeTrace), f.GetEventType().GetType())
 	assert.Equal(t, int32(api.TraceFromLxc), f.GetEventType().GetSubType())
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
-	assert.Equal(t, (*observer.TCPFlags)(nil), f.L4.GetTCP().GetFlags())
+	assert.Equal(t, (*pb.TCPFlags)(nil), f.L4.GetTCP().GetFlags())
 	assert.Equal(t, nodeName, f.GetNodeName())
 	assert.Equal(t, p, f.GetPayload())
 }

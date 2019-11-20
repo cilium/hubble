@@ -17,7 +17,7 @@ package parser
 import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/cilium/hubble/pkg/parser/options"
