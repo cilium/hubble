@@ -41,11 +41,11 @@ import (
 type Parser struct {
 	cache     *lru.Cache
 	dnsGetter getters.DNSGetter
-	k8sGetter getters.K8sGetter
+	ipGetter  getters.IPGetter
 }
 
 // New returns a new L7 parser
-func New(dnsGetter getters.DNSGetter, k8sGetter getters.K8sGetter, opts ...options.Option) (*Parser, error) {
+func New(dnsGetter getters.DNSGetter, ipGetter getters.IPGetter, opts ...options.Option) (*Parser, error) {
 	args := &options.Options{
 		CacheSize: 10000,
 	}
@@ -62,7 +62,7 @@ func New(dnsGetter getters.DNSGetter, k8sGetter getters.K8sGetter, opts ...optio
 	return &Parser{
 		cache:     cache,
 		dnsGetter: dnsGetter,
-		k8sGetter: k8sGetter,
+		ipGetter:  ipGetter,
 	}, nil
 }
 
@@ -114,9 +114,13 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 		sourceNames = p.dnsGetter.GetNamesOf(sourceEndpoint.ID, sourceIP)
 		destinationNames = p.dnsGetter.GetNamesOf(destinationEndpoint.ID, destinationIP)
 	}
-	if p.k8sGetter != nil {
-		sourceNamespace, sourcePod, _ = p.k8sGetter.GetPodNameOf(sourceIP)
-		destinationNamespace, destinationPod, _ = p.k8sGetter.GetPodNameOf(destinationIP)
+	if p.ipGetter != nil {
+		if id, ok := p.ipGetter.GetIPIdentity(sourceIP); ok {
+			sourceNamespace, sourcePod = id.Namespace, id.PodName
+		}
+		if id, ok := p.ipGetter.GetIPIdentity(destinationIP); ok {
+			destinationNamespace, destinationPod = id.Namespace, id.PodName
+		}
 	}
 
 	decoded.Time = pbTimestamp
