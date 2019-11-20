@@ -21,7 +21,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/format"
 
 	"github.com/cilium/cilium/pkg/monitor/api"
