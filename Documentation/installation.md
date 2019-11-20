@@ -41,7 +41,8 @@ This is the default setting for new installs of Cilium 1.6 or later.
 
 Generate the deployment files using [Helm] and deploy it:
 
-    cd install/kubernetes
+    git clone https://github.com/cilium/hubble.git
+    cd hubble/install/kubernetes
     helm template hubble \
         --namespace kube-system \
         --set metrics.enabled="{dns,drop,tcp,flow,port-distribution,icmp,http}" \
