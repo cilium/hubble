@@ -31,7 +31,7 @@ import (
 	"github.com/google/gopacket/layers"
 	lru "github.com/hashicorp/golang-lru"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/cilium/hubble/pkg/parser/options"
