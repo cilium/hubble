@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 )
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
