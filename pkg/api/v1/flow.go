@@ -15,7 +15,7 @@
 package v1
 
 import (
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 )

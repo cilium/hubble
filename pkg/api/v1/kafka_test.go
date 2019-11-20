@@ -17,7 +17,7 @@ package v1
 import (
 	"testing"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
 
 	"github.com/stretchr/testify/assert"
 )
