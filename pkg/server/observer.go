@@ -21,7 +21,8 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/cilium/hubble/api/v1/observer"
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/container"
 	"github.com/cilium/hubble/pkg/filters"
@@ -101,7 +102,7 @@ type ObserverServer struct {
 	log *zap.Logger
 
 	// channel to receive events from observer server.
-	eventschan chan *pb.GetFlowsResponse
+	eventschan chan *observer.GetFlowsResponse
 
 	// payloadParser decodes pb.Payload into pb.Flow
 	payloadParser *parser.Parser
@@ -131,7 +132,7 @@ func NewServer(
 		epDel:         make(chan string, 100),
 		epAdd:         make(chan string, 100),
 		logRecord:     make(chan monitor.LogRecordNotify, 100),
-		eventschan:    make(chan *pb.GetFlowsResponse, 100),
+		eventschan:    make(chan *observer.GetFlowsResponse, 100),
 		payloadParser: payloadParser,
 	}
 }
@@ -211,9 +212,9 @@ func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
 
 // ServerStatus should have a comment, apparently. It returns the server status.
 func (s *ObserverServer) ServerStatus(
-	ctx context.Context, req *pb.ServerStatusRequest,
-) (*pb.ServerStatusResponse, error) {
-	res := &pb.ServerStatusResponse{
+	ctx context.Context, req *observer.ServerStatusRequest,
+) (*observer.ServerStatusResponse, error) {
+	res := &observer.ServerStatusResponse{
 		MaxFlows: s.ring.Cap(),
 		NumFlows: s.ring.Len(),
 	}
@@ -230,8 +231,8 @@ func logFilters(filters []*pb.FlowFilter) string {
 
 // GetFlows implements the proto method for client requests.
 func (s *ObserverServer) GetFlows(
-	req *pb.GetFlowsRequest,
-	server pb.Observer_GetFlowsServer,
+	req *observer.GetFlowsRequest,
+	server observer.Observer_GetFlowsServer,
 ) (err error) {
 	reply, err := getFlows(server.Context(), s.log, s.ring, req)
 	if err != nil {
@@ -245,8 +246,8 @@ func (s *ObserverServer) GetFlows(
 			if !ok {
 				return nil
 			}
-			err := server.Send(&pb.GetFlowsResponse{
-				ResponseTypes: &pb.GetFlowsResponse_Flow{
+			err := server.Send(&observer.GetFlowsResponse{
+				ResponseTypes: &observer.GetFlowsResponse_Flow{
 					Flow: rep,
 				},
 			})
@@ -257,7 +258,7 @@ func (s *ObserverServer) GetFlows(
 	}
 }
 
-func getUntil(req *pb.GetFlowsRequest, defaultTime *types.Timestamp) (time.Time, error) {
+func getUntil(req *observer.GetFlowsRequest, defaultTime *types.Timestamp) (time.Time, error) {
 	until := req.GetUntil()
 	if until == nil {
 		until = defaultTime
@@ -265,7 +266,7 @@ func getUntil(req *pb.GetFlowsRequest, defaultTime *types.Timestamp) (time.Time,
 	return types.TimestampFromProto(until)
 }
 
-func getBufferCh(ctx context.Context, ring *container.Ring, req *pb.GetFlowsRequest) (ch <-chan *v1.Event, stop context.CancelFunc, err error) {
+func getBufferCh(ctx context.Context, ring *container.Ring, req *observer.GetFlowsRequest) (ch <-chan *v1.Event, stop context.CancelFunc, err error) {
 	stop = func() {}
 
 	// s.ring.ReadFrom reads the values up to the last written index, i.e.,
@@ -326,7 +327,7 @@ func getFlows(
 	ctx context.Context,
 	log *zap.Logger,
 	ring *container.Ring,
-	req *pb.GetFlowsRequest,
+	req *observer.GetFlowsRequest,
 ) (chan *pb.Flow, error) {
 	start := time.Now()
 	i := uint64(0)
