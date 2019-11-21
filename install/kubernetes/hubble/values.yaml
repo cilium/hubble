@@ -38,15 +38,6 @@ metrics:
 ui:
   enabled: false
   image:
-    # hubble image used for hubble-ui
-    hubble:
-      # repository of the Hubble docker image
-      repository: quay.io/isovalent/hubble
-      # tag is the container image tag to use
-      tag: latest
-      # pullPolicy is the container image pull policy
-      pullPolicy: Always
-
     # repository of the docker image
     repository: quay.io/isovalent/hubble-ui
     # tag is the container image tag to use
