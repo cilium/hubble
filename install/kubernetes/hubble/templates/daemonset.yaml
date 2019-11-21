@@ -43,19 +43,20 @@ spec:
             {{- end }}
       containers:
       - name: hubble
-{{- if .Values.ui.enabled }}
-        image: "{{ .Values.ui.image.hubble.repository }}:{{ .Values.ui.image.hubble.tag }}"
-        imagePullPolicy: {{ .Values.ui.image.hubble.pullPolicy }}
-{{- else }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
-{{- end }}
         command:
         - hubble
         args:
         - serve
 {{- range .Values.listenClientUrls }}
         - --listen-client-urls={{ . }}
+{{- end }}
+{{- if and .Values.ui.enabled (not (has "0.0.0.0:50051" .Values.listenClientUrls)) }}
+        - --listen-client-urls=0.0.0.0:50051
+{{- if not .Values.listenClientUrls }}
+        - --listen-client-urls=unix:///var/run/hubble.sock
+{{- end }}
 {{- end }}
 {{- if .Values.maxFlows }}
         - --max-flows

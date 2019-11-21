@@ -173,7 +173,7 @@ spec:
             - kube-system
       containers:
       - name: hubble
-        image: "quay.io/isovalent/hubble:latest"
+        image: "quay.io/cilium/hubble:latest"
         imagePullPolicy: Always
         command:
         - hubble
