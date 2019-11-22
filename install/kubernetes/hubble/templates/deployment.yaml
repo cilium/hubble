@@ -28,7 +28,7 @@ spec:
             - name: HUBBLE
               value: "true"
             - name: HUBBLE_SERVICE
-              value: "hubble-grpc.kube-system.svc.cluster.local"
+              value: "hubble-grpc.{{ .Release.Namespace }}.svc.cluster.local"
             - name: HUBBLE_PORT
               value: "50051"
           ports:
