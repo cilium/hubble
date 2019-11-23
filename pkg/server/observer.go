@@ -363,14 +363,10 @@ func getFlows(
 	}
 	reply := make(chan *pb.Flow, 1)
 	go func() {
-		var (
-			e *v1.Event
-			f *pb.Flow
-		)
 		defer close(reply)
 		defer stop()
 
-		for e = range ch {
+		for e := range ch {
 			if req.Number != 0 && !req.Follow {
 				i++
 				if i >= req.Number {
@@ -384,26 +380,11 @@ func getFlows(
 					}
 				}
 			}
-			if e == nil || e.Payload == nil {
+			if e.GetFlow() == nil || !filters.Apply(whitelist, blacklist, e) {
 				continue
-			}
-			if e.Flow == nil && !req.SkipDecoding {
-				continue
-			}
-			if !filters.Apply(whitelist, blacklist, e) {
-				continue
-			}
-			if e.Flow != nil {
-				f = e.Flow
-			} else if req.SkipDecoding {
-				f = &pb.Flow{
-					Type:    pb.FlowType_UNKNOWN_TYPE,
-					Time:    e.Payload.Time,
-					Payload: e.Payload,
-				}
 			}
 			select {
-			case reply <- f:
+			case reply <- e.GetFlow():
 				// We have sent all expected flows so we can return already
 				if req.Number != 0 && i >= req.Number {
 					return

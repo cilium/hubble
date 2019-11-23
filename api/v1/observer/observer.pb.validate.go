@@ -236,8 +236,6 @@ func (m *GetFlowsRequest) Validate() error {
 		}
 	}
 
-	// no validation rules for SkipDecoding
-
 	return nil
 }
 

@@ -341,13 +341,12 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 
 	client := observer.NewObserverClient(conn)
 	req := &observer.GetFlowsRequest{
-		Number:       last,
-		Follow:       follow,
-		Whitelist:    wl,
-		Blacklist:    bl,
-		Since:        since,
-		Until:        until,
-		SkipDecoding: !format.EnablePortTranslation && !format.EnableIPTranslation,
+		Number:    last,
+		Follow:    follow,
+		Whitelist: wl,
+		Blacklist: bl,
+		Since:     since,
+		Until:     until,
 	}
 
 	return getFlows(client, req)
