@@ -127,13 +127,15 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	m := s.GetEventsChannel()
 	want := make([]*pb.Payload, 10, 10)
 	for i := uint64(0); i < s.ring.Cap(); i++ {
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
 		pl := &pb.Payload{
 			Time: &types.Timestamp{Seconds: int64(i)},
 			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(i), // other data
-			},
+			Data: data,
 		}
 		m <- pl
 
@@ -153,9 +155,8 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Number:       10,
-		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
-		SkipDecoding: true,
+		Number:    10,
+		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
 	}
 	got := make([]*observer.GetFlowsResponse, 10, 10)
 	i := 0
@@ -201,13 +202,15 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	m := s.GetEventsChannel()
 	want := make([]*pb.Payload, 12, 12)
 	for i := uint64(0); i < s.ring.Cap(); i++ {
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
 		pl := &pb.Payload{
 			Time: &types.Timestamp{Seconds: int64(i)},
 			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(i), // other data
-			},
+			Data: data,
 		}
 		m <- pl
 
@@ -227,10 +230,9 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Number:       10,
-		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
-		Follow:       true,
-		SkipDecoding: true,
+		Number:    10,
+		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
+		Follow:    true,
 	}
 	got := make([]*observer.GetFlowsResponse, 12, 12)
 	i := 0
@@ -271,13 +273,15 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	m = s.GetEventsChannel()
 
 	for i := uint64(0); i < 2; i++ {
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
 		pl := &pb.Payload{
 			Time: &types.Timestamp{Seconds: int64(i + s.ring.Cap())},
 			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 2,                      // event type
-				1: byte(i + s.ring.Cap()), // other data
-			},
+			Data: data,
 		}
 		m <- pl
 		if i < 1 {
@@ -308,15 +312,20 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	go s.Start()
 
 	m := s.GetEventsChannel()
+	var payloads []*pb.Payload
 	for i := uint64(0); i < s.ring.Cap(); i++ {
-		m <- &pb.Payload{
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
+		payload := &pb.Payload{
 			Time: &types.Timestamp{Seconds: int64(i)},
 			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(i), // other data
-			},
+			Data: data,
 		}
+		payloads = append(payloads, payload)
+		m <- payload
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
@@ -329,44 +338,15 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Since:        &types.Timestamp{Seconds: 2, Nanos: 0},
-		Until:        &types.Timestamp{Seconds: 7, Nanos: 0},
-		Whitelist:    []*pb.FlowFilter{{EventType: allTypes}},
-		SkipDecoding: true,
+		Since:     &types.Timestamp{Seconds: 2, Nanos: 0},
+		Until:     &types.Timestamp{Seconds: 7, Nanos: 0},
+		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
 	}
 	want := []*pb.Payload{
-		{
-			Time: &types.Timestamp{Seconds: int64(6)},
-			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(6), // other data
-			},
-		},
-		{
-			Time: &types.Timestamp{Seconds: int64(5)},
-			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(5), // other data
-			},
-		},
-		{
-			Time: &types.Timestamp{Seconds: int64(4)},
-			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(4), // other data
-			},
-		},
-		{
-			Time: &types.Timestamp{Seconds: int64(3)},
-			Type: pb.EventType_EventSample,
-			Data: []byte{
-				0: 1,       // event type
-				1: byte(3), // other data
-			},
-		},
+		payloads[6],
+		payloads[5],
+		payloads[4],
+		payloads[3],
 	}
 	got := make([]*observer.GetFlowsResponse, 4, 4)
 	i := 0

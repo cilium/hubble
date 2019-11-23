@@ -70,9 +70,6 @@ message GetFlowsRequest {
 
     // Until this time for returned flows. Incompatible with `number`.
     google.protobuf.Timestamp until = 8;
-
-    // Do not dissect and inflate `message Flow`, only return flow.Payload raw data.
-    bool skip_decoding = 9;
 }
 
 // GetFlowsResponse contains either a flow or a protocol message.
