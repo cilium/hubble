@@ -282,17 +282,8 @@ func filterByVerdicts(vs []pb.Verdict) FilterFunc {
 func filterByEventType(types []*pb.EventTypeFilter) FilterFunc {
 	return func(ev *v1.Event) bool {
 		event := ev.GetFlow().GetEventType()
-		// fall back on payload data for undecoded types
 		if event == nil {
-			data := ev.GetPayload().GetData()
-			if len(data) == 0 {
-				return false
-			}
-
-			event = &pb.CiliumEventType{Type: int32(data[0])}
-			if len(data) > 1 {
-				event.SubType = int32(data[1])
-			}
+			return false
 		}
 
 		for _, typeFilter := range types {
