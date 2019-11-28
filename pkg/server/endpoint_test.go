@@ -274,7 +274,7 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	endpointsMutex.Unlock()
 }
 
-func TestObserverServer_consumeEpAddEvents(t *testing.T) {
+func TestObserverServer_EndpointAddEvent(t *testing.T) {
 	once := sync.Once{}
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -326,16 +326,19 @@ func TestObserverServer_consumeEpAddEvents(t *testing.T) {
 			})
 		},
 	}
-	epAddCh := make(chan string, 1)
+	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
 	s := &ObserverServer{
-		ciliumClient: fakeClient,
-		endpoints:    fakeHandler,
-		epAdd:        epAddCh,
-		log:          zap.L(),
+		ciliumClient:   fakeClient,
+		endpoints:      fakeHandler,
+		endpointEvents: epEventsCh,
+		log:            zap.L(),
 	}
-	go s.consumeEpAddEvents()
+	go s.consumeEndpointEvents()
 
-	s.GetEpAddChannel() <- string(ecnMarshal)
+	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+		Type: monitorAPI.AgentNotifyEndpointCreated,
+		Text: string(ecnMarshal),
+	}
 	wg.Wait()
 
 	// Endpoint is not found so we don't even add it to the list of endpoints
@@ -349,18 +352,21 @@ func TestObserverServer_consumeEpAddEvents(t *testing.T) {
 	}
 	wg.Add(1)
 	s = &ObserverServer{
-		ciliumClient: fakeClient,
-		endpoints:    fakeHandler,
-		epAdd:        epAddCh,
-		log:          zap.L(),
+		ciliumClient:   fakeClient,
+		endpoints:      fakeHandler,
+		endpointEvents: epEventsCh,
+		log:            zap.L(),
 	}
-	go s.consumeEpAddEvents()
+	go s.consumeEndpointEvents()
 
-	s.GetEpAddChannel() <- string(ecnMarshal)
+	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+		Type: monitorAPI.AgentNotifyEndpointCreated,
+		Text: string(ecnMarshal),
+	}
 	wg.Wait()
 }
 
-func TestObserverServer_consumeEpDelEvents(t *testing.T) {
+func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	edn := &monitorAPI.EndpointDeleteNotification{
@@ -386,15 +392,82 @@ func TestObserverServer_consumeEpDelEvents(t *testing.T) {
 			assert.Equal(t, wanted, ep)
 		},
 	}
-	epDelCh := make(chan string, 1)
+	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
 	s := &ObserverServer{
-		endpoints: fakeHandler,
-		epDel:     epDelCh,
-		log:       zap.L(),
+		endpoints:      fakeHandler,
+		endpointEvents: epEventsCh,
+		log:            zap.L(),
 	}
-	go s.consumeEpDelEvents()
+	go s.consumeEndpointEvents()
 
-	s.GetEpDelChannel() <- string(ednMarshal)
+	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+		Type: monitorAPI.AgentNotifyEndpointDeleted,
+		Text: string(ednMarshal),
+	}
+	wg.Wait()
+}
+
+func TestObserverServer_EndpointRegenEvent(t *testing.T) {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	ern := &monitorAPI.EndpointRegenNotification{
+		ID: 13,
+	}
+	ednMarshal, err := json.Marshal(ern)
+	assert.Nil(t, err)
+	fakeClient := &fakeCiliumClient{
+		fakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
+			defer wg.Done()
+			assert.Equal(t, uint64(13), epID)
+			return &models.Endpoint{
+				ID: 13,
+				Status: &models.EndpointStatus{
+					ExternalIdentifiers: &models.EndpointIdentifiers{
+						ContainerID: "123",
+						PodName:     "default/bar",
+					},
+					Networking: &models.EndpointNetworking{
+						Addressing: []*models.AddressPair{
+							{
+								IPV4: "10.0.0.1",
+								IPV6: "fd00::1",
+							},
+						},
+					},
+				},
+			}, nil
+		},
+	}
+	fakeHandler := &fakeEndpointsHandler{
+		fakeUpdateEndpoint: func(ep *v1.Endpoint) {
+			defer wg.Done()
+			wanted := &v1.Endpoint{
+				ContainerIDs: []string{"123"},
+				Created:      time.Unix(12, 34),
+				ID:           13,
+				IPv4:         net.ParseIP("10.0.0.1").To4(),
+				IPv6:         net.ParseIP("fd00::1").To16(),
+				PodName:      "bar",
+				PodNamespace: "default",
+			}
+			ep.Created = time.Unix(12, 34)
+			assert.Equal(t, wanted, ep)
+		},
+	}
+	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
+	wg.Add(1)
+	s := &ObserverServer{
+		ciliumClient:   fakeClient,
+		endpoints:      fakeHandler,
+		endpointEvents: epEventsCh,
+		log:            zap.L(),
+	}
+	go s.consumeEndpointEvents()
+
+	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+		Type: monitorAPI.AgentNotifyEndpointRegenerateSuccess,
+		Text: string(ednMarshal),
+	}
 	wg.Wait()
 }
 
