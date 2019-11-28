@@ -162,6 +162,7 @@ func TestEndpoint_SetFrom(t *testing.T) {
 		IPv6         net.IP
 		PodName      string
 		PodNamespace string
+		Labels       []string
 	}
 	type args struct {
 		o *Endpoint
@@ -182,6 +183,7 @@ func TestEndpoint_SetFrom(t *testing.T) {
 				IPv6:         nil,
 				PodName:      "",
 				PodNamespace: "",
+				Labels:       nil,
 			},
 			args: args{
 				o: &Endpoint{
@@ -193,6 +195,7 @@ func TestEndpoint_SetFrom(t *testing.T) {
 					IPv6:         net.ParseIP("fd00::"),
 					PodName:      "pod-bar",
 					PodNamespace: "cilium",
+					Labels:       []string{"a", "b"},
 				},
 			},
 			want: &Endpoint{
@@ -203,6 +206,7 @@ func TestEndpoint_SetFrom(t *testing.T) {
 				IPv6:         net.ParseIP("fd00::"),
 				PodName:      "pod-bar",
 				PodNamespace: "cilium",
+				Labels:       []string{"a", "b"},
 			},
 		},
 	}

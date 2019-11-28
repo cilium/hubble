@@ -43,6 +43,9 @@ func (e *Endpoint) SetFrom(o *Endpoint) {
 	if o.IPv6 != nil {
 		e.IPv6 = o.IPv6
 	}
+	if len(o.Labels) != 0 {
+		e.Labels = o.Labels
+	}
 	if o.PodName != "" {
 		e.PodName = o.PodName
 	}
