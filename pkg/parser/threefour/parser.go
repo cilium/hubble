@@ -238,7 +238,11 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoin
 	}
 	var labels []string
 	if p.identityGetter != nil {
-		if id, err := p.identityGetter.GetIdentity(securityIdentity); err == nil {
+		if id, err := p.identityGetter.GetIdentity(securityIdentity); err != nil {
+			logger.GetLogger().Warn("failed to resolve identity",
+				zap.Error(err),
+				zap.Uint64("identity", securityIdentity))
+		} else {
 			labels = sortAndFilterLabels(id.Labels, securityIdentity)
 		}
 	}
