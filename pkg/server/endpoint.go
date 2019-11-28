@@ -66,42 +66,45 @@ func (s *ObserverServer) syncEndpoints() {
 	}
 }
 
-// consumeEpAddEvents starts reading the s.epAdd channel and adds the endpoint
-// to the observerServer's endpoints.
-func (s *ObserverServer) consumeEpAddEvents() {
-	for ep := range s.epAdd {
-		ecn := monitorAPI.EndpointCreateNotification{}
-		err := json.Unmarshal([]byte(ep), &ecn)
-		if err != nil {
-			s.log.Error("Unable to unmarshal EndpointCreateNotification", zap.String("EndpointCreateNotification", ep))
-			continue
-		}
+func (s *ObserverServer) consumeEndpointEvents() {
+	for an := range s.endpointEvents {
+		switch an.Type {
+		case monitorAPI.AgentNotifyEndpointCreated, monitorAPI.AgentNotifyEndpointRegenerateSuccess:
+			// When a new endpoint is created, or an endpoint is successfully
+			// updated, we consult the Cilium API to fetch additional endpoint
+			// information such as the endpoint IP address.
+			ern := monitorAPI.EndpointRegenNotification{}
+			err := json.Unmarshal([]byte(an.Text), &ern)
+			if err != nil {
+				s.log.Error("Unable to unmarshal EndpointRegenNotification", zap.String("EndpointRegenNotification", an.Text))
+				continue
+			}
 
-		ciliumEP, err := s.ciliumClient.GetEndpoint(ecn.ID)
-		if err != nil {
-			s.log.Error("Endpoint not found!", zap.Error(err))
-			continue
-		}
-		ep := endpoint.ParseEndpointFromModel(ciliumEP)
-		s.endpoints.UpdateEndpoint(ep)
-	}
-}
+			ciliumEP, err := s.ciliumClient.GetEndpoint(ern.ID)
+			if err != nil {
+				s.log.Error("Updated or created endpoint not found!", zap.Uint64("id", ern.ID), zap.Error(err))
+				continue
+			}
+			ep := endpoint.ParseEndpointFromModel(ciliumEP)
+			s.endpoints.UpdateEndpoint(ep)
+		case monitorAPI.AgentNotifyEndpointDeleted:
+			// When a deleted endpoint is found in the local endpoint cache,
+			// sets the time when the endpoint was deleted. If not found, stores
+			// a new endpoint in the cache, as well with the time when the
+			// endpoint was deleted.
+			edn := monitorAPI.EndpointDeleteNotification{}
+			err := json.Unmarshal([]byte(an.Text), &edn)
+			if err != nil {
+				s.log.Error("Unable to unmarshal EndpointDeleteNotification", zap.String("EndpointDeleteNotification", an.Text))
+				continue
+			}
 
-// consumeEpAddEvents starts reading the s.epDel channel and, if found in
-// observerServer, sets the time when the endpoint was deleted, if not found
-// stores a new endpoint in the observerServer as well with the time when the
-// endpoint was deleted.
-func (s *ObserverServer) consumeEpDelEvents() {
-	for epDeleted := range s.epDel {
-		edn := monitorAPI.EndpointDeleteNotification{}
-		err := json.Unmarshal([]byte(epDeleted), &edn)
-		if err != nil {
-			s.log.Error("Unable to unmarshal EndpointDeleteNotification", zap.String("EndpointDeleteNotification", epDeleted))
-			continue
+			ep := endpoint.ParseEndpointFromEndpointDeleteNotification(edn)
+			s.endpoints.MarkDeleted(ep)
+		default:
+			s.log.Debug("Ignoring unknown endpoint event",
+				zap.Int("type", int(an.Type)), zap.String("notification", an.Text))
 		}
-
-		ep := endpoint.ParseEndpointFromEndpointDeleteNotification(edn)
-		s.endpoints.MarkDeleted(ep)
 	}
 }
 

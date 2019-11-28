@@ -391,8 +391,7 @@ func getMonitorParser(conn net.Conn, version listener.Version) (parser eventPars
 func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version listener.Version) error {
 	defer conn.Close()
 	ch := s.GetEventsChannel()
-	epAdd := s.GetEpAddChannel()
-	epDel := s.GetEpDelChannel()
+	endpointEvents := s.GetEndpointEventsChannel()
 
 	dnsAdd := s.GetLogRecordNotifyChannel()
 
@@ -424,10 +423,10 @@ func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version liste
 				continue
 			}
 			switch an.Type {
-			case monitorAPI.AgentNotifyEndpointCreated:
-				epAdd <- an.Text
-			case monitorAPI.AgentNotifyEndpointDeleted:
-				epDel <- an.Text
+			case monitorAPI.AgentNotifyEndpointCreated,
+				monitorAPI.AgentNotifyEndpointRegenerateSuccess,
+				monitorAPI.AgentNotifyEndpointDeleted:
+				endpointEvents <- an
 			case monitorAPI.AgentNotifyIPCacheUpserted:
 				ipCacheEvents <- an
 			case monitorAPI.AgentNotifyIPCacheDeleted:

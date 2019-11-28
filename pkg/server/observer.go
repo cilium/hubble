@@ -89,11 +89,8 @@ type ObserverServer struct {
 	// ipcache is a mirror of Cilium's IPCache
 	ipcache *ipcache.IPCache
 
-	// epAdd is a channel used to exchange endpoints added in Cilium
-	epAdd chan string
-
-	// epAdd is a channel used to exchange endpoints removed in Cilium
-	epDel chan string
+	// epAdd is a channel used to exchange endpoint events from Cilium
+	endpointEvents chan monitorAPI.AgentNotify
 
 	// logRecord is a channel used to exchange L7 DNS requests seens from the
 	// monitor
@@ -123,17 +120,16 @@ func NewServer(
 		log:  logger.GetLogger(),
 		ring: container.NewRing(maxFlows),
 		// have a channel with 1% of the max flows that we can receive
-		events:        make(chan *pb.Payload, uint64(math.IntMin(maxFlows/100, 100))),
-		stopped:       make(chan struct{}),
-		ciliumClient:  ciliumClient,
-		endpoints:     endpoints,
-		ipcache:       ipCache,
-		fqdnCache:     fqdnCache,
-		epDel:         make(chan string, 100),
-		epAdd:         make(chan string, 100),
-		logRecord:     make(chan monitor.LogRecordNotify, 100),
-		eventschan:    make(chan *observer.GetFlowsResponse, 100),
-		payloadParser: payloadParser,
+		events:         make(chan *pb.Payload, uint64(math.IntMin(maxFlows/100, 100))),
+		stopped:        make(chan struct{}),
+		ciliumClient:   ciliumClient,
+		endpoints:      endpoints,
+		ipcache:        ipCache,
+		fqdnCache:      fqdnCache,
+		endpointEvents: make(chan monitorAPI.AgentNotify, 100),
+		logRecord:      make(chan monitor.LogRecordNotify, 100),
+		eventschan:     make(chan *observer.GetFlowsResponse, 100),
+		payloadParser:  payloadParser,
 	}
 }
 
@@ -142,8 +138,7 @@ func NewServer(
 func (s *ObserverServer) Start() {
 	go s.syncEndpoints()
 	go s.syncFQDNCache()
-	go s.consumeEpAddEvents()
-	go s.consumeEpDelEvents()
+	go s.consumeEndpointEvents()
 	go s.consumeLogRecordNotifyChannel()
 
 	for pl := range s.events {
@@ -187,16 +182,11 @@ func (s *ObserverServer) GetEventsChannel() chan<- *pb.Payload {
 	return s.events
 }
 
-// GetEpAddChannel returns the EpAdd channel that should be used to send
-// information when an endpoint is added into Cilium.
-func (s *ObserverServer) GetEpAddChannel() chan<- string {
-	return s.epAdd
-}
-
-// GetEpDelChannel returns the EpDel channel that should be used to send
-// information when an endpoint is deleted into Cilium.
-func (s *ObserverServer) GetEpDelChannel() chan<- string {
-	return s.epDel
+// GetEndpointEventsChannel returns a channel that should be used to send
+// AgentNotifyEndpoint* events when an endpoint is added, deleted or updated
+// in Cilium.
+func (s *ObserverServer) GetEndpointEventsChannel() chan<- monitorAPI.AgentNotify {
+	return s.endpointEvents
 }
 
 func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
