@@ -2,6 +2,14 @@
 
 # Network, Service & Security Observability for Kubernetes
 
+- [What is Hubble?](#what-is-hubble)
+- [Getting Started](#getting-started)
+- [Features](#features)
+  - [Service Dependency Graph](#service-dependency-graph)
+  - [Metrics & Monitoring](#metrics--monitoring)
+  - [Flow Visibility](#flow-visibility)
+- [Get in touch / Community](#community)
+- [Authors](#authors)
 # What is Hubble?
 
 Hubble is a fully distributed networking and security observability platform
@@ -169,6 +177,12 @@ Identifying pods which have received DNS response indicating failure:
     starwars/enterprise-5775b56c4b-thtwl:37800   starwars/deathstar-695d8f7ddc-lvj84:80(http)   Policy denied (L3)   TCP Flags: SYN
     starwars/enterprise-5775b56c4b-thtwl:37800   starwars/deathstar-695d8f7ddc-lvj84:80(http)   Policy denied (L3)   TCP Flags: SYN
     starwars/enterprise-5775b56c4b-thtwl:37800   starwars/deathstar-695d8f7ddc-lvj84:80(http)   Policy denied (L3)   TCP Flags: SYN
+
+# Community
+
+Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat with Cilium Hublbe developers and other Cilium / Hubble users. This is a good place to learn about Hubble and Cilium, ask questions, and share your experiences.
+
+Learn more about [Cilium](http://cilium.io).
 
 # Authors
 
