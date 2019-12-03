@@ -494,6 +494,57 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "do not return deleted endpoint",
+			fields: fields{
+				mutex: sync.RWMutex{},
+				eps: []*Endpoint{
+					{
+						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
+						ID:           1,
+						Created:      time.Unix(0, 0),
+						Deleted:      &time.Time{},
+						IPv4:         net.ParseIP("1.1.1.1").To4(),
+						IPv6:         net.ParseIP("fd00::1").To16(),
+						PodName:      "foo",
+						PodNamespace: "default",
+					},
+					{
+						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+						ID:           2,
+						Created:      time.Unix(0, 0),
+						IPv4:         net.ParseIP("1.1.1.2").To4(),
+						IPv6:         net.ParseIP("fd00::2").To16(),
+						PodName:      "foo",
+						PodNamespace: "default",
+					},
+					{
+						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
+						ID:           3,
+						Created:      time.Unix(0, 0),
+						IPv4:         net.ParseIP("1.1.1.3").To4(),
+						IPv6:         net.ParseIP("fd00::3").To16(),
+						PodName:      "bar",
+						PodNamespace: "kube-system",
+					},
+				},
+			},
+			args: args{
+				podName:   "foo",
+				namespace: "default",
+			},
+			want: []Endpoint{
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+					ID:           2,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.2").To4(),
+					IPv6:         net.ParseIP("fd00::2").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -653,6 +704,23 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 			},
 			args: args{
 				ip: net.ParseIP("1.1.1.2"),
+			},
+			wantEndpoint: nil,
+			wantOk:       false,
+		},
+		{
+			name: "deleted",
+			fields: fields{
+				eps: []*Endpoint{
+					{
+						ID:      15,
+						IPv4:    net.ParseIP("1.1.1.1"),
+						Deleted: &time.Time{},
+					},
+				},
+			},
+			args: args{
+				ip: net.ParseIP("1.1.1.1"),
 			},
 			wantEndpoint: nil,
 			wantOk:       false,
