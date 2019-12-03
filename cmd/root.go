@@ -27,6 +27,8 @@ import (
 var (
 	cfgFile string
 	log     *zap.Logger
+
+	cpuprofile, memprofile string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -39,6 +41,9 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	fin := maybeProfile()
+	defer fin() // make sure update memory profile is written in the end
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
@@ -53,6 +58,15 @@ func init() {
 	viper.BindPFlags(flags)
 	rootCmd.AddCommand(newCmdCompletion(os.Stdout))
 	rootCmd.SetErr(os.Stderr)
+
+	rootCmd.PersistentFlags().StringVar(&cpuprofile,
+		"cpuprofile", "", "Enable CPU profiling",
+	)
+	rootCmd.PersistentFlags().StringVar(&memprofile,
+		"memprofile", "", "Enable memory profiling",
+	)
+	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
+	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
 }
 
 // initConfig reads in config file and ENV variables if set.

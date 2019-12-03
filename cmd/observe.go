@@ -72,8 +72,6 @@ var (
 	serverTimeoutVar string
 	serverTimeout    time.Duration
 
-	cpuprofile, memprofile string
-
 	numeric bool
 )
 
@@ -101,8 +99,6 @@ programs attached to endpoints and devices. This includes:
 			if err := handleArgs(cmd, ofilter); err != nil {
 				return err
 			}
-
-			defer maybeProfile()()
 
 			if err := runObserve(serverURL, ofilter); err != nil {
 				msg := err.Error()
@@ -236,15 +232,6 @@ programs attached to endpoints and devices. This includes:
 		true,
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
 	)
-
-	observerCmd.Flags().StringVar(&cpuprofile,
-		"cpuprofile", "", "Enable CPU profiling",
-	)
-	observerCmd.Flags().StringVar(&memprofile,
-		"memprofile", "", "Enable memory profiling",
-	)
-	observerCmd.Flags().Lookup("cpuprofile").Hidden = true
-	observerCmd.Flags().Lookup("memprofile").Hidden = true
 
 	customObserverHelp(observerCmd)
 
