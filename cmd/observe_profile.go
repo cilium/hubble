@@ -43,7 +43,6 @@ func maybeProfile() func() {
 		if err != nil {
 			log.Fatal("failed to create memory profile", zap.Error(err))
 		}
-		pprof.WriteHeapProfile(mf)
 	}
 
 	return func() {
