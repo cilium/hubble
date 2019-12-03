@@ -101,6 +101,10 @@ func (es *Endpoints) FindEPs(epID uint64, namespace string, podName string) []En
 	es.mutex.RLock()
 	defer es.mutex.RUnlock()
 	for _, ep := range es.eps {
+		if ep.Deleted != nil {
+			continue
+		}
+
 		// If is the endpoint ID we are looking for
 		if (epID != 0 && ep.ID == epID) ||
 			// The pod name is the one we are looking for
@@ -172,7 +176,7 @@ func (es *Endpoints) GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool) {
 	es.mutex.RLock()
 	defer es.mutex.RUnlock()
 	for _, ep := range es.eps {
-		if ep.IPv4.Equal(ip) || ep.IPv6.Equal(ip) {
+		if ep.Deleted == nil && (ep.IPv4.Equal(ip) || ep.IPv6.Equal(ip)) {
 			return ep, true
 		}
 	}
