@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,27 +53,27 @@ func (h *portDistributionHandler) Status() string {
 	return h.context.Status()
 }
 
-func (h *portDistributionHandler) ProcessFlow(flow *pb.Flow) {
-	if flow.GetVerdict() != pb.Verdict_FORWARDED || flow.L4 == nil || flow.Reply {
+func (h *portDistributionHandler) ProcessFlow(flow v1.Flow) {
+	if flow.GetVerdict() != pb.Verdict_FORWARDED || flow.GetL4() == nil || flow.GetReply() {
 		return
 	}
 
-	if tcp := flow.L4.GetTCP(); tcp != nil {
+	if tcp := flow.GetL4().GetTCP(); tcp != nil {
 		labels := append([]string{"TCP", fmt.Sprintf("%d", tcp.DestinationPort)}, h.context.GetLabelValues(flow)...)
 		h.portDistribution.WithLabelValues(labels...).Inc()
 	}
 
-	if udp := flow.L4.GetUDP(); udp != nil {
+	if udp := flow.GetL4().GetUDP(); udp != nil {
 		labels := append([]string{"UDP", fmt.Sprintf("%d", udp.DestinationPort)}, h.context.GetLabelValues(flow)...)
 		h.portDistribution.WithLabelValues(labels...).Inc()
 	}
 
-	if flow.L4.GetICMPv4() != nil {
+	if flow.GetL4().GetICMPv4() != nil {
 		labels := append([]string{"ICMPv4", "0"}, h.context.GetLabelValues(flow)...)
 		h.portDistribution.WithLabelValues(labels...).Inc()
 	}
 
-	if flow.L4.GetICMPv6() != nil {
+	if flow.GetL4().GetICMPv6() != nil {
 		labels := append([]string{"ICMPv6", "0"}, h.context.GetLabelValues(flow)...)
 		h.portDistribution.WithLabelValues(labels...).Inc()
 	}

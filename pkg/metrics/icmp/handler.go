@@ -15,7 +15,7 @@
 package icmp
 
 import (
-	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	"github.com/google/gopacket/layers"
@@ -51,7 +51,7 @@ func (h *icmpHandler) Status() string {
 	return h.context.Status()
 }
 
-func (h *icmpHandler) ProcessFlow(flow *pb.Flow) {
+func (h *icmpHandler) ProcessFlow(flow v1.Flow) {
 	l4 := flow.GetL4()
 	if l4 == nil {
 		return

@@ -15,7 +15,7 @@
 package flow
 
 import (
-	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
@@ -41,9 +41,9 @@ func (h *flowHandler) Status() string {
 	return ""
 }
 
-func (h *flowHandler) ProcessFlow(flow *pb.Flow) {
+func (h *flowHandler) ProcessFlow(flow v1.Flow) {
 	var typeName, subType string
-	switch flow.EventType.Type {
+	switch flow.GetEventType().Type {
 	case monitorAPI.MessageTypeAgent:
 		typeName = "Agent"
 	case monitorAPI.MessageTypeAccessLog:
@@ -67,8 +67,8 @@ func (h *flowHandler) ProcessFlow(flow *pb.Flow) {
 		typeName = "Capture"
 	case monitorAPI.MessageTypeTrace:
 		typeName = "Trace"
-		subType = monitorAPI.TraceObservationPoints[uint8(flow.EventType.SubType)]
+		subType = monitorAPI.TraceObservationPoints[uint8(flow.GetEventType().SubType)]
 	}
 
-	h.flows.WithLabelValues(typeName, subType, flow.Verdict.String()).Inc()
+	h.flows.WithLabelValues(typeName, subType, flow.GetVerdict().String()).Inc()
 }

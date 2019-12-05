@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -99,12 +100,12 @@ func (d *dnsHandler) Status() string {
 	return strings.Join(append(status, d.context.Status()), ",")
 }
 
-func (d *dnsHandler) ProcessFlow(flow *pb.Flow) {
-	if flow.L7 == nil {
+func (d *dnsHandler) ProcessFlow(flow v1.Flow) {
+	if flow.GetL7() == nil {
 		return
 	}
 
-	dns := flow.L7.GetDns()
+	dns := flow.GetL7().GetDns()
 	if dns == nil {
 		return
 	}
@@ -125,7 +126,7 @@ func (d *dnsHandler) ProcessFlow(flow *pb.Flow) {
 		labels[0] = "Policy denied"
 		d.responses.WithLabelValues(labels...).Inc()
 	} else {
-		if flow.Reply {
+		if flow.GetReply() {
 			labels[0] = rcodeNames[dns.Rcode]
 			d.responses.WithLabelValues(labels...).Inc()
 

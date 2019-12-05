@@ -16,6 +16,7 @@ package tcp
 
 import (
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -50,13 +51,13 @@ func (h *tcpHandler) Status() string {
 	return h.context.Status()
 }
 
-func (h *tcpHandler) ProcessFlow(flow *pb.Flow) {
-	if flow.GetVerdict() != pb.Verdict_FORWARDED || flow.L4 == nil {
+func (h *tcpHandler) ProcessFlow(flow v1.Flow) {
+	if flow.GetVerdict() != pb.Verdict_FORWARDED || flow.GetL4() == nil {
 		return
 	}
 
 	ip := flow.GetIP()
-	tcp := flow.L4.GetTCP()
+	tcp := flow.GetL4().GetTCP()
 	if ip == nil || tcp == nil || tcp.Flags == nil {
 		return
 	}

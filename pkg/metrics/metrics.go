@@ -17,7 +17,7 @@ package metrics
 import (
 	"net/http"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 	_ "github.com/cilium/hubble/pkg/metrics/dns"               // invoke init
 	_ "github.com/cilium/hubble/pkg/metrics/drop"              // invoke init
@@ -37,7 +37,7 @@ var (
 )
 
 // ProcessFlow processes a flow and updates metrics
-func ProcessFlow(flow *pb.Flow) {
+func ProcessFlow(flow v1.Flow) {
 	if enabledMetrics != nil {
 		enabledMetrics.ProcessFlow(flow)
 	}
