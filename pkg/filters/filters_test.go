@@ -99,10 +99,10 @@ func TestIPFilter(t *testing.T) {
 					{SourceIp: []string{"1.1.1.1", "f00d::a10:0:0:9195"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
 				},
 			},
 			want: []bool{
@@ -119,10 +119,10 @@ func TestIPFilter(t *testing.T) {
 					{DestinationIp: []string{"1.1.1.1", "f00d::a10:0:0:9195"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
 				},
 			},
 			want: []bool{
@@ -142,10 +142,10 @@ func TestIPFilter(t *testing.T) {
 					},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "f00d::a10:0:0:9195", Destination: "ff02::1:ff00:b3e5"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "ff02::1:ff00:b3e5", Destination: "f00d::a10:0:0:9195"}}},
 				},
 			},
 			want: []bool{
@@ -163,10 +163,10 @@ func TestIPFilter(t *testing.T) {
 					{DestinationIp: []string{"2.2.2.2"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "1.1.1.1"}}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "2.2.2.2"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "2.2.2.2"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "1.1.1.1"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "1.1.1.1", Destination: "1.1.1.1"}}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: "2.2.2.2", Destination: "2.2.2.2"}}},
 				},
 			},
 			want: []bool{
@@ -185,8 +185,8 @@ func TestIPFilter(t *testing.T) {
 				ev: []*v1.Event{
 					nil,
 					{},
-					{Flow: &pb.Flow{}},
-					{Flow: &pb.Flow{IP: &pb.IP{Source: ""}}},
+					{Event: &pb.Flow{}},
+					{Event: &pb.Flow{IP: &pb.IP{Source: ""}}},
 				},
 			},
 			want: []bool{
@@ -249,10 +249,10 @@ func TestPodFilter(t *testing.T) {
 					{SourcePod: []string{"xwing", "default/tiefighter"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
-					{Flow: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "tiefighter"}}},
-					{Flow: &pb.Flow{Source: &pb.Endpoint{Namespace: "kube-system", PodName: "xwing"}}},
-					{Flow: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
+					{Event: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
+					{Event: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "tiefighter"}}},
+					{Event: &pb.Flow{Source: &pb.Endpoint{Namespace: "kube-system", PodName: "xwing"}}},
+					{Event: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
 				},
 			},
 			want: []bool{
@@ -269,10 +269,10 @@ func TestPodFilter(t *testing.T) {
 					{DestinationPod: []string{"xwing", "default/tiefighter"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
-					{Flow: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "tiefighter"}}},
-					{Flow: &pb.Flow{Destination: &pb.Endpoint{Namespace: "kube-system", PodName: "xwing"}}},
-					{Flow: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
+					{Event: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
+					{Event: &pb.Flow{Destination: &pb.Endpoint{Namespace: "default", PodName: "tiefighter"}}},
+					{Event: &pb.Flow{Destination: &pb.Endpoint{Namespace: "kube-system", PodName: "xwing"}}},
+					{Event: &pb.Flow{Source: &pb.Endpoint{Namespace: "default", PodName: "xwing"}}},
 				},
 			},
 			want: []bool{
@@ -292,19 +292,19 @@ func TestPodFilter(t *testing.T) {
 					},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
@@ -325,19 +325,19 @@ func TestPodFilter(t *testing.T) {
 					{DestinationPod: []string{"deathstar"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "deathstar"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
@@ -358,19 +358,19 @@ func TestPodFilter(t *testing.T) {
 					{DestinationPod: []string{"kube-system/"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "kube-system", PodName: "coredns"},
 						Destination: &pb.Endpoint{Namespace: "kube-system", PodName: "kube-proxy"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "kube-system", PodName: "coredns"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "kube-system", PodName: "coredns"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source:      &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 						Destination: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
@@ -390,19 +390,19 @@ func TestPodFilter(t *testing.T) {
 					{SourcePod: []string{"xwing", "kube-system/coredns-"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source: &pb.Endpoint{Namespace: "default", PodName: "xwing"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source: &pb.Endpoint{Namespace: "default", PodName: "xwing-t-65b"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source: &pb.Endpoint{Namespace: "kube-system", PodName: "coredns-12345"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source: &pb.Endpoint{Namespace: "kube-system", PodName: "-coredns-12345"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						Source: &pb.Endpoint{Namespace: "default", PodName: "tiefighter"},
 					}},
 				},
@@ -424,8 +424,8 @@ func TestPodFilter(t *testing.T) {
 				ev: []*v1.Event{
 					nil,
 					{},
-					{Flow: &pb.Flow{}},
-					{Flow: &pb.Flow{Source: &pb.Endpoint{Namespace: "", PodName: "xwing"}}},
+					{Event: &pb.Flow{}},
+					{Event: &pb.Flow{Source: &pb.Endpoint{Namespace: "", PodName: "xwing"}}},
 				},
 			},
 			want: []bool{
@@ -488,10 +488,10 @@ func TestFQDNFilter(t *testing.T) {
 					{SourceFqdn: []string{"cilium.io", "ebpf.io"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{SourceNames: []string{"cilium.io"}}},
-					{Flow: &pb.Flow{SourceNames: []string{"ebpf.io"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{"cilium.io"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{"ebpf.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"cilium.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"ebpf.io"}}},
+					{Event: &pb.Flow{DestinationNames: []string{"cilium.io"}}},
+					{Event: &pb.Flow{DestinationNames: []string{"ebpf.io"}}},
 				},
 			},
 			want: []bool{
@@ -508,10 +508,10 @@ func TestFQDNFilter(t *testing.T) {
 					{DestinationFqdn: []string{"cilium.io", "ebpf.io"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{SourceNames: []string{"cilium.io"}}},
-					{Flow: &pb.Flow{SourceNames: []string{"ebpf.io"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{"cilium.io"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{"ebpf.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"cilium.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"ebpf.io"}}},
+					{Event: &pb.Flow{DestinationNames: []string{"cilium.io"}}},
+					{Event: &pb.Flow{DestinationNames: []string{"ebpf.io"}}},
 				},
 			},
 			want: []bool{
@@ -531,15 +531,15 @@ func TestFQDNFilter(t *testing.T) {
 					},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"cilium.io"},
 						DestinationNames: []string{"ebpf.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"ebpf.io"},
 						DestinationNames: []string{"cilium.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"deathstar.empire.svc.cluster.local", "docs.cilium.io"},
 						DestinationNames: []string{"ebpf.io"},
 					}},
@@ -559,21 +559,21 @@ func TestFQDNFilter(t *testing.T) {
 					{DestinationFqdn: []string{"ebpf.io"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"cilium.io"},
 						DestinationNames: []string{"ebpf.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"ebpf.io"},
 						DestinationNames: []string{"cilium.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames: []string{"deathstar.empire.svc.cluster.local", "docs.cilium.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						DestinationNames: []string{"ebpf.io"},
 					}},
-					{Flow: &pb.Flow{
+					{Event: &pb.Flow{
 						SourceNames:      []string{"deathstar.empire.svc.cluster.local", "docs.cilium.io"},
 						DestinationNames: []string{"ebpf.io"},
 					}},
@@ -596,10 +596,10 @@ func TestFQDNFilter(t *testing.T) {
 				ev: []*v1.Event{
 					nil,
 					{},
-					{Flow: &pb.Flow{}},
-					{Flow: &pb.Flow{SourceNames: []string{"cilium.io."}}}, // should not have trailing dot
-					{Flow: &pb.Flow{SourceNames: []string{"www.cilium.io"}}},
-					{Flow: &pb.Flow{SourceNames: []string{""}}},
+					{Event: &pb.Flow{}},
+					{Event: &pb.Flow{SourceNames: []string{"cilium.io."}}}, // should not have trailing dot
+					{Event: &pb.Flow{SourceNames: []string{"www.cilium.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{""}}},
 				},
 			},
 			want: []bool{
@@ -637,13 +637,13 @@ func TestFQDNFilter(t *testing.T) {
 					{DestinationFqdn: []string{"*"}},
 				},
 				ev: []*v1.Event{
-					{Flow: &pb.Flow{SourceNames: []string{"www.cilium.io"}}},
-					{Flow: &pb.Flow{SourceNames: []string{"multiple.domains.org"}}},
-					{Flow: &pb.Flow{SourceNames: []string{"cilium.io"}}},
-					{Flow: &pb.Flow{SourceNames: []string{"tiefighter", "empire.org"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{}}},
-					{Flow: &pb.Flow{DestinationNames: []string{"anything.really"}}},
-					{Flow: &pb.Flow{DestinationNames: []string{""}}},
+					{Event: &pb.Flow{SourceNames: []string{"www.cilium.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"multiple.domains.org"}}},
+					{Event: &pb.Flow{SourceNames: []string{"cilium.io"}}},
+					{Event: &pb.Flow{SourceNames: []string{"tiefighter", "empire.org"}}},
+					{Event: &pb.Flow{DestinationNames: []string{}}},
+					{Event: &pb.Flow{DestinationNames: []string{"anything.really"}}},
+					{Event: &pb.Flow{DestinationNames: []string{""}}},
 				},
 			},
 			want: []bool{
@@ -675,7 +675,7 @@ func TestFQDNFilter(t *testing.T) {
 
 func TestVerdictFilter(t *testing.T) {
 	ev := &v1.Event{
-		Flow: &pb.Flow{
+		Event: &pb.Flow{
 			Verdict: pb.Verdict_FORWARDED,
 		},
 	}
@@ -686,7 +686,7 @@ func TestVerdictFilter(t *testing.T) {
 func TestHttpStatusCodeFilter(t *testing.T) {
 	httpFlow := func(http *pb.HTTP) *v1.Event {
 		return &v1.Event{
-			Flow: &pb.Flow{
+			Event: &pb.Flow{
 				EventType: &pb.CiliumEventType{
 					Type: api.MessageTypeAccessLog,
 				},
@@ -776,9 +776,9 @@ func TestHttpStatusCodeFilter(t *testing.T) {
 					},
 				},
 				ev: []*v1.Event{
-					{Payload: &pb.Payload{Data: nil}},
-					{Payload: &pb.Payload{Data: []byte{byte(api.MessageTypeAccessLog)}}},
-					{Flow: &pb.Flow{}},
+					{Event: &pb.Flow{Payload: &pb.Payload{Data: nil}}},
+					{Event: &pb.Flow{Payload: &pb.Payload{Data: []byte{byte(api.MessageTypeAccessLog)}}}},
+					{Event: &pb.Flow{}},
 					httpFlow(&pb.HTTP{}),
 					httpFlow(&pb.HTTP{Code: 666}),
 				},
@@ -928,28 +928,28 @@ func TestLabelSelectorFilter(t *testing.T) {
 				f: []*pb.FlowFilter{{SourceLabel: []string{"label1", "label2"}}},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label2", "label3", "label4=val4"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label3"},
 							},
@@ -970,56 +970,56 @@ func TestLabelSelectorFilter(t *testing.T) {
 				f: []*pb.FlowFilter{{SourceLabel: []string{"label1=val1", "label2=val2"}}},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val2", "label2=val1", "label3"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label2=val2", "label3"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label3=val1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{""},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: nil,
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1=toomuch"},
 							},
@@ -1044,35 +1044,35 @@ func TestLabelSelectorFilter(t *testing.T) {
 				f: []*pb.FlowFilter{{SourceLabel: []string{"label1 in (val1, val2), label3 notin ()"}}},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val2", "label2=val1", "label3=val3"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label2=val2", "label3"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1", "label3=val3"},
 							},
@@ -1099,7 +1099,7 @@ func TestLabelSelectorFilter(t *testing.T) {
 				},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"src1", "src2=val2"},
 							},
@@ -1109,21 +1109,21 @@ func TestLabelSelectorFilter(t *testing.T) {
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"label1=val1"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Destination: &pb.Endpoint{
 								Labels: []string{"dst1", "dst2=val2"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"dst1", "dst2=val2"},
 							},
@@ -1133,7 +1133,7 @@ func TestLabelSelectorFilter(t *testing.T) {
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"src1"},
 							},
@@ -1162,21 +1162,21 @@ func TestLabelSelectorFilter(t *testing.T) {
 				},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"src1", "src2=val2"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: nil,
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{""},
 							},
@@ -1200,28 +1200,28 @@ func TestLabelSelectorFilter(t *testing.T) {
 				},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"k8s:app=bar"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"k8s:foo=baz"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"k8s.app=bar"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"container:foo=bar", "reserved:host"},
 							},
@@ -1246,21 +1246,21 @@ func TestLabelSelectorFilter(t *testing.T) {
 				},
 				ev: []*v1.Event{
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"key"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"reserved:key"},
 							},
 						},
 					},
 					{
-						Flow: &pb.Flow{
+						Event: &pb.Flow{
 							Source: &pb.Endpoint{
 								Labels: []string{"any.key"},
 							},
@@ -1331,7 +1331,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 			name: "udp",
 			args: args{
 				f: []*pb.FlowFilter{{Protocol: []string{"udp"}}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_UDP{UDP: &pb.UDP{}}},
 				}},
 			},
@@ -1341,7 +1341,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 			name: "http",
 			args: args{
 				f: []*pb.FlowFilter{{Protocol: []string{"http"}}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_TCP{TCP: &pb.TCP{}}},
 					L7: &pb.Layer7{Record: &pb.Layer7_Http{Http: &pb.HTTP{}}},
 				}},
@@ -1352,7 +1352,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 			name: "icmp (v4)",
 			args: args{
 				f: []*pb.FlowFilter{{Protocol: []string{"icmp"}}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_ICMPv4{ICMPv4: &pb.ICMPv4{}}},
 				}},
 			},
@@ -1362,7 +1362,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 			name: "icmp (v6)",
 			args: args{
 				f: []*pb.FlowFilter{{Protocol: []string{"icmp"}}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_ICMPv6{ICMPv6: &pb.ICMPv6{}}},
 				}},
 			},
@@ -1372,7 +1372,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 			name: "multiple protocols",
 			args: args{
 				f: []*pb.FlowFilter{{Protocol: []string{"tcp", "kafka"}}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_TCP{TCP: &pb.TCP{}}},
 				}},
 			},
@@ -1422,7 +1422,7 @@ func TestPortFilter(t *testing.T) {
 					SourcePort:      []string{"12345"},
 					DestinationPort: []string{"53"},
 				}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_UDP{UDP: &pb.UDP{
 						SourcePort:      12345,
 						DestinationPort: 53,
@@ -1438,7 +1438,7 @@ func TestPortFilter(t *testing.T) {
 					SourcePort:      []string{"32320"},
 					DestinationPort: []string{"80"},
 				}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_TCP{TCP: &pb.TCP{
 						SourcePort:      32320,
 						DestinationPort: 80,
@@ -1453,7 +1453,7 @@ func TestPortFilter(t *testing.T) {
 				f: []*pb.FlowFilter{{
 					DestinationPort: []string{"80"},
 				}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_TCP{TCP: &pb.TCP{
 						SourcePort:      80,
 						DestinationPort: 32320,
@@ -1468,7 +1468,7 @@ func TestPortFilter(t *testing.T) {
 				f: []*pb.FlowFilter{{
 					DestinationPort: []string{"0"},
 				}},
-				ev: &v1.Event{Flow: &pb.Flow{
+				ev: &v1.Event{Event: &pb.Flow{
 					L4: &pb.Layer4{Protocol: &pb.Layer4_ICMPv4{ICMPv4: &pb.ICMPv4{}}},
 				}},
 			},

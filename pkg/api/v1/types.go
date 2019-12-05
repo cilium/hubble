@@ -40,26 +40,20 @@ type Endpoint struct {
 type Event struct {
 	// Timestamp when event was observed in Hubble
 	Timestamp *types.Timestamp
-	// Payload is a raw cilium monitor payload
-	Payload *pb.Payload
-	// Flow is a decoded L3/L4/L7 flow event.
-	Flow *pb.Flow
+	// Event contains the actual event
+	Event interface{}
 }
 
-// GetPayload returns the payload, or nil if the payload or ev is nil
-func (ev *Event) GetPayload() *pb.Payload {
-	if ev == nil {
-		return nil
+// GetFlow returns the decoded flow, or nil if there is no event
+func (ev *Event) GetFlow() Flow {
+	if ev == nil || ev.Event == nil {
+		// returns typed nil so getter methods still work
+		return (*pb.Flow)(nil)
 	}
-	return ev.Payload
-}
-
-// GetFlow returns the decoded, or nil if the flow or ev is nil
-func (ev *Event) GetFlow() *pb.Flow {
-	if ev == nil {
-		return nil
+	if f, ok := ev.Event.(Flow); ok {
+		return f
 	}
-	return ev.Flow
+	return nil
 }
 
 // Endpoints is a slice of endpoints and their cached dns queries protected by a mutex.

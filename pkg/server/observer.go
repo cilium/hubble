@@ -147,14 +147,13 @@ func (s *ObserverServer) Start() {
 			if !parserErrors.IsErrInvalidType(err) {
 				s.log.Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
 			}
-		} else {
-			metrics.ProcessFlow(flow)
+			continue
 		}
 
+		metrics.ProcessFlow(flow)
 		s.ring.Write(&v1.Event{
 			Timestamp: pl.Time,
-			Payload:   pl,
-			Flow:      flow,
+			Event:     flow,
 		})
 	}
 	close(s.stopped)
@@ -292,10 +291,10 @@ func getBufferCh(ctx context.Context, ring *container.Ring, req *observer.GetFlo
 			for lastWrite := ring.LastWriteParallel(); ; lastWrite-- {
 				e, ok := ring.Read(lastWrite)
 				// if the buffer was not full yet we can get nil payloads
-				if e == nil || e.Payload == nil || !ok {
+				if e == nil || e.Event == nil || !ok {
 					return
 				}
-				ts, err := types.TimestampFromProto(e.Payload.Time)
+				ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
 				if err != nil {
 					return
 				}
@@ -370,11 +369,15 @@ func getFlows(
 					}
 				}
 			}
-			if e.GetFlow() == nil || !filters.Apply(whitelist, blacklist, e) {
+			if e == nil {
+				continue
+			}
+			flow, ok := e.Event.(*pb.Flow)
+			if !ok || !filters.Apply(whitelist, blacklist, e) {
 				continue
 			}
 			select {
-			case reply <- e.GetFlow():
+			case reply <- flow:
 				// We have sent all expected flows so we can return already
 				if req.Number != 0 && i >= req.Number {
 					return

@@ -270,7 +270,7 @@ func filterByVerdicts(vs []pb.Verdict) FilterFunc {
 			return false
 		}
 		for _, verdict := range vs {
-			if verdict == flow.Verdict {
+			if verdict == flow.GetVerdict() {
 				return true
 			}
 		}
