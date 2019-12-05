@@ -95,6 +95,7 @@ type fakeEndpointsHandler struct {
 	fakeMarkDeleted    func(*v1.Endpoint)
 	fakeFindEPs        func(epID uint64, ns, pod string) []v1.Endpoint
 	fakeGetEndpoint    func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
+	fakeGarbageCollect func()
 }
 
 func (f *fakeEndpointsHandler) SyncEndpoints(eps []*v1.Endpoint) {
@@ -133,6 +134,14 @@ func (f *fakeEndpointsHandler) GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool)
 		return f.fakeGetEndpoint(ip)
 	}
 	panic("GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
+}
+
+func (f *fakeEndpointsHandler) GarbageCollect() {
+	if f.fakeGarbageCollect != nil {
+		f.fakeGarbageCollect()
+		return
+	}
+	panic("GarbageCollect() should not have been called since it was not defined")
 }
 
 func TestObserverServer_syncAllEndpoints(t *testing.T) {
@@ -204,6 +213,7 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 			endpoints = append(endpoints, ep)
 			endpointsMutex.Unlock()
 		},
+		fakeGarbageCollect: func() {},
 	}
 	s := &ObserverServer{
 		ciliumClient: fakeClient,
