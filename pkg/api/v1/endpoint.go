@@ -171,6 +171,20 @@ func (es *Endpoints) MarkDeleted(del *Endpoint) {
 	es.eps = append(es.eps, del)
 }
 
+// GarbageCollect removes all endpoints marked as deleted from the collection
+func (es *Endpoints) GarbageCollect() {
+	es.mutex.Lock()
+	defer es.mutex.Unlock()
+	n := 0
+	for _, ep := range es.eps {
+		if ep.Deleted == nil {
+			es.eps[n] = ep
+			n++
+		}
+	}
+	es.eps = es.eps[:n]
+}
+
 // GetEndpoint returns the endpoint that has the given ip.
 func (es *Endpoints) GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool) {
 	es.mutex.RLock()

@@ -63,6 +63,7 @@ func (s *ObserverServer) syncEndpoints() {
 		}
 
 		s.endpoints.SyncEndpoints(parsedEPs)
+		s.endpoints.GarbageCollect()
 	}
 }
 

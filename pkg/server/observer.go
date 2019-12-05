@@ -54,6 +54,7 @@ type endpointsHandler interface {
 	MarkDeleted(*v1.Endpoint)
 	FindEPs(epID uint64, ns, pod string) []v1.Endpoint
 	GetEndpoint(ip net.IP) (endpoint *v1.Endpoint, ok bool)
+	GarbageCollect()
 }
 
 type fqdnCache interface {

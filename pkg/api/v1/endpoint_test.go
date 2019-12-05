@@ -742,3 +742,41 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 		})
 	}
 }
+
+func TestEndpoints_GarbageCollect(t *testing.T) {
+	es := &Endpoints{
+		eps: []*Endpoint{
+			{
+				ID:   1,
+				IPv4: net.ParseIP("1.1.1.1"),
+			},
+			{
+				ID:   2,
+				IPv4: net.ParseIP("1.1.1.2"),
+			},
+			{
+				ID:   3,
+				IPv4: net.ParseIP("1.1.1.3"),
+			},
+		},
+	}
+
+	del := time.Unix(0, 0)
+	es.MarkDeleted(&Endpoint{ID: 2, Deleted: &del})
+	assert.Equal(t, 3, len(es.eps))
+
+	es.GarbageCollect()
+	assert.Equal(t, 2, len(es.eps))
+
+	_, ok := es.GetEndpoint(net.ParseIP("1.1.1.1"))
+	assert.True(t, ok)
+	_, ok = es.GetEndpoint(net.ParseIP("1.1.1.2"))
+	assert.False(t, ok)
+	_, ok = es.GetEndpoint(net.ParseIP("1.1.1.3"))
+	assert.True(t, ok)
+
+	es.MarkDeleted(&Endpoint{ID: 1, Deleted: &del})
+	es.MarkDeleted(&Endpoint{ID: 3, Deleted: &del})
+	es.GarbageCollect()
+	assert.Equal(t, 0, len(es.eps))
+}
