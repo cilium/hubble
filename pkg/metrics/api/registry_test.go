@@ -17,7 +17,7 @@ package api
 import (
 	"testing"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +47,7 @@ func (t *testHandler) Status() string {
 	return ""
 }
 
-func (t *testHandler) ProcessFlow(p *pb.Flow) {
+func (t *testHandler) ProcessFlow(p v1.Flow) {
 	t.ProcessCalled++
 }
 

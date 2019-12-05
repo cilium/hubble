@@ -52,7 +52,7 @@ func (d *dropHandler) Status() string {
 	return d.context.Status()
 }
 
-func (d *dropHandler) ProcessFlow(flow *pb.Flow) {
+func (d *dropHandler) ProcessFlow(flow v1.Flow) {
 	if flow.GetVerdict() != pb.Verdict_DROPPED {
 		return
 	}

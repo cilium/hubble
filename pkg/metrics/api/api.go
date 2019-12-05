@@ -17,7 +17,7 @@ package api
 import (
 	"strings"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/api/v1"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -71,7 +71,7 @@ type Handler interface {
 
 	// ProcessFlow must processes a flow event and perform metrics
 	// accounting
-	ProcessFlow(flow *pb.Flow)
+	ProcessFlow(flow v1.Flow)
 
 	// Status returns the configuration status of the metric handler
 	Status() string
@@ -79,7 +79,7 @@ type Handler interface {
 
 // ProcessFlow processes a flow by calling ProcessFlow it on to all enabled
 // metric handlers
-func (h Handlers) ProcessFlow(flow *pb.Flow) {
+func (h Handlers) ProcessFlow(flow v1.Flow) {
 	for _, mh := range h {
 		mh.ProcessFlow(flow)
 	}
