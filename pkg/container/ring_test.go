@@ -21,7 +21,8 @@ import (
 	"sync"
 	"testing"
 
-	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/api/v1"
+
 	"github.com/gogo/protobuf/types"
 )
 

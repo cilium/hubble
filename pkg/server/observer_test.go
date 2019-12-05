@@ -424,13 +424,22 @@ func TestObserverServer_GetFlows(t *testing.T) {
 		require.NoError(t, err)
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 		// This payload will be ignored by GetFlows.
-		data, err = testutils.CreateL3L4Payload(monitorAPI.AgentNotify{Type: monitorAPI.MessageTypeAgent}, &eth, &ip, &tcp)
+		data, err = testutils.CreateL3L4Payload(monitor.TraceNotifyV0{Type: monitorAPI.MessageTypeTrace}, &eth, &ip, &tcp)
 		require.NoError(t, err)
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 	}
 	close(ch)
 	<-s.stopped
-	err = s.GetFlows(&observer.GetFlowsRequest{Number: 20}, fakeServer)
+	err = s.GetFlows(&observer.GetFlowsRequest{
+		Number: 20,
+		Whitelist: []*pb.FlowFilter{
+			{
+				EventType: []*pb.EventTypeFilter{
+					{Type: monitorAPI.MessageTypeDrop},
+				},
+			},
+		},
+	}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
 }
@@ -556,7 +565,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 		require.NoError(t, err)
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 		// This payload will be ignored by GetFlows.
-		data, err = testutils.CreateL3L4Payload(monitorAPI.AgentNotify{Type: monitorAPI.MessageTypeAgent}, &eth, &ip, &tcp)
+		data, err = testutils.CreateL3L4Payload(monitor.TraceNotifyV0{Type: monitorAPI.MessageTypeTrace}, &eth, &ip, &tcp)
 		require.NoError(t, err)
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 	}

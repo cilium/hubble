@@ -39,7 +39,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/math"
 )
 
