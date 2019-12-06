@@ -1545,3 +1545,89 @@ func Test_parseSelector(t *testing.T) {
 		})
 	}
 }
+
+func Test_filterByReplyField(t *testing.T) {
+	type args struct {
+		f  []*pb.FlowFilter
+		ev *v1.Event
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "nil flow",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{true}}},
+				ev: &v1.Event{},
+			},
+			want: false,
+		},
+		{
+			name: "empty-param",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: true}},
+			},
+			want: true,
+		},
+		{
+			name: "empty-param-2",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: false}},
+			},
+			want: true,
+		},
+		{
+			name: "no-reply",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{false}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: false}},
+			},
+			want: true,
+		},
+		{
+			name: "reply",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{true}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: true}},
+			},
+			want: true,
+		},
+		{
+			name: "no-match",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{true}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: false}},
+			},
+			want: false,
+		},
+		{
+			name: "no-match-2",
+			args: args{
+				f:  []*pb.FlowFilter{{Reply: []bool{false}}},
+				ev: &v1.Event{Event: &pb.Flow{Reply: true}},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fl, err := BuildFilterList(tt.args.f)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
+			if got := fl.MatchOne(tt.args.ev); got != tt.want {
+				t.Errorf("\"%s\" got %v, want %v", tt.name, got, tt.want)
+			}
+		})
+	}
+}
