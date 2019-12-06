@@ -248,6 +248,8 @@ message FlowFilter {
     repeated string source_port = 13;
     // destination_port filters flows by L4 destination port
     repeated string destination_port = 14;
+    // reply filters flows based on the direction of the flow.
+    repeated bool reply = 15;
 }
 
 // EventType are constants are based on the ones from <linux/perf_event.h>.

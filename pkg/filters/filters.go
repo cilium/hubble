@@ -465,6 +465,24 @@ func filterByPort(portStrs []string, getPort func(*v1.Event) (port uint16, ok bo
 	}, nil
 }
 
+func filterByReplyField(replyParams []bool) FilterFunc {
+	return func(ev *v1.Event) bool {
+		if len(replyParams) == 0 {
+			return true
+		}
+		switch ev.Event.(type) {
+		case v1.Flow:
+			reply := ev.GetFlow().GetReply()
+			for _, replyParam := range replyParams {
+				if reply == replyParam {
+					return true
+				}
+			}
+		}
+		return false
+	}
+}
+
 // BuildFilter builds a filter based on a FlowFilter. It returns:
 // - the FilterFunc to be used to filter packets based on the requested
 //   FlowFilter;
@@ -582,6 +600,10 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 			return nil, fmt.Errorf("invalid destination port filter: %v", err)
 		}
 		fs = append(fs, dpf)
+	}
+
+	if ff.GetReply() != nil {
+		fs = append(fs, filterByReplyField(ff.GetReply()))
 	}
 
 	return fs, nil
