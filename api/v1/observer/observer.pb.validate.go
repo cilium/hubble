@@ -236,6 +236,8 @@ func (m *GetFlowsRequest) Validate() error {
 		}
 	}
 
+	// no validation rules for IncludeBinaryPayload
+
 	return nil
 }
 

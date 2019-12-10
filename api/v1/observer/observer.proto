@@ -70,6 +70,9 @@ message GetFlowsRequest {
 
     // Until this time for returned flows. Incompatible with `number`.
     google.protobuf.Timestamp until = 8;
+
+    // Attach the original binary payload to the flow.
+    bool includeBinaryPayload = 9;
 }
 
 // GetFlowsResponse contains either a flow or a protocol message.
