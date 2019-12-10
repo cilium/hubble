@@ -155,8 +155,9 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Number:    10,
-		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
+		Number:               10,
+		Whitelist:            []*pb.FlowFilter{{EventType: allTypes}},
+		IncludeBinaryPayload: true,
 	}
 	got := make([]*observer.GetFlowsResponse, 10, 10)
 	i := 0
@@ -182,6 +183,62 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	}
 	for i := 0; i < 10; i++ {
 		assert.Equal(t, want[i], got[i].GetFlow().Payload)
+	}
+}
+
+func TestObserverServer_GetLastNFlows_NoPayload(t *testing.T) {
+	es := v1.NewEndpoints()
+	ipc := ipcache.New()
+	fqdnc := fqdncache.New()
+
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	assert.NoError(t, err)
+
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 0xff)
+	go s.Start()
+
+	m := s.GetEventsChannel()
+	for i := uint64(0); i < s.ring.Cap(); i++ {
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
+		pl := &pb.Payload{
+			Time: &types.Timestamp{Seconds: int64(i)},
+			Type: pb.EventType_EventSample,
+			Data: data,
+		}
+		m <- pl
+	}
+	// Make sure all flows were consumed by the server
+	close(m)
+	<-s.stopped
+
+	req := &observer.GetFlowsRequest{
+		Number:    10,
+		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
+	}
+	got := make([]*observer.GetFlowsResponse, 10, 10)
+	i := 0
+	fakeServer := &FakeGetFlowsServer{
+		OnSend: func(response *observer.GetFlowsResponse) error {
+			got[i] = response
+			i++
+			return nil
+		},
+		FakeGRPCServerStream: &FakeGRPCServerStream{
+			OnContext: func() context.Context {
+				return context.Background()
+			},
+		},
+	}
+	err = s.GetFlows(req, fakeServer)
+	if err != nil {
+		t.Errorf("GetLastNFlows error = %v, wantErr %v", err, nil)
+	}
+	for i := 0; i < 10; i++ {
+		require.Nil(t, got[i].GetFlow().Payload)
 	}
 }
 
@@ -230,9 +287,10 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Number:    10,
-		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
-		Follow:    true,
+		Number:               10,
+		Whitelist:            []*pb.FlowFilter{{EventType: allTypes}},
+		Follow:               true,
+		IncludeBinaryPayload: true,
 	}
 	got := make([]*observer.GetFlowsResponse, 12, 12)
 	i := 0
@@ -338,9 +396,10 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	}
 
 	req := &observer.GetFlowsRequest{
-		Since:     &types.Timestamp{Seconds: 2, Nanos: 0},
-		Until:     &types.Timestamp{Seconds: 7, Nanos: 0},
-		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
+		Since:                &types.Timestamp{Seconds: 2, Nanos: 0},
+		Until:                &types.Timestamp{Seconds: 7, Nanos: 0},
+		Whitelist:            []*pb.FlowFilter{{EventType: allTypes}},
+		IncludeBinaryPayload: true,
 	}
 	want := []*pb.Payload{
 		payloads[6],
@@ -439,6 +498,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 				},
 			},
 		},
+		IncludeBinaryPayload: true,
 	}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
@@ -512,6 +572,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 		Blacklist: []*pb.FlowFilter{
 			{EventType: []*pb.EventTypeFilter{{Type: monitorAPI.MessageTypeTrace}}},
 		},
+		IncludeBinaryPayload: true,
 	}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)

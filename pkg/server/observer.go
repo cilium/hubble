@@ -377,6 +377,17 @@ func getFlows(
 			if !ok || !filters.Apply(whitelist, blacklist, e) {
 				continue
 			}
+
+			if !req.IncludeBinaryPayload {
+				// this is subject to some profiling to be done. Not the most
+				// efficient way to strip the payload, but considering how many
+				// pointers are floating around, this prevents mutation of the
+				// ring buffer.
+				tmp := *flow
+				tmp.Payload = nil
+				flow = &tmp
+			}
+
 			select {
 			case reply <- flow:
 				// We have sent all expected flows so we can return already
