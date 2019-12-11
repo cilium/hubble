@@ -157,7 +157,6 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, nodeName, f.GetNodeName())
-	assert.Equal(t, p, f.GetPayload())
 
 	assert.Equal(t, &pb.HTTP{
 		Code:     404,
@@ -242,7 +241,6 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, nodeName, f.GetNodeName())
-	assert.Equal(t, p, f.GetPayload())
 
 	assert.Equal(t, &pb.DNS{
 		Query:             "deathstar.empire.svc.cluster.local.",

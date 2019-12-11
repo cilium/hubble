@@ -133,7 +133,6 @@ func TestL34Decode(t *testing.T) {
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, &pb.TCPFlags{ACK: true}, f.L4.GetTCP().GetFlags())
 	assert.Equal(t, nodeName, f.GetNodeName())
-	assert.Equal(t, p, f.GetPayload())
 
 	// ICMP packet so no ports until that support is merged into master
 	//
@@ -203,7 +202,6 @@ func TestL34Decode(t *testing.T) {
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, (*pb.TCPFlags)(nil), f.L4.GetTCP().GetFlags())
 	assert.Equal(t, nodeName, f.GetNodeName())
-	assert.Equal(t, p, f.GetPayload())
 }
 
 func BenchmarkL34Decode(b *testing.B) {

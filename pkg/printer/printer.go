@@ -230,7 +230,6 @@ func (p *Printer) WriteProtoFlow(f *pb.Flow) error {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
 	case JSONOutput:
-		f.Payload = nil
 		return p.jsonEncoder.Encode(f)
 	}
 	p.line++

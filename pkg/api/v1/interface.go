@@ -34,7 +34,6 @@ type Flow interface {
 	GetDestination() *pb.Endpoint
 	GetType() pb.FlowType
 	GetNodeName() string
-	GetPayload() *pb.Payload
 	GetSourceNames() []string
 	GetDestinationNames() []string
 	GetL7() *pb.Layer7

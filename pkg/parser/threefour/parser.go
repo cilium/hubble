@@ -149,7 +149,6 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 	decoded.Destination = dstEndpoint
 	decoded.Type = pb.FlowType_L3_L4
 	decoded.NodeName = payload.HostName
-	decoded.Payload = payload
 	decoded.SourceNames = p.resolveNames(dstEndpoint.ID, srcIP)
 	decoded.DestinationNames = p.resolveNames(srcEndpoint.ID, dstIP)
 	decoded.L7 = nil

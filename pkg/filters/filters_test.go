@@ -776,16 +776,12 @@ func TestHttpStatusCodeFilter(t *testing.T) {
 					},
 				},
 				ev: []*v1.Event{
-					{Event: &pb.Flow{Payload: &pb.Payload{Data: nil}}},
-					{Event: &pb.Flow{Payload: &pb.Payload{Data: []byte{byte(api.MessageTypeAccessLog)}}}},
 					{Event: &pb.Flow{}},
 					httpFlow(&pb.HTTP{}),
-					httpFlow(&pb.HTTP{Code: 666}),
+					httpFlow(&pb.HTTP{Code: 777}),
 				},
 			},
 			want: []bool{
-				false,
-				false,
 				false,
 				false,
 				false,

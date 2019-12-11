@@ -42,12 +42,7 @@ message Flow {
     // NodeName is the name of the node from which this Flow was captured.
     string node_name = 11;
 
-    // Payload of the original monitor notification in full. Used at the moment
-    // primarily for transitioning to GetFlows, but there may be some sense to
-    // keep this in here forever. This would allow the more sophisticated
-    // clients to dissect the data to get at the more obscure things that are
-    // not part of the structured API.
-    Payload payload = 12;
+    // unused 12
 
     // all names the source IP can have.
     repeated string source_names = 13;
@@ -59,7 +54,7 @@ message Flow {
 
     bool reply = 16;
 
-    // Unusd 17-18
+    // unused 17-18
 
     // EventType of the originating Cilium event
     CiliumEventType event_type = 19;
