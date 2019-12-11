@@ -37,6 +37,7 @@ import (
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
 
@@ -113,6 +114,7 @@ programs attached to endpoints and devices. This includes:
 		},
 	}
 	observerCmd.Flags().StringVarP(&serverURL, "server", "", serverClientSocket, "URL to connect to server")
+	viper.BindEnv("server", "HUBBLE_SOCK")
 	observerCmd.Flags().StringVar(&serverTimeoutVar, "timeout", "5s", "How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, allTypes,
