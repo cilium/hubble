@@ -22,6 +22,7 @@ import (
 	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -41,6 +42,7 @@ var (
 func init() {
 	rootCmd.AddCommand(statusCmd)
 	statusCmd.Flags().StringVarP(&serverURL, "server", "", serverClientSocket, "URL to connect to server")
+	viper.BindEnv("server", "HUBBLE_SOCK")
 }
 
 func runStatus(serverURL string) error {
