@@ -125,7 +125,6 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	go s.Start()
 
 	m := s.GetEventsChannel()
-	want := make([]*pb.Payload, 10, 10)
 	for i := uint64(0); i < s.ring.Cap(); i++ {
 		tn := monitor.TraceNotifyV0{
 			Type: byte(monitorAPI.MessageTypeTrace),
@@ -138,11 +137,6 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 			Data: data,
 		}
 		m <- pl
-
-		if i >= s.ring.Cap()-10-1 && i < s.ring.Cap()-1 {
-			// store the last 10 flows that we have written.
-			want[i-(s.ring.Cap()-10-1)] = pl
-		}
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
@@ -177,11 +171,11 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 		t.Errorf("GetLastNFlows error = %v, wantErr %v", err, nil)
 	}
 
-	if len(got) != len(want) {
+	if len(got) != 10 {
 		t.Errorf("Length of 'got' is not the same as 'wanted'")
 	}
 	for i := 0; i < 10; i++ {
-		assert.Equal(t, want[i], got[i].GetFlow().Payload)
+		assert.Equal(t, int64(245+i), got[i].GetFlow().Time.Seconds)
 	}
 }
 
@@ -200,7 +194,6 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	go s.Start()
 
 	m := s.GetEventsChannel()
-	want := make([]*pb.Payload, 12, 12)
 	for i := uint64(0); i < s.ring.Cap(); i++ {
 		tn := monitor.TraceNotifyV0{
 			Type: byte(monitorAPI.MessageTypeTrace),
@@ -213,11 +206,6 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 			Data: data,
 		}
 		m <- pl
-
-		if i >= s.ring.Cap()-10-1 {
-			// store the last 11 flows that we have written.
-			want[i-(s.ring.Cap()-10-1)] = pl
-		}
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
@@ -264,7 +252,7 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	<-receivedFirstBatch
 
 	for i := 0; i < 10; i++ {
-		assert.Equal(t, want[i], got[i].GetFlow().Payload)
+		assert.Equal(t, int64(245+i), got[i].GetFlow().Time.Seconds)
 	}
 
 	// hacky to restart the events consumer.
@@ -284,16 +272,11 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 			Data: data,
 		}
 		m <- pl
-		if i < 1 {
-			// store the second-last flow, the client will never be able to read
-			// the last flow. Check s.ring.LastWriteParallel() docs for why.
-			want[i+11] = pl
-		}
 	}
 
 	<-receivedSecondBatch
 	for i := 0; i < len(got); i++ {
-		assert.Equal(t, want[i], got[i].GetFlow().Payload)
+		assert.Equal(t, int64(245+i), got[i].GetFlow().Time.Seconds)
 	}
 }
 
@@ -342,12 +325,6 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 		Until:     &types.Timestamp{Seconds: 7, Nanos: 0},
 		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
 	}
-	want := []*pb.Payload{
-		payloads[6],
-		payloads[5],
-		payloads[4],
-		payloads[3],
-	}
 	got := make([]*observer.GetFlowsResponse, 4, 4)
 	i := 0
 	fakeServer := &FakeGetFlowsServer{
@@ -368,7 +345,7 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	}
 
 	for i := 0; i < 4; i++ {
-		assert.Equal(t, want[i], got[i].GetFlow().GetPayload())
+		assert.Equal(t, int64(6-i), got[i].GetFlow().Time.Seconds)
 	}
 }
 
@@ -452,7 +429,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 			count++
 			assert.Equal(t, "1.1.1.1", res.GetFlow().GetIP().GetSource())
 			assert.Equal(t, "2.2.2.2", res.GetFlow().GetIP().GetDestination())
-			assert.Equal(t, uint8(monitorAPI.MessageTypeDrop), res.GetFlow().GetPayload().GetData()[0])
+			assert.Equal(t, observer.Verdict_DROPPED, res.GetFlow().Verdict)
 			return nil
 		},
 		FakeGRPCServerStream: &FakeGRPCServerStream{

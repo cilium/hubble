@@ -111,16 +111,6 @@ func (m *Flow) Validate() error {
 
 	// no validation rules for NodeName
 
-	if v, ok := interface{}(m.GetPayload()).(interface{ Validate() error }); ok {
-		if err := v.Validate(); err != nil {
-			return FlowValidationError{
-				field:  "Payload",
-				reason: "embedded message failed validation",
-				cause:  err,
-			}
-		}
-	}
-
 	if v, ok := interface{}(m.GetL7()).(interface{ Validate() error }); ok {
 		if err := v.Validate(); err != nil {
 			return FlowValidationError{

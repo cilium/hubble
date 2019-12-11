@@ -132,7 +132,6 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 	decoded.Destination = decodeEndpoint(destinationEndpoint, destinationNamespace, destinationPod)
 	decoded.Type = pb.FlowType_L7
 	decoded.NodeName = payload.HostName
-	decoded.Payload = payload
 	decoded.SourceNames = sourceNames
 	decoded.DestinationNames = destinationNames
 	decoded.L7 = decodeLayer7(r)
