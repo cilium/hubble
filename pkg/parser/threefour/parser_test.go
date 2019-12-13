@@ -463,6 +463,7 @@ func TestTraceNotifyOriginalIP(t *testing.T) {
 		OrigIP: [16]byte{1, 1, 1, 1},
 	}
 	data, err = testutils.CreateL3L4Payload(v1, &eth, &ip, &layers.TCP{})
+	require.NoError(t, err)
 	err = parser.Decode(&pb.Payload{Data: data}, f)
 	require.NoError(t, err)
 	assert.Equal(t, f.IP.Source, "1.1.1.1")
