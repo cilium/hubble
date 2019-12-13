@@ -26,7 +26,10 @@ lint:
 check-fmt:
 	./contrib/scripts/check-fmt.sh
 
+ineffassign:
+	ineffassign .
+
 image:
 	$(CONTAINER_ENGINE) build -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
-.PHONY: all clean check-fmt image install lint test hubble
+.PHONY: all clean check-fmt image ineffassign install lint test hubble
