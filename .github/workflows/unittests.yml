@@ -22,6 +22,7 @@ jobs:
       run: |
         export PATH=${PATH}:${GOPATH}/bin
         go get -u github.com/golang/dep/cmd/dep
+        go get -u github.com/gordonklaus/ineffassign
         go get -u golang.org/x/lint/golint
         dep check
         make check-fmt lint test
