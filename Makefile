@@ -21,12 +21,18 @@ test:
 	go test -timeout=30s -cover $$(go list ./...)
 
 lint:
+ifeq (, $(shell which golint))
+	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
+endif
 	golint -set_exit_status $$(go list ./...)
 
 check-fmt:
 	./contrib/scripts/check-fmt.sh
 
 ineffassign:
+ifeq (, $(shell which ineffassign))
+	$(error "ineffassign not installed; you can install it with `go get -u github.com/gordonklaus/ineffassign`")
+endif
 	ineffassign .
 
 image:
