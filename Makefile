@@ -20,7 +20,7 @@ clean:
 test:
 	go test -timeout=30s -cover $$(go list ./...)
 
-lint:
+lint: check-fmt ineffassign
 ifeq (, $(shell which golint))
 	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
 endif
