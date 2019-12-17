@@ -4,6 +4,29 @@
 
     hubble observe [OPTIONS] [FILTERS]
 
+# Kubernetes Helpers
+
+The file [helpers.bash](../../install/kubernetes/helpers.bash) contains a set
+of Bash functions which assist in using Hubble with Kubernetes. Source the file
+in you Bash environment as follows:
+
+``` bash
+source install/kubernetes/helpers.bash
+```
+
+You can then run a Hubble CLI command across the entire cluster:
+
+``` bash
+hubble-cluster hubble observe --protocol dns --since=10m
+```
+
+Identify the Hubble pod name which runs on the same node as the pod specified:
+
+``` bash
+kubectl -n kube-system exec -ti $(hubble-pod default mypod-xxx) -- \
+    hubble observe --since=5m --pod default/mypod-xxx -t drop
+```
+
 # Filters
 
 Most filters support three variants to be specified `--field`, `--to-field`,
