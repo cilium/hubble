@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package observe
 
 import (
 	"bytes"
@@ -22,10 +22,9 @@ import (
 	"strings"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/pflag"
-
-	pb "github.com/cilium/hubble/api/v1/flow"
 )
 
 type (

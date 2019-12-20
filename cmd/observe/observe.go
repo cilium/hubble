@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package observe
 
 import (
 	"context"
@@ -29,12 +29,11 @@ import (
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
 	"github.com/cilium/hubble/pkg/format"
-	"github.com/cilium/hubble/pkg/logger"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -77,11 +76,12 @@ func eventTypes() (l []string) {
 	return
 }
 
-func init() {
-	rootCmd.AddCommand(newObserverCmd(newObserveFilter()))
+// New observer command.
+func New(log *zap.Logger) *cobra.Command {
+	return newObserveCmd(log, newObserveFilter())
 }
 
-func newObserverCmd(ofilter *observeFilter) *cobra.Command {
+func newObserveCmd(log *zap.Logger, ofilter *observeFilter) *cobra.Command {
 	observerCmd := &cobra.Command{
 		Use:   "observe",
 		Short: "Display BPF program events running in the local node",
@@ -91,7 +91,7 @@ programs attached to endpoints and devices. This includes:
   * Captured packet traces
   * Debugging information`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(cmd, ofilter); err != nil {
+			if err := handleArgs(log, cmd, ofilter); err != nil {
 				return err
 			}
 
@@ -110,8 +110,6 @@ programs attached to endpoints and devices. This includes:
 	observerCmd.Flags().StringVarP(&serverURL,
 		"server", "", api.DefaultSocketPath,
 		"URL to connect to server")
-	viper.BindEnv("server", "HUBBLE_SOCK")
-
 	observerCmd.Flags().StringVar(&serverTimeoutVar,
 		"timeout", "5s",
 		"How long to wait before giving up on server dialing")
@@ -119,18 +117,10 @@ programs attached to endpoints and devices. This includes:
 		"type", "t", ofilter, allTypes,
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
 
-	observerCmd.Flags().Uint64Var(&last,
-		"last", 0,
-		"Get last N flows stored in the hubble")
-	observerCmd.Flags().BoolVarP(&follow,
-		"follow", "f", false,
-		"Follow flows output")
-	observerCmd.Flags().StringVar(&sinceVar,
-		"since", "",
-		"Filter flows since a specific date (relative or RFC3339)")
-	observerCmd.Flags().StringVar(&untilVar,
-		"until", "",
-		"Filter flows until a specific date (relative or RFC3339)")
+	observerCmd.Flags().Uint64Var(&last, "last", 0, "Get last N flows stored in the hubble")
+	observerCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow flows output")
+	observerCmd.Flags().StringVar(&sinceVar, "since", "", "Filter flows since a specific date (relative or RFC3339)")
+	observerCmd.Flags().StringVar(&untilVar, "until", "", "Filter flows until a specific date (relative or RFC3339)")
 
 	observerCmd.Flags().Var(filterVar(
 		"not", ofilter,
@@ -247,9 +237,11 @@ programs attached to endpoints and devices. This includes:
 	return observerCmd
 }
 
-func handleArgs(cmd *cobra.Command, ofilter *observeFilter) (err error) {
-	log = logger.GetLogger()
-
+func handleArgs(
+	log *zap.Logger,
+	cmd *cobra.Command,
+	ofilter *observeFilter,
+) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}
