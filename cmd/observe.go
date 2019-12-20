@@ -24,26 +24,20 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gogo/protobuf/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/api"
 	"github.com/cilium/hubble/pkg/format"
 	"github.com/cilium/hubble/pkg/logger"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
-
-	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
-)
-
-const (
-	connTimeout        = 12 * time.Second
-	serverClientSocket = serverSocketPath
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var (
@@ -113,17 +107,30 @@ programs attached to endpoints and devices. This includes:
 			return nil
 		},
 	}
-	observerCmd.Flags().StringVarP(&serverURL, "server", "", serverClientSocket, "URL to connect to server")
+	observerCmd.Flags().StringVarP(&serverURL,
+		"server", "", api.DefaultSocketPath,
+		"URL to connect to server")
 	viper.BindEnv("server", "HUBBLE_SOCK")
-	observerCmd.Flags().StringVar(&serverTimeoutVar, "timeout", "5s", "How long to wait before giving up on server dialing")
+
+	observerCmd.Flags().StringVar(&serverTimeoutVar,
+		"timeout", "5s",
+		"How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, allTypes,
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
 
-	observerCmd.Flags().Uint64Var(&last, "last", 0, "Get last N flows stored in the hubble")
-	observerCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow flows output")
-	observerCmd.Flags().StringVar(&sinceVar, "since", "", "Filter flows since a specific date (relative or RFC3339)")
-	observerCmd.Flags().StringVar(&untilVar, "until", "", "Filter flows until a specific date (relative or RFC3339)")
+	observerCmd.Flags().Uint64Var(&last,
+		"last", 0,
+		"Get last N flows stored in the hubble")
+	observerCmd.Flags().BoolVarP(&follow,
+		"follow", "f", false,
+		"Follow flows output")
+	observerCmd.Flags().StringVar(&sinceVar,
+		"since", "",
+		"Filter flows since a specific date (relative or RFC3339)")
+	observerCmd.Flags().StringVar(&untilVar,
+		"until", "",
+		"Filter flows until a specific date (relative or RFC3339)")
 
 	observerCmd.Flags().Var(filterVar(
 		"not", ofilter,

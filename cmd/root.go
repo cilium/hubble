@@ -19,7 +19,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/cilium/hubble/cmd/serve"
 	"github.com/cilium/hubble/cmd/status"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -69,7 +71,11 @@ func init() {
 	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
 	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
 
+	l := logger.GetLogger()
+
+	// initialize all subcommands
 	rootCmd.AddCommand(status.New())
+	rootCmd.AddCommand(serve.New(l))
 }
 
 // initConfig reads in config file and ENV variables if set.
