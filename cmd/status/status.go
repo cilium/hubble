@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package status
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	"os"
 
 	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -28,33 +29,38 @@ import (
 )
 
 var (
-	statusCmd = &cobra.Command{
+	serverURL string
+)
+
+// New status command.
+func New() *cobra.Command {
+	statusCmd := &cobra.Command{
 		Use:   "status",
 		Short: "Display status of hubble server",
 		Long: `Displays the status of the hubble server. This is
 		intended as a basic connectivity health check`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStatus(serverURL)
+			return runStatus()
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(statusCmd)
-	statusCmd.Flags().StringVarP(&serverURL, "server", "", serverClientSocket, "URL to connect to server")
+	statusCmd.Flags().StringVarP(&serverURL,
+		"server", "", api.DefaultSocketPath, "URL to connect to server")
 	viper.BindEnv("server", "HUBBLE_SOCK")
+
+	return statusCmd
 }
 
-func runStatus(serverURL string) error {
+func runStatus() error {
 	// get the standard GRPC health check to see if the server is up
 	healthy, status, err := getHC(serverURL)
 	if err != nil {
 		fmt.Println("Failed getting status:", err)
-		os.Exit(-1)
+		os.Exit(-1) // TODO: rewrite without os.Exit, return an error
 	}
 	fmt.Printf("Healthcheck (via %s): %s\n", serverURL, status)
 	if !healthy {
-		os.Exit(-1)
+		os.Exit(-1) // TODO: rewrite without os.Exit, return an error
 	}
 
 	// if the server is up, lets try to get hubble specific status
@@ -81,7 +87,7 @@ func getHC(s string) (bool, string, error) {
 	}
 	defer conn.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), connTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), api.ConnectionTimeout)
 	defer cancel()
 
 	req := &healthpb.HealthCheckRequest{Service: v1.ObserverServiceName}
@@ -105,7 +111,7 @@ func getStatus(s string) (*observer.ServerStatusResponse, error) {
 	}
 	defer conn.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), connTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), api.ConnectionTimeout)
 	defer cancel()
 
 	req := &observer.ServerStatusRequest{}

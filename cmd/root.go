@@ -19,6 +19,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/cilium/hubble/cmd/status"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -67,6 +68,8 @@ func init() {
 	)
 	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
 	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
+
+	rootCmd.AddCommand(status.New())
 }
 
 // initConfig reads in config file and ENV variables if set.
