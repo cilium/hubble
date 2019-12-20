@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package serve
 
 import (
 	"bytes"
@@ -28,8 +28,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/google/gops/agent"
-
+	"github.com/cilium/cilium/pkg/defaults"
+	"github.com/cilium/cilium/pkg/monitor"
+	"github.com/cilium/cilium/pkg/monitor/agent/listener"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/cilium/pkg/monitor/payload"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
@@ -38,18 +41,12 @@ import (
 	"github.com/cilium/hubble/pkg/format"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
-	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/metrics"
 	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/server"
-
-	"github.com/cilium/cilium/pkg/defaults"
-	"github.com/cilium/cilium/pkg/monitor"
-	"github.com/cilium/cilium/pkg/monitor/agent/listener"
-	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/cilium/cilium/pkg/monitor/payload"
 	"github.com/gogo/protobuf/types"
+	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -57,15 +54,22 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// observerCmd represents the monitor command
-var (
-	serverCmd = &cobra.Command{
+// New ...
+func New(log *zap.Logger) *cobra.Command {
+	var numeric bool
+
+	serverCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start gRPC server",
 		Run: func(cmd *cobra.Command, args []string) {
-			err := validateArgs()
+			err := validateArgs(log)
 			if err != nil {
 				log.Fatal("failed to parse arguments", zap.Error(err))
+			}
+
+			if numeric {
+				format.EnableIPTranslation = false
+				format.EnablePortTranslation = false
 			}
 
 			if gopsVar {
@@ -86,13 +90,34 @@ var (
 				}()
 			}
 
-			err = Serve(listenClientUrls)
+			err = Serve(log, listenClientUrls)
 			if err != nil {
 				log.Fatal("", zap.Error(err))
 			}
 		},
 	}
 
+	serverCmd.Flags().StringArrayVarP(&listenClientUrls, "listen-client-urls", "", []string{serverSocketPath}, "List of URLs to listen on for client traffic.")
+	serverCmd.Flags().Uint32Var(&maxFlows, "max-flows", 131071, "Max number of flows to store in memory (gets rounded up to closest (2^n)-1")
+	serverCmd.Flags().StringVar(&serveDurationVar, "duration", "", "Shut the server down after this duration")
+	serverCmd.Flags().StringVar(&nodeName, "node-name", os.Getenv(envNodeName), "Node name where hubble is running (defaults to value set in env variable '"+envNodeName+"'")
+
+	serverCmd.Flags().BoolVarP(&numeric, "numeric", "n", false, "Display all information in numeric form")
+	serverCmd.Flags().BoolVar(&format.EnablePortTranslation, "port-translation", true, "Translate port numbers to names")
+	serverCmd.Flags().BoolVar(&format.EnableIPTranslation, "ip-translation", true, "Translate IP addresses to logical names such as pod name, FQDN, ...")
+	serverCmd.Flags().StringSliceVar(&enabledMetrics, "metric", []string{}, "Enable metrics reporting")
+	serverCmd.Flags().StringVar(&metricsServer, "metrics-server", "", "Address to serve metrics on")
+
+	serverCmd.Flags().BoolVar(&gopsVar, "gops", false, "Run gops agent")
+	serverCmd.Flags().BoolVar(&pprofVar, "pprof", false, "Run http/pprof handler")
+	serverCmd.Flags().Lookup("gops").Hidden = true
+	serverCmd.Flags().Lookup("pprof").Hidden = true
+
+	return serverCmd
+}
+
+// observerCmd represents the monitor command
+var (
 	maxFlows uint32
 
 	serveDurationVar string
@@ -115,26 +140,7 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-func init() {
-	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().StringArrayVarP(&listenClientUrls, "listen-client-urls", "", []string{serverSocketPath}, "List of URLs to listen on for client traffic.")
-	serverCmd.Flags().Uint32Var(&maxFlows, "max-flows", 131071, "Max number of flows to store in memory (gets rounded up to closest (2^n)-1")
-	serverCmd.Flags().StringVar(&serveDurationVar, "duration", "", "Shut the server down after this duration")
-	serverCmd.Flags().StringVar(&nodeName, "node-name", os.Getenv(envNodeName), "Node name where hubble is running (defaults to value set in env variable '"+envNodeName+"'")
-
-	serverCmd.Flags().BoolVarP(&numeric, "numeric", "n", false, "Display all information in numeric form")
-	serverCmd.Flags().BoolVar(&format.EnablePortTranslation, "port-translation", true, "Translate port numbers to names")
-	serverCmd.Flags().BoolVar(&format.EnableIPTranslation, "ip-translation", true, "Translate IP addresses to logical names such as pod name, FQDN, ...")
-	serverCmd.Flags().StringSliceVar(&enabledMetrics, "metric", []string{}, "Enable metrics reporting")
-	serverCmd.Flags().StringVar(&metricsServer, "metrics-server", "", "Address to serve metrics on")
-
-	serverCmd.Flags().BoolVar(&gopsVar, "gops", false, "Run gops agent")
-	serverCmd.Flags().BoolVar(&pprofVar, "pprof", false, "Run http/pprof handler")
-	serverCmd.Flags().Lookup("gops").Hidden = true
-	serverCmd.Flags().Lookup("pprof").Hidden = true
-}
-
-func enableMetrics(m []string) {
+func enableMetrics(log *zap.Logger, m []string) {
 	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
 	if err != nil {
 		log.Fatal("Unable to setup metrics", zap.Error(err))
@@ -149,9 +155,7 @@ func enableMetrics(m []string) {
 
 }
 
-func validateArgs() error {
-	log = logger.GetLogger()
-
+func validateArgs(log *zap.Logger) error {
 	if serveDurationVar != "" {
 		d, err := time.ParseDuration(serveDurationVar)
 		if err != nil {
@@ -169,13 +173,8 @@ func validateArgs() error {
 		zap.Duration("duration", serveDuration),
 	)
 
-	if numeric {
-		format.EnableIPTranslation = false
-		format.EnablePortTranslation = false
-	}
-
 	if metricsServer != "" {
-		enableMetrics(enabledMetrics)
+		enableMetrics(log, enabledMetrics)
 	}
 
 	return nil
@@ -225,7 +224,7 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(listenClientUrls []string) error {
+func Serve(log *zap.Logger, listenClientUrls []string) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err
@@ -297,7 +296,7 @@ func Serve(listenClientUrls []string) error {
 	// On EOF, retry
 	// On other errors, exit
 	// always wait connTimeout when retrying
-	for ; ; time.Sleep(connTimeout) {
+	for ; ; time.Sleep(api.ConnectionTimeout) {
 		conn, version, err := openMonitorSock()
 		if err != nil {
 			log.Error("Cannot open monitor serverSocketPath", zap.Error(err))
