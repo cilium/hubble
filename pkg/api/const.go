@@ -28,4 +28,10 @@ const (
 	SocketFileMode os.FileMode = 0660
 	// ClientTimeout specifies timeout to be used by clients
 	ClientTimeout = 90 * time.Second
+
+	// DefaultSocketPath which hubble listens to
+	DefaultSocketPath = "unix:///var/run/hubble.sock"
+
+	// ConnectionTimeout ...
+	ConnectionTimeout = 12 * time.Second
 )
