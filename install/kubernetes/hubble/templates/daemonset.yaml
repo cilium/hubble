@@ -16,7 +16,7 @@ spec:
         # gets priority scheduling, same as cilium-agent.
         # https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
         scheduler.alpha.kubernetes.io/critical-pod: ""
-{{- if .Values.metrics.enabled }}
+{{- if and .Values.metrics.enabled (not .Values.metrics.serviceMonitor.enabled) }}
         prometheus.io/port: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" | quote }}
         prometheus.io/scrape: "true"
 {{- end }}
@@ -86,6 +86,7 @@ spec:
 {{- if .Values.metrics.enabled }}
         - containerPort: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" }}
           protocol: TCP
+          name: metrics
 {{- end }}
         readinessProbe:
           exec:

@@ -30,5 +30,24 @@ spec:
       port: 12000
       targetPort: 12000
   type: ClusterIP
+{{- end }}
+{{- if and .Values.metrics.enabled (.Values.metrics.serviceMonitor.enabled) }}
 ---
+kind: Service
+apiVersion: v1
+metadata:
+  name: hubble-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    k8s-app: hubble-metrics
+spec:
+  clusterIP: None
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" }}
+    protocol: TCP
+    targetPort: metrics
+  selector:
+    k8s-app: hubble
 {{- end }}
