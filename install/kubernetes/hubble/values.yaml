@@ -33,6 +33,9 @@ metrics:
   enabled:
    - drop
   address: ":6943"
+  # Create a prometheus-operator servicemonitor
+  serviceMonitor:
+    enabled: false
 
 # Configuration for hubble ui
 ui:
