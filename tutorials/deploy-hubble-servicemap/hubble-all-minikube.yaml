@@ -147,17 +147,13 @@ spec:
   template:
     metadata:
       annotations:
-        # This annotation plus the CriticalAddonsOnly toleration makes
-        # hubble to be a critical pod in the cluster, which ensures hubble
-        # gets priority scheduling, same as cilium-agent.
-        # https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
-        scheduler.alpha.kubernetes.io/critical-pod: ""
         prometheus.io/port: "6943"
         prometheus.io/scrape: "true"
       labels:
         k8s-app: hubble
         kubernetes.io/cluster-service: "true"
     spec:
+      priorityClassName: system-node-critical
       affinity:
         podAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
