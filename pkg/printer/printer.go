@@ -21,10 +21,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
-	"github.com/cilium/hubble/pkg/format"
-
 	"github.com/cilium/cilium/pkg/monitor/api"
+	pb "github.com/cilium/hubble/api/v1/flow"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/format"
 	"github.com/francoispqt/gojay"
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gopacket/layers"
@@ -96,58 +96,59 @@ func (p *Printer) WriteErr(msg string) error {
 	return err
 }
 
-func getPorts(f *pb.Flow) (string, string) {
-	if f.L4 == nil {
+func getPorts(f v1.Flow) (string, string) {
+	l4 := f.GetL4()
+	if l4 == nil {
 		return "", ""
 	}
-	switch f.L4.Protocol.(type) {
+	switch l4.Protocol.(type) {
 	case *pb.Layer4_TCP:
-		return format.TCPPort(layers.TCPPort(f.L4.GetTCP().SourcePort)), format.TCPPort(layers.TCPPort(f.L4.GetTCP().DestinationPort))
+		return format.TCPPort(layers.TCPPort(l4.GetTCP().SourcePort)), format.TCPPort(layers.TCPPort(l4.GetTCP().DestinationPort))
 	case *pb.Layer4_UDP:
-		return format.UDPPort(layers.UDPPort(f.L4.GetUDP().SourcePort)), format.UDPPort(layers.UDPPort(f.L4.GetUDP().DestinationPort))
+		return format.UDPPort(layers.UDPPort(l4.GetUDP().SourcePort)), format.UDPPort(layers.UDPPort(l4.GetUDP().DestinationPort))
 	default:
 		return "", ""
 	}
 }
 
-func getHostNames(f *pb.Flow) (string, string) {
+func getHostNames(f v1.Flow) (string, string) {
 	var srcNamespace, dstNamespace, srcPodName, dstPodName string
-	if f == nil || f.IP == nil {
+	if f == nil || f.GetIP() == nil {
 		return "", ""
 	}
-	if f.Source != nil {
-		srcNamespace = f.Source.Namespace
-		srcPodName = f.Source.PodName
+	if src := f.GetSource(); src != nil {
+		srcNamespace = src.Namespace
+		srcPodName = src.PodName
 	}
-	if f.Destination != nil {
-		dstNamespace = f.Destination.Namespace
-		dstPodName = f.Destination.PodName
+	if dst := f.GetDestination(); dst != nil {
+		dstNamespace = dst.Namespace
+		dstPodName = dst.PodName
 	}
 	srcPort, dstPort := getPorts(f)
-	src := format.Hostname(f.IP.Source, srcPort, srcNamespace, srcPodName, f.SourceNames)
-	dst := format.Hostname(f.IP.Destination, dstPort, dstNamespace, dstPodName, f.DestinationNames)
+	src := format.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, f.GetSourceNames())
+	dst := format.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, f.GetSourceNames())
 	return src, dst
 }
 
-func getTimestamp(f *pb.Flow) string {
+func getTimestamp(f v1.Flow) string {
 	if f == nil {
 		return "N/A"
 	}
-	ts, err := types.TimestampFromProto(f.Time)
+	ts, err := types.TimestampFromProto(f.GetTime())
 	if err != nil {
 		return "N/A"
 	}
 	return format.MaybeTime(&ts)
 }
 
-func getFlowType(f *pb.Flow) string {
-	if f == nil || f.EventType == nil {
+func getFlowType(f v1.Flow) string {
+	if f == nil || f.GetEventType() == nil {
 		return "UNKNOWN"
 	}
-	if f.L7 != nil {
+	if l7 := f.GetL7(); l7 != nil {
 		l7Protocol := "l7"
-		l7Type := strings.ToLower(f.GetL7().Type.String())
-		switch f.L7.GetRecord().(type) {
+		l7Type := strings.ToLower(l7.Type.String())
+		switch l7.GetRecord().(type) {
 		case *pb.Layer7_Http:
 			l7Protocol = "http"
 		case *pb.Layer7_Dns:
@@ -157,14 +158,14 @@ func getFlowType(f *pb.Flow) string {
 		}
 		return l7Protocol + "-" + l7Type
 	}
-	if f.Verdict == pb.Verdict_DROPPED {
-		return api.DropReason(uint8(f.EventType.SubType))
+	if f.GetVerdict() == pb.Verdict_DROPPED {
+		return api.DropReason(uint8(f.GetEventType().SubType))
 	}
-	return api.TraceObservationPoint(uint8(f.EventType.SubType))
+	return api.TraceObservationPoint(uint8(f.GetEventType().SubType))
 }
 
-// WriteProtoFlow writes pb.Flow into the output writer.
-func (p *Printer) WriteProtoFlow(f *pb.Flow) error {
+// WriteProtoFlow writes v1.Flow into the output writer.
+func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 	switch p.opts.output {
 	case TabOutput:
 		if p.line == 0 {
@@ -186,8 +187,8 @@ func (p *Printer) WriteProtoFlow(f *pb.Flow) error {
 			src, tab,
 			dst, tab,
 			getFlowType(f), tab,
-			f.Verdict.String(), tab,
-			f.Summary, newline,
+			f.GetVerdict().String(), tab,
+			f.GetSummary(), newline,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
@@ -208,8 +209,8 @@ func (p *Printer) WriteProtoFlow(f *pb.Flow) error {
 			"     SOURCE: ", src, newline,
 			"DESTINATION: ", dst, newline,
 			"       TYPE: ", getFlowType(f), newline,
-			"    VERDICT: ", f.Verdict.String(), newline,
-			"    SUMMARY: ", f.Summary, newline,
+			"    VERDICT: ", f.GetVerdict().String(), newline,
+			"    SUMMARY: ", f.GetSummary(), newline,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
@@ -219,12 +220,12 @@ func (p *Printer) WriteProtoFlow(f *pb.Flow) error {
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s [%s]: %s -> %s %s %s (%s)\n",
 			getTimestamp(f),
-			f.NodeName,
+			f.GetNodeName(),
 			src,
 			dst,
 			getFlowType(f),
-			f.Verdict.String(),
-			f.Summary,
+			f.GetVerdict().String(),
+			f.GetSummary(),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
