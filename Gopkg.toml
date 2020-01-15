@@ -31,7 +31,7 @@ required = [
 
 [[constraint]]
   name = "github.com/cilium/cilium"
-  revision = "593e2d74652a9d49a5675dbede8dd5712a3766de"
+  revision = "v1.7.0-rc2"
 
 [[constraint]]
   name = "github.com/gogo/protobuf"

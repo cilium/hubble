@@ -29,7 +29,6 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/common"
-	"github.com/cilium/cilium/pkg/byteorder"
 	"github.com/cilium/cilium/pkg/cidr"
 	"github.com/cilium/cilium/pkg/defaults"
 	"github.com/cilium/cilium/pkg/ip"
@@ -82,8 +81,17 @@ const (
 	// e.g. {"a1.medium": "2,4,4", "a2.custom2": "4,5,6"}
 	AwsInstanceLimitMapping = "aws-instance-limit-mapping"
 
+	// AwsReleaseExcessIps allows releasing excess free IP addresses from ENI.
+	// Enabling this option reduces waste of IP addresses but may increase
+	// the number of API calls to AWS EC2 service.
+	AwsReleaseExcessIps = "aws-release-excess-ips"
+
 	// BPFRoot is the Path to BPF filesystem
 	BPFRoot = "bpf-root"
+
+	// CertsDirectory is the root directory used to find out certificates used
+	// in L7 HTTPs policy enforcement.
+	CertsDirectory = "certificates-directory"
 
 	// CGroupRoot is the path to Cgroup2 filesystem
 	CGroupRoot = "cgroup-root"
@@ -106,9 +114,13 @@ const (
 	// ContainerRuntime sets the container runtime(s) used by Cilium
 	// { containerd | crio | docker | none | auto } ( "auto" uses the container
 	// runtime found in the order: "docker", "containerd", "crio" )
+	// Deprecated: This option is no longer available since cilium-daemon does
+	//             not have any direct interaction with container runtimes.
 	ContainerRuntime = "container-runtime"
 
 	// ContainerRuntimeEndpoint set the container runtime(s) endpoint(s)
+	// Deprecated: This option is no longer available since cilium-daemon does
+	//             not have any direct interaction with container runtimes.
 	ContainerRuntimeEndpoint = "container-runtime-endpoint"
 
 	// DebugArg is the argument enables debugging mode
@@ -131,6 +143,12 @@ const (
 
 	// EnablePolicy enables policy enforcement in the agent.
 	EnablePolicy = "enable-policy"
+
+	// EnableK8sExternalIPs enables k8s external IPs feature into Cilium datapath.
+	EnableK8sExternalIPs = "enable-k8s-external-ips"
+
+	// EnableL7Proxy is the name of the option to enable L7 proxy
+	EnableL7Proxy = "enable-l7-proxy"
 
 	// EnableTracing enables tracing mode in the agent.
 	EnableTracing = "enable-tracing"
@@ -283,6 +301,8 @@ const (
 	// FlannelManageExistingContainers sets if Cilium should install the BPF
 	// programs on already running interfaces created by flannel. Require
 	// Cilium to be running in the hostPID.
+	// Deprecated: This option is no longer available since cilium-daemon does
+	//             not have any direct interaction with container runtimes.
 	FlannelManageExistingContainers = "flannel-manage-existing-containers"
 
 	// PProf enables serving the pprof debugging API
@@ -318,6 +338,10 @@ const (
 	// ToFQDNsMaxIPsPerHost defines the maximum number of IPs to maintain
 	// for each FQDN name in an endpoint's FQDN cache
 	ToFQDNsMaxIPsPerHost = "tofqdns-endpoint-max-ip-per-hostname"
+
+	// ToFQDNsMaxDeferredConnectionDeletes defines the maximum number of IPs to
+	// retain for expired DNS lookups with still-active connections"
+	ToFQDNsMaxDeferredConnectionDeletes = "tofqdns-max-deferred-connection-deletes"
 
 	// ToFQDNsPreCache is a path to a file with DNS cache data to insert into the
 	// global cache on startup.
@@ -504,6 +528,9 @@ const (
 	// EnableHealthChecking is the name of the EnableHealthChecking option
 	EnableHealthChecking = "enable-health-checking"
 
+	// EnableEndpointHealthChecking is the name of the EnableEndpointHealthChecking option
+	EnableEndpointHealthChecking = "enable-endpoint-health-checking"
+
 	// PolicyQueueSize is the size of the queues utilized by the policy
 	// repository.
 	PolicyQueueSize = "policy-queue-size"
@@ -574,6 +601,12 @@ const (
 	// AWSClientBurst is the burst value allowed for the AWS client used by the AWS ENI IPAM
 	AWSClientBurst = "aws-client-burst"
 
+	// ENITags are the tags that will be added to every ENI created by the AWS ENI IPAM
+	ENITags = "eni-tags"
+
+	// UpdateEC2AdapterLimitViaAPI configures the operator to use the EC2 API to fill out the instnacetype to adapter limit mapping
+	UpdateEC2AdapterLimitViaAPI = "update-ec2-apdater-limit-via-api"
+
 	// K8sClientQPSLimit is the queries per second limit for the K8s client. Defaults to k8s client defaults.
 	K8sClientQPSLimit = "k8s-client-qps"
 
@@ -613,6 +646,18 @@ const (
 	// DisableCNPStatusUpdates disables updating of CNP NodeStatus in the CNP
 	// CRD.
 	DisableCNPStatusUpdates = "disable-cnp-status-updates"
+
+	// EnableLocalNodeRoute controls installation of the route which points
+	// the allocation prefix of the local node.
+	EnableLocalNodeRoute = "enable-local-node-route"
+
+	// EnableWellKnownIdentities enables the use of well-known identities.
+	// This is requires if identiy resolution is required to bring up the
+	// control plane, e.g. when using the managed etcd feature
+	EnableWellKnownIdentities = "enable-well-known-identities"
+
+	// EnableRemoteNodeIdentity enables use of the remote-node identity
+	EnableRemoteNodeIdentity = "enable-remote-node-identity"
 )
 
 // Default string arguments
@@ -784,7 +829,6 @@ type DaemonConfig struct {
 	HostV6Addr       net.IP     // Host v6 address of the snooping device
 	EncryptInterface string     // Set with name of network facing interface to encrypt
 	EncryptNode      bool       // Set to true for encrypting node IP traffic
-	Workloads        []string   // List of Workloads set by the user to used by cilium.
 
 	Ipvlan IpvlanConfig // Ipvlan related configuration
 
@@ -967,6 +1011,9 @@ type DaemonConfig struct {
 	// EnableIPv6 is true when IPv6 is enabled
 	EnableIPv6 bool
 
+	// EnableL7Proxy is the option to enable L7 proxy
+	EnableL7Proxy bool
+
 	// EnableIPSec is true when IPSec is enabled
 	EnableIPSec bool
 
@@ -983,7 +1030,6 @@ type DaemonConfig struct {
 	BPFCompileDebug               string
 	ConfigFile                    string
 	ConfigDir                     string
-	ContainerRuntimeEndpoint      map[string]string
 	Debug                         bool
 	DebugVerbose                  []string
 	DisableConntrack              bool
@@ -1051,6 +1097,10 @@ type DaemonConfig struct {
 	// for each FQDN name in an endpoint's FQDN cache
 	ToFQDNsMaxIPsPerHost int
 
+	// ToFQDNsMaxIPsPerHost defines the maximum number of IPs to retain for
+	// expired DNS lookups with still-active connections
+	ToFQDNsMaxDeferredConnectionDeletes int
+
 	// FQDNRejectResponse is the dns-proxy response for invalid dns-proxy request
 	FQDNRejectResponse string
 
@@ -1073,18 +1123,21 @@ type DaemonConfig struct {
 	// Cilium on all interfaces created by the flannel.
 	FlannelUninstallOnExit bool
 
-	// FlannelManageExistingContainers sets if Cilium should install the BPF
-	// programs on already running interfaces created by flannel. Require
-	// Cilium to be running in the hostPID.
-	FlannelManageExistingContainers bool
-
 	// EnableAutoDirectRouting enables installation of direct routes to
 	// other nodes when available
 	EnableAutoDirectRouting bool
 
+	// EnableLocalNodeRoute controls installation of the route which points
+	// the allocation prefix of the local node.
+	EnableLocalNodeRoute bool
+
 	// EnableHealthChecking enables health checking between nodes and
 	// health endpoints
 	EnableHealthChecking bool
+
+	// EnableEndpointHealthChecking enables health checking between virtual
+	// health endpoints
+	EnableEndpointHealthChecking bool
 
 	// KVstoreKeepAliveInterval is the interval in which the lease is being
 	// renewed. This must be set to a value lesser than the LeaseTTL ideally
@@ -1183,6 +1236,9 @@ type DaemonConfig struct {
 	// EnableNodePort enables k8s NodePort service implementation in BPF
 	EnableNodePort bool
 
+	// EnableK8sExternalIPs enables k8s external IPs implementation in BPF
+	EnableK8sExternalIPs bool
+
 	// NodePortMin is the minimum port address for the NodePort range
 	NodePortMin int
 
@@ -1233,6 +1289,23 @@ type DaemonConfig struct {
 	// pkg/aws/eni/limits.go
 	// e.g. {"a1.medium": "2,4,4", "a2.custom2": "4,5,6"}
 	AwsInstanceLimitMapping map[string]string
+
+	// AwsReleaseExcessIps allows releasing excess free IP addresses from ENI.
+	// Enabling this option reduces waste of IP addresses but may increase
+	// the number of API calls to AWS EC2 service.
+	AwsReleaseExcessIps bool
+
+	// EnableWellKnownIdentities enables the use of well-known identities.
+	// This is requires if identiy resolution is required to bring up the
+	// control plane, e.g. when using the managed etcd feature
+	EnableWellKnownIdentities bool
+
+	// CertsDirectory is the root directory to be used by cilium to find
+	// certificates locally.
+	CertDirectory string
+
+	// EnableRemoteNodeIdentity enables use of the remote-node identity
+	EnableRemoteNodeIdentity bool
 }
 
 var (
@@ -1244,14 +1317,15 @@ var (
 		IPv6ClusterAllocCIDRBase:     defaults.IPv6ClusterAllocCIDRBase,
 		EnableHostIPRestore:          defaults.EnableHostIPRestore,
 		EnableHealthChecking:         defaults.EnableHealthChecking,
+		EnableEndpointHealthChecking: defaults.EnableEndpointHealthChecking,
 		EnableIPv4:                   defaults.EnableIPv4,
 		EnableIPv6:                   defaults.EnableIPv6,
+		EnableL7Proxy:                defaults.EnableL7Proxy,
 		ToFQDNsMaxIPsPerHost:         defaults.ToFQDNsMaxIPsPerHost,
 		KVstorePeriodicSync:          defaults.KVstorePeriodicSync,
 		KVstoreConnectivityTimeout:   defaults.KVstoreConnectivityTimeout,
 		IPAllocationTimeout:          defaults.IPAllocationTimeout,
 		IdentityChangeGracePeriod:    defaults.IdentityChangeGracePeriod,
-		ContainerRuntimeEndpoint:     make(map[string]string),
 		FixedIdentityMapping:         make(map[string]string),
 		KVStoreOpt:                   make(map[string]string),
 		LogOpt:                       make(map[string]string),
@@ -1266,7 +1340,7 @@ var (
 		AutoCreateCiliumNodeResource: defaults.AutoCreateCiliumNodeResource,
 		IdentityAllocationMode:       IdentityAllocationModeKVstore,
 		AllowICMPFragNeeded:          defaults.AllowICMPFragNeeded,
-		AwsInstanceLimitMapping:      make(map[string]string),
+		EnableWellKnownIdentities:    defaults.EnableEndpointRoutes,
 	}
 )
 
@@ -1310,17 +1384,6 @@ func (c *DaemonConfig) GetNodeConfigPath() string {
 // GetGlobalsDir returns the path for the globals directory.
 func (c *DaemonConfig) GetGlobalsDir() string {
 	return filepath.Join(c.StateDir, "globals")
-}
-
-// WorkloadsEnabled returns true if any workload runtimes are enabled
-func (c *DaemonConfig) WorkloadsEnabled() bool {
-	for _, w := range c.Workloads {
-		if w == "none" {
-			return false
-		}
-	}
-
-	return len(c.Workloads) > 0
 }
 
 // AlwaysAllowLocalhost returns true if the daemon has the option set that
@@ -1562,6 +1625,7 @@ func (c *DaemonConfig) Populate() {
 	c.CTMapEntriesGlobalAny = viper.GetInt(CTMapEntriesGlobalAnyName)
 	c.NATMapEntriesGlobal = viper.GetInt(NATMapEntriesGlobalName)
 	c.BPFRoot = viper.GetString(BPFRoot)
+	c.CertDirectory = viper.GetString(CertsDirectory)
 	c.CGroupRoot = viper.GetString(CGroupRoot)
 	c.ClusterID = viper.GetInt(ClusterIDName)
 	c.ClusterName = viper.GetString(ClusterName)
@@ -1574,17 +1638,23 @@ func (c *DaemonConfig) Populate() {
 	c.EnableIPv4 = getIPv4Enabled()
 	c.EnableIPv6 = viper.GetBool(EnableIPv6Name)
 	c.EnableIPSec = viper.GetBool(EnableIPSecName)
+	c.EnableWellKnownIdentities = viper.GetBool(EnableWellKnownIdentities)
 	c.EndpointInterfaceNamePrefix = viper.GetString(EndpointInterfaceNamePrefix)
 	c.DevicePreFilter = viper.GetString(PrefilterDevice)
 	c.DisableCiliumEndpointCRD = viper.GetBool(DisableCiliumEndpointCRDName)
 	c.DisableK8sServices = viper.GetBool(DisableK8sServices)
 	c.EgressMasqueradeInterfaces = viper.GetString(EgressMasqueradeInterfaces)
 	c.EnableHostReachableServices = viper.GetBool(EnableHostReachableServices)
+	c.EnableRemoteNodeIdentity = viper.GetBool(EnableRemoteNodeIdentity)
 	c.DockerEndpoint = viper.GetString(Docker)
 	c.EnableAutoDirectRouting = viper.GetBool(EnableAutoDirectRoutingName)
 	c.EnableEndpointRoutes = viper.GetBool(EnableEndpointRoutes)
 	c.EnableHealthChecking = viper.GetBool(EnableHealthChecking)
+	c.EnableEndpointHealthChecking = viper.GetBool(EnableEndpointHealthChecking)
+	c.EnableLocalNodeRoute = viper.GetBool(EnableLocalNodeRoute)
 	c.EnablePolicy = strings.ToLower(viper.GetString(EnablePolicy))
+	c.EnableK8sExternalIPs = viper.GetBool(EnableK8sExternalIPs)
+	c.EnableL7Proxy = viper.GetBool(EnableL7Proxy)
 	c.EnableTracing = viper.GetBool(EnableTracing)
 	c.EnableNodePort = viper.GetBool(EnableNodePort)
 	c.EncryptInterface = viper.GetString(EncryptInterface)
@@ -1642,7 +1712,6 @@ func (c *DaemonConfig) Populate() {
 	c.NAT46Range = viper.GetString(NAT46Range)
 	c.FlannelMasterDevice = viper.GetString(FlannelMasterDevice)
 	c.FlannelUninstallOnExit = viper.GetBool(FlannelUninstallOnExit)
-	c.FlannelManageExistingContainers = viper.GetBool(FlannelManageExistingContainers)
 	c.PolicyMapMaxEntries = viper.GetInt(PolicyMapEntriesName)
 	c.PProf = viper.GetBool(PProf)
 	c.PreAllocateMaps = viper.GetBool(PreAllocateMapsName)
@@ -1660,7 +1729,6 @@ func (c *DaemonConfig) Populate() {
 	c.TracePayloadlen = viper.GetInt(TracePayloadlen)
 	c.Tunnel = viper.GetString(TunnelName)
 	c.Version = viper.GetString(Version)
-	c.Workloads = viper.GetStringSlice(ContainerRuntime)
 	c.WriteCNIConfigurationWhenReady = viper.GetString(WriteCNIConfigurationWhenReady)
 	c.PolicyTriggerInterval = viper.GetDuration(PolicyTriggerInterval)
 	c.CTMapEntriesTimeoutTCP = viper.GetDuration(CTMapEntriesTimeoutTCPName)
@@ -1682,10 +1750,14 @@ func (c *DaemonConfig) Populate() {
 	c.ToFQDNsEnablePoller = viper.GetBool(ToFQDNsEnablePoller)
 	c.ToFQDNsEnablePollerEvents = viper.GetBool(ToFQDNsEnablePollerEvents)
 	c.ToFQDNsMaxIPsPerHost = viper.GetInt(ToFQDNsMaxIPsPerHost)
-	userSetMinTTL := viper.GetInt(ToFQDNsMinTTL)
+	if maxZombies := viper.GetInt(ToFQDNsMaxDeferredConnectionDeletes); maxZombies >= 0 {
+		c.ToFQDNsMaxDeferredConnectionDeletes = viper.GetInt(ToFQDNsMaxDeferredConnectionDeletes)
+	} else {
+		log.Fatal("tofqdns-max-deferred-connection-deletes must be positive, or 0 to disable deferred connection deletion")
+	}
 	switch {
-	case userSetMinTTL != 0: // set by user
-		c.ToFQDNsMinTTL = userSetMinTTL
+	case viper.IsSet(ToFQDNsMinTTL): // set by user
+		c.ToFQDNsMinTTL = viper.GetInt(ToFQDNsMinTTL)
 	case c.ToFQDNsEnablePoller:
 		c.ToFQDNsMinTTL = defaults.ToFQDNsMinTTLPoller
 	default:
@@ -1758,17 +1830,9 @@ func (c *DaemonConfig) Populate() {
 		}
 		ctMonitorReportFlags |= flag
 	}
-	c.MonitorAggregationFlags = byteorder.HostToNetwork(ctMonitorReportFlags).(uint16)
+	c.MonitorAggregationFlags = ctMonitorReportFlags
 
 	// Map options
-	if m := viper.GetStringMapString(AwsInstanceLimitMapping); len(m) != 0 {
-		c.AwsInstanceLimitMapping = m
-	}
-
-	if m := viper.GetStringMapString(ContainerRuntimeEndpoint); len(m) != 0 {
-		c.ContainerRuntimeEndpoint = m
-	}
-
 	if m := viper.GetStringMapString(FixedIdentityMapping); len(m) != 0 {
 		c.FixedIdentityMapping = m
 	}
@@ -1849,6 +1913,7 @@ func (c *DaemonConfig) Populate() {
 	c.SelectiveRegeneration = viper.GetBool(SelectiveRegeneration)
 	c.SkipCRDCreation = viper.GetBool(SkipCRDCreation)
 	c.DisableCNPStatusUpdates = viper.GetBool(DisableCNPStatusUpdates)
+	c.AwsReleaseExcessIps = viper.GetBool(AwsReleaseExcessIps)
 }
 
 func sanitizeIntParam(paramName string, paramDefault int) int {
