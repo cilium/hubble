@@ -55,11 +55,6 @@ const (
 	// SockPathEnv is the environment variable to overwrite SockPath
 	SockPathEnv = "CILIUM_SOCK"
 
-	// MonitorSockPath1_0 is the path to the UNIX domain socket used to
-	// distribute BPF and agent events to listeners.
-	// This is the 1.0 protocol version.
-	MonitorSockPath1_0 = RuntimePath + "/monitor.sock"
-
 	// MonitorSockPath1_2 is the path to the UNIX domain socket used to
 	// distribute BPF and agent events to listeners.
 	// This is the 1.2 protocol version.
@@ -90,16 +85,20 @@ const (
 
 	// ToFQDNsMinTTL is the default lower bound for TTLs used with ToFQDNs rules.
 	// This or ToFQDNsMinTTLPoller is used in DaemonConfig.Populate
-	ToFQDNsMinTTL = 604800 // 1 week in seconds
+	ToFQDNsMinTTL = 3600 // 1 hour in seconds
 
 	// ToFQDNsMinTTLPoller is the default lower bound for TTLs used with ToFQDNs
 	// rules when the poller is enabled.
 	// This or ToFQDNsMinTTL is used in DaemonConfig.Populate
-	ToFQDNsMinTTLPoller = 3600 // 1 hour in seconds
+	ToFQDNsMinTTLPoller = 600 // 10 minutes in seconds
 
 	// ToFQDNsMaxIPsPerHost defines the maximum number of IPs to maintain
 	// for each FQDN name in an endpoint's FQDN cache
 	ToFQDNsMaxIPsPerHost = 50
+
+	// ToFQDNsMaxDeferredConnectionDeletes Maximum number of IPs to retain for
+	// expired DNS lookups with still-active connections
+	ToFQDNsMaxDeferredConnectionDeletes = 10000
 
 	// ToFQDNsPreCache is a path to a file with DNS cache data to insert into the
 	// global cache on startup.
@@ -130,6 +129,12 @@ const (
 	// EnableIPv6 is the default value for IPv6 enablement
 	EnableIPv6 = true
 
+	// EnableL7Proxy is the default value for L7 proxy enablement
+	EnableL7Proxy = true
+
+	// EnableK8sExternalIPs is the default value for k8s externalIPs feature.
+	EnableK8sExternalIPs = true
+
 	// PreAllocateMaps is the default value for BPF map preallocation
 	PreAllocateMaps = true
 
@@ -159,11 +164,18 @@ const (
 	// DatapathMode is the default value for the datapath mode.
 	DatapathMode = "veth"
 
+	// EnableLocalNodeRoute default value for EnableLocalNodeRoute
+	EnableLocalNodeRoute = true
+
 	// EnableAutoDirectRouting is the default value for EnableAutoDirectRouting
 	EnableAutoDirectRouting = false
 
 	// EnableHealthChecking is the default value for EnableHealthChecking
 	EnableHealthChecking = true
+
+	// EnableEndpointHealthChecking is the default value for
+	// EnableEndpointHealthChecking
+	EnableEndpointHealthChecking = true
 
 	// AlignCheckerName is the BPF object name for the alignchecker.
 	AlignCheckerName = "bpf_alignchecker.o"
@@ -274,6 +286,19 @@ const (
 	// CiliumNode.Spec.ENI.PreAllocate if no value is set
 	ENIPreAllocation = 8
 
+	// ENIFirstInterfaceIndex is the default value for
+	// CiliumNode.Spec.ENI.FirstInterfaceIndex if no value is set
+	ENIFirstInterfaceIndex = 1
+
+	// ENIParallelWorkers is the default max number of workers that process ENI operations
+	ENIParallelWorkers = 50
+
+	// AWSClientBurst is the default burst value for the AWS client
+	AWSClientBurst = 4
+
+	// AWSClientQPSLimit is the default QPS limit for the AWS client
+	AWSClientQPSLimit = 20.0
+
 	// AutoCreateCiliumNodeResource enables automatic creation of a
 	// CiliumNode resource for the local node
 	AutoCreateCiliumNodeResource = true
@@ -304,4 +329,15 @@ const (
 
 	// RestoreV6Addr is used as match for cilium_host v6 (router) address
 	RestoreV6Addr = "cilium.v6.internal.raw "
+
+	// EnableWellKnownIdentities is enabled by default as this is the
+	// original behavior. New default Helm templates will disable this.
+	EnableWellKnownIdentities = true
+
+	// CertsDirectory is the default directory used to find certificates
+	// specified in the L7 policies.
+	CertsDirectory = RuntimePath + "/certs"
+
+	// EnableRemoteNodeIdentity is the default value for option.EnableRemoteNodeIdentity
+	EnableRemoteNodeIdentity = false
 )

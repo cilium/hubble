@@ -34,7 +34,7 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:4477f7307436b4d318f70d82cc8d40edcc3ca400f599a2573369c258ae2f9149"
+  digest = "1:2d0fbd6647ad7c97d27e5c9afd2c6e007f921a0c18692e4853cb93c36def6a19"
   name = "github.com/cilium/cilium"
   packages = [
     "api/v1/client",
@@ -83,9 +83,10 @@
     "pkg/source",
     "pkg/spanstat",
     "pkg/u8proto",
+    "pkg/version",
   ]
   pruneopts = "NUT"
-  revision = "593e2d74652a9d49a5675dbede8dd5712a3766de"
+  revision = "v1.7.0-rc2"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
