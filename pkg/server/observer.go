@@ -40,6 +40,21 @@ import (
 	"go.uber.org/zap"
 )
 
+// Observer defines the interface for observer server.
+type Observer interface {
+	observer.ObserverServer
+	Start()
+	GetEventsChannel() chan *pb.Payload
+	GetEndpointEventsChannel() chan<- monitorAPI.AgentNotify
+	GetLogRecordNotifyChannel() chan<- monitor.LogRecordNotify
+	StartMirroringIPCache(ipCacheEvents <-chan monitorAPI.AgentNotify)
+	GetRingBuffer() *container.Ring
+	GetLogger() *zap.Logger
+	GetStopped() chan struct{}
+	GetPayloadParser() *parser.Parser
+	UseMonitorSocket() bool
+}
+
 type ciliumClient interface {
 	EndpointList() ([]*models.Endpoint, error)
 	GetEndpoint(id uint64) (*models.Endpoint, error)
@@ -142,22 +157,26 @@ func (s *ObserverServer) Start() {
 	go s.consumeEndpointEvents()
 	go s.consumeLogRecordNotifyChannel()
 
-	for pl := range s.events {
-		flow, err := s.decodeFlow(pl)
+	processEvents(s)
+}
+
+func processEvents(s Observer) {
+	for pl := range s.GetEventsChannel() {
+		flow, err := decodeFlow(s.GetPayloadParser(), pl)
 		if err != nil {
 			if !parserErrors.IsErrInvalidType(err) {
-				s.log.Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
+				s.GetLogger().Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
 			}
 			continue
 		}
 
 		metrics.ProcessFlow(flow)
-		s.ring.Write(&v1.Event{
+		s.GetRingBuffer().Write(&v1.Event{
 			Timestamp: pl.Time,
 			Event:     flow,
 		})
 	}
-	close(s.stopped)
+	close(s.GetStopped())
 }
 
 // StartMirroringIPCache will obtain an initial IPCache snapshot from Cilium
@@ -178,7 +197,7 @@ func (s *ObserverServer) GetLogRecordNotifyChannel() chan<- monitor.LogRecordNot
 }
 
 // GetEventsChannel returns the event channel to receive pb.Payload events.
-func (s *ObserverServer) GetEventsChannel() chan<- *pb.Payload {
+func (s *ObserverServer) GetEventsChannel() chan *pb.Payload {
 	return s.events
 }
 
@@ -189,10 +208,35 @@ func (s *ObserverServer) GetEndpointEventsChannel() chan<- monitorAPI.AgentNotif
 	return s.endpointEvents
 }
 
-func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
+// GetRingBuffer implements Observer.GetRingBuffer.
+func (s *ObserverServer) GetRingBuffer() *container.Ring {
+	return s.ring
+}
+
+// GetLogger implements Observer.GetLogger.
+func (s *ObserverServer) GetLogger() *zap.Logger {
+	return s.log
+}
+
+// GetStopped implements Observer.GetStopped.
+func (s *ObserverServer) GetStopped() chan struct{} {
+	return s.stopped
+}
+
+// GetPayloadParser implements Observer.GetPayloadParser.
+func (s *ObserverServer) GetPayloadParser() *parser.Parser {
+	return s.payloadParser
+}
+
+// UseMonitorSocket implements Observer.UseMonitorSocket.
+func (s *ObserverServer) UseMonitorSocket() bool {
+	return true
+}
+
+func decodeFlow(payloadParser *parser.Parser, pl *pb.Payload) (*pb.Flow, error) {
 	// TODO: Pool these instead of allocating new flows each time.
 	f := &pb.Flow{}
-	err := s.payloadParser.Decode(pl, f)
+	err := payloadParser.Decode(pl, f)
 	if err != nil {
 		return nil, err
 	}
@@ -204,9 +248,13 @@ func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
 func (s *ObserverServer) ServerStatus(
 	ctx context.Context, req *observer.ServerStatusRequest,
 ) (*observer.ServerStatusResponse, error) {
+	return getServerStatusFromObserver(s)
+}
+
+func getServerStatusFromObserver(obs Observer) (*observer.ServerStatusResponse, error) {
 	res := &observer.ServerStatusResponse{
-		MaxFlows: s.ring.Cap(),
-		NumFlows: s.ring.Len(),
+		MaxFlows: obs.GetRingBuffer().Cap(),
+		NumFlows: obs.GetRingBuffer().Len(),
 	}
 	return res, nil
 }
@@ -224,7 +272,15 @@ func (s *ObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	reply, err := getFlows(server.Context(), s.log, s.ring, req)
+	return getFlowsFromObserver(req, server, s)
+}
+
+func getFlowsFromObserver(
+	req *observer.GetFlowsRequest,
+	server observer.Observer_GetFlowsServer,
+	obs Observer,
+) (err error) {
+	reply, err := getFlows(server.Context(), obs.GetLogger(), obs.GetRingBuffer(), req)
 	if err != nil {
 		return err
 	}
