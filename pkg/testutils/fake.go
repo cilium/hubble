@@ -5,6 +5,8 @@ package testutils
 import (
 	"net"
 
+	"github.com/cilium/cilium/api/v1/models"
+
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
 )
@@ -66,5 +68,25 @@ func (f *FakeIPGetter) GetIPIdentity(ip net.IP) (id ipcache.IPIdentity, ok bool)
 var NoopIPGetter = FakeIPGetter{
 	OnGetIPIdentity: func(ip net.IP) (id ipcache.IPIdentity, ok bool) {
 		return ipcache.IPIdentity{}, false
+	},
+}
+
+// FakeIdentityGetter is used for unit tests that need IdentityGetter.
+type FakeIdentityGetter struct {
+	OnGetIdentity func(securityIdentity uint64) (*models.Identity, error)
+}
+
+// GetIdentity implements IdentityGetter.GetIPIdentity.
+func (f *FakeIdentityGetter) GetIdentity(securityIdentity uint64) (*models.Identity, error) {
+	if f.OnGetIdentity != nil {
+		return f.OnGetIdentity(securityIdentity)
+	}
+	panic("OnGetIdentity not set")
+}
+
+// NoopIdentityGetter always returns an empty response.
+var NoopIdentityGetter = FakeIdentityGetter{
+	OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+		return &models.Identity{}, nil
 	},
 }

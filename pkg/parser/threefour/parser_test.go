@@ -39,17 +39,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeIdentityGetter struct {
-	OnGetIdentity func(securityIdentity uint64) (*models.Identity, error)
-}
-
-func (f *fakeIdentityGetter) GetIdentity(securityIdentity uint64) (*models.Identity, error) {
-	if f.OnGetIdentity != nil {
-		return f.OnGetIdentity(securityIdentity)
-	}
-	panic("OnGetIdentity not set")
-}
-
 func TestL34Decode(t *testing.T) {
 	//SOURCE          					DESTINATION           TYPE   SUMMARY
 	//192.168.33.11:6443(sun-sr-https)  10.16.236.178:54222   L3/4   TCP Flags: ACK
@@ -93,11 +82,7 @@ func TestL34Decode(t *testing.T) {
 			return
 		},
 	}
-	identityCache := &fakeIdentityGetter{
-		OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
-			return &models.Identity{}, nil
-		},
-	}
+	identityCache := &testutils.NoopIdentityGetter
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
@@ -227,9 +212,7 @@ func BenchmarkL34Decode(b *testing.B) {
 			return
 		},
 	}
-	identityCache := &fakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
-		return &models.Identity{}, nil
-	}}
+	identityCache := &testutils.NoopIdentityGetter
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
@@ -277,7 +260,7 @@ func TestDecodeTraceNotify(t *testing.T) {
 	require.NoError(t, err)
 	buf.Write(buffer.Bytes())
 	require.NoError(t, err)
-	identityGetter := &fakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+	identityGetter := &testutils.FakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
 		if securityIdentity == (uint64)(tn.SrcLabel) {
 			return &models.Identity{Labels: []string{"src=label"}}, nil
 		} else if securityIdentity == (uint64)(tn.DstLabel) {
@@ -320,7 +303,7 @@ func TestDecodeDropNotify(t *testing.T) {
 	require.NoError(t, err)
 	buf.Write(buffer.Bytes())
 	require.NoError(t, err)
-	identityGetter := &fakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+	identityGetter := &testutils.FakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
 		if securityIdentity == (uint64)(dn.SrcLabel) {
 			return &models.Identity{Labels: []string{"src=label"}}, nil
 		} else if securityIdentity == (uint64)(dn.DstLabel) {
@@ -366,7 +349,7 @@ func TestDecodeLocalIdentity(t *testing.T) {
 	}
 	data, err := testutils.CreateL3L4Payload(tn)
 	require.NoError(t, err)
-	identityGetter := &fakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+	identityGetter := &testutils.FakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
 		return &models.Identity{Labels: []string{"some=label", "cidr:1.2.3.4/12", "cidr:1.2.3.4/11"}}, nil
 	}}
 
