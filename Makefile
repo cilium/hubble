@@ -3,11 +3,12 @@ INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 IMAGE_REPOSITORY ?= quay.io/covalent/hubble
 CONTAINER_ENGINE ?= docker
+TARGET=hubble
 
 all: hubble
 
 hubble:
-	$(GO) build -o $@ $^
+	$(GO) build -o $(TARGET)
 
 install:
 	groupadd -f hubble
