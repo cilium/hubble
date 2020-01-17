@@ -91,7 +91,32 @@ func New(log *zap.Logger) *cobra.Command {
 				}()
 			}
 
-			err = Serve(log, listenClientUrls)
+			ciliumClient, err := client.NewClient()
+			if err != nil {
+				log.Fatal("failed to get Cilium client", zap.Error(err))
+			}
+			ipCache := ipcache.New()
+			fqdnCache := fqdncache.New()
+			serviceCache := servicecache.New()
+			endpoints := v1.NewEndpoints()
+			podGetter := &server.LegacyPodGetter{
+				PodGetter:      ipCache,
+				EndpointGetter: endpoints,
+			}
+			payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
+			if err != nil {
+				log.Fatal("failed to get parser", zap.Error(err))
+			}
+			s := server.NewServer(
+				ciliumClient,
+				endpoints,
+				ipCache,
+				fqdnCache,
+				serviceCache,
+				payloadParser,
+				int(maxFlows),
+			)
+			err = Serve(log, listenClientUrls, s)
 			if err != nil {
 				log.Fatal("", zap.Error(err))
 			}
@@ -225,40 +250,11 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(log *zap.Logger, listenClientUrls []string) error {
+func Serve(log *zap.Logger, listenClientUrls []string, s server.Observer) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err
 	}
-
-	ciliumClient, err := client.NewClient()
-	if err != nil {
-		return err
-	}
-
-	ipCache := ipcache.New()
-	fqdnCache := fqdncache.New()
-	serviceCache := servicecache.New()
-	endpoints := v1.NewEndpoints()
-	podGetter := &server.LegacyPodGetter{
-		PodGetter:      ipCache,
-		EndpointGetter: endpoints,
-	}
-
-	payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
-	if err != nil {
-		return err
-	}
-
-	s := server.NewServer(
-		ciliumClient,
-		endpoints,
-		ipCache,
-		fqdnCache,
-		serviceCache,
-		payloadParser,
-		int(maxFlows),
-	)
 
 	serverStart = time.Now()
 	go s.Start()
@@ -294,6 +290,9 @@ func Serve(log *zap.Logger, listenClientUrls []string) error {
 	}
 
 	setupSigHandler()
+	if !s.UseMonitorSocket() {
+		return nil
+	}
 	fmt.Printf("Press Ctrl-C to quit\n")
 
 	// On EOF, retry
@@ -390,7 +389,7 @@ func getMonitorParser(conn net.Conn, version listener.Version) (parser eventPars
 // consumeMonitorEvents handles and prints events on a monitor connection. It
 // calls getMonitorParsed to construct a monitor-version appropriate parser.
 // It closes conn on return, and returns on error, including io.EOF
-func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version listener.Version) error {
+func consumeMonitorEvents(s server.Observer, conn net.Conn, version listener.Version) error {
 	defer conn.Close()
 	ch := s.GetEventsChannel()
 	endpointEvents := s.GetEndpointEventsChannel()
