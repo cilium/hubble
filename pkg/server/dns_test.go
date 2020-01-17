@@ -105,6 +105,6 @@ func TestObserverServer_consumeLogRecordNotifyChannel(t *testing.T) {
 	}
 	go s.consumeLogRecordNotifyChannel()
 
-	s.GetLogRecordNotifyChannel() <- lr
+	s.getLogRecordNotifyChannel() <- lr
 	wg.Wait()
 }
