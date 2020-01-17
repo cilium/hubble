@@ -353,7 +353,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 	}
 	go s.consumeEndpointEvents()
 
-	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointCreated,
 		Text: string(ecnMarshal),
 	}
@@ -377,7 +377,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 	}
 	go s.consumeEndpointEvents()
 
-	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointCreated,
 		Text: string(ecnMarshal),
 	}
@@ -418,7 +418,7 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 	}
 	go s.consumeEndpointEvents()
 
-	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointDeleted,
 		Text: string(ednMarshal),
 	}
@@ -482,7 +482,7 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 	}
 	go s.consumeEndpointEvents()
 
-	s.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointRegenerateSuccess,
 		Text: string(ednMarshal),
 	}

@@ -15,14 +15,25 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"strings"
 	"time"
 
+	"github.com/cilium/cilium/api/v1/models"
+	"github.com/cilium/cilium/pkg/math"
+	"github.com/cilium/cilium/pkg/monitor"
+	"github.com/cilium/cilium/pkg/monitor/agent/listener"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/cilium/pkg/monitor/payload"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/container"
 	"github.com/cilium/hubble/pkg/filters"
@@ -32,14 +43,21 @@ import (
 	"github.com/cilium/hubble/pkg/parser"
 	parserErrors "github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/cilium/hubble/pkg/servicecache"
-
-	"github.com/cilium/cilium/api/v1/models"
-	"github.com/cilium/cilium/pkg/math"
-	"github.com/cilium/cilium/pkg/monitor"
-	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/gogo/protobuf/types"
 	"go.uber.org/zap"
 )
+
+// Observer defines the interface for observer server.
+type Observer interface {
+	observer.ObserverServer
+	Start()
+	GetEventsChannel() chan *pb.Payload
+	GetRingBuffer() *container.Ring
+	GetLogger() *zap.Logger
+	GetStopped() chan struct{}
+	GetPayloadParser() *parser.Parser
+	HandleMonitorSocket(nodeName string) error
+}
 
 type ciliumClient interface {
 	EndpointList() ([]*models.Endpoint, error)
@@ -149,68 +167,92 @@ func (s *ObserverServer) Start() {
 	go s.consumeEndpointEvents()
 	go s.consumeLogRecordNotifyChannel()
 
-	for pl := range s.events {
-		flow, err := s.decodeFlow(pl)
+	processEvents(s)
+}
+
+func processEvents(s Observer) {
+	for pl := range s.GetEventsChannel() {
+		flow, err := decodeFlow(s.GetPayloadParser(), pl)
 		if err != nil {
 			if !parserErrors.IsErrInvalidType(err) {
-				s.log.Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
+				s.GetLogger().Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
 			}
 			continue
 		}
 
 		metrics.ProcessFlow(flow)
-		s.ring.Write(&v1.Event{
+		s.GetRingBuffer().Write(&v1.Event{
 			Timestamp: pl.Time,
 			Event:     flow,
 		})
 	}
-	close(s.stopped)
+	close(s.GetStopped())
 }
 
-// StartMirroringIPCache will obtain an initial IPCache snapshot from Cilium
+// startMirroringIPCache will obtain an initial IPCache snapshot from Cilium
 // and then start mirroring IPCache events based on IPCacheNotification sent
 // through the ipCacheEvents channels. Only messages of type
 // `AgentNotifyIPCacheUpserted` and `AgentNotifyIPCacheDeleted` should be sent
 // through that channel. This function assumes that the caller is already
 // connected to Cilium Monitor, i.e. no IPCacheNotification must be lost after
 // calling this method.
-func (s *ObserverServer) StartMirroringIPCache(ipCacheEvents <-chan monitorAPI.AgentNotify) {
+func (s *ObserverServer) startMirroringIPCache(ipCacheEvents <-chan monitorAPI.AgentNotify) {
 	go s.syncIPCache(ipCacheEvents)
 }
 
-// StartMirroringServiceCache initially caches service information from Cilium
+// startMirroringServiceCache initially caches service information from Cilium
 // and then starts to mirror service information based on events that are sent
 // to the serviceEvents channel. Only messages of type
 // `AgentNotifyServiceUpserted` and `AgentNotifyServiceDeleted` should be sent
 // to this channel.  This function assumes that the caller is already connected
 // to Cilium Monitor, i.e. no Service notification must be lost after calling
 // this method.
-func (s *ObserverServer) StartMirroringServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
+func (s *ObserverServer) startMirroringServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
 	go s.syncServiceCache(serviceEvents)
 }
 
-// GetLogRecordNotifyChannel returns the event channel to receive
+// getLogRecordNotifyChannel returns the event channel to receive
 // monitorAPI.LogRecordNotify events.
-func (s *ObserverServer) GetLogRecordNotifyChannel() chan<- monitor.LogRecordNotify {
+func (s *ObserverServer) getLogRecordNotifyChannel() chan<- monitor.LogRecordNotify {
 	return s.logRecord
 }
 
 // GetEventsChannel returns the event channel to receive pb.Payload events.
-func (s *ObserverServer) GetEventsChannel() chan<- *pb.Payload {
+func (s *ObserverServer) GetEventsChannel() chan *pb.Payload {
 	return s.events
 }
 
-// GetEndpointEventsChannel returns a channel that should be used to send
+// getEndpointEventsChannel returns a channel that should be used to send
 // AgentNotifyEndpoint* events when an endpoint is added, deleted or updated
 // in Cilium.
-func (s *ObserverServer) GetEndpointEventsChannel() chan<- monitorAPI.AgentNotify {
+func (s *ObserverServer) getEndpointEventsChannel() chan<- monitorAPI.AgentNotify {
 	return s.endpointEvents
 }
 
-func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
+// GetRingBuffer implements Observer.GetRingBuffer.
+func (s *ObserverServer) GetRingBuffer() *container.Ring {
+	return s.ring
+}
+
+// GetLogger implements Observer.GetLogger.
+func (s *ObserverServer) GetLogger() *zap.Logger {
+	return s.log
+}
+
+// GetStopped implements Observer.GetStopped.
+func (s *ObserverServer) GetStopped() chan struct{} {
+	return s.stopped
+}
+
+// GetPayloadParser implements Observer.GetPayloadParser.
+func (s *ObserverServer) GetPayloadParser() *parser.Parser {
+	return s.payloadParser
+}
+
+func decodeFlow(payloadParser *parser.Parser, pl *pb.Payload) (*pb.Flow, error) {
 	// TODO: Pool these instead of allocating new flows each time.
 	f := &pb.Flow{}
-	err := s.payloadParser.Decode(pl, f)
+	err := payloadParser.Decode(pl, f)
 	if err != nil {
 		return nil, err
 	}
@@ -222,9 +264,13 @@ func (s *ObserverServer) decodeFlow(pl *pb.Payload) (*pb.Flow, error) {
 func (s *ObserverServer) ServerStatus(
 	ctx context.Context, req *observer.ServerStatusRequest,
 ) (*observer.ServerStatusResponse, error) {
+	return getServerStatusFromObserver(s)
+}
+
+func getServerStatusFromObserver(obs Observer) (*observer.ServerStatusResponse, error) {
 	res := &observer.ServerStatusResponse{
-		MaxFlows: s.ring.Cap(),
-		NumFlows: s.ring.Len(),
+		MaxFlows: obs.GetRingBuffer().Cap(),
+		NumFlows: obs.GetRingBuffer().Len(),
 	}
 	return res, nil
 }
@@ -242,7 +288,15 @@ func (s *ObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	reply, err := getFlows(server.Context(), s.log, s.ring, req)
+	return getFlowsFromObserver(req, server, s)
+}
+
+func getFlowsFromObserver(
+	req *observer.GetFlowsRequest,
+	server observer.Observer_GetFlowsServer,
+	obs Observer,
+) (err error) {
+	reply, err := getFlows(server.Context(), obs.GetLogger(), obs.GetRingBuffer(), req)
 	if err != nil {
 		return err
 	}
@@ -408,3 +462,142 @@ func getFlows(
 	}()
 	return reply, nil
 }
+
+// HandleMonitorSocket connects to the monitor socket and consumes monitor events.
+func (s *ObserverServer) HandleMonitorSocket(nodeName string) error {
+	// On EOF, retry
+	// On other errors, exit
+	// always wait connTimeout when retrying
+	for ; ; time.Sleep(api.ConnectionTimeout) {
+		conn, version, err := openMonitorSock()
+		if err != nil {
+			s.log.Error("Cannot open monitor serverSocketPath", zap.Error(err))
+			return err
+		}
+
+		err = s.consumeMonitorEvents(conn, version, nodeName)
+		switch {
+		case err == nil:
+			// no-op
+
+		case err == io.EOF, err == io.ErrUnexpectedEOF:
+			s.log.Warn("connection closed", zap.Error(err))
+			continue
+
+		default:
+			log.Fatal("decoding error", zap.Error(err))
+		}
+	}
+}
+
+// getMonitorParser constructs and returns an eventParserFunc. It is
+// appropriate for the monitor API version passed in.
+func getMonitorParser(conn net.Conn, version listener.Version, nodeName string) (parser eventParserFunc, err error) {
+	switch version {
+	case listener.Version1_2:
+		var (
+			pl  payload.Payload
+			dec = gob.NewDecoder(conn)
+		)
+		// This implements the newer 1.2 API. Each listener maintains its own gob
+		// session, and type information is only ever sent once.
+		return func() (*pb.Payload, error) {
+			if err := pl.DecodeBinary(dec); err != nil {
+				return nil, err
+			}
+			b := make([]byte, len(pl.Data))
+			copy(b, pl.Data)
+
+			// TODO: Eventually, the monitor will add these timestaps to events.
+			// For now, we add them in hubble server.
+			grpcPl := &pb.Payload{
+				Data:     b,
+				CPU:      int32(pl.CPU),
+				Lost:     pl.Lost,
+				Type:     pb.EventType(pl.Type),
+				Time:     types.TimestampNow(),
+				HostName: nodeName,
+			}
+			return grpcPl, nil
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported version %s", version)
+	}
+}
+
+// consumeMonitorEvents handles and prints events on a monitor connection. It
+// calls getMonitorParsed to construct a monitor-version appropriate parser.
+// It closes conn on return, and returns on error, including io.EOF
+func (s *ObserverServer) consumeMonitorEvents(conn net.Conn, version listener.Version, nodeName string) error {
+	defer conn.Close()
+	ch := s.GetEventsChannel()
+	endpointEvents := s.getEndpointEventsChannel()
+
+	dnsAdd := s.getLogRecordNotifyChannel()
+
+	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)
+	s.startMirroringIPCache(ipCacheEvents)
+
+	serviceEvents := make(chan monitorAPI.AgentNotify, 100)
+	s.startMirroringServiceCache(serviceEvents)
+
+	getParsedPayload, err := getMonitorParser(conn, version, nodeName)
+	if err != nil {
+		return err
+	}
+
+	for {
+		pl, err := getParsedPayload()
+		if err != nil {
+			return err
+		}
+
+		ch <- pl
+		// we don't expect to have many MessageTypeAgent so we
+		// can "decode" this messages as they come.
+		switch pl.Data[0] {
+		case monitorAPI.MessageTypeAgent:
+			buf := bytes.NewBuffer(pl.Data[1:])
+			dec := gob.NewDecoder(buf)
+
+			an := monitorAPI.AgentNotify{}
+			if err := dec.Decode(&an); err != nil {
+				fmt.Printf("Error while decoding agent notification message: %s\n", err)
+				continue
+			}
+			switch an.Type {
+			case monitorAPI.AgentNotifyEndpointCreated,
+				monitorAPI.AgentNotifyEndpointRegenerateSuccess,
+				monitorAPI.AgentNotifyEndpointDeleted:
+				endpointEvents <- an
+			case monitorAPI.AgentNotifyIPCacheUpserted,
+				monitorAPI.AgentNotifyIPCacheDeleted:
+				ipCacheEvents <- an
+			case monitorAPI.AgentNotifyServiceUpserted,
+				monitorAPI.AgentNotifyServiceDeleted:
+				serviceEvents <- an
+			}
+		case monitorAPI.MessageTypeAccessLog:
+			// TODO re-think the way this is being done. We are dissecting/
+			//      TypeAccessLog messages here *and* when we are dumping
+			//      them into JSON.
+			buf := bytes.NewBuffer(pl.Data[1:])
+			dec := gob.NewDecoder(buf)
+
+			lr := monitor.LogRecordNotify{}
+
+			if err := dec.Decode(&lr); err != nil {
+				fmt.Printf("Error while decoding access log message type: %s\n", err)
+				continue
+			}
+			if lr.DNS != nil {
+				dnsAdd <- lr
+			}
+		}
+	}
+}
+
+// eventParseFunc is a convenience function type used as a version-specific
+// parser of monitor events
+type eventParserFunc func() (*pb.Payload, error)
