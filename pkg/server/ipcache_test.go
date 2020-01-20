@@ -57,12 +57,12 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 	}
 
 	s := &ObserverServer{
-		ciliumClient:  fakeClient,
-		ipcache:       ipc,
-		log:           zap.L(),
-		ipCacheEvents: make(chan monitorAPI.AgentNotify, 100),
+		ciliumClient: fakeClient,
+		ipcache:      ipc,
+		log:          zap.L(),
 	}
 
+	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)
 	go func() {
 		id100 := uint32(100)
 		id200 := uint32(200)
@@ -70,34 +70,34 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 		// stale update, should be ignored
 		n, err := monitorAPI.IPCacheNotificationRepr("3.3.3.3/32", id100, &id200, nil, nil, 0, "", "")
 		require.NoError(t, err)
-		s.GetIPCacheChannel() <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
+		ipCacheEvents <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
 
 		// delete 2.2.2.2
 		n, err = monitorAPI.IPCacheNotificationRepr("2.2.2.2/32", id100, nil, nil, nil, 0, "", "")
 		require.NoError(t, err)
-		s.GetIPCacheChannel() <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheDeleted, Text: n}
+		ipCacheEvents <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheDeleted, Text: n}
 
 		// reinsert 2.2.2.2 with pod name
 		n, err = monitorAPI.IPCacheNotificationRepr("2.2.2.2/32", id100, nil, nil, nil, 0, "ns-2", "pod-2")
 		require.NoError(t, err)
-		s.GetIPCacheChannel() <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
+		ipCacheEvents <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
 
 		// update 1.1.1.1 with pod name
 		n, err = monitorAPI.IPCacheNotificationRepr("1.1.1.1/32", id100, &id100, nil, nil, 0, "ns-1", "pod-1")
 		require.NoError(t, err)
-		s.GetIPCacheChannel() <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
+		ipCacheEvents <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheUpserted, Text: n}
 
 		// delete 4.4.4.4
 		n, err = monitorAPI.IPCacheNotificationRepr("4.4.4.4/32", id100, nil, nil, nil, 0, "", "")
 		require.NoError(t, err)
-		s.GetIPCacheChannel() <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheDeleted, Text: n}
+		ipCacheEvents <- monitorAPI.AgentNotify{Type: monitorAPI.AgentNotifyIPCacheDeleted, Text: n}
 
-		close(s.GetIPCacheChannel())
+		close(ipCacheEvents)
 	}()
 
 	// blocks until channel is closed
-	s.syncIPCache()
-	assert.Equal(t, 0, len(s.GetIPCacheChannel()))
+	s.syncIPCache(ipCacheEvents)
+	assert.Equal(t, 0, len(ipCacheEvents))
 
 	id100 := identity.NumericIdentity(100)
 

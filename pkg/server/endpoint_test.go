@@ -87,9 +87,6 @@ var fakeDummyCiliumClient = &fakeCiliumClient{
 	fakeGetFqdnCache: func() ([]*models.DNSLookup, error) {
 		return nil, nil
 	},
-	fakeGetIPCache: func() ([]*models.IPListEntry, error) {
-		return nil, nil
-	},
 }
 
 type fakeEndpointsHandler struct {
