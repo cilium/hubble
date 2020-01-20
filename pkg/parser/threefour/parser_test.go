@@ -153,11 +153,8 @@ func TestL34Decode(t *testing.T) {
 			return nil
 		},
 	}
-	ipGetter = &testutils.FakeIPGetter{
-		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
-			return
-		},
-	}
+	ipGetter = &testutils.NoopIPGetter
+
 	parser, err = New(endpointGetter, identityCache, dnsGetter, ipGetter)
 	require.NoError(t, err)
 
@@ -197,21 +194,9 @@ func BenchmarkL34Decode(b *testing.B) {
 		129, 103, 128, 16, 1, 152, 216, 156, 0, 0, 1, 1, 8, 10, 0, 90, 176, 98, 0,
 		90, 176, 97, 0, 0}
 
-	endpointGetter := &testutils.FakeEndpointGetter{
-		OnGetEndpoint: func(ip net.IP) (*v1.Endpoint, bool) {
-			return nil, false
-		},
-	}
-	dnsGetter := &testutils.FakeDNSGetter{
-		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
-			return nil
-		},
-	}
-	ipGetter := &testutils.FakeIPGetter{
-		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
-			return
-		},
-	}
+	endpointGetter := &testutils.NoopEndpointGetter
+	dnsGetter := &testutils.NoopDNSGetter
+	ipGetter := &testutils.NoopIPGetter
 	identityCache := &testutils.NoopIdentityGetter
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
@@ -303,14 +288,16 @@ func TestDecodeDropNotify(t *testing.T) {
 	require.NoError(t, err)
 	buf.Write(buffer.Bytes())
 	require.NoError(t, err)
-	identityGetter := &testutils.FakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
-		if securityIdentity == (uint64)(dn.SrcLabel) {
-			return &models.Identity{Labels: []string{"src=label"}}, nil
-		} else if securityIdentity == (uint64)(dn.DstLabel) {
-			return &models.Identity{Labels: []string{"dst=label"}}, nil
-		}
-		return nil, fmt.Errorf("identity not found for %d", securityIdentity)
-	}}
+	identityGetter := &testutils.FakeIdentityGetter{
+		OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+			if securityIdentity == (uint64)(dn.SrcLabel) {
+				return &models.Identity{Labels: []string{"src=label"}}, nil
+			} else if securityIdentity == (uint64)(dn.DstLabel) {
+				return &models.Identity{Labels: []string{"dst=label"}}, nil
+			}
+			return nil, fmt.Errorf("identity not found for %d", securityIdentity)
+		},
+	}
 
 	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter)
 	require.NoError(t, err)
@@ -349,9 +336,11 @@ func TestDecodeLocalIdentity(t *testing.T) {
 	}
 	data, err := testutils.CreateL3L4Payload(tn)
 	require.NoError(t, err)
-	identityGetter := &testutils.FakeIdentityGetter{OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
-		return &models.Identity{Labels: []string{"some=label", "cidr:1.2.3.4/12", "cidr:1.2.3.4/11"}}, nil
-	}}
+	identityGetter := &testutils.FakeIdentityGetter{
+		OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+			return &models.Identity{Labels: []string{"some=label", "cidr:1.2.3.4/12", "cidr:1.2.3.4/11"}}, nil
+		},
+	}
 
 	parser, err := New(nil, identityGetter, nil, nil)
 	require.NoError(t, err)
