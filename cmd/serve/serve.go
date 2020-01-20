@@ -391,11 +391,8 @@ func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version liste
 	defer conn.Close()
 	ch := s.GetEventsChannel()
 	endpointEvents := s.GetEndpointEventsChannel()
-
+	ipCacheEvents := s.GetIPCacheChannel()
 	dnsAdd := s.GetLogRecordNotifyChannel()
-
-	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)
-	s.StartMirroringIPCache(ipCacheEvents)
 
 	getParsedPayload, err := getMonitorParser(conn, version)
 	if err != nil {
