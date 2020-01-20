@@ -194,16 +194,8 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 	lr.DestinationEndpoint.Port = 53
 
 	data := encodeL7Record(t, lr)
-	dnsGetter := &testutils.FakeDNSGetter{
-		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
-			return nil
-		},
-	}
-	ipGetter := &testutils.FakeIPGetter{
-		OnGetIPIdentity: func(ip net.IP) (identity ipcache.IPIdentity, ok bool) {
-			return ipcache.IPIdentity{}, false
-		},
-	}
+	dnsGetter := &testutils.NoopDNSGetter
+	ipGetter := &testutils.NoopIPGetter
 
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
@@ -282,11 +274,7 @@ func BenchmarkL7Decode(b *testing.B) {
 	lr.DestinationEndpoint.Port = 80
 
 	data := encodeL7Record(b, lr)
-	dnsGetter := &testutils.FakeDNSGetter{
-		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
-			return nil
-		},
-	}
+	dnsGetter := &testutils.NoopDNSGetter
 	ipGetter := &testutils.NoopIPGetter
 
 	timestamp := &types.Timestamp{
