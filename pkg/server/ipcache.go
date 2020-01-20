@@ -103,14 +103,9 @@ func (s *ObserverServer) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
 	return false
 }
 
-// syncIPCache will obtain an initial IPCache snapshot from Cilium
-// and then start mirroring IPCache events based on IPCacheNotification sent
-// through the ipCacheEvents channels. Only messages of type
-// `AgentNotifyIPCacheUpserted` and `AgentNotifyIPCacheDeleted` should be sent
-// through that channel. This function assumes that the caller is already
-// connected to Cilium Monitor, i.e. no IPCacheNotification must be lost after
-// calling this method.
-func (s *ObserverServer) syncIPCache() {
+// syncIPCache initializes the IPCache by fetching an initial version from
+// Cilium and then starts reading IPCacheNotification from the channel.
+func (s *ObserverServer) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
 	for {
 		err := s.fetchIPCache()
 		if err != nil {
@@ -132,7 +127,7 @@ func (s *ObserverServer) syncIPCache() {
 	refresh := time.NewTimer(ipcacheRefreshInterval)
 	inSync := false
 
-	for s.ipCacheEvents != nil {
+	for ipcacheEvents != nil {
 		select {
 		case <-refresh.C:
 			err := s.fetchIPCache()
@@ -142,7 +137,7 @@ func (s *ObserverServer) syncIPCache() {
 				continue
 			}
 			refresh.Reset(ipcacheRefreshInterval)
-		case an, ok := <-s.ipCacheEvents:
+		case an, ok := <-ipcacheEvents:
 			if !ok {
 				return
 			}

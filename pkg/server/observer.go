@@ -104,9 +104,6 @@ type ObserverServer struct {
 
 	// payloadParser decodes pb.Payload into pb.Flow
 	payloadParser *parser.Parser
-
-	// channel to receive AgentNotify events to keep ipcache up to date.
-	ipCacheEvents chan monitorAPI.AgentNotify
 }
 
 // NewServer returns a server that can store up to the given of maxFlows
@@ -134,7 +131,6 @@ func NewServer(
 		logRecord:      make(chan monitor.LogRecordNotify, 100),
 		eventschan:     make(chan *observer.GetFlowsResponse, 100),
 		payloadParser:  payloadParser,
-		ipCacheEvents:  make(chan monitorAPI.AgentNotify, 100),
 	}
 }
 
@@ -145,7 +141,6 @@ func (s *ObserverServer) Start() {
 	go s.syncFQDNCache()
 	go s.consumeEndpointEvents()
 	go s.consumeLogRecordNotifyChannel()
-	go s.syncIPCache()
 
 	for pl := range s.events {
 		flow, err := s.decodeFlow(pl)
@@ -165,9 +160,15 @@ func (s *ObserverServer) Start() {
 	close(s.stopped)
 }
 
-// GetIPCacheChannel returns the channel to receive AgentNotify events.
-func (s *ObserverServer) GetIPCacheChannel() chan<- monitorAPI.AgentNotify {
-	return s.ipCacheEvents
+// StartMirroringIPCache will obtain an initial IPCache snapshot from Cilium
+// and then start mirroring IPCache events based on IPCacheNotification sent
+// through the ipCacheEvents channels. Only messages of type
+// `AgentNotifyIPCacheUpserted` and `AgentNotifyIPCacheDeleted` should be sent
+// through that channel. This function assumes that the caller is already
+// connected to Cilium Monitor, i.e. no IPCacheNotification must be lost after
+// calling this method.
+func (s *ObserverServer) StartMirroringIPCache(ipCacheEvents <-chan monitorAPI.AgentNotify) {
+	go s.syncIPCache(ipCacheEvents)
 }
 
 // GetLogRecordNotifyChannel returns the event channel to receive
