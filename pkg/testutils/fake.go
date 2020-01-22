@@ -7,6 +7,7 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 
+	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
 )
@@ -68,6 +69,38 @@ func (f *FakeIPGetter) GetIPIdentity(ip net.IP) (id ipcache.IPIdentity, ok bool)
 var NoopIPGetter = FakeIPGetter{
 	OnGetIPIdentity: func(ip net.IP) (id ipcache.IPIdentity, ok bool) {
 		return ipcache.IPIdentity{}, false
+	},
+}
+
+// FakeServiceGetter is used for unit tests that need ServiceGetter.
+type FakeServiceGetter struct {
+	OnGetServiceByAddr func(ip net.IP, port uint16) (service pb.Service, ok bool)
+	OnGetServiceByID   func(id int64) (service pb.Service, ok bool)
+}
+
+// GetServiceByAddr implements FakeServiceGetter.GetServiceByAddr.
+func (f *FakeServiceGetter) GetServiceByAddr(ip net.IP, port uint16) (service pb.Service, ok bool) {
+	if f.OnGetServiceByAddr != nil {
+		return f.OnGetServiceByAddr(ip, port)
+	}
+	panic("OnGetServiceByAddr not set")
+}
+
+// GetServiceByID implements FakeServiceGetter.GetServiceByID.
+func (f *FakeServiceGetter) GetServiceByID(id int64) (service pb.Service, ok bool) {
+	if f.OnGetServiceByID != nil {
+		return f.OnGetServiceByID(id)
+	}
+	panic("OnGetServiceByID not set")
+}
+
+// NoopServiceGetter always returns an empty response.
+var NoopServiceGetter = FakeServiceGetter{
+	OnGetServiceByAddr: func(ip net.IP, port uint16) (service pb.Service, ok bool) {
+		return pb.Service{}, false
+	},
+	OnGetServiceByID: func(id int64) (service pb.Service, ok bool) {
+		return pb.Service{}, false
 	},
 }
 

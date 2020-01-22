@@ -32,11 +32,12 @@ import (
 )
 
 type fakeCiliumClient struct {
-	fakeEndpointList func() ([]*models.Endpoint, error)
-	fakeGetEndpoint  func(uint64) (*models.Endpoint, error)
-	fakeGetIdentity  func(uint64) (*models.Identity, error)
-	fakeGetFqdnCache func() ([]*models.DNSLookup, error)
-	fakeGetIPCache   func() ([]*models.IPListEntry, error)
+	fakeEndpointList    func() ([]*models.Endpoint, error)
+	fakeGetEndpoint     func(uint64) (*models.Endpoint, error)
+	fakeGetIdentity     func(uint64) (*models.Identity, error)
+	fakeGetFqdnCache    func() ([]*models.DNSLookup, error)
+	fakeGetIPCache      func() ([]*models.IPListEntry, error)
+	fakeGetServiceCache func() ([]*models.Service, error)
 }
 
 func (c *fakeCiliumClient) EndpointList() ([]*models.Endpoint, error) {
@@ -72,6 +73,13 @@ func (c *fakeCiliumClient) GetIPCache() ([]*models.IPListEntry, error) {
 		return c.fakeGetIPCache()
 	}
 	panic("GetIPCache() should not have been called since it was not defined")
+}
+
+func (c *fakeCiliumClient) GetServiceCache() ([]*models.Service, error) {
+	if c.fakeGetServiceCache != nil {
+		return c.fakeGetServiceCache()
+	}
+	panic("GetServiceCache() should not have been called since it was not defined")
 }
 
 var fakeDummyCiliumClient = &fakeCiliumClient{

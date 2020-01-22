@@ -39,13 +39,14 @@ import (
 
 // Parser is a parser for L7 payloads
 type Parser struct {
-	cache     *lru.Cache
-	dnsGetter getters.DNSGetter
-	ipGetter  getters.IPGetter
+	cache         *lru.Cache
+	dnsGetter     getters.DNSGetter
+	ipGetter      getters.IPGetter
+	serviceGetter getters.ServiceGetter
 }
 
 // New returns a new L7 parser
-func New(dnsGetter getters.DNSGetter, ipGetter getters.IPGetter, opts ...options.Option) (*Parser, error) {
+func New(dnsGetter getters.DNSGetter, ipGetter getters.IPGetter, serviceGetter getters.ServiceGetter, opts ...options.Option) (*Parser, error) {
 	args := &options.Options{
 		CacheSize: 10000,
 	}
@@ -60,9 +61,10 @@ func New(dnsGetter getters.DNSGetter, ipGetter getters.IPGetter, opts ...options
 	}
 
 	return &Parser{
-		cache:     cache,
-		dnsGetter: dnsGetter,
-		ipGetter:  ipGetter,
+		cache:         cache,
+		dnsGetter:     dnsGetter,
+		ipGetter:      ipGetter,
+		serviceGetter: serviceGetter,
 	}, nil
 }
 
@@ -123,11 +125,22 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 		}
 	}
 
+	l4, sourcePort, destinationPort := decodeLayer4(r.TransportProtocol, sourceEndpoint, destinationEndpoint)
+	var sourceService, destinationService *pb.Service
+	if p.serviceGetter != nil {
+		if srcService, ok := p.serviceGetter.GetServiceByAddr(sourceIP, sourcePort); ok {
+			sourceService = &srcService
+		}
+		if dstService, ok := p.serviceGetter.GetServiceByAddr(destinationIP, destinationPort); ok {
+			destinationService = &dstService
+		}
+	}
+
 	decoded.Time = pbTimestamp
 	decoded.Verdict = decodeVerdict(r.Verdict)
 	decoded.DropReason = 0
 	decoded.IP = ip
-	decoded.L4 = decodeLayer4(r.TransportProtocol, sourceEndpoint, destinationEndpoint)
+	decoded.L4 = l4
 	decoded.Source = decodeEndpoint(sourceEndpoint, sourceNamespace, sourcePod)
 	decoded.Destination = decodeEndpoint(destinationEndpoint, destinationNamespace, destinationPod)
 	decoded.Type = pb.FlowType_L7
@@ -138,6 +151,8 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 	decoded.L7.LatencyNs = p.computeResponseTime(r, timestamp)
 	decoded.Reply = decodeIsReply(r.Type)
 	decoded.EventType = decodeCiliumEventType(eventType)
+	decoded.SourceService = sourceService
+	decoded.DestinationService = destinationService
 	decoded.Summary = p.getSummary(r, decoded)
 
 	return nil
@@ -220,7 +235,7 @@ func decodeIP(version accesslog.IPVersion, source, destination accesslog.Endpoin
 	}
 }
 
-func decodeLayer4(protocol accesslog.TransportProtocol, source, destination accesslog.EndpointInfo) *pb.Layer4 {
+func decodeLayer4(protocol accesslog.TransportProtocol, source, destination accesslog.EndpointInfo) (l4 *pb.Layer4, srcPort, dstPort uint16) {
 	switch u8proto.U8proto(protocol) {
 	case u8proto.TCP:
 		return &pb.Layer4{
@@ -230,7 +245,7 @@ func decodeLayer4(protocol accesslog.TransportProtocol, source, destination acce
 					DestinationPort: uint32(destination.Port),
 				},
 			},
-		}
+		}, uint16(source.Port), uint16(destination.Port)
 	case u8proto.UDP:
 		return &pb.Layer4{
 			Protocol: &pb.Layer4_UDP{
@@ -239,9 +254,9 @@ func decodeLayer4(protocol accesslog.TransportProtocol, source, destination acce
 					DestinationPort: uint32(destination.Port),
 				},
 			},
-		}
+		}, uint16(source.Port), uint16(destination.Port)
 	default:
-		return nil
+		return nil, 0, 0
 	}
 }
 

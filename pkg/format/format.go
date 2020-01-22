@@ -75,16 +75,18 @@ func TCPPort(p layers.TCPPort) string {
 }
 
 // Hostname returns a "host:ip" formatted pair for the given ip and port. If
-// port is empty, only the host is returned. The host part is either the pod
-// name (if set), or a comman-separated list of domain names (if set), or just
-// the ip address if EnableIPTranslation is false and/or there are no pod and
-// domain names.
-func Hostname(ip, port string, ns, pod string, names []string) (host string) {
+// port is empty, only the host is returned. The host part is either the pod or
+// service name (if set), or a comma-separated list of domain names (if set),
+// or just the ip address if EnableIPTranslation is false and/or there are no
+// pod nor service name and domain names.
+func Hostname(ip, port string, ns, pod, svc string, names []string) (host string) {
 	host = ip
 	if EnableIPTranslation {
 		if pod != "" {
 			// path.Join omits the slash if ns is empty
 			host = path.Join(ns, pod)
+		} else if svc != "" {
+			host = path.Join(ns, svc)
 		} else if len(names) != 0 {
 			host = strings.Join(names, ",")
 		}

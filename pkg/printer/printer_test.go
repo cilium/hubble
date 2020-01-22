@@ -142,27 +142,25 @@ func Test_getHostNames(t *testing.T) {
 	type args struct {
 		f *pb.Flow
 	}
+	type want struct {
+		src, dst string
+	}
 	tests := []struct {
-		name  string
-		args  args
-		want  string
-		want1 string
+		name string
+		args args
+		want want
 	}{
 		{
-			name:  "nil flow",
-			args:  args{},
-			want:  "",
-			want1: "",
-		},
-		{
+			name: "nil flow",
+			args: args{},
+			want: want{},
+		}, {
 			name: "nil ip",
 			args: args{
 				f: &pb.Flow{},
 			},
-			want:  "",
-			want1: "",
-		},
-		{
+			want: want{},
+		}, {
 			name: "valid ips",
 			args: args{
 				f: &pb.Flow{
@@ -172,10 +170,11 @@ func Test_getHostNames(t *testing.T) {
 					},
 				},
 			},
-			want:  "1.1.1.1",
-			want1: "2.2.2.2",
-		},
-		{
+			want: want{
+				src: "1.1.1.1",
+				dst: "2.2.2.2",
+			},
+		}, {
 			name: "valid ips/endpoints",
 			args: args{
 				f: &pb.Flow{
@@ -193,10 +192,11 @@ func Test_getHostNames(t *testing.T) {
 					},
 				},
 			},
-			want:  "srcns/srcpod",
-			want1: "dstns/dstpod",
-		},
-		{
+			want: want{
+				src: "srcns/srcpod",
+				dst: "dstns/dstpod",
+			},
+		}, {
 			name: "valid tcp",
 			args: args{
 				f: &pb.Flow{
@@ -214,10 +214,11 @@ func Test_getHostNames(t *testing.T) {
 					},
 				},
 			},
-			want:  "1.1.1.1:55555",
-			want1: "2.2.2.2:80(http)",
-		},
-		{
+			want: want{
+				src: "1.1.1.1:55555",
+				dst: "2.2.2.2:80(http)",
+			},
+		}, {
 			name: "valid udp",
 			args: args{
 				f: &pb.Flow{
@@ -235,18 +236,80 @@ func Test_getHostNames(t *testing.T) {
 					},
 				},
 			},
-			want:  "1.1.1.1:55555",
-			want1: "2.2.2.2:53(domain)",
+			want: want{
+				src: "1.1.1.1:55555",
+				dst: "2.2.2.2:53(domain)",
+			},
+		}, {
+			name: "valid tcp service",
+			args: args{
+				f: &pb.Flow{
+					IP: &pb.IP{
+						Source:      "1.1.1.1",
+						Destination: "2.2.2.2",
+					},
+					L4: &pb.Layer4{
+						Protocol: &pb.Layer4_TCP{
+							TCP: &pb.TCP{
+								SourcePort:      55555,
+								DestinationPort: 80,
+							},
+						},
+					},
+					SourceService: &pb.Service{
+						Name:      "xwing",
+						Namespace: "default",
+					},
+					DestinationService: &pb.Service{
+						Name:      "tiefighter",
+						Namespace: "deathstar",
+					},
+				},
+			},
+			want: want{
+				src: "default/xwing:55555",
+				dst: "deathstar/tiefighter:80(http)",
+			},
+		}, {
+			name: "valid udp service",
+			args: args{
+				f: &pb.Flow{
+					IP: &pb.IP{
+						Source:      "1.1.1.1",
+						Destination: "2.2.2.2",
+					},
+					L4: &pb.Layer4{
+						Protocol: &pb.Layer4_UDP{
+							UDP: &pb.UDP{
+								SourcePort:      55555,
+								DestinationPort: 53,
+							},
+						},
+					},
+					SourceService: &pb.Service{
+						Name:      "xwing",
+						Namespace: "default",
+					},
+					DestinationService: &pb.Service{
+						Name:      "tiefighter",
+						Namespace: "deathstar",
+					},
+				},
+			},
+			want: want{
+				src: "default/xwing:55555",
+				dst: "deathstar/tiefighter:53(domain)",
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := getHostNames(tt.args.f)
-			if got != tt.want {
-				t.Errorf("getHostNames() got = %v, want %v", got, tt.want)
+			gotSrc, gotDst := getHostNames(tt.args.f)
+			if gotSrc != tt.want.src {
+				t.Errorf("getHostNames() got = %v, want %v", gotSrc, tt.want.src)
 			}
-			if got1 != tt.want1 {
-				t.Errorf("getHostNames() got1 = %v, want %v", got1, tt.want1)
+			if gotDst != tt.want.dst {
+				t.Errorf("getHostNames() got1 = %v, want %v", gotDst, tt.want.dst)
 			}
 		})
 	}

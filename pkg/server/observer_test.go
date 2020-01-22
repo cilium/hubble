@@ -28,6 +28,7 @@ import (
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/cilium/hubble/pkg/testutils"
 
 	"github.com/gogo/protobuf/types"
@@ -113,12 +114,13 @@ func (s *FakeGRPCServerStream) RecvMsg(m interface{}) error {
 func TestObserverServer_GetLastNFlows(t *testing.T) {
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 0xff)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
 	if s.ring.Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
 	}
@@ -182,12 +184,13 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 0xff)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
 	if s.ring.Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
 	}
@@ -283,12 +286,13 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 0xff)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
 	if s.ring.Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
 	}
@@ -377,12 +381,13 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	}
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
 	go s.Start()
 	m := s.GetEventsChannel()
 	eth := layers.Ethernet{
@@ -441,12 +446,13 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
 	go s.Start()
 	m := s.GetEventsChannel()
 	eth := layers.Ethernet{
@@ -519,12 +525,13 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
+	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
 	go s.Start()
 	m := s.GetEventsChannel()
 	eth := layers.Ethernet{

@@ -45,6 +45,7 @@ import (
 	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/server"
+	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
@@ -237,13 +238,14 @@ func Serve(log *zap.Logger, listenClientUrls []string) error {
 
 	ipCache := ipcache.New()
 	fqdnCache := fqdncache.New()
+	serviceCache := servicecache.New()
 	endpoints := v1.NewEndpoints()
 	podGetter := &server.LegacyPodGetter{
 		PodGetter:      ipCache,
 		EndpointGetter: endpoints,
 	}
 
-	payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter)
+	payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
 	if err != nil {
 		return err
 	}
@@ -253,6 +255,7 @@ func Serve(log *zap.Logger, listenClientUrls []string) error {
 		endpoints,
 		ipCache,
 		fqdnCache,
+		serviceCache,
 		payloadParser,
 		int(maxFlows),
 	)
@@ -397,6 +400,9 @@ func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version liste
 	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)
 	s.StartMirroringIPCache(ipCacheEvents)
 
+	serviceEvents := make(chan monitorAPI.AgentNotify, 100)
+	s.StartMirroringServiceCache(serviceEvents)
+
 	getParsedPayload, err := getMonitorParser(conn, version)
 	if err != nil {
 		return err
@@ -426,10 +432,12 @@ func consumeMonitorEvents(s *server.ObserverServer, conn net.Conn, version liste
 				monitorAPI.AgentNotifyEndpointRegenerateSuccess,
 				monitorAPI.AgentNotifyEndpointDeleted:
 				endpointEvents <- an
-			case monitorAPI.AgentNotifyIPCacheUpserted:
+			case monitorAPI.AgentNotifyIPCacheUpserted,
+				monitorAPI.AgentNotifyIPCacheDeleted:
 				ipCacheEvents <- an
-			case monitorAPI.AgentNotifyIPCacheDeleted:
-				ipCacheEvents <- an
+			case monitorAPI.AgentNotifyServiceUpserted,
+				monitorAPI.AgentNotifyServiceDeleted:
+				serviceEvents <- an
 			}
 		case monitorAPI.MessageTypeAccessLog:
 			// TODO re-think the way this is being done. We are dissecting/

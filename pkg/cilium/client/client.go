@@ -85,6 +85,15 @@ func (c *Cilium) GetIPCache() ([]*models.IPListEntry, error) {
 	return ips.Payload, nil
 }
 
+// GetServiceCache retrieves the contents of the Cilium service cache.
+func (c *Cilium) GetServiceCache() ([]*models.Service, error) {
+	svcs, err := c.Client.Service.GetService(nil)
+	if err != nil {
+		return nil, err
+	}
+	return svcs.Payload, nil
+}
+
 // IsIPCacheNotFoundErr is true if the IPCache fetch error was a 404
 func IsIPCacheNotFoundErr(err error) bool {
 	_, ok := err.(*ciliumPolicy.GetIPNotFound)

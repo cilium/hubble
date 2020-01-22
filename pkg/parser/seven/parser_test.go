@@ -54,6 +54,7 @@ var (
 		ID:       4321,
 		IPv4:     "10.16.32.20",
 		IPv6:     "f00d::a10:0:0:1234",
+		Port:     80,
 		Identity: 6789,
 		Labels:   []string{"k3=v3", "k4=v4"},
 	}
@@ -122,13 +123,24 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 			return
 		},
 	}
+	serviceGetter := &testutils.FakeServiceGetter{
+		OnGetServiceByAddr: func(ip net.IP, port uint16) (service pb.Service, ok bool) {
+			if ip.Equal(net.ParseIP(fakeDestinationEndpoint.IPv4)) && (port == fakeDestinationEndpoint.Port) {
+				return pb.Service{
+					Name:      "service-1234",
+					Namespace: "default",
+				}, true
+			}
+			return
+		},
+	}
 
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, IPGetter)
+	parser, err := New(dnsGetter, IPGetter, serviceGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -147,6 +159,8 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 	assert.Equal(t, fakeSourceEndpoint.Labels, f.GetDestination().GetLabels())
 	assert.Equal(t, "", f.GetDestination().GetNamespace())
 	assert.Equal(t, "", f.GetDestination().GetPodName())
+	assert.Equal(t, "", f.GetDestinationService().GetNamespace())
+	assert.Equal(t, "", f.GetDestinationService().GetName())
 
 	assert.Equal(t, fakeDestinationEndpoint.IPv4, f.GetIP().GetSource())
 	assert.Equal(t, uint32(80), f.GetL4().GetTCP().GetSourcePort())
@@ -154,6 +168,8 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 	assert.Equal(t, fakeDestinationEndpoint.Labels, f.GetSource().GetLabels())
 	assert.Equal(t, "default", f.GetSource().GetNamespace())
 	assert.Equal(t, "pod-1234", f.GetSource().GetPodName())
+	assert.Equal(t, "default", f.GetSourceService().GetNamespace())
+	assert.Equal(t, "service-1234", f.GetSourceService().GetName())
 
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, nodeName, f.GetNodeName())
@@ -196,13 +212,14 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 	data := encodeL7Record(t, lr)
 	dnsGetter := &testutils.NoopDNSGetter
 	ipGetter := &testutils.NoopIPGetter
+	serviceGetter := &testutils.NoopServiceGetter
 
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, ipGetter)
+	parser, err := New(dnsGetter, ipGetter, serviceGetter)
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -223,6 +240,8 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 	assert.Equal(t, fakeSourceEndpoint.Labels, f.GetDestination().GetLabels())
 	assert.Equal(t, "", f.GetDestination().GetNamespace())
 	assert.Equal(t, "", f.GetDestination().GetPodName())
+	assert.Equal(t, "", f.GetDestinationService().GetNamespace())
+	assert.Equal(t, "", f.GetDestinationService().GetName())
 
 	assert.Equal(t, fakeDestinationEndpoint.IPv6, f.GetIP().GetSource())
 	assert.Equal(t, uint32(53), f.GetL4().GetUDP().GetSourcePort())
@@ -230,6 +249,8 @@ func TestDecodeL7DNSRecord(t *testing.T) {
 	assert.Equal(t, fakeDestinationEndpoint.Labels, f.GetSource().GetLabels())
 	assert.Equal(t, "", f.GetSource().GetNamespace())
 	assert.Equal(t, "", f.GetSource().GetPodName())
+	assert.Equal(t, "", f.GetSourceService().GetNamespace())
+	assert.Equal(t, "", f.GetSourceService().GetName())
 
 	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
 	assert.Equal(t, nodeName, f.GetNodeName())
@@ -276,13 +297,14 @@ func BenchmarkL7Decode(b *testing.B) {
 	data := encodeL7Record(b, lr)
 	dnsGetter := &testutils.NoopDNSGetter
 	ipGetter := &testutils.NoopIPGetter
+	serviceGetter := &testutils.NoopServiceGetter
 
 	timestamp := &types.Timestamp{
 		Seconds: 1234,
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(dnsGetter, ipGetter)
+	parser, err := New(dnsGetter, ipGetter, serviceGetter)
 	require.NoError(b, err)
 
 	f := &pb.Flow{}
@@ -318,7 +340,7 @@ func TestDecodeResponseTime(t *testing.T) {
 	requestTimestamp := time.Unix(0, 0).Format(time.RFC3339Nano)
 	responseTimestamp := time.Unix(1, 0).Format(time.RFC3339Nano)
 
-	parser, err := New(nil, nil)
+	parser, err := New(nil, nil, nil)
 	require.NoError(t, err)
 
 	requestPayload := &pb.Payload{
