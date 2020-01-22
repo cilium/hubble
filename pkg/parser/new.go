@@ -37,15 +37,16 @@ func New(
 	identityGetter getters.IdentityGetter,
 	dnsGetter getters.DNSGetter,
 	ipGetter getters.IPGetter,
+	serviceGetter getters.ServiceGetter,
 	opts ...options.Option,
 ) (*Parser, error) {
 
-	l34, err := threefour.New(endpointGetter, identityGetter, dnsGetter, ipGetter)
+	l34, err := threefour.New(endpointGetter, identityGetter, dnsGetter, ipGetter, serviceGetter)
 	if err != nil {
 		return nil, err
 	}
 
-	l7, err := seven.New(dnsGetter, ipGetter, opts...)
+	l7, err := seven.New(dnsGetter, ipGetter, serviceGetter, opts...)
 	if err != nil {
 		return nil, err
 	}

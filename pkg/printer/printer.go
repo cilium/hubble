@@ -112,7 +112,7 @@ func getPorts(f v1.Flow) (string, string) {
 }
 
 func getHostNames(f v1.Flow) (string, string) {
-	var srcNamespace, dstNamespace, srcPodName, dstPodName string
+	var srcNamespace, dstNamespace, srcPodName, dstPodName, srcSvcName, dstSvcName string
 	if f == nil || f.GetIP() == nil {
 		return "", ""
 	}
@@ -124,9 +124,17 @@ func getHostNames(f v1.Flow) (string, string) {
 		dstNamespace = dst.Namespace
 		dstPodName = dst.PodName
 	}
+	if svc := f.GetSourceService(); svc != nil {
+		srcNamespace = svc.Namespace
+		srcSvcName = svc.Name
+	}
+	if svc := f.GetDestinationService(); svc != nil {
+		dstNamespace = svc.Namespace
+		dstSvcName = svc.Name
+	}
 	srcPort, dstPort := getPorts(f)
-	src := format.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, f.GetSourceNames())
-	dst := format.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, f.GetSourceNames())
+	src := format.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, srcSvcName, f.GetSourceNames())
+	dst := format.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetSourceNames())
 	return src, dst
 }
 

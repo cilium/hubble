@@ -31,6 +31,7 @@ import (
 	"github.com/cilium/hubble/pkg/metrics"
 	"github.com/cilium/hubble/pkg/parser"
 	parserErrors "github.com/cilium/hubble/pkg/parser/errors"
+	"github.com/cilium/hubble/pkg/servicecache"
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/math"
@@ -46,6 +47,7 @@ type ciliumClient interface {
 	GetIdentity(id uint64) (*models.Identity, error)
 	GetFqdnCache() ([]*models.DNSLookup, error)
 	GetIPCache() ([]*models.IPListEntry, error)
+	GetServiceCache() ([]*models.Service, error)
 }
 
 type endpointsHandler interface {
@@ -90,6 +92,9 @@ type ObserverServer struct {
 	// ipcache is a mirror of Cilium's IPCache
 	ipcache *ipcache.IPCache
 
+	// serviceCache is a cache that contains information about services.
+	serviceCache *servicecache.ServiceCache
+
 	// epAdd is a channel used to exchange endpoint events from Cilium
 	endpointEvents chan monitorAPI.AgentNotify
 
@@ -113,6 +118,7 @@ func NewServer(
 	endpoints endpointsHandler,
 	ipCache *ipcache.IPCache,
 	fqdnCache fqdnCache,
+	serviceCache *servicecache.ServiceCache,
 	payloadParser *parser.Parser,
 	maxFlows int,
 ) *ObserverServer {
@@ -127,6 +133,7 @@ func NewServer(
 		endpoints:      endpoints,
 		ipcache:        ipCache,
 		fqdnCache:      fqdnCache,
+		serviceCache:   serviceCache,
 		endpointEvents: make(chan monitorAPI.AgentNotify, 100),
 		logRecord:      make(chan monitor.LogRecordNotify, 100),
 		eventschan:     make(chan *observer.GetFlowsResponse, 100),
@@ -169,6 +176,17 @@ func (s *ObserverServer) Start() {
 // calling this method.
 func (s *ObserverServer) StartMirroringIPCache(ipCacheEvents <-chan monitorAPI.AgentNotify) {
 	go s.syncIPCache(ipCacheEvents)
+}
+
+// StartMirroringServiceCache initially caches service information from Cilium
+// and then starts to mirror service information based on events that are sent
+// to the serviceEvents channel. Only messages of type
+// `AgentNotifyServiceUpserted` and `AgentNotifyServiceDeleted` should be sent
+// to this channel.  This function assumes that the caller is already connected
+// to Cilium Monitor, i.e. no Service notification must be lost after calling
+// this method.
+func (s *ObserverServer) StartMirroringServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
+	go s.syncServiceCache(serviceEvents)
 }
 
 // GetLogRecordNotifyChannel returns the event channel to receive

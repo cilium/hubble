@@ -43,6 +43,7 @@ type Parser struct {
 	identityGetter getters.IdentityGetter
 	dnsGetter      getters.DNSGetter
 	ipGetter       getters.IPGetter
+	serviceGetter  getters.ServiceGetter
 
 	// TODO: consider using a pool of these
 	packet *packet
@@ -68,6 +69,7 @@ func New(
 	identityGetter getters.IdentityGetter,
 	dnsGetter getters.DNSGetter,
 	ipGetter getters.IPGetter,
+	serviceGetter getters.ServiceGetter,
 ) (*Parser, error) {
 	packet := &packet{}
 	packet.decLayer = gopacket.NewDecodingLayerParser(
@@ -80,6 +82,7 @@ func New(
 		endpointGetter: endpointGetter,
 		identityGetter: identityGetter,
 		ipGetter:       ipGetter,
+		serviceGetter:  serviceGetter,
 		packet:         packet,
 	}, nil
 }
@@ -127,7 +130,7 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 		return err
 	}
 
-	ether, ip, l4, srcIP, dstIP, summary := decodeLayers(p.packet)
+	ether, ip, l4, srcIP, dstIP, srcPort, dstPort, summary := decodeLayers(p.packet)
 	if tn != nil && !tn.OriginalIP().IsUnspecified() {
 		srcIP = tn.OriginalIP()
 		if ip != nil {
@@ -138,6 +141,15 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 	srcLabelID, dstLabelID := decodeSecurityIdentities(dn, tn)
 	srcEndpoint := p.resolveEndpoint(srcIP, srcLabelID)
 	dstEndpoint := p.resolveEndpoint(dstIP, dstLabelID)
+	var sourceService, destinationService *pb.Service
+	if p.serviceGetter != nil {
+		if srcService, ok := p.serviceGetter.GetServiceByAddr(srcIP, srcPort); ok {
+			sourceService = &srcService
+		}
+		if dstService, ok := p.serviceGetter.GetServiceByAddr(dstIP, dstPort); ok {
+			destinationService = &dstService
+		}
+	}
 
 	decoded.Time = payload.Time
 	decoded.Verdict = decodeVerdict(eventType)
@@ -154,6 +166,8 @@ func (p *Parser) Decode(payload *pb.Payload, decoded *pb.Flow) error {
 	decoded.L7 = nil
 	decoded.Reply = decodeIsReply(tn)
 	decoded.EventType = decodeCiliumEventType(eventType, eventSubType)
+	decoded.SourceService = sourceService
+	decoded.DestinationService = destinationService
 	decoded.Summary = summary
 
 	return nil
@@ -259,6 +273,7 @@ func decodeLayers(packet *packet) (
 	ip *pb.IP,
 	l4 *pb.Layer4,
 	sourceIP, destinationIP net.IP,
+	sourcePort, destinationPort uint16,
 	summary string) {
 	for _, typ := range packet.Layers {
 		summary = typ.String()
@@ -270,10 +285,10 @@ func decodeLayers(packet *packet) (
 		case layers.LayerTypeIPv6:
 			ip, sourceIP, destinationIP = decodeIPv6(&packet.IPv6)
 		case layers.LayerTypeTCP:
-			l4 = decodeTCP(&packet.TCP)
+			l4, sourcePort, destinationPort = decodeTCP(&packet.TCP)
 			summary = "TCP Flags: " + getTCPFlags(packet.TCP)
 		case layers.LayerTypeUDP:
-			l4 = decodeUDP(&packet.UDP)
+			l4, sourcePort, destinationPort = decodeUDP(&packet.UDP)
 		case layers.LayerTypeICMPv4:
 			l4 = decodeICMPv4(&packet.ICMPv4)
 			summary = "ICMPv4 " + packet.ICMPv4.TypeCode.String()
@@ -327,7 +342,7 @@ func decodeIPv6(ipv6 *layers.IPv6) (ip *pb.IP, src, dst net.IP) {
 	}, ipv6.SrcIP, ipv6.DstIP
 }
 
-func decodeTCP(tcp *layers.TCP) *pb.Layer4 {
+func decodeTCP(tcp *layers.TCP) (l4 *pb.Layer4, src, dst uint16) {
 	return &pb.Layer4{
 		Protocol: &pb.Layer4_TCP{
 			TCP: &pb.TCP{
@@ -340,10 +355,10 @@ func decodeTCP(tcp *layers.TCP) *pb.Layer4 {
 				},
 			},
 		},
-	}
+	}, uint16(tcp.SrcPort), uint16(tcp.DstPort)
 }
 
-func decodeUDP(udp *layers.UDP) *pb.Layer4 {
+func decodeUDP(udp *layers.UDP) (l4 *pb.Layer4, src, dst uint16) {
 	return &pb.Layer4{
 		Protocol: &pb.Layer4_UDP{
 			UDP: &pb.UDP{
@@ -351,7 +366,7 @@ func decodeUDP(udp *layers.UDP) *pb.Layer4 {
 				DestinationPort: uint32(udp.DstPort),
 			},
 		},
-	}
+	}, uint16(udp.SrcPort), uint16(udp.DstPort)
 }
 
 func decodeICMPv4(icmp *layers.ICMPv4) *pb.Layer4 {

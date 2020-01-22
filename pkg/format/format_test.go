@@ -51,9 +51,13 @@ func TestHostname(t *testing.T) {
 	}()
 
 	EnableIPTranslation = true
-	assert.Equal(t, "default/pod", Hostname("", "", "default", "pod", []string{}))
-	assert.Equal(t, "a,b", Hostname("", "", "", "", []string{"a", "b"}))
+	assert.Equal(t, "default/pod", Hostname("", "", "default", "pod", "", []string{}))
+	assert.Equal(t, "default/pod", Hostname("", "", "default", "pod", "service", []string{}))
+	assert.Equal(t, "default/service", Hostname("", "", "default", "", "service", []string{}))
+	assert.Equal(t, "a,b", Hostname("", "", "", "", "", []string{"a", "b"}))
 	EnableIPTranslation = false
-	assert.Equal(t, "1.1.1.1:80", Hostname("1.1.1.1", "80", "default", "pod", []string{}))
-	assert.Equal(t, "1.1.1.1", Hostname("1.1.1.1", "0", "default", "pod", []string{}))
+	assert.Equal(t, "1.1.1.1:80", Hostname("1.1.1.1", "80", "default", "pod", "", []string{}))
+	assert.Equal(t, "1.1.1.1:80", Hostname("1.1.1.1", "80", "default", "pod", "service", []string{}))
+	assert.Equal(t, "1.1.1.1", Hostname("1.1.1.1", "0", "default", "pod", "", []string{}))
+	assert.Equal(t, "1.1.1.1", Hostname("1.1.1.1", "0", "default", "pod", "service", []string{}))
 }
