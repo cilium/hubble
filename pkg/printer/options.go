@@ -37,12 +37,13 @@ const (
 
 // Options for the printer.
 type Options struct {
-	output      Output
-	w           io.Writer
-	werr        io.Writer
-	withNewLine bool
+	output Output
+	w      io.Writer
+	werr   io.Writer
 	// Use json.Encoder instead of gojay
-	withJSONEncoder bool
+	withJSONEncoder       bool
+	enablePortTranslation bool
+	enableIPTranslation   bool
 }
 
 // Option ...
@@ -76,13 +77,6 @@ func Writer(w io.Writer) Option {
 	}
 }
 
-// WithNewLine sets the output to have a new line appended on each line.
-func WithNewLine() Option {
-	return func(opts *Options) {
-		opts.withNewLine = true
-	}
-}
-
 // WithJSONEncoder configures the JSON output to use json.Encoder instead of gojay.
 func WithJSONEncoder() Option {
 	return func(opts *Options) {
@@ -94,5 +88,19 @@ func WithJSONEncoder() Option {
 func IgnoreStderr() Option {
 	return func(opts *Options) {
 		opts.werr = os.NewFile(uintptr(syscall.Stderr), os.DevNull)
+	}
+}
+
+// SetPortTranslation sets the flag to translate port numbers to port names, i.e. `80` becomes `80(http)`.
+func SetPortTranslation(enabled bool) Option {
+	return func(opts *Options) {
+		opts.enablePortTranslation = enabled
+	}
+}
+
+// SetIPTranslation sets the flag to translate IPs to pod names, FQDNs, and service names.
+func SetIPTranslation(enabled bool) Option {
+	return func(opts *Options) {
+		opts.enableIPTranslation = enabled
 	}
 }

@@ -33,19 +33,6 @@ import (
 	"github.com/cilium/cilium/pkg/monitor/agent/listener"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/cilium/pkg/monitor/payload"
-	pb "github.com/cilium/hubble/api/v1/flow"
-	"github.com/cilium/hubble/api/v1/observer"
-	"github.com/cilium/hubble/pkg/api"
-	v1 "github.com/cilium/hubble/pkg/api/v1"
-	"github.com/cilium/hubble/pkg/cilium/client"
-	"github.com/cilium/hubble/pkg/format"
-	"github.com/cilium/hubble/pkg/fqdncache"
-	"github.com/cilium/hubble/pkg/ipcache"
-	"github.com/cilium/hubble/pkg/metrics"
-	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
-	"github.com/cilium/hubble/pkg/parser"
-	"github.com/cilium/hubble/pkg/server"
-	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
@@ -53,12 +40,23 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/api"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/cilium/client"
+	"github.com/cilium/hubble/pkg/fqdncache"
+	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/metrics"
+	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
+	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/server"
+	"github.com/cilium/hubble/pkg/servicecache"
 )
 
 // New ...
 func New(log *zap.Logger) *cobra.Command {
-	var numeric bool
-
 	serverCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start gRPC server",
@@ -66,11 +64,6 @@ func New(log *zap.Logger) *cobra.Command {
 			err := validateArgs(log)
 			if err != nil {
 				log.Fatal("failed to parse arguments", zap.Error(err))
-			}
-
-			if numeric {
-				format.EnableIPTranslation = false
-				format.EnablePortTranslation = false
 			}
 
 			if gopsVar {
@@ -103,9 +96,6 @@ func New(log *zap.Logger) *cobra.Command {
 	serverCmd.Flags().StringVar(&serveDurationVar, "duration", "", "Shut the server down after this duration")
 	serverCmd.Flags().StringVar(&nodeName, "node-name", os.Getenv(envNodeName), "Node name where hubble is running (defaults to value set in env variable '"+envNodeName+"'")
 
-	serverCmd.Flags().BoolVarP(&numeric, "numeric", "n", false, "Display all information in numeric form")
-	serverCmd.Flags().BoolVar(&format.EnablePortTranslation, "port-translation", true, "Translate port numbers to names")
-	serverCmd.Flags().BoolVar(&format.EnableIPTranslation, "ip-translation", true, "Translate IP addresses to logical names such as pod name, FQDN, ...")
 	serverCmd.Flags().StringSliceVar(&enabledMetrics, "metric", []string{}, "Enable metrics reporting")
 	serverCmd.Flags().StringVar(&metricsServer, "metrics-server", "", "Address to serve metrics on")
 

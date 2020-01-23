@@ -17,18 +17,28 @@ package printer
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
+	"path"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/flow"
-	v1 "github.com/cilium/hubble/pkg/api/v1"
-	"github.com/cilium/hubble/pkg/format"
 	"github.com/francoispqt/gojay"
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gopacket/layers"
+
+	pb "github.com/cilium/hubble/api/v1/flow"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 )
+
+// additional named ports that are related to hubble and cilium, which do
+// not appear in the "well known" list of Golang ports... yet.
+var namedPorts = map[int]string{
+	4240: "cilium-health",
+}
 
 // Encoder for flows.
 type Encoder interface {
@@ -96,22 +106,22 @@ func (p *Printer) WriteErr(msg string) error {
 	return err
 }
 
-func getPorts(f v1.Flow) (string, string) {
+func (p *Printer) getPorts(f v1.Flow) (string, string) {
 	l4 := f.GetL4()
 	if l4 == nil {
 		return "", ""
 	}
 	switch l4.Protocol.(type) {
 	case *pb.Layer4_TCP:
-		return format.TCPPort(layers.TCPPort(l4.GetTCP().SourcePort)), format.TCPPort(layers.TCPPort(l4.GetTCP().DestinationPort))
+		return p.TCPPort(layers.TCPPort(l4.GetTCP().SourcePort)), p.TCPPort(layers.TCPPort(l4.GetTCP().DestinationPort))
 	case *pb.Layer4_UDP:
-		return format.UDPPort(layers.UDPPort(l4.GetUDP().SourcePort)), format.UDPPort(layers.UDPPort(l4.GetUDP().DestinationPort))
+		return p.UDPPort(layers.UDPPort(l4.GetUDP().SourcePort)), p.UDPPort(layers.UDPPort(l4.GetUDP().DestinationPort))
 	default:
 		return "", ""
 	}
 }
 
-func getHostNames(f v1.Flow) (string, string) {
+func (p *Printer) getHostNames(f v1.Flow) (string, string) {
 	var srcNamespace, dstNamespace, srcPodName, dstPodName, srcSvcName, dstSvcName string
 	if f == nil || f.GetIP() == nil {
 		return "", ""
@@ -132,9 +142,9 @@ func getHostNames(f v1.Flow) (string, string) {
 		dstNamespace = svc.Namespace
 		dstSvcName = svc.Name
 	}
-	srcPort, dstPort := getPorts(f)
-	src := format.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, srcSvcName, f.GetSourceNames())
-	dst := format.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetSourceNames())
+	srcPort, dstPort := p.getPorts(f)
+	src := p.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, srcSvcName, f.GetSourceNames())
+	dst := p.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetSourceNames())
 	return src, dst
 }
 
@@ -146,7 +156,7 @@ func getTimestamp(f v1.Flow) string {
 	if err != nil {
 		return "N/A"
 	}
-	return format.MaybeTime(&ts)
+	return MaybeTime(&ts)
 }
 
 func getFlowType(f v1.Flow) string {
@@ -189,7 +199,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 				return err
 			}
 		}
-		src, dst := getHostNames(f)
+		src, dst := p.getHostNames(f)
 		_, err := fmt.Fprint(p.tw,
 			getTimestamp(f), tab,
 			src, tab,
@@ -209,7 +219,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 				return err
 			}
 		}
-		src, dst := getHostNames(f)
+		src, dst := p.getHostNames(f)
 		// this is a little crude, but will do for now. should probably find the
 		// longest header and auto-format the keys
 		_, err := fmt.Fprint(p.opts.w,
@@ -224,7 +234,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
 	case CompactOutput:
-		src, dst := getHostNames(f)
+		src, dst := p.getHostNames(f)
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s [%s]: %s -> %s %s %s (%s)\n",
 			getTimestamp(f),
@@ -243,4 +253,62 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 	}
 	p.line++
 	return nil
+}
+
+// MaybeTime returns a Millisecond precision timestamp, or "N/A" if nil.
+func MaybeTime(t *time.Time) string {
+	if t != nil {
+		// TODO: support more date formats through options to `hubble observe`
+		return t.Format(time.StampMilli)
+	}
+	return "N/A"
+}
+
+// UDPPort ...
+func (p *Printer) UDPPort(port layers.UDPPort) string {
+	i := int(port)
+	if !p.opts.enablePortTranslation {
+		return strconv.Itoa(i)
+	}
+	if name, ok := namedPorts[i]; ok {
+		return fmt.Sprintf("%v(%v)", i, name)
+	}
+	return port.String()
+}
+
+// TCPPort ...
+func (p *Printer) TCPPort(port layers.TCPPort) string {
+	i := int(port)
+	if !p.opts.enablePortTranslation {
+		return strconv.Itoa(i)
+	}
+	if name, ok := namedPorts[i]; ok {
+		return fmt.Sprintf("%v(%v)", i, name)
+	}
+	return port.String()
+}
+
+// Hostname returns a "host:ip" formatted pair for the given ip and port. If
+// port is empty, only the host is returned. The host part is either the pod or
+// service name (if set), or a comma-separated list of domain names (if set),
+// or just the ip address if EnableIPTranslation is false and/or there are no
+// pod nor service name and domain names.
+func (p *Printer) Hostname(ip, port string, ns, pod, svc string, names []string) (host string) {
+	host = ip
+	if p.opts.enableIPTranslation {
+		if pod != "" {
+			// path.Join omits the slash if ns is empty
+			host = path.Join(ns, pod)
+		} else if svc != "" {
+			host = path.Join(ns, svc)
+		} else if len(names) != 0 {
+			host = strings.Join(names, ",")
+		}
+	}
+
+	if port != "" && port != "0" {
+		return net.JoinHostPort(host, port)
+	}
+
+	return host
 }
