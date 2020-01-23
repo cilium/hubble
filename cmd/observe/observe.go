@@ -271,8 +271,12 @@ func handleArgs(
 		enableIPTranslation = false
 		enablePortTranslation = false
 	}
-	opts = append(opts, hubprinter.SetIPTranslation(enableIPTranslation))
-	opts = append(opts, hubprinter.SetPortTranslation(enablePortTranslation))
+	if enableIPTranslation {
+		opts = append(opts, hubprinter.WithIPTranslation())
+	}
+	if enablePortTranslation {
+		opts = append(opts, hubprinter.WithPortTranslation())
+	}
 	printer = hubprinter.New(opts...)
 	return nil
 }

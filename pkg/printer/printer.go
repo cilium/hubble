@@ -106,7 +106,8 @@ func (p *Printer) WriteErr(msg string) error {
 	return err
 }
 
-func (p *Printer) getPorts(f v1.Flow) (string, string) {
+// GetPorts returns source and destination port of a flow.
+func (p *Printer) GetPorts(f v1.Flow) (string, string) {
 	l4 := f.GetL4()
 	if l4 == nil {
 		return "", ""
@@ -121,7 +122,8 @@ func (p *Printer) getPorts(f v1.Flow) (string, string) {
 	}
 }
 
-func (p *Printer) getHostNames(f v1.Flow) (string, string) {
+// GetHostNames returns source and destination hostnames of a flow.
+func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
 	var srcNamespace, dstNamespace, srcPodName, dstPodName, srcSvcName, dstSvcName string
 	if f == nil || f.GetIP() == nil {
 		return "", ""
@@ -142,7 +144,7 @@ func (p *Printer) getHostNames(f v1.Flow) (string, string) {
 		dstNamespace = svc.Namespace
 		dstSvcName = svc.Name
 	}
-	srcPort, dstPort := p.getPorts(f)
+	srcPort, dstPort := p.GetPorts(f)
 	src := p.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, srcSvcName, f.GetSourceNames())
 	dst := p.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetSourceNames())
 	return src, dst
@@ -159,7 +161,8 @@ func getTimestamp(f v1.Flow) string {
 	return MaybeTime(&ts)
 }
 
-func getFlowType(f v1.Flow) string {
+// GetFlowType returns the type of a flow as a string.
+func GetFlowType(f v1.Flow) string {
 	if f == nil || f.GetEventType() == nil {
 		return "UNKNOWN"
 	}
@@ -199,12 +202,12 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 				return err
 			}
 		}
-		src, dst := p.getHostNames(f)
+		src, dst := p.GetHostNames(f)
 		_, err := fmt.Fprint(p.tw,
 			getTimestamp(f), tab,
 			src, tab,
 			dst, tab,
-			getFlowType(f), tab,
+			GetFlowType(f), tab,
 			f.GetVerdict().String(), tab,
 			f.GetSummary(), newline,
 		)
@@ -219,14 +222,14 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 				return err
 			}
 		}
-		src, dst := p.getHostNames(f)
+		src, dst := p.GetHostNames(f)
 		// this is a little crude, but will do for now. should probably find the
 		// longest header and auto-format the keys
 		_, err := fmt.Fprint(p.opts.w,
 			"  TIMESTAMP: ", getTimestamp(f), newline,
 			"     SOURCE: ", src, newline,
 			"DESTINATION: ", dst, newline,
-			"       TYPE: ", getFlowType(f), newline,
+			"       TYPE: ", GetFlowType(f), newline,
 			"    VERDICT: ", f.GetVerdict().String(), newline,
 			"    SUMMARY: ", f.GetSummary(), newline,
 		)
@@ -234,14 +237,14 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
 	case CompactOutput:
-		src, dst := p.getHostNames(f)
+		src, dst := p.GetHostNames(f)
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s [%s]: %s -> %s %s %s (%s)\n",
 			getTimestamp(f),
 			f.GetNodeName(),
 			src,
 			dst,
-			getFlowType(f),
+			GetFlowType(f),
 			f.GetVerdict().String(),
 			f.GetSummary(),
 		)
