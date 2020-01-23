@@ -18,11 +18,14 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-
-	"github.com/gogo/protobuf/types"
-	"github.com/stretchr/testify/require"
+	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/gogo/protobuf/types"
+	"github.com/google/gopacket/layers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	pb "github.com/cilium/hubble/api/v1/flow"
 )
 
@@ -66,6 +69,7 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 		{
 			name: "tabular",
 			options: []Option{
+				SetPortTranslation(true),
 				Writer(&buf),
 			},
 			args: args{
@@ -79,6 +83,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			name: "compact",
 			options: []Option{
 				Compact(),
+				SetPortTranslation(true),
 				Writer(&buf),
 			},
 			args: args{
@@ -111,6 +116,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			name: "dict",
 			options: []Option{
 				Dict(),
+				SetPortTranslation(true),
 				Writer(&buf),
 			},
 			args: args{
@@ -302,9 +308,10 @@ func Test_getHostNames(t *testing.T) {
 			},
 		},
 	}
+	p := New(SetPortTranslation(true), SetIPTranslation(true))
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSrc, gotDst := getHostNames(tt.args.f)
+			gotSrc, gotDst := p.getHostNames(tt.args.f)
 			if gotSrc != tt.want.src {
 				t.Errorf("getHostNames() got = %v, want %v", gotSrc, tt.want.src)
 			}
@@ -469,4 +476,34 @@ func Test_getFlowType(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMaybeTime(t *testing.T) {
+	assert.Equal(t, "N/A", MaybeTime(nil))
+
+	mt := time.Date(2018, time.July, 07, 17, 30, 0, 123000000, time.UTC)
+	assert.Equal(t, "Jul  7 17:30:00.123", MaybeTime(&mt))
+}
+
+func TestPorts(t *testing.T) {
+	p := New(SetPortTranslation(true))
+	assert.Equal(t, "80(http)", p.UDPPort(layers.UDPPort(80)))
+	assert.Equal(t, "443(https)", p.TCPPort(layers.TCPPort(443)))
+	assert.Equal(t, "4240(cilium-health)", p.TCPPort(layers.TCPPort(4240)))
+	p = New()
+	assert.Equal(t, "80", p.UDPPort(layers.UDPPort(80)))
+	assert.Equal(t, "443", p.TCPPort(layers.TCPPort(443)))
+}
+
+func TestHostname(t *testing.T) {
+	p := New(SetIPTranslation(true))
+	assert.Equal(t, "default/pod", p.Hostname("", "", "default", "pod", "", []string{}))
+	assert.Equal(t, "default/pod", p.Hostname("", "", "default", "pod", "service", []string{}))
+	assert.Equal(t, "default/service", p.Hostname("", "", "default", "", "service", []string{}))
+	assert.Equal(t, "a,b", p.Hostname("", "", "", "", "", []string{"a", "b"}))
+	p = New()
+	assert.Equal(t, "1.1.1.1:80", p.Hostname("1.1.1.1", "80", "default", "pod", "", []string{}))
+	assert.Equal(t, "1.1.1.1:80", p.Hostname("1.1.1.1", "80", "default", "pod", "service", []string{}))
+	assert.Equal(t, "1.1.1.1", p.Hostname("1.1.1.1", "0", "default", "pod", "", []string{}))
+	assert.Equal(t, "1.1.1.1", p.Hostname("1.1.1.1", "0", "default", "pod", "service", []string{}))
 }

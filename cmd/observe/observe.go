@@ -25,29 +25,31 @@ import (
 	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/flow"
-	"github.com/cilium/hubble/api/v1/observer"
-	"github.com/cilium/hubble/pkg/api"
-	"github.com/cilium/hubble/pkg/format"
-	hubprinter "github.com/cilium/hubble/pkg/printer"
-	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/api"
+	hubprinter "github.com/cilium/hubble/pkg/printer"
+	hubtime "github.com/cilium/hubble/pkg/time"
 )
 
 var (
 	last               uint64
 	sinceVar, untilVar string
 
-	jsonOutput    bool
-	compactOutput bool
-	dictOutput    bool
-	follow        bool
-	ignoreStderr  bool
+	jsonOutput            bool
+	compactOutput         bool
+	dictOutput            bool
+	follow                bool
+	ignoreStderr          bool
+	enableIPTranslation   bool
+	enablePortTranslation bool
 
 	printer *hubprinter.Printer
 
@@ -219,14 +221,14 @@ programs attached to endpoints and devices. This includes:
 	)
 
 	observerCmd.Flags().BoolVar(
-		&format.EnablePortTranslation,
+		&enablePortTranslation,
 		"port-translation",
 		true,
 		"Translate port numbers to names",
 	)
 
 	observerCmd.Flags().BoolVar(
-		&format.EnableIPTranslation,
+		&enableIPTranslation,
 		"ip-translation",
 		true,
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
@@ -265,13 +267,13 @@ func handleArgs(
 	if ignoreStderr {
 		opts = append(opts, hubprinter.IgnoreStderr())
 	}
-	printer = hubprinter.New(opts...)
-
 	if numeric {
-		format.EnableIPTranslation = false
-		format.EnablePortTranslation = false
+		enableIPTranslation = false
+		enablePortTranslation = false
 	}
-
+	opts = append(opts, hubprinter.SetIPTranslation(enableIPTranslation))
+	opts = append(opts, hubprinter.SetPortTranslation(enablePortTranslation))
+	printer = hubprinter.New(opts...)
 	return nil
 }
 
