@@ -69,7 +69,7 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 		{
 			name: "tabular",
 			options: []Option{
-				SetPortTranslation(true),
+				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
@@ -83,7 +83,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			name: "compact",
 			options: []Option{
 				Compact(),
-				SetPortTranslation(true),
+				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
@@ -116,7 +116,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			name: "dict",
 			options: []Option{
 				Dict(),
-				SetPortTranslation(true),
+				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
@@ -308,15 +308,15 @@ func Test_getHostNames(t *testing.T) {
 			},
 		},
 	}
-	p := New(SetPortTranslation(true), SetIPTranslation(true))
+	p := New(WithPortTranslation(), WithIPTranslation())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSrc, gotDst := p.getHostNames(tt.args.f)
+			gotSrc, gotDst := p.GetHostNames(tt.args.f)
 			if gotSrc != tt.want.src {
-				t.Errorf("getHostNames() got = %v, want %v", gotSrc, tt.want.src)
+				t.Errorf("GetHostNames() got = %v, want %v", gotSrc, tt.want.src)
 			}
 			if gotDst != tt.want.dst {
-				t.Errorf("getHostNames() got1 = %v, want %v", gotDst, tt.want.dst)
+				t.Errorf("GetHostNames() got1 = %v, want %v", gotDst, tt.want.dst)
 			}
 		})
 	}
@@ -471,8 +471,8 @@ func Test_getFlowType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getFlowType(tt.args.f); got != tt.want {
-				t.Errorf("getFlowType() = %v, want %v", got, tt.want)
+			if got := GetFlowType(tt.args.f); got != tt.want {
+				t.Errorf("GetFlowType() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -486,7 +486,7 @@ func TestMaybeTime(t *testing.T) {
 }
 
 func TestPorts(t *testing.T) {
-	p := New(SetPortTranslation(true))
+	p := New(WithPortTranslation())
 	assert.Equal(t, "80(http)", p.UDPPort(layers.UDPPort(80)))
 	assert.Equal(t, "443(https)", p.TCPPort(layers.TCPPort(443)))
 	assert.Equal(t, "4240(cilium-health)", p.TCPPort(layers.TCPPort(4240)))
@@ -496,7 +496,7 @@ func TestPorts(t *testing.T) {
 }
 
 func TestHostname(t *testing.T) {
-	p := New(SetIPTranslation(true))
+	p := New(WithIPTranslation())
 	assert.Equal(t, "default/pod", p.Hostname("", "", "default", "pod", "", []string{}))
 	assert.Equal(t, "default/pod", p.Hostname("", "", "default", "pod", "service", []string{}))
 	assert.Equal(t, "default/service", p.Hostname("", "", "default", "", "service", []string{}))

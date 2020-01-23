@@ -91,16 +91,16 @@ func IgnoreStderr() Option {
 	}
 }
 
-// SetPortTranslation sets the flag to translate port numbers to port names, i.e. `80` becomes `80(http)`.
-func SetPortTranslation(enabled bool) Option {
+// WithPortTranslation enables translation from port numbers to port names, i.e. `80` becomes `80(http)`.
+func WithPortTranslation() Option {
 	return func(opts *Options) {
-		opts.enablePortTranslation = enabled
+		opts.enablePortTranslation = true
 	}
 }
 
-// SetIPTranslation sets the flag to translate IPs to pod names, FQDNs, and service names.
-func SetIPTranslation(enabled bool) Option {
+// WithIPTranslation enables translation from IPs to pod names, FQDNs, and service names.
+func WithIPTranslation() Option {
 	return func(opts *Options) {
-		opts.enableIPTranslation = enabled
+		opts.enableIPTranslation = true
 	}
 }
