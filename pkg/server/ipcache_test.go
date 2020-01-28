@@ -60,6 +60,7 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 		ciliumClient: fakeClient,
 		ipcache:      ipc,
 		log:          zap.L(),
+		grpcServer:   getNoopGRPCServer(),
 	}
 
 	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)

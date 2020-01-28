@@ -31,6 +31,7 @@ import (
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/metrics"
 	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
 	"github.com/cilium/hubble/pkg/parser"
@@ -97,10 +98,16 @@ func New(log *zap.Logger) *cobra.Command {
 				serviceCache,
 				payloadParser,
 				int(maxFlows),
+				logger.GetLogger(),
 			)
-			err = Serve(log, listenClientUrls, s)
+			s.Start()
+			err = Serve(log, listenClientUrls, s.GetGRPCServer())
 			if err != nil {
 				log.Fatal("", zap.Error(err))
+			}
+			fmt.Printf("Press Ctrl-C to quit\n")
+			if err := s.HandleMonitorSocket(nodeName); err != nil {
+				log.Fatal("HandleMonitorSocket failed", zap.Error(err))
 			}
 		},
 	}
@@ -229,14 +236,13 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(log *zap.Logger, listenClientUrls []string, s server.Observer) error {
+func Serve(log *zap.Logger, listenClientUrls []string, s server.GRPCServer) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err
 	}
 
 	serverStart = time.Now()
-	go s.Start()
 
 	if serveDuration != 0 {
 		// Register a server shutdown
@@ -269,8 +275,7 @@ func Serve(log *zap.Logger, listenClientUrls []string, s server.Observer) error 
 	}
 
 	setupSigHandler()
-	fmt.Printf("Press Ctrl-C to quit\n")
-	return s.HandleMonitorSocket(nodeName)
+	return nil
 }
 
 func setupSigHandler() {

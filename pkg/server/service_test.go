@@ -66,6 +66,7 @@ func TestObserverServer_syncServiceCache(t *testing.T) {
 		ciliumClient: fakeClient,
 		serviceCache: svcc,
 		log:          zap.L(),
+		grpcServer:   getNoopGRPCServer(),
 	}
 
 	serviceCacheEvents := make(chan monitorAPI.AgentNotify, 100)

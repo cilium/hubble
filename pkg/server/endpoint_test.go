@@ -25,10 +25,11 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-
-	v1 "github.com/cilium/hubble/pkg/api/v1"
 )
 
 type fakeCiliumClient struct {
@@ -152,6 +153,16 @@ func (f *fakeEndpointsHandler) GarbageCollect() {
 	panic("GarbageCollect() should not have been called since it was not defined")
 }
 
+func getNoopGRPCServer() GRPCServer {
+	pp, _ := parser.New(
+		&testutils.NoopEndpointGetter,
+		&testutils.NoopIdentityGetter,
+		&testutils.NoopDNSGetter,
+		&testutils.NoopIPGetter,
+		&testutils.NoopServiceGetter)
+	return NewLocalServer(pp, 10, zap.NewNop())
+}
+
 func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	refreshEndpointList = 50 * time.Millisecond
 	var (
@@ -227,6 +238,7 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		ciliumClient: fakeClient,
 		endpoints:    fakeHandler,
 		log:          zap.L(),
+		grpcServer:   getNoopGRPCServer(),
 	}
 	go s.syncEndpoints()
 
@@ -350,6 +362,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
+		grpcServer:     getNoopGRPCServer(),
 	}
 	go s.consumeEndpointEvents()
 
@@ -374,6 +387,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
+		grpcServer:     getNoopGRPCServer(),
 	}
 	go s.consumeEndpointEvents()
 
@@ -415,6 +429,7 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
+		grpcServer:     getNoopGRPCServer(),
 	}
 	go s.consumeEndpointEvents()
 
@@ -479,6 +494,7 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
+		grpcServer:     getNoopGRPCServer(),
 	}
 	go s.consumeEndpointEvents()
 

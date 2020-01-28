@@ -21,16 +21,15 @@ import (
 
 	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/cilium/hubble/pkg/testutils"
-
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/assert"
@@ -120,14 +119,14 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
-	if s.ring.Cap() != 0x100 {
-		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
+	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
+		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
 	go s.Start()
 
-	m := s.GetEventsChannel()
-	for i := uint64(0); i < s.ring.Cap(); i++ {
+	m := s.GetGRPCServer().GetEventsChannel()
+	for i := uint64(0); i < s.GetGRPCServer().GetRingBuffer().Cap(); i++ {
 		tn := monitor.TraceNotifyV0{
 			Type: byte(monitorAPI.MessageTypeTrace),
 			Hash: uint32(i),
@@ -142,11 +141,11 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
-	<-s.stopped
+	<-s.GetGRPCServer().GetStopped()
 
 	// We could use s.ring.LastWrite() but the Server uses LastWriteParallel
 	// so we should use LastWriteParallel in testing as well
-	if lastWrite := s.ring.LastWriteParallel(); lastWrite != 0xfe {
+	if lastWrite := s.GetGRPCServer().GetRingBuffer().LastWriteParallel(); lastWrite != 0xfe {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
@@ -168,7 +167,7 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 			},
 		},
 	}
-	err = s.GetFlows(req, fakeServer)
+	err = s.GetGRPCServer().GetFlows(req, fakeServer)
 	if err != nil {
 		t.Errorf("GetLastNFlows error = %v, wantErr %v", err, nil)
 	}
@@ -190,14 +189,14 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
-	if s.ring.Cap() != 0x100 {
-		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
+	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
+		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
 	go s.Start()
 
-	m := s.GetEventsChannel()
-	for i := uint64(0); i < s.ring.Cap(); i++ {
+	m := s.GetGRPCServer().GetEventsChannel()
+	for i := uint64(0); i < s.GetGRPCServer().GetRingBuffer().Cap(); i++ {
 		tn := monitor.TraceNotifyV0{
 			Type: byte(monitorAPI.MessageTypeTrace),
 			Hash: uint32(i),
@@ -212,11 +211,11 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
-	<-s.stopped
+	<-s.GetGRPCServer().GetStopped()
 
 	// We could use s.ring.LastWrite() but the Server uses LastWriteParallel
 	// so we should use LastWriteParallel in testing as well
-	if lastWrite := s.ring.LastWriteParallel(); lastWrite != 0xfe {
+	if lastWrite := s.GetGRPCServer().GetRingBuffer().LastWriteParallel(); lastWrite != 0xfe {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
@@ -247,7 +246,7 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 		},
 	}
 	go func() {
-		err := s.GetFlows(req, fakeServer)
+		err := s.GetGRPCServer().GetFlows(req, fakeServer)
 		if err != nil {
 			t.Errorf("GetLastNFlows error = %v, wantErr %v", err, nil)
 		}
@@ -259,9 +258,9 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	}
 
 	// hacky to restart the events consumer.
-	s.events = make(chan *pb.Payload, 10)
+	s.grpcServer.SetEventsChannel(make(chan *pb.Payload, 10))
 	go s.Start()
-	m = s.GetEventsChannel()
+	m = s.GetGRPCServer().GetEventsChannel()
 
 	for i := uint64(0); i < 2; i++ {
 		tn := monitor.TraceNotifyV0{
@@ -270,7 +269,7 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 		}
 		data := testutils.MustCreateL3L4Payload(tn)
 		pl := &pb.Payload{
-			Time: &types.Timestamp{Seconds: int64(i + s.ring.Cap())},
+			Time: &types.Timestamp{Seconds: int64(i + s.GetGRPCServer().GetRingBuffer().Cap())},
 			Type: pb.EventType_EventSample,
 			Data: data,
 		}
@@ -292,15 +291,15 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff)
-	if s.ring.Cap() != 0x100 {
-		t.Errorf("s.ring.Len() got = %#v, want %#v", s.ring.Cap(), 0x100)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
+	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
+		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
 	go s.Start()
 
-	m := s.GetEventsChannel()
+	m := s.GetGRPCServer().GetEventsChannel()
 	var payloads []*pb.Payload
-	for i := uint64(0); i < s.ring.Cap(); i++ {
+	for i := uint64(0); i < s.GetGRPCServer().GetRingBuffer().Cap(); i++ {
 		tn := monitor.TraceNotifyV0{
 			Type: byte(monitorAPI.MessageTypeTrace),
 			Hash: uint32(i),
@@ -316,11 +315,11 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	}
 	// Make sure all flows were consumed by the server
 	close(m)
-	<-s.stopped
+	<-s.GetGRPCServer().GetStopped()
 
 	// We could use s.ring.LastWrite() but the Server uses LastWriteParallel
 	// so we should use LastWriteParallel in testing as well
-	if lastWrite := s.ring.LastWriteParallel(); lastWrite != 0xfe {
+	if lastWrite := s.GetGRPCServer().GetRingBuffer().LastWriteParallel(); lastWrite != 0xfe {
 		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0xfe)
 	}
 
@@ -343,7 +342,7 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 			},
 		},
 	}
-	err = s.GetFlows(req, fakeServer)
+	err = s.GetGRPCServer().GetFlows(req, fakeServer)
 	if err != nil {
 		t.Errorf("GetFlowsBetween error = %v, wantErr %v", err, nil)
 	}
@@ -387,9 +386,9 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())
 	go s.Start()
-	m := s.GetEventsChannel()
+	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{
 		EthernetType: layers.EthernetTypeIPv4,
 		SrcMAC:       net.HardwareAddr{1, 2, 3, 4, 5, 6},
@@ -400,7 +399,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 		DstIP: net.ParseIP("2.2.2.2"),
 	}
 	tcp := layers.TCP{}
-	ch := s.GetEventsChannel()
+	ch := s.GetGRPCServer().GetEventsChannel()
 	for i := 0; i < numFlows; i++ {
 		data, err := testutils.CreateL3L4Payload(monitor.DropNotify{Type: monitorAPI.MessageTypeDrop}, &eth, &ip, &tcp)
 		require.NoError(t, err)
@@ -411,8 +410,8 @@ func TestObserverServer_GetFlows(t *testing.T) {
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 	}
 	close(ch)
-	<-s.stopped
-	err = s.GetFlows(&observer.GetFlowsRequest{
+	<-s.GetGRPCServer().GetStopped()
+	err = s.GetGRPCServer().GetFlows(&observer.GetFlowsRequest{
 		Number: 10,
 		Whitelist: []*pb.FlowFilter{
 			{
@@ -452,9 +451,9 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())
 	go s.Start()
-	m := s.GetEventsChannel()
+	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{
 		EthernetType: layers.EthernetTypeIPv4,
 		SrcMAC:       net.HardwareAddr{1, 2, 3, 4, 5, 6},
@@ -470,7 +469,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	}
 	tcp := layers.TCP{}
 	udp := layers.UDP{}
-	ch := s.GetEventsChannel()
+	ch := s.GetGRPCServer().GetEventsChannel()
 	for i := 0; i < numFlows; i++ {
 		// flow which is matched by the whitelist (to be included)
 		data, err := testutils.CreateL3L4Payload(monitor.DropNotify{Type: monitorAPI.MessageTypeDrop}, &eth, &ip, &tcp)
@@ -486,8 +485,8 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 	}
 	close(ch)
-	<-s.stopped
-	err = s.GetFlows(&observer.GetFlowsRequest{
+	<-s.GetGRPCServer().GetStopped()
+	err = s.GetGRPCServer().GetFlows(&observer.GetFlowsRequest{
 		Number: uint64(numFlows),
 		Whitelist: []*pb.FlowFilter{
 			{SourceIp: []string{"1.1.1.1"}, EventType: allTypes},
@@ -531,9 +530,9 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30)
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())
 	go s.Start()
-	m := s.GetEventsChannel()
+	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{
 		EthernetType: layers.EthernetTypeIPv4,
 		SrcMAC:       net.HardwareAddr{1, 2, 3, 4, 5, 6},
@@ -554,7 +553,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 		m <- &pb.Payload{Type: pb.EventType_EventSample, Data: data}
 	}
 	close(m)
-	<-s.stopped
+	<-s.GetGRPCServer().GetStopped()
 
 	// pod exist so we will be able to get flows
 	flowFilter := []*pb.FlowFilter{
@@ -567,7 +566,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 			},
 		},
 	}
-	err = s.GetFlows(&observer.GetFlowsRequest{Whitelist: flowFilter, Number: 5}, fakeServer)
+	err = s.GetGRPCServer().GetFlows(&observer.GetFlowsRequest{Whitelist: flowFilter, Number: 5}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
 }

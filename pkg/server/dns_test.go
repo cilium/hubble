@@ -99,9 +99,10 @@ func TestObserverServer_consumeLogRecordNotifyChannel(t *testing.T) {
 	}
 
 	s := &ObserverServer{
-		fqdnCache: fakeFQDNCache,
-		logRecord: make(chan monitorAPI.LogRecordNotify, 1),
-		log:       zap.L(),
+		fqdnCache:  fakeFQDNCache,
+		logRecord:  make(chan monitorAPI.LogRecordNotify, 1),
+		log:        zap.L(),
+		grpcServer: getNoopGRPCServer(),
 	}
 	go s.consumeLogRecordNotifyChannel()
 
