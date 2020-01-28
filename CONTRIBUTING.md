@@ -17,7 +17,3 @@ Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct)
 Code of Conduct. Only by respecting each other can we develop a productive,
 collaborative community. If you would like to report a violation of the code of
 contact, please contact any of the maintainers.
-
-## Development Requirements
-
- * go dep >= 0.5.4 (`curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh`)
