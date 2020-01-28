@@ -16,14 +16,42 @@ package server
 
 import (
 	"context"
+	"io"
+	"strings"
+	"time"
 
 	"github.com/cilium/cilium/pkg/math"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/container"
+	"github.com/cilium/hubble/pkg/filters"
+	"github.com/cilium/hubble/pkg/metrics"
 	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/parser/errors"
+	"github.com/gogo/protobuf/types"
 	"go.uber.org/zap"
 )
+
+// GRPCServer defines the interface for Hubble gRPC server, extending the
+// auto-generated ObserverServer interface from the protobuf definition.
+type GRPCServer interface {
+	observer.ObserverServer
+	// Start starts the server and blocks.
+	Start()
+	// GetEventsChannel returns the channel to push monitor events to.
+	GetEventsChannel() chan *pb.Payload
+	// SetEventsChannel sets the events channel. For unit testing only.
+	SetEventsChannel(chan *pb.Payload)
+	///GetRingBuffer returns the underlying ring buffer to parsed events.
+	GetRingBuffer() *container.Ring
+	// GetStopped returns a channel that gets closed at the end of the
+	// main server loop after all the events have been processes. Used
+	// in unit testing.
+	GetStopped() chan struct{}
+	// GetLogger returns the logger assigned to this gRPC server.
+	GetLogger() *zap.Logger
+}
 
 // LocalObserverServer is an implementation of the server.Observer interface
 // that's meant to be run embedded inside the Cilium process. It ignores all
@@ -66,10 +94,24 @@ func NewLocalServer(
 	}
 }
 
-// Start starts the server to handle the events sent to the events channel as
-// well as handle events to the EpAdd and EpDel channels.
+// Start implements GRPCServer.Start.
 func (s *LocalObserverServer) Start() {
-	processEvents(s)
+	for pl := range s.GetEventsChannel() {
+		flow, err := decodeFlow(s.payloadParser, pl)
+		if err != nil {
+			if !errors.IsErrInvalidType(err) {
+				s.log.Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
+			}
+			continue
+		}
+
+		metrics.ProcessFlow(flow)
+		s.GetRingBuffer().Write(&v1.Event{
+			Timestamp: pl.Time,
+			Event:     flow,
+		})
+	}
+	close(s.GetStopped())
 }
 
 // GetEventsChannel returns the event channel to receive pb.Payload events.
@@ -77,22 +119,27 @@ func (s *LocalObserverServer) GetEventsChannel() chan *pb.Payload {
 	return s.events
 }
 
-// GetRingBuffer implements Observer.GetRingBuffer.
+// SetEventsChannel implements GRPCServer.SetEventsChannel.
+func (s *LocalObserverServer) SetEventsChannel(events chan *pb.Payload) {
+	s.events = events
+}
+
+// GetRingBuffer implements GRPCServer.GetRingBuffer.
 func (s *LocalObserverServer) GetRingBuffer() *container.Ring {
 	return s.ring
 }
 
-// GetLogger implements Observer.GetLogger.
+// GetLogger implements GRPCServer.GetLogger.
 func (s *LocalObserverServer) GetLogger() *zap.Logger {
 	return s.log
 }
 
-// GetStopped implements Observer.GetStopped.
+// GetStopped implements GRPCServer.GetStopped.
 func (s *LocalObserverServer) GetStopped() chan struct{} {
 	return s.stopped
 }
 
-// GetPayloadParser implements Observer.GetPayloadParser.
+// GetPayloadParser implements GRPCServer.GetPayloadParser.
 func (s *LocalObserverServer) GetPayloadParser() *parser.Parser {
 	return s.payloadParser
 }
@@ -101,7 +148,10 @@ func (s *LocalObserverServer) GetPayloadParser() *parser.Parser {
 func (s *LocalObserverServer) ServerStatus(
 	ctx context.Context, req *observer.ServerStatusRequest,
 ) (*observer.ServerStatusResponse, error) {
-	return getServerStatusFromObserver(s)
+	return &observer.ServerStatusResponse{
+		MaxFlows: s.GetRingBuffer().Cap(),
+		NumFlows: s.GetRingBuffer().Len(),
+	}, nil
 }
 
 // GetFlows implements the proto method for client requests.
@@ -112,7 +162,229 @@ func (s *LocalObserverServer) GetFlows(
 	return getFlows(req, server, s)
 }
 
-// HandleMonitorSocket is a noop for local server since it doesn't connect to the monitor socket.
-func (s *LocalObserverServer) HandleMonitorSocket(nodeName string) error {
-	return nil
+func getFlows(
+	req *observer.GetFlowsRequest,
+	server observer.Observer_GetFlowsServer,
+	obs GRPCServer,
+) (err error) {
+	start := time.Now()
+	log := obs.GetLogger()
+	ring := obs.GetRingBuffer()
+
+	i := uint64(0)
+	defer func() {
+		log.Debug(
+			"GetFlows finished",
+			zap.Uint64("number_of_flows", i),
+			zap.Uint64("buffer_size", ring.Cap()),
+			zap.String("whitelist", logFilters(req.Whitelist)),
+			zap.String("blacklist", logFilters(req.Blacklist)),
+			zap.Duration("took", time.Now().Sub(start)),
+		)
+	}()
+
+	ringReader, err := newRingReader(server.Context(), ring, req)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return err
+	}
+	flowsReader, err := newFlowsReader(ringReader, req, log)
+	if err != nil {
+		return err
+	}
+
+	for ; ; i++ {
+		flow, err := flowsReader.Next(server.Context())
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+		err = server.Send(&observer.GetFlowsResponse{
+			ResponseTypes: &observer.GetFlowsResponse_Flow{
+				Flow: flow,
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+}
+
+func getUntil(req *observer.GetFlowsRequest, defaultTime *types.Timestamp) (time.Time, error) {
+	until := req.GetUntil()
+	if until == nil {
+		until = defaultTime
+	}
+	return types.TimestampFromProto(until)
+}
+
+func logFilters(filters []*pb.FlowFilter) string {
+	var s []string
+	for _, f := range filters {
+		s = append(s, f.String())
+	}
+	return "{" + strings.Join(s, ",") + "}"
+}
+
+func decodeFlow(payloadParser *parser.Parser, pl *pb.Payload) (*pb.Flow, error) {
+	// TODO: Pool these instead of allocating new flows each time.
+	f := &pb.Flow{}
+	err := payloadParser.Decode(pl, f)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
+// flowsReader reads flows using a RingReader. It applies the flow request
+// criterias (blacklist, whitelist, follow, ...) before returning flows.
+type flowsReader struct {
+	ringReader           *container.RingReader
+	whitelist, blacklist filters.FilterFuncs
+	maxFlows             uint64
+	follow, timeRange    bool
+	flowsCount           uint64
+	start, end           time.Time
+}
+
+// newFlowsReader creates a new flowsReader that uses the given RingReader to
+// read through the ring buffer. Only flows that match the request criterias
+// are returned.
+func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *zap.Logger) (*flowsReader, error) {
+	whitelist, err := filters.BuildFilterList(req.Whitelist)
+	if err != nil {
+		return nil, err
+	}
+	blacklist, err := filters.BuildFilterList(req.Blacklist)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug("creating a new flowsReader",
+		zap.Any("req", req),
+		zap.Any("whitelist", whitelist),
+		zap.Any("blacklist", blacklist),
+	)
+
+	reader := &flowsReader{
+		ringReader: r,
+		whitelist:  whitelist,
+		blacklist:  blacklist,
+		maxFlows:   req.Number,
+		follow:     req.Follow,
+		timeRange:  !req.Follow && req.Number == 0,
+	}
+	if reader.timeRange { // apply time range filtering
+		reader.start, err = types.TimestampFromProto(req.GetSince())
+		if err != nil {
+			return nil, err
+		}
+		reader.end, err = getUntil(req, types.TimestampNow())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return reader, nil
+}
+
+// Next returns the next flow that matches the request criterias.
+func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		if r.maxFlows > 0 && !r.follow && (r.flowsCount >= r.maxFlows) {
+			return nil, io.EOF
+		}
+		e := r.ringReader.Next(ctx)
+		if e == nil {
+			// if the buffer is not full, we might receive nil values
+			// just keep reading then
+			continue
+		}
+		flow, ok := e.Event.(*pb.Flow)
+		if ok && filters.Apply(r.whitelist, r.blacklist, e) {
+			if r.timeRange {
+				ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
+				if err != nil {
+					return nil, err
+				}
+				if ts.After(r.end) {
+					return nil, io.EOF
+				}
+				if ts.Before(r.start) {
+					continue
+				}
+			}
+			r.flowsCount++
+			return flow, nil
+		}
+	}
+}
+
+// newRingReader creates a new RingReader that starts at the correct ring
+// offset to match the flow request.
+func newRingReader(ctx context.Context, ring *container.Ring, req *observer.GetFlowsRequest) (*container.RingReader, error) {
+	if req.Follow && req.Number == 0 { // no need to rewind
+		return container.NewRingReader(ring, ring.LastWriteParallel()), nil
+	}
+
+	var err error
+	var start time.Time
+	since := req.GetSince()
+	if since != nil {
+		start, err = types.TimestampFromProto(since)
+		if err != nil {
+			return nil, err
+		}
+	}
+	whitelist, err := filters.BuildFilterList(req.Whitelist)
+	if err != nil {
+		return nil, err
+	}
+	blacklist, err := filters.BuildFilterList(req.Blacklist)
+	if err != nil {
+		return nil, err
+	}
+
+	idx := ring.LastWriteParallel()
+	reader := container.NewRingReader(ring, idx)
+
+	var flowsCount uint64
+	// We need to find out what the right index is; that is the index with the
+	// oldest entry that is within time range boundaries (if any is defined)
+	// or until we find enough events.
+	// In order to avoid buffering events, we have to rewind first to find the
+	// correct index, then create a new reader that starts from there
+	for i := ring.Len(); i > 0; i, idx = i-1, idx-1 {
+		e := reader.Previous(ctx)
+		if e == nil {
+			continue
+		}
+		_, ok := e.Event.(*pb.Flow)
+		if !ok || !filters.Apply(whitelist, blacklist, e) {
+			continue
+		}
+		flowsCount++
+		if since != nil {
+			ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
+			if err != nil {
+				return nil, err
+			}
+			if ts.Before(start) {
+				idx++ // we went backward 1 too far
+				break
+			}
+		} else if flowsCount == req.Number {
+			break // we went backward far enough
+		}
+	}
+	return container.NewRingReader(ring, idx), nil
 }
