@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   name: hubble-ui
 spec:
-  replicas: 1
+  replicas: {{ .Values.ui.replicas }}
   selector:
     matchLabels:
       k8s-app: hubble-ui
