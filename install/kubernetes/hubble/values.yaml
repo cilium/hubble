@@ -42,7 +42,7 @@ ui:
   enabled: false
   image:
     # repository of the docker image
-    repository: quay.io/isovalent/hubble-ui
+    repository: quay.io/cilium/hubble-ui
     # tag is the container image tag to use
     tag: latest
     # pullPolicy is the container image pull policy
