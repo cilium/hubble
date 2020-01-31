@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Hubble
+// Copyright 2019-2020 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ func BenchmarkRingRead(b *testing.B) {
 	b.ResetTimer()
 	lastWriteIdx := s.LastWriteParallel()
 	for i := 0; i < b.N; i++ {
-		a[i], _ = s.Read(lastWriteIdx)
+		a[i], _ = s.read(lastWriteIdx)
 		lastWriteIdx--
 	}
 }
@@ -288,12 +288,12 @@ func TestRing_Read(t *testing.T) {
 				cycleExp:  tt.fields.cycleExp,
 				cycleMask: ^uint64(0) >> tt.fields.cycleExp,
 			}
-			got, got1 := r.Read(tt.args.read)
+			got, got1 := r.read(tt.args.read)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Ring.Read() got = %v, want %v", got, tt.want)
+				t.Errorf("Ring.read() got = %v, want %v", got, tt.want)
 			}
 			if got1 != tt.want1 {
-				t.Errorf("Ring.Read() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("Ring.read() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
@@ -501,7 +501,7 @@ func TestRingFunctionalityInParallel(t *testing.T) {
 		t.Errorf("lastWrite should be 0x0. Got %x", lastWrite)
 	}
 
-	entry, ok := r.Read(lastWrite)
+	entry, ok := r.read(lastWrite)
 	if !ok {
 		t.Errorf("Should be able to read position %x", lastWrite)
 	}
@@ -509,7 +509,7 @@ func TestRingFunctionalityInParallel(t *testing.T) {
 		t.Errorf("Read Event should be %+v, got %+v instead", &types.Timestamp{Seconds: 0}, entry.Timestamp)
 	}
 	lastWrite--
-	entry, ok = r.Read(lastWrite)
+	entry, ok = r.read(lastWrite)
 	if !ok {
 		t.Errorf("Should be able to read position %x", lastWrite)
 	}
@@ -543,12 +543,12 @@ func TestRingFunctionalitySerialized(t *testing.T) {
 		t.Errorf("lastWrite should be 0x1. Got %x", lastWrite)
 	}
 
-	entry, ok := r.Read(lastWrite)
+	entry, ok := r.read(lastWrite)
 	if ok {
 		t.Errorf("Should not be able to read position %x", lastWrite)
 	}
 	lastWrite--
-	entry, ok = r.Read(lastWrite)
+	entry, ok = r.read(lastWrite)
 	if !ok {
 		t.Errorf("Should be able to read position %x", lastWrite)
 	}
@@ -583,7 +583,7 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 	}
 
 	stop := make(chan struct{})
-	ch := r.ReadFrom(stop, 0)
+	ch := r.readFrom(stop, 0)
 	i := int64(0)
 	for entry := range ch {
 		if !entry.Timestamp.Equal(&types.Timestamp{Seconds: i}) {
@@ -629,7 +629,7 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 	stop := make(chan struct{})
 	// We should be able to read from a previou 'cycles' and ReadFrom will
 	// be able to catch up with the writer.
-	ch := r.ReadFrom(stop, ^uint64(0)-15)
+	ch := r.readFrom(stop, ^uint64(0)-15)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
@@ -690,7 +690,7 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 	stop := make(chan struct{})
 	// We should be able to read from a previous 'cycle' and ReadFrom will
 	// be able to catch up with the writer.
-	ch := r.ReadFrom(stop, ^uint64(0)-30)
+	ch := r.readFrom(stop, ^uint64(0)-30)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
