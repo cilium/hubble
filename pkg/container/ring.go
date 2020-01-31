@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Hubble
+// Copyright 2019-2020 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package container implements a ring buffer that can be accessible by multiple
-// readers.
-//
-// To iterate over a PayloadRing (where t is the PayloadRing):
-// 	for lastWritePos := t.LastWriteParallel(); ; lastWritePos-- {
-// 	    value, stop := s.Read(lastWriteIdx)
-//      if stop {
-//          break
-//      }
-//      // do something with value
-// 	}
-//
-// Write is *not* being executed in parallel you can use
-// 	for lastWritePos := t.LastWrite(); ; lastWritePos-- {
-// 	    value, stop := s.Read(lastWriteIdx)
-//      if stop {
-//          break
-//      }
-//      // do something with value
-// 	}
-//
+// Package container implements a ring buffer that can be accessed by multiple
+// RingReader readers.
 package container
 
 import (
@@ -139,9 +120,9 @@ func (r *Ring) LastWrite() uint64 {
 	return atomic.LoadUint64(&r.write) - 1
 }
 
-// Read reads the *v1.Event from the given read position. Returns false if
+// read reads the *v1.Event from the given read position. Returns false if
 // that position is no longer available to be read, returns true otherwise.
-func (r *Ring) Read(read uint64) (*v1.Event, bool) {
+func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	readIdx := read & r.mask
 	flow := r.data[readIdx]
 
@@ -173,9 +154,9 @@ func (r *Ring) Read(read uint64) (*v1.Event, bool) {
 	return nil, false
 }
 
-// ReadFrom continues to read from the given position until the stop channel
+// readFrom continues to read from the given position until the stop channel
 // is closed.
-func (r *Ring) ReadFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
+func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 	// TODO should we create the channel or the caller?
 	const returnedBufferChLen = 1000
 	ch := make(chan *v1.Event, returnedBufferChLen)
