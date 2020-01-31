@@ -109,7 +109,7 @@ func (s *LocalObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	return getFlowsFromObserver(req, server, s)
+	return getFlows(req, server, s)
 }
 
 // HandleMonitorSocket is a noop for local server since it doesn't connect to the monitor socket.

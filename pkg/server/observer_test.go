@@ -329,7 +329,7 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 		Until:     &types.Timestamp{Seconds: 7, Nanos: 0},
 		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
 	}
-	got := make([]*observer.GetFlowsResponse, 4, 4)
+	got := make([]*observer.GetFlowsResponse, 6, 6)
 	i := 0
 	fakeServer := &FakeGetFlowsServer{
 		OnSend: func(response *observer.GetFlowsResponse) error {
@@ -348,8 +348,8 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 		t.Errorf("GetFlowsBetween error = %v, wantErr %v", err, nil)
 	}
 
-	for i := 0; i < 4; i++ {
-		assert.Equal(t, int64(6-i), got[i].GetFlow().Time.Seconds)
+	for i := 0; i < 6; i++ {
+		assert.Equal(t, int64(i+2), got[i].GetFlow().Time.Seconds)
 	}
 }
 
@@ -413,7 +413,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	close(ch)
 	<-s.stopped
 	err = s.GetFlows(&observer.GetFlowsRequest{
-		Number: 20,
+		Number: 10,
 		Whitelist: []*pb.FlowFilter{
 			{
 				EventType: []*pb.EventTypeFilter{
@@ -488,7 +488,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	close(ch)
 	<-s.stopped
 	err = s.GetFlows(&observer.GetFlowsRequest{
-		Number: uint64(numFlows * 3),
+		Number: uint64(numFlows),
 		Whitelist: []*pb.FlowFilter{
 			{SourceIp: []string{"1.1.1.1"}, EventType: allTypes},
 		},
@@ -567,7 +567,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 			},
 		},
 	}
-	err = s.GetFlows(&observer.GetFlowsRequest{Whitelist: flowFilter, Number: 20}, fakeServer)
+	err = s.GetFlows(&observer.GetFlowsRequest{Whitelist: flowFilter, Number: 5}, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, numFlows, count)
 }

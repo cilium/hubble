@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Cilium
+// Copyright 2019-2020 Authors of Cilium
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -289,34 +289,145 @@ func (s *ObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	return getFlowsFromObserver(req, server, s)
+	return getFlows(req, server, s)
 }
 
-func getFlowsFromObserver(
+func getFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 	obs Observer,
 ) (err error) {
-	reply, err := getFlows(server.Context(), obs.GetLogger(), obs.GetRingBuffer(), req)
+	start := time.Now()
+	log := obs.GetLogger()
+	ring := obs.GetRingBuffer()
+
+	i := uint64(0)
+	defer func() {
+		log.Debug(
+			"GetFlows finished",
+			zap.Uint64("number_of_flows", i),
+			zap.Uint64("buffer_size", ring.Cap()),
+			zap.String("whitelist", logFilters(req.Whitelist)),
+			zap.String("blacklist", logFilters(req.Blacklist)),
+			zap.Duration("took", time.Now().Sub(start)),
+		)
+	}()
+
+	ringReader, err := newRingReader(server.Context(), ring, req)
+	if err != nil {
+		if err == io.EOF {
+			return nil
+		}
+		return err
+	}
+	flowsReader, err := newFlowsReader(ringReader, req, log)
 	if err != nil {
 		return err
 	}
-	for {
-		select {
-		case <-server.Context().Done():
-			return nil
-		case rep, ok := <-reply:
-			if !ok {
+
+	for ; ; i++ {
+		flow, err := flowsReader.Next(server.Context())
+		if err != nil {
+			if err == io.EOF {
 				return nil
 			}
-			err := server.Send(&observer.GetFlowsResponse{
-				ResponseTypes: &observer.GetFlowsResponse_Flow{
-					Flow: rep,
-				},
-			})
-			if err != nil {
-				return err
+			return err
+		}
+		err = server.Send(&observer.GetFlowsResponse{
+			ResponseTypes: &observer.GetFlowsResponse_Flow{
+				Flow: flow,
+			},
+		})
+		if err != nil {
+			return err
+		}
+	}
+}
+
+// flowsReader reads flows using a RingReader. It applies the flow request
+// criterias (blacklist, whitelist, follow, ...) before returning flows.
+type flowsReader struct {
+	ringReader           *container.RingReader
+	whitelist, blacklist filters.FilterFuncs
+	maxFlows             uint64
+	follow, timeRange    bool
+	flowsCount           uint64
+	start, end           time.Time
+}
+
+// newFlowsReader creates a new flowsReader that uses the given RingReader to
+// read through the ring buffer. Only flows that match the request criterias
+// are returned.
+func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *zap.Logger) (*flowsReader, error) {
+	whitelist, err := filters.BuildFilterList(req.Whitelist)
+	if err != nil {
+		return nil, err
+	}
+	blacklist, err := filters.BuildFilterList(req.Blacklist)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Debug("creating a new flowsReader",
+		zap.Any("req", req),
+		zap.Any("whitelist", whitelist),
+		zap.Any("blacklist", blacklist),
+	)
+
+	reader := &flowsReader{
+		ringReader: r,
+		whitelist:  whitelist,
+		blacklist:  blacklist,
+		maxFlows:   req.Number,
+		follow:     req.Follow,
+		timeRange:  !req.Follow && req.Number == 0,
+	}
+	if reader.timeRange { // apply time range filtering
+		reader.start, err = types.TimestampFromProto(req.GetSince())
+		if err != nil {
+			return nil, err
+		}
+		reader.end, err = getUntil(req, types.TimestampNow())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return reader, nil
+}
+
+// Next returns the next flow that matches the request criterias.
+func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+		if r.maxFlows > 0 && !r.follow && (r.flowsCount >= r.maxFlows) {
+			return nil, io.EOF
+		}
+		e := r.ringReader.Next(ctx)
+		if e == nil {
+			// if the buffer is not full, we might receive nil values
+			// just keep reading then
+			continue
+		}
+		flow, ok := e.Event.(*pb.Flow)
+		if ok && filters.Apply(r.whitelist, r.blacklist, e) {
+			if r.timeRange {
+				ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
+				if err != nil {
+					return nil, err
+				}
+				if ts.After(r.end) {
+					return nil, io.EOF
+				}
+				if ts.Before(r.start) {
+					continue
+				}
 			}
+			r.flowsCount++
+			return flow, nil
 		}
 	}
 }
@@ -329,84 +440,22 @@ func getUntil(req *observer.GetFlowsRequest, defaultTime *types.Timestamp) (time
 	return types.TimestampFromProto(until)
 }
 
-func getBufferCh(ctx context.Context, ring *container.Ring, req *observer.GetFlowsRequest) (ch <-chan *v1.Event, stop context.CancelFunc, err error) {
-	stop = func() {}
-
-	// s.ring.ReadFrom reads the values up to the last written index, i.e.,
-	// it will read all values from the given interval:
-	// [ lastWrite, s.ring.write [
-	lastWrite := ring.LastWriteParallel() + 1
-	readIdx := lastWrite - req.Number
-
-	switch {
-	case req.Follow:
-		ch = ring.ReadFrom(ctx.Done(), readIdx)
-	case req.Number != 0:
-		var ctx1 context.Context
-		ctx1, stop = context.WithCancel(ctx)
-		ch = ring.ReadFrom(ctx1.Done(), readIdx)
-	default:
-		beginning, err := types.TimestampFromProto(req.GetSince())
-		if err != nil {
-			return nil, nil, err
-		}
-		end, err := getUntil(req, types.TimestampNow())
-		if err != nil {
-			return nil, nil, err
-		}
-		timestampCh := make(chan *v1.Event, 1000)
-		ch = timestampCh
-
-		var ctx1 context.Context
-		ctx1, stop = context.WithCancel(ctx)
-
-		go func() {
-			defer close(timestampCh)
-			for lastWrite := ring.LastWriteParallel(); ; lastWrite-- {
-				e, ok := ring.Read(lastWrite)
-				// if the buffer was not full yet we can get nil payloads
-				if e == nil || e.Event == nil || !ok {
-					return
-				}
-				ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
-				if err != nil {
-					return
-				}
-				if beginning.Before(ts) && end.After(ts) {
-					select {
-					case <-ctx1.Done():
-						return
-					case timestampCh <- e:
-					}
-				}
-			}
-		}()
+// newRingReader creates a new RingReader that starts at the correct ring
+// offset to match the flow request.
+func newRingReader(ctx context.Context, ring *container.Ring, req *observer.GetFlowsRequest) (*container.RingReader, error) {
+	if req.Follow && req.Number == 0 { // no need to rewind
+		return container.NewRingReader(ring, ring.LastWriteParallel()), nil
 	}
-	return ch, stop, nil
-}
 
-// getFlow returns the flows either depending on the requests performed.
-func getFlows(
-	ctx context.Context,
-	log *zap.Logger,
-	ring *container.Ring,
-	req *observer.GetFlowsRequest,
-) (chan *pb.Flow, error) {
-	start := time.Now()
-	i := uint64(0)
-	defer func() {
-		size := ring.Cap()
-		took := time.Now().Sub(start)
-		log.Debug(
-			"GetFlows finished",
-			zap.Uint64("number_of_flows", i),
-			zap.Uint64("buffer_size", size),
-			zap.String("whitelist", logFilters(req.Whitelist)),
-			zap.String("blacklist", logFilters(req.Blacklist)),
-			zap.Duration("took", took),
-		)
-	}()
-
+	var err error
+	var start time.Time
+	since := req.GetSince()
+	if since != nil {
+		start, err = types.TimestampFromProto(since)
+		if err != nil {
+			return nil, err
+		}
+	}
 	whitelist, err := filters.BuildFilterList(req.Whitelist)
 	if err != nil {
 		return nil, err
@@ -416,52 +465,39 @@ func getFlows(
 		return nil, err
 	}
 
-	log.Debug("filters", zap.String("req", fmt.Sprintf("%+v", req)))
-	log.Debug("whitelist", zap.String("whitelist", fmt.Sprintf("%+v", whitelist)))
-	log.Debug("blacklist", zap.String("blacklist", fmt.Sprintf("%+v", blacklist)))
+	idx := ring.LastWriteParallel()
+	reader := container.NewRingReader(ring, idx)
 
-	ch, stop, err := getBufferCh(ctx, ring, req)
-	if err != nil {
-		return nil, err
-	}
-	reply := make(chan *pb.Flow, 1)
-	go func() {
-		defer close(reply)
-		defer stop()
-
-		for e := range ch {
-			if req.Number != 0 && !req.Follow {
-				i++
-				if i >= req.Number {
-					// stop the channel buffer because we have reached
-					// the number of requested flows.
-					stop()
-					if i > req.Number {
-						// We will 'continue' since 'ch' might have flows and we
-						// need to empty that channel.
-						return
-					}
-				}
-			}
-			if e == nil {
-				continue
-			}
-			flow, ok := e.Event.(*pb.Flow)
-			if !ok || !filters.Apply(whitelist, blacklist, e) {
-				continue
-			}
-			select {
-			case reply <- flow:
-				// We have sent all expected flows so we can return already
-				if req.Number != 0 && i >= req.Number {
-					return
-				}
-			case <-ctx.Done():
-				return
-			}
+	var flowsCount uint64
+	// We need to find out what the right index is; that is the index with the
+	// oldest entry that is within time range boundaries (if any is defined)
+	// or until we find enough events.
+	// In order to avoid buffering events, we have to rewind first to find the
+	// correct index, then create a new reader that starts from there
+	for i := ring.Len(); i > 0; i, idx = i-1, idx-1 {
+		e := reader.Previous(ctx)
+		if e == nil {
+			continue
 		}
-	}()
-	return reply, nil
+		_, ok := e.Event.(*pb.Flow)
+		if !ok || !filters.Apply(whitelist, blacklist, e) {
+			continue
+		}
+		flowsCount++
+		if since != nil {
+			ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
+			if err != nil {
+				return nil, err
+			}
+			if ts.Before(start) {
+				idx++ // we went backward 1 too far
+				break
+			}
+		} else if flowsCount == req.Number {
+			break // we went backward far enough
+		}
+	}
+	return container.NewRingReader(ring, idx), nil
 }
 
 // HandleMonitorSocket connects to the monitor socket and consumes monitor events.
