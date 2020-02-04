@@ -22,7 +22,9 @@ func (msg *ServerStatusRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *ServerStatusRequest) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
 
 // MarshalJSON implements json.Marshaler
@@ -38,7 +40,9 @@ func (msg *ServerStatusResponse) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *ServerStatusResponse) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
 
 // MarshalJSON implements json.Marshaler
@@ -54,7 +58,9 @@ func (msg *GetFlowsRequest) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *GetFlowsRequest) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
 
 // MarshalJSON implements json.Marshaler
@@ -70,7 +76,9 @@ func (msg *GetFlowsResponse) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *GetFlowsResponse) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
 
 // MarshalJSON implements json.Marshaler
@@ -86,7 +94,9 @@ func (msg *ProtocolMessage) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *ProtocolMessage) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
 
 // MarshalJSON implements json.Marshaler
@@ -102,5 +112,7 @@ func (msg *ProtocolMessageInfo) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (msg *ProtocolMessageInfo) UnmarshalJSON(b []byte) error {
-	return jsonpb.Unmarshal(bytes.NewReader(b), msg)
+	return (&jsonpb.Unmarshaler{
+		AllowUnknownFields: false,
+	}).Unmarshal(bytes.NewReader(b), msg)
 }
