@@ -861,3 +861,47 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 		})
 	}
 }
+
+func TestEndpoint_Copy(t *testing.T) {
+	ep := &Endpoint{
+		Created:      time.Unix(1, 2),
+		Deleted:      nil,
+		ContainerIDs: nil,
+		ID:           0,
+		IPv4:         nil,
+		IPv6:         nil,
+		PodName:      "",
+		PodNamespace: "",
+		Labels:       nil,
+	}
+	cp := ep.DeepCopy()
+	assert.Equal(t, ep, cp)
+
+	deleted := time.Unix(3, 4)
+	ep = &Endpoint{
+		Created:      time.Unix(1, 2),
+		Deleted:      &deleted,
+		ContainerIDs: []string{"c1", "c2"},
+		ID:           3,
+		IPv4:         net.ParseIP("1.1.1.1"),
+		IPv6:         net.ParseIP("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"),
+		PodName:      "pod1",
+		PodNamespace: "ns1",
+		Labels:       []string{"a=b", "c=d"},
+	}
+	cp1 := ep.DeepCopy()
+	cp2 := ep.DeepCopy()
+	assert.Equal(t, ep, cp2)
+	assert.Equal(t, cp1, cp2)
+	cp1.Created = time.Unix(5, 6)
+	*cp1.Deleted = time.Unix(7, 8)
+	cp1.ContainerIDs = []string{"c3", "c4"}
+	cp1.ID = 4
+	cp1.IPv4 = net.ParseIP("2.2.2.2")
+	cp1.IPv4 = net.ParseIP("eeee:eeee:eeee:eeee:eeee:eeee:eeee:eeee")
+	cp1.PodName = "pod1"
+	cp1.PodNamespace = "ns1"
+	cp1.Labels = []string{"e=f"}
+	assert.Equal(t, ep, cp2)
+	assert.NotEqual(t, cp1, cp2)
+}

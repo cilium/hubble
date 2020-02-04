@@ -54,6 +54,32 @@ func (e *Endpoint) SetFrom(o *Endpoint) {
 	}
 }
 
+// DeepCopy returns a deep copy of this endpoint.
+func (e *Endpoint) DeepCopy() *Endpoint {
+	result := *e
+	if e.Deleted != nil {
+		result.Deleted = &time.Time{}
+		*result.Deleted = *e.Deleted
+	}
+	if e.ContainerIDs != nil {
+		result.ContainerIDs = make([]string, len(e.ContainerIDs))
+		copy(result.ContainerIDs, e.ContainerIDs)
+	}
+	if e.IPv4 != nil {
+		result.IPv4 = make(net.IP, len(e.IPv4))
+		copy(result.IPv4, e.IPv4)
+	}
+	if e.IPv6 != nil {
+		result.IPv6 = make(net.IP, len(e.IPv6))
+		copy(result.IPv6, e.IPv6)
+	}
+	if e.Labels != nil {
+		result.Labels = make([]string, len(e.Labels))
+		copy(result.Labels, e.Labels)
+	}
+	return &result
+}
+
 // SyncEndpoints adds the given list of endpoints in the internal endpoint
 // slice. All endpoints in the internal endpoint slice that are not in the given
 // 'newEps' slice will be marked as "deleted".
@@ -191,7 +217,7 @@ func (es *Endpoints) GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool) {
 	defer es.mutex.RUnlock()
 	for _, ep := range es.eps {
 		if ep.Deleted == nil && (ep.IPv4.Equal(ip) || ep.IPv6.Equal(ip)) {
-			return ep, true
+			return ep.DeepCopy(), true
 		}
 	}
 	return
@@ -207,7 +233,7 @@ func (es *Endpoints) GetEndpointByContainerID(id string) (*Endpoint, bool) {
 		}
 		for _, containerID := range ep.ContainerIDs {
 			if id == containerID {
-				return ep, true
+				return ep.DeepCopy(), true
 			}
 		}
 	}
