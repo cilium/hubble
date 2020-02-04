@@ -16,7 +16,6 @@ package ipcache
 
 import (
 	"net"
-	"sync"
 	"testing"
 
 	"github.com/cilium/cilium/api/v1/models"
@@ -167,7 +166,6 @@ func TestIPCache_Delete(t *testing.T) {
 
 	type cache map[string]entry
 	type fields struct {
-		mutex sync.RWMutex
 		cache map[string]entry
 	}
 	type args struct {
