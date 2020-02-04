@@ -196,3 +196,20 @@ func (es *Endpoints) GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool) {
 	}
 	return
 }
+
+// GetEndpointByContainerID returns the endpoint that has the given container ID.
+func (es *Endpoints) GetEndpointByContainerID(id string) (*Endpoint, bool) {
+	es.mutex.RLock()
+	defer es.mutex.RUnlock()
+	for _, ep := range es.eps {
+		if ep.Deleted != nil {
+			continue
+		}
+		for _, containerID := range ep.ContainerIDs {
+			if id == containerID {
+				return ep, true
+			}
+		}
+	}
+	return nil, false
+}

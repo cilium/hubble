@@ -780,3 +780,84 @@ func TestEndpoints_GarbageCollect(t *testing.T) {
 	es.GarbageCollect()
 	assert.Equal(t, 0, len(es.eps))
 }
+
+func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
+	type fields struct {
+		mutex sync.RWMutex
+		eps   []*Endpoint
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name         string
+		fields       fields
+		args         args
+		wantEndpoint *Endpoint
+		wantOk       bool
+	}{
+		{
+			name: "found",
+			fields: fields{
+				eps: []*Endpoint{
+					{
+						ID:           15,
+						ContainerIDs: []string{"c0", "c1"},
+					},
+				},
+			},
+			args: args{
+				id: "c1",
+			},
+			wantEndpoint: &Endpoint{
+				ID:           15,
+				ContainerIDs: []string{"c0", "c1"},
+			},
+			wantOk: true,
+		},
+		{
+			name: "not found",
+			fields: fields{
+				eps: []*Endpoint{
+					{
+						ID:           15,
+						ContainerIDs: []string{"c0", "c1"},
+					},
+				},
+			},
+			args: args{
+				id: "c2",
+			},
+			wantEndpoint: nil,
+			wantOk:       false,
+		},
+		{
+			name: "deleted",
+			fields: fields{
+				eps: []*Endpoint{
+					{
+						ID:           15,
+						ContainerIDs: []string{"c0", "c1"},
+						Deleted:      &time.Time{},
+					},
+				},
+			},
+			args: args{
+				id: "c0",
+			},
+			wantEndpoint: nil,
+			wantOk:       false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := Endpoints{
+				mutex: tt.fields.mutex,
+				eps:   tt.fields.eps,
+			}
+			gotEndpoint, gotOk := es.GetEndpointByContainerID(tt.args.id)
+			assert.Equal(t, tt.wantEndpoint, gotEndpoint)
+			assert.Equal(t, tt.wantOk, gotOk)
+		})
+	}
+}
