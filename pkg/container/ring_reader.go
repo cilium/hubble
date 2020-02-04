@@ -16,7 +16,6 @@ package container
 
 import (
 	"context"
-	"sync"
 
 	"github.com/cilium/hubble/pkg/api/v1"
 )
@@ -27,7 +26,6 @@ type RingReader struct {
 	idx  uint64
 	c    <-chan *v1.Event
 	stop chan struct{}
-	once sync.Once
 }
 
 // NewRingReader creates a new RingReader that starts reading the ring at the
