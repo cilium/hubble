@@ -14,6 +14,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/miekg/dns v1.1.22 // indirect
+	github.com/mitchellh/protoc-gen-go-json v0.0.0-20200113165135-fd297ce346f1
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/prometheus/client_golang v1.2.0
 	github.com/sasha-s/go-deadlock v0.2.1-0.20190130213442-5dc88f41ca59 // indirect
