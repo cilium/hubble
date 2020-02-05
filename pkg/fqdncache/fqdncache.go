@@ -104,9 +104,7 @@ func (f *FQDNCache) InitializeFrom(entries []*models.DNSLookup) {
 
 	for _, entry := range entries {
 		ep := endpoints.createOrGetEndpoint(uint64(entry.EndpointID))
-		if entry != nil {
-			ep.insertDNSLookup(entry)
-		}
+		ep.insertDNSLookup(entry)
 	}
 
 	// replace existing map
