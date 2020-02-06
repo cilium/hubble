@@ -49,15 +49,6 @@ type ciliumClient interface {
 	GetServiceCache() ([]*models.Service, error)
 }
 
-type endpointsHandler interface {
-	SyncEndpoints([]*v1.Endpoint)
-	UpdateEndpoint(*v1.Endpoint)
-	MarkDeleted(*v1.Endpoint)
-	FindEPs(epID uint64, ns, pod string) []v1.Endpoint
-	GetEndpoint(ip net.IP) (endpoint *v1.Endpoint, ok bool)
-	GarbageCollect()
-}
-
 type fqdnCache interface {
 	InitializeFrom(entries []*models.DNSLookup)
 	AddDNSLookup(epID uint64, lookupTime time.Time, domainName string, ips []net.IP, ttl uint32)
@@ -74,7 +65,7 @@ type ObserverServer struct {
 
 	// endpoints contains a slice of all endpoints running the node where
 	// hubble is running.
-	endpoints endpointsHandler
+	endpoints v1.EndpointsHandler
 
 	// fqdnCache contains the responses of all intercepted DNS lookups
 	// performed by local endpoints
@@ -100,7 +91,7 @@ type ObserverServer struct {
 // received.
 func NewServer(
 	ciliumClient ciliumClient,
-	endpoints endpointsHandler,
+	endpoints v1.EndpointsHandler,
 	ipCache *ipcache.IPCache,
 	fqdnCache fqdnCache,
 	serviceCache *servicecache.ServiceCache,

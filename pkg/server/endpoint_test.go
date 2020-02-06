@@ -99,12 +99,13 @@ var fakeDummyCiliumClient = &fakeCiliumClient{
 }
 
 type fakeEndpointsHandler struct {
-	fakeSyncEndpoints  func([]*v1.Endpoint)
-	fakeUpdateEndpoint func(*v1.Endpoint)
-	fakeMarkDeleted    func(*v1.Endpoint)
-	fakeFindEPs        func(epID uint64, ns, pod string) []v1.Endpoint
-	fakeGetEndpoint    func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
-	fakeGarbageCollect func()
+	fakeSyncEndpoints            func([]*v1.Endpoint)
+	fakeUpdateEndpoint           func(*v1.Endpoint)
+	fakeMarkDeleted              func(*v1.Endpoint)
+	fakeFindEPs                  func(epID uint64, ns, pod string) []v1.Endpoint
+	fakeGetEndpoint              func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
+	fakeGarbageCollect           func()
+	fakeGetEndpointByContainerID func(id string) (endpoint *v1.Endpoint, ok bool)
 }
 
 func (f *fakeEndpointsHandler) SyncEndpoints(eps []*v1.Endpoint) {
@@ -143,6 +144,13 @@ func (f *fakeEndpointsHandler) GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool)
 		return f.fakeGetEndpoint(ip)
 	}
 	panic("GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
+}
+
+func (f *fakeEndpointsHandler) GetEndpointByContainerID(id string) (ep *v1.Endpoint, ok bool) {
+	if f.fakeGetEndpointByContainerID != nil {
+		return f.fakeGetEndpointByContainerID(id)
+	}
+	panic("GetEndpointByContainerID(id string) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
 }
 
 func (f *fakeEndpointsHandler) GarbageCollect() {
