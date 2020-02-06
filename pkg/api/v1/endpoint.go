@@ -19,6 +19,17 @@ import (
 	"time"
 )
 
+// EndpointsHandler defines an interface for interacting with Cilium endpoints.
+type EndpointsHandler interface {
+	SyncEndpoints([]*Endpoint)
+	UpdateEndpoint(*Endpoint)
+	MarkDeleted(*Endpoint)
+	FindEPs(epID uint64, ns, pod string) []Endpoint
+	GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool)
+	GarbageCollect()
+	GetEndpointByContainerID(id string) (*Endpoint, bool)
+}
+
 // EqualsByID compares if the receiver's endpoint has the same ID, PodName and
 // PodNamespace.
 func (e *Endpoint) EqualsByID(o *Endpoint) bool {
