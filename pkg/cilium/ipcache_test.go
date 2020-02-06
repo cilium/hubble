@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"net"
@@ -56,11 +56,10 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 		},
 	}
 
-	s := &ObserverServer{
+	c := &State{
 		ciliumClient: fakeClient,
 		ipcache:      ipc,
 		log:          zap.L(),
-		grpcServer:   getNoopGRPCServer(),
 	}
 
 	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)
@@ -97,7 +96,7 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 	}()
 
 	// blocks until channel is closed
-	s.syncIPCache(ipCacheEvents)
+	c.syncIPCache(ipCacheEvents)
 	assert.Equal(t, 0, len(ipCacheEvents))
 
 	id100 := identity.NumericIdentity(100)

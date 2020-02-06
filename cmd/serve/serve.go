@@ -28,6 +28,7 @@ import (
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/cilium"
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
@@ -82,7 +83,7 @@ func New(log *zap.Logger) *cobra.Command {
 			fqdnCache := fqdncache.New()
 			serviceCache := servicecache.New()
 			endpoints := v1.NewEndpoints()
-			podGetter := &server.LegacyPodGetter{
+			podGetter := &cilium.LegacyPodGetter{
 				PodGetter:      ipCache,
 				EndpointGetter: endpoints,
 			}

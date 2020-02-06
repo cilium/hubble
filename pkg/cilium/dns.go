@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
+	"net"
 	"time"
 
+	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/proxy/accesslog"
 	"go.uber.org/zap"
 )
@@ -26,9 +28,16 @@ const (
 	fqdnCacheRefreshInterval = 5 * time.Minute
 )
 
+// FqdnCache defines an interface for caching FQDN info from Cilium.
+type FqdnCache interface {
+	InitializeFrom(entries []*models.DNSLookup)
+	AddDNSLookup(epID uint64, lookupTime time.Time, domainName string, ips []net.IP, ttl uint32)
+	GetNamesOf(epID uint64, ip net.IP) []string
+}
+
 // syncFQDNCache regularily syncs DNS lookups from Cilium into our local FQDN
 // cache
-func (s *ObserverServer) syncFQDNCache() {
+func (s *State) syncFQDNCache() {
 	for {
 		entries, err := s.ciliumClient.GetFqdnCache()
 		if err != nil {
@@ -44,7 +53,7 @@ func (s *ObserverServer) syncFQDNCache() {
 }
 
 // consumeLogRecordNotifyChannel consume
-func (s *ObserverServer) consumeLogRecordNotifyChannel() {
+func (s *State) consumeLogRecordNotifyChannel() {
 	for logRecord := range s.logRecord {
 		if logRecord.DNS == nil {
 			continue

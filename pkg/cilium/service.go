@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ const (
 
 // fetchServiceCache fetches the service cache from cilium and initializes the
 // local service cache.
-func (s *ObserverServer) fetchServiceCache() error {
+func (s *State) fetchServiceCache() error {
 	entries, err := s.ciliumClient.GetServiceCache()
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (s *ObserverServer) fetchServiceCache() error {
 
 // processServiceEvent decodes and applies a service update. It returns true
 // when successful.
-func (s *ObserverServer) processServiceEvent(an monitorAPI.AgentNotify) bool {
+func (s *State) processServiceEvent(an monitorAPI.AgentNotify) bool {
 	switch an.Type {
 	case monitorAPI.AgentNotifyServiceUpserted:
 		n := monitorAPI.ServiceUpsertNotification{}
@@ -67,7 +67,7 @@ func (s *ObserverServer) processServiceEvent(an monitorAPI.AgentNotify) bool {
 	}
 }
 
-func (s *ObserverServer) syncServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
+func (s *State) syncServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
 	for err := s.fetchServiceCache(); err != nil; err = s.fetchServiceCache() {
 		s.log.Error("Failed to fetch service cache from Cilium", zap.Error(err))
 		time.Sleep(serviceCacheInitRetryInterval)

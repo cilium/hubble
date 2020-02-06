@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"net"
@@ -64,11 +64,10 @@ func TestObserverServer_syncServiceCache(t *testing.T) {
 		},
 	}
 
-	s := &ObserverServer{
+	c := &State{
 		ciliumClient: fakeClient,
 		serviceCache: svcc,
 		log:          zap.L(),
-		grpcServer:   getNoopGRPCServer(),
 	}
 
 	serviceCacheEvents := make(chan monitorAPI.AgentNotify, 100)
@@ -126,7 +125,7 @@ func TestObserverServer_syncServiceCache(t *testing.T) {
 	}()
 
 	// blocks until channel is closed
-	s.syncServiceCache(serviceCacheEvents)
+	c.syncServiceCache(serviceCacheEvents)
 	assert.Equal(t, 0, len(serviceCacheEvents))
 
 	tests := []struct {

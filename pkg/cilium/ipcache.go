@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"encoding/json"
@@ -59,7 +59,7 @@ func (l *LegacyPodGetter) GetIPIdentity(ip net.IP) (identity ipcache.IPIdentity,
 }
 
 // fetchIPCache copies over the IP cache from cilium agent
-func (s *ObserverServer) fetchIPCache() error {
+func (s *State) fetchIPCache() error {
 	entries, err := s.ciliumClient.GetIPCache()
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (s *ObserverServer) fetchIPCache() error {
 
 // processIPCacheEvent decodes and applies an IPCache update, returns true if
 // it was applied to the local IPCache mirror.
-func (s *ObserverServer) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
+func (s *State) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
 	n := monitorAPI.IPCacheNotification{}
 	err := json.Unmarshal([]byte(an.Text), &n)
 	if err != nil {
@@ -105,7 +105,7 @@ func (s *ObserverServer) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
 
 // syncIPCache initializes the IPCache by fetching an initial version from
 // Cilium and then starts reading IPCacheNotification from the channel.
-func (s *ObserverServer) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
+func (s *State) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
 	for {
 		err := s.fetchIPCache()
 		if err != nil {

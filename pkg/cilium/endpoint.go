@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ var (
 )
 
 // syncEndpoints sync all endpoints of Cilium with the hubble.
-func (s *ObserverServer) syncEndpoints() {
+func (s *State) syncEndpoints() {
 	for {
 		eps, err := s.ciliumClient.EndpointList()
 		if err != nil {
@@ -67,7 +67,7 @@ func (s *ObserverServer) syncEndpoints() {
 	}
 }
 
-func (s *ObserverServer) consumeEndpointEvents() {
+func (s *State) consumeEndpointEvents() {
 	for an := range s.endpointEvents {
 		switch an.Type {
 		case monitorAPI.AgentNotifyEndpointCreated, monitorAPI.AgentNotifyEndpointRegenerateSuccess:
