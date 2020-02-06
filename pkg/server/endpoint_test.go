@@ -32,133 +32,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type fakeCiliumClient struct {
-	fakeEndpointList    func() ([]*models.Endpoint, error)
-	fakeGetEndpoint     func(uint64) (*models.Endpoint, error)
-	fakeGetIdentity     func(uint64) (*models.Identity, error)
-	fakeGetFqdnCache    func() ([]*models.DNSLookup, error)
-	fakeGetIPCache      func() ([]*models.IPListEntry, error)
-	fakeGetServiceCache func() ([]*models.Service, error)
-}
-
-func (c *fakeCiliumClient) EndpointList() ([]*models.Endpoint, error) {
-	if c.fakeEndpointList != nil {
-		return c.fakeEndpointList()
-	}
-	panic("EndpointList() should not have been called since it was not defined")
-}
-
-func (c *fakeCiliumClient) GetEndpoint(id uint64) (*models.Endpoint, error) {
-	if c.fakeGetEndpoint != nil {
-		return c.fakeGetEndpoint(id)
-	}
-	panic("GetEndpoint(uint64) should not have been called since it was not defined")
-}
-
-func (c *fakeCiliumClient) GetIdentity(id uint64) (*models.Identity, error) {
-	if c.fakeGetIdentity != nil {
-		return c.fakeGetIdentity(id)
-	}
-	panic("GetIdentity(uint64) should not have been called since it was not defined")
-}
-
-func (c *fakeCiliumClient) GetFqdnCache() ([]*models.DNSLookup, error) {
-	if c.fakeGetFqdnCache != nil {
-		return c.fakeGetFqdnCache()
-	}
-	panic("GetFqdnCache() should not have been called since it was not defined")
-}
-
-func (c *fakeCiliumClient) GetIPCache() ([]*models.IPListEntry, error) {
-	if c.fakeGetIPCache != nil {
-		return c.fakeGetIPCache()
-	}
-	panic("GetIPCache() should not have been called since it was not defined")
-}
-
-func (c *fakeCiliumClient) GetServiceCache() ([]*models.Service, error) {
-	if c.fakeGetServiceCache != nil {
-		return c.fakeGetServiceCache()
-	}
-	panic("GetServiceCache() should not have been called since it was not defined")
-}
-
-var fakeDummyCiliumClient = &fakeCiliumClient{
-	fakeEndpointList: func() (endpoints []*models.Endpoint, e error) {
+var fakeDummyCiliumClient = &testutils.FakeCiliumClient{
+	FakeEndpointList: func() (endpoints []*models.Endpoint, e error) {
 		return nil, nil
 	},
-	fakeGetEndpoint: func(u uint64) (endpoint *models.Endpoint, e error) {
+	FakeGetEndpoint: func(u uint64) (endpoint *models.Endpoint, e error) {
 		return nil, nil
 	},
-	fakeGetIdentity: func(u uint64) (endpoint *models.Identity, e error) {
+	FakeGetIdentity: func(u uint64) (endpoint *models.Identity, e error) {
 		return &models.Identity{}, nil
 	},
-	fakeGetFqdnCache: func() ([]*models.DNSLookup, error) {
+	FakeGetFqdnCache: func() ([]*models.DNSLookup, error) {
 		return nil, nil
 	},
-}
-
-type fakeEndpointsHandler struct {
-	fakeSyncEndpoints            func([]*v1.Endpoint)
-	fakeUpdateEndpoint           func(*v1.Endpoint)
-	fakeMarkDeleted              func(*v1.Endpoint)
-	fakeFindEPs                  func(epID uint64, ns, pod string) []v1.Endpoint
-	fakeGetEndpoint              func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
-	fakeGarbageCollect           func()
-	fakeGetEndpointByContainerID func(id string) (endpoint *v1.Endpoint, ok bool)
-}
-
-func (f *fakeEndpointsHandler) SyncEndpoints(eps []*v1.Endpoint) {
-	if f.fakeSyncEndpoints != nil {
-		f.fakeSyncEndpoints(eps)
-		return
-	}
-	panic("SyncEndpoints([]*v1.Endpoint) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) UpdateEndpoint(ep *v1.Endpoint) {
-	if f.fakeUpdateEndpoint != nil {
-		f.fakeUpdateEndpoint(ep)
-		return
-	}
-	panic("UpdateEndpoint(*v1.Endpoint) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) MarkDeleted(ep *v1.Endpoint) {
-	if f.fakeMarkDeleted != nil {
-		f.fakeMarkDeleted(ep)
-		return
-	}
-	panic("MarkDeleted(ep *v1.Endpoint) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) FindEPs(epID uint64, ns, pod string) []v1.Endpoint {
-	if f.fakeFindEPs != nil {
-		return f.fakeFindEPs(epID, ns, pod)
-	}
-	panic(" FindEPs(epID uint64, ns, pod string) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool) {
-	if f.fakeGetEndpoint != nil {
-		return f.fakeGetEndpoint(ip)
-	}
-	panic("GetEndpoint(ip net.IP) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) GetEndpointByContainerID(id string) (ep *v1.Endpoint, ok bool) {
-	if f.fakeGetEndpointByContainerID != nil {
-		return f.fakeGetEndpointByContainerID(id)
-	}
-	panic("GetEndpointByContainerID(id string) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
-}
-
-func (f *fakeEndpointsHandler) GarbageCollect() {
-	if f.fakeGarbageCollect != nil {
-		f.fakeGarbageCollect()
-		return
-	}
-	panic("GarbageCollect() should not have been called since it was not defined")
 }
 
 func getNoopGRPCServer() GRPCServer {
@@ -179,8 +65,8 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		endpoints            []*v1.Endpoint
 	)
 
-	fakeClient := &fakeCiliumClient{
-		fakeEndpointList: func() ([]*models.Endpoint, error) {
+	fakeClient := &testutils.FakeCiliumClient{
+		FakeEndpointList: func() ([]*models.Endpoint, error) {
 			if atomic.LoadInt32(&returnEmptyEndpoints) != 0 {
 				return []*models.Endpoint{}, nil
 			}
@@ -224,8 +110,8 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		},
 	}
 
-	fakeHandler := &fakeEndpointsHandler{
-		fakeSyncEndpoints: func(newEndpoint []*v1.Endpoint) {
+	fakeHandler := &testutils.FakeEndpointsHandler{
+		FakeSyncEndpoints: func(newEndpoint []*v1.Endpoint) {
 			if len(newEndpoint) == 0 {
 				now := time.Now()
 				endpointsMutex.Lock()
@@ -235,12 +121,12 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 				endpointsMutex.Unlock()
 			}
 		},
-		fakeUpdateEndpoint: func(ep *v1.Endpoint) {
+		FakeUpdateEndpoint: func(ep *v1.Endpoint) {
 			endpointsMutex.Lock()
 			endpoints = append(endpoints, ep)
 			endpointsMutex.Unlock()
 		},
-		fakeGarbageCollect: func() {},
+		FakeGarbageCollect: func() {},
 	}
 	s := &ObserverServer{
 		ciliumClient: fakeClient,
@@ -323,8 +209,8 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 	}
 	ecnMarshal, err := json.Marshal(ecn)
 	assert.Nil(t, err)
-	fakeClient := &fakeCiliumClient{
-		fakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
+	fakeClient := &testutils.FakeCiliumClient{
+		FakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
 			defer wg.Done()
 			assert.Equal(t, uint64(13), epID)
 			return &models.Endpoint{
@@ -346,8 +232,8 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 			}, nil
 		},
 	}
-	fakeHandler := &fakeEndpointsHandler{
-		fakeUpdateEndpoint: func(ep *v1.Endpoint) {
+	fakeHandler := &testutils.FakeEndpointsHandler{
+		FakeUpdateEndpoint: func(ep *v1.Endpoint) {
 			once.Do(func() {
 				defer wg.Done()
 				wanted := &v1.Endpoint{
@@ -382,8 +268,8 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 
 	// Endpoint is not found so we don't even add it to the list of endpoints
 	wg = sync.WaitGroup{}
-	fakeClient = &fakeCiliumClient{
-		fakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
+	fakeClient = &testutils.FakeCiliumClient{
+		FakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
 			defer wg.Done()
 			assert.Equal(t, uint64(13), epID)
 			return nil, nil
@@ -418,8 +304,8 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 	}
 	ednMarshal, err := json.Marshal(edn)
 	assert.Nil(t, err)
-	fakeHandler := &fakeEndpointsHandler{
-		fakeMarkDeleted: func(ep *v1.Endpoint) {
+	fakeHandler := &testutils.FakeEndpointsHandler{
+		FakeMarkDeleted: func(ep *v1.Endpoint) {
 			defer wg.Done()
 			assert.NotNil(t, ep.Deleted)
 			wanted := &v1.Endpoint{
@@ -456,8 +342,8 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 	}
 	ednMarshal, err := json.Marshal(ern)
 	assert.Nil(t, err)
-	fakeClient := &fakeCiliumClient{
-		fakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
+	fakeClient := &testutils.FakeCiliumClient{
+		FakeGetEndpoint: func(epID uint64) (*models.Endpoint, error) {
 			defer wg.Done()
 			assert.Equal(t, uint64(13), epID)
 			return &models.Endpoint{
@@ -479,8 +365,8 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 			}, nil
 		},
 	}
-	fakeHandler := &fakeEndpointsHandler{
-		fakeUpdateEndpoint: func(ep *v1.Endpoint) {
+	fakeHandler := &testutils.FakeEndpointsHandler{
+		FakeUpdateEndpoint: func(ep *v1.Endpoint) {
 			defer wg.Done()
 			wanted := &v1.Endpoint{
 				ContainerIDs: []string{"123"},

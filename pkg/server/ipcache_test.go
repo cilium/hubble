@@ -39,8 +39,8 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 	cidr4444 := "4.4.4.4/32"
 
 	ipc := ipcache.New()
-	fakeClient := &fakeCiliumClient{
-		fakeGetIPCache: func() ([]*models.IPListEntry, error) {
+	fakeClient := &testutils.FakeCiliumClient{
+		FakeGetIPCache: func() ([]*models.IPListEntry, error) {
 			id100 := int64(100)
 
 			return []*models.IPListEntry{
@@ -149,8 +149,8 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
-				EndpointGetter: &fakeEndpointsHandler{
-					fakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
+				EndpointGetter: &testutils.FakeEndpointsHandler{
+					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
 						return nil, false
 					},
 				},
@@ -167,8 +167,8 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 			name: "available in endpoints",
 			fields: fields{
 				IPGetter: &testutils.NoopIPGetter,
-				EndpointGetter: &fakeEndpointsHandler{
-					fakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
+				EndpointGetter: &testutils.FakeEndpointsHandler{
+					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
 						return &v1.Endpoint{
 							ID:           16,
 							IPv4:         net.ParseIP("1.1.1.15"),
@@ -194,8 +194,8 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
-				EndpointGetter: &fakeEndpointsHandler{
-					fakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
+				EndpointGetter: &testutils.FakeEndpointsHandler{
+					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
 						return &v1.Endpoint{
 							ID:           16,
 							IPv4:         net.ParseIP("1.1.1.15"),

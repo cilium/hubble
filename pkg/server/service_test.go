@@ -18,6 +18,8 @@ import (
 	"net"
 	"testing"
 
+	"github.com/cilium/hubble/pkg/testutils"
+
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	pb "github.com/cilium/hubble/api/v1/flow"
@@ -30,8 +32,8 @@ import (
 
 func TestObserverServer_syncServiceCache(t *testing.T) {
 	svcc := servicecache.New()
-	fakeClient := &fakeCiliumClient{
-		fakeGetServiceCache: func() ([]*models.Service, error) {
+	fakeClient := &testutils.FakeCiliumClient{
+		FakeGetServiceCache: func() ([]*models.Service, error) {
 			return []*models.Service{
 				{
 					Spec: &models.ServiceSpec{
