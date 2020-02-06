@@ -24,6 +24,16 @@ import (
 	clientPkg "github.com/cilium/cilium/pkg/client"
 )
 
+// Client is the interface for Cilium API.
+type Client interface {
+	EndpointList() ([]*models.Endpoint, error)
+	GetEndpoint(id uint64) (*models.Endpoint, error)
+	GetIdentity(id uint64) (*models.Identity, error)
+	GetFqdnCache() ([]*models.DNSLookup, error)
+	GetIPCache() ([]*models.IPListEntry, error)
+	GetServiceCache() ([]*models.Service, error)
+}
+
 // Cilium is an abstraction to communicate with the cilium-agent.
 type Cilium struct {
 	*clientPkg.Client

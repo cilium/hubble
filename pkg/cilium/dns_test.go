@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"net"
@@ -98,14 +98,13 @@ func TestObserverServer_consumeLogRecordNotifyChannel(t *testing.T) {
 		},
 	}
 
-	s := &ObserverServer{
-		fqdnCache:  fakeFQDNCache,
-		logRecord:  make(chan monitorAPI.LogRecordNotify, 1),
-		log:        zap.L(),
-		grpcServer: getNoopGRPCServer(),
+	c := &State{
+		fqdnCache: fakeFQDNCache,
+		logRecord: make(chan monitorAPI.LogRecordNotify, 1),
+		log:       zap.L(),
 	}
-	go s.consumeLogRecordNotifyChannel()
+	go c.consumeLogRecordNotifyChannel()
 
-	s.getLogRecordNotifyChannel() <- lr
+	c.GetLogRecordNotifyChannel() <- lr
 	wg.Wait()
 }

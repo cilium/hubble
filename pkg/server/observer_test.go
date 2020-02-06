@@ -19,6 +19,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	pb "github.com/cilium/hubble/api/v1/flow"
@@ -36,6 +37,21 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
+
+var fakeDummyCiliumClient = &testutils.FakeCiliumClient{
+	FakeEndpointList: func() (endpoints []*models.Endpoint, e error) {
+		return nil, nil
+	},
+	FakeGetEndpoint: func(u uint64) (endpoint *models.Endpoint, e error) {
+		return nil, nil
+	},
+	FakeGetIdentity: func(u uint64) (endpoint *models.Identity, e error) {
+		return &models.Identity{}, nil
+	},
+	FakeGetFqdnCache: func() ([]*models.DNSLookup, error) {
+		return nil, nil
+	},
+}
 
 var allTypes = []*pb.EventTypeFilter{
 	{Type: 1},

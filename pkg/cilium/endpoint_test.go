@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package server
+package cilium
 
 import (
 	"encoding/json"
@@ -26,36 +26,10 @@ import (
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
-	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
-
-var fakeDummyCiliumClient = &testutils.FakeCiliumClient{
-	FakeEndpointList: func() (endpoints []*models.Endpoint, e error) {
-		return nil, nil
-	},
-	FakeGetEndpoint: func(u uint64) (endpoint *models.Endpoint, e error) {
-		return nil, nil
-	},
-	FakeGetIdentity: func(u uint64) (endpoint *models.Identity, e error) {
-		return &models.Identity{}, nil
-	},
-	FakeGetFqdnCache: func() ([]*models.DNSLookup, error) {
-		return nil, nil
-	},
-}
-
-func getNoopGRPCServer() GRPCServer {
-	pp, _ := parser.New(
-		&testutils.NoopEndpointGetter,
-		&testutils.NoopIdentityGetter,
-		&testutils.NoopDNSGetter,
-		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
-	return NewLocalServer(pp, 10, zap.NewNop())
-}
 
 func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	refreshEndpointList = 50 * time.Millisecond
@@ -128,13 +102,12 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		},
 		FakeGarbageCollect: func() {},
 	}
-	s := &ObserverServer{
+	c := &State{
 		ciliumClient: fakeClient,
 		endpoints:    fakeHandler,
 		log:          zap.L(),
-		grpcServer:   getNoopGRPCServer(),
 	}
-	go s.syncEndpoints()
+	go c.syncEndpoints()
 
 	time.Sleep(2 * refreshEndpointList)
 
@@ -251,16 +224,15 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		},
 	}
 	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
-	s := &ObserverServer{
+	c := &State{
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
-		grpcServer:     getNoopGRPCServer(),
 	}
-	go s.consumeEndpointEvents()
+	go c.consumeEndpointEvents()
 
-	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	c.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointCreated,
 		Text: string(ecnMarshal),
 	}
@@ -276,16 +248,15 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		},
 	}
 	wg.Add(1)
-	s = &ObserverServer{
+	c = &State{
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
-		grpcServer:     getNoopGRPCServer(),
 	}
-	go s.consumeEndpointEvents()
+	go c.consumeEndpointEvents()
 
-	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	c.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointCreated,
 		Text: string(ecnMarshal),
 	}
@@ -319,15 +290,14 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 		},
 	}
 	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
-	s := &ObserverServer{
+	c := &State{
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
-		grpcServer:     getNoopGRPCServer(),
 	}
-	go s.consumeEndpointEvents()
+	go c.consumeEndpointEvents()
 
-	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	c.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointDeleted,
 		Text: string(ednMarshal),
 	}
@@ -383,16 +353,15 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 	}
 	epEventsCh := make(chan monitorAPI.AgentNotify, 1)
 	wg.Add(1)
-	s := &ObserverServer{
+	c := &State{
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
 		log:            zap.L(),
-		grpcServer:     getNoopGRPCServer(),
 	}
-	go s.consumeEndpointEvents()
+	go c.consumeEndpointEvents()
 
-	s.getEndpointEventsChannel() <- monitorAPI.AgentNotify{
+	c.GetEndpointEventsChannel() <- monitorAPI.AgentNotify{
 		Type: monitorAPI.AgentNotifyEndpointRegenerateSuccess,
 		Text: string(ednMarshal),
 	}
