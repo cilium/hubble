@@ -905,3 +905,80 @@ func TestEndpoint_Copy(t *testing.T) {
 	assert.Equal(t, ep, cp2)
 	assert.NotEqual(t, cp1, cp2)
 }
+
+func TestEndpoints_GetEndpointByPodName(t *testing.T) {
+	type fields struct {
+		mutex sync.RWMutex
+		eps   []*Endpoint
+	}
+	type args struct {
+		namespace string
+		name      string
+	}
+	tests := []struct {
+		name         string
+		fields       fields
+		args         args
+		wantEndpoint *Endpoint
+		wantOk       bool
+	}{
+		{
+			name: "found",
+			fields: fields{
+				eps: []*Endpoint{
+					{PodNamespace: "ns1", PodName: "pod1"},
+					{PodNamespace: "ns2", PodName: "pod2"},
+				},
+			},
+			args: args{
+				namespace: "ns2",
+				name:      "pod2",
+			},
+			wantEndpoint: &Endpoint{
+				PodNamespace: "ns2",
+				PodName:      "pod2",
+			},
+			wantOk: true,
+		},
+		{
+			name: "not found",
+			fields: fields{
+				eps: []*Endpoint{
+					{PodNamespace: "ns1", PodName: "pod1"},
+					{PodNamespace: "ns2", PodName: "pod2"},
+				},
+			},
+			args: args{
+				namespace: "ns3",
+				name:      "pod3",
+			},
+			wantEndpoint: nil,
+			wantOk:       false,
+		},
+		{
+			name: "deleted",
+			fields: fields{
+				eps: []*Endpoint{
+					{PodNamespace: "ns1", PodName: "pod1", Deleted: &time.Time{}},
+				},
+			},
+			args: args{
+				namespace: "ns1",
+				name:      "pod1",
+			},
+			wantEndpoint: nil,
+			wantOk:       false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := Endpoints{
+				mutex: tt.fields.mutex,
+				eps:   tt.fields.eps,
+			}
+			gotEndpoint, gotOk := es.GetEndpointByPodName(tt.args.namespace, tt.args.name)
+			assert.Equal(t, tt.wantEndpoint, gotEndpoint)
+			assert.Equal(t, tt.wantOk, gotOk)
+		})
+	}
+}

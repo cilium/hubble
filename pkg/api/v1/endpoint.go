@@ -28,6 +28,7 @@ type EndpointsHandler interface {
 	GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool)
 	GarbageCollect()
 	GetEndpointByContainerID(id string) (*Endpoint, bool)
+	GetEndpointByPodName(namespace string, name string) (*Endpoint, bool)
 }
 
 // EqualsByID compares if the receiver's endpoint has the same ID, PodName and
@@ -246,6 +247,21 @@ func (es *Endpoints) GetEndpointByContainerID(id string) (*Endpoint, bool) {
 			if id == containerID {
 				return ep.DeepCopy(), true
 			}
+		}
+	}
+	return nil, false
+}
+
+// GetEndpointByPodName returns the endpoint with the given pod name.
+func (es *Endpoints) GetEndpointByPodName(namespace string, name string) (*Endpoint, bool) {
+	es.mutex.RLock()
+	defer es.mutex.RUnlock()
+	for _, ep := range es.eps {
+		if ep.Deleted != nil {
+			continue
+		}
+		if ep.PodNamespace == namespace && ep.PodName == name {
+			return ep.DeepCopy(), true
 		}
 	}
 	return nil, false
