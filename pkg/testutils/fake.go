@@ -133,6 +133,7 @@ type FakeEndpointsHandler struct {
 	FakeGetEndpoint              func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
 	FakeGarbageCollect           func()
 	FakeGetEndpointByContainerID func(id string) (endpoint *v1.Endpoint, ok bool)
+	FakeGetEndpointByPodName     func(namespace string, name string) (*v1.Endpoint, bool)
 }
 
 // SyncEndpoints calls FakeSyncEndpoints.
@@ -184,6 +185,14 @@ func (f *FakeEndpointsHandler) GetEndpointByContainerID(id string) (ep *v1.Endpo
 		return f.FakeGetEndpointByContainerID(id)
 	}
 	panic("GetEndpointByContainerID(id string) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
+}
+
+// GetEndpointByPodName calls FakeGetEndpointByPodName.
+func (f *FakeEndpointsHandler) GetEndpointByPodName(namespace string, name string) (ep *v1.Endpoint, ok bool) {
+	if f.FakeGetEndpointByPodName != nil {
+		return f.FakeGetEndpointByPodName(namespace, name)
+	}
+	panic("GetEndpointByPodName(namespace string, name string) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
 }
 
 // GarbageCollect calls FakeGarbageCollect.
