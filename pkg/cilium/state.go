@@ -116,3 +116,28 @@ func (s *State) GetLogRecordNotifyChannel() chan<- monitor.LogRecordNotify {
 func (s *State) GetEndpointEventsChannel() chan<- monitorAPI.AgentNotify {
 	return s.endpointEvents
 }
+
+// GetCiliumClient returns ciliumClient.
+func (s *State) GetCiliumClient() client.Client {
+	return s.ciliumClient
+}
+
+// GetEndpointsHandler returns endpoints.
+func (s *State) GetEndpointsHandler() v1.EndpointsHandler {
+	return s.endpoints
+}
+
+// GetFQDNCache returns fqdnCache.
+func (s *State) GetFQDNCache() FqdnCache {
+	return s.fqdnCache
+}
+
+// GetIPCache returns ipcache.
+func (s *State) GetIPCache() *ipcache.IPCache {
+	return s.ipcache
+}
+
+// GetServiceCache returns serviceCache.
+func (s *State) GetServiceCache() *servicecache.ServiceCache {
+	return s.serviceCache
+}
