@@ -1695,3 +1695,93 @@ func Test_filterByReplyField(t *testing.T) {
 		})
 	}
 }
+
+func Test_filterByDNSQuery(t *testing.T) {
+	type args struct {
+		f  []*pb.FlowFilter
+		ev *v1.Event
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "not-dns",
+			args: args{
+				f:  []*pb.FlowFilter{{DnsQuery: []string{".*"}}},
+				ev: &v1.Event{Event: &pb.Flow{}},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
+			name: "invalid-regex",
+			args: args{
+				f: []*pb.FlowFilter{{DnsQuery: []string{"*"}}},
+			},
+			wantErr: true,
+		},
+		{
+			name: "positive",
+			args: args{
+				f: []*pb.FlowFilter{{DnsQuery: []string{".*\\.com$", ".*\\.io"}}},
+				ev: &v1.Event{Event: &pb.Flow{
+					L7: &pb.Layer7{
+						Record: &pb.Layer7_Dns{
+							Dns: &pb.DNS{
+								Query: "cilium.io",
+							},
+						},
+					},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "positive",
+			args: args{
+				f: []*pb.FlowFilter{{DnsQuery: []string{".*\\.com$", ".*\\.io"}}},
+				ev: &v1.Event{Event: &pb.Flow{
+					L7: &pb.Layer7{
+						Record: &pb.Layer7_Dns{
+							Dns: &pb.DNS{
+								Query: "cilium.io",
+							},
+						},
+					},
+				}},
+			},
+			wantErr: false,
+			want:    true,
+		},
+		{
+			name: "negative",
+			args: args{
+				f: []*pb.FlowFilter{{DnsQuery: []string{".*\\.com$", ".*\\.net"}}},
+				ev: &v1.Event{Event: &pb.Flow{
+					L7: &pb.Layer7{
+						Record: &pb.Layer7_Dns{
+							Dns: &pb.DNS{
+								Query: "cilium.io",
+							},
+						},
+					},
+				}},
+			},
+			wantErr: false,
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fl, err := BuildFilterList(tt.args.f)
+			assert.Equal(t, tt.wantErr, err != nil)
+			if err == nil {
+				got := fl.MatchOne(tt.args.ev)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
