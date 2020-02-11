@@ -218,6 +218,9 @@ message FlowFilter {
     // source_labels filters on a list of source label selectors. Selectors
     // support the full Kubernetes label selector syntax.
     repeated string source_label = 10;
+    // source_service filters on a list of source service names. This field
+    // supports the same syntax as the source_pod field.
+    repeated string source_service = 16;
 
     // destination_ip filters by a list of destination ips
     repeated string destination_ip = 3;
@@ -227,6 +230,8 @@ message FlowFilter {
     repeated string destination_fqdn = 8;
     // destination_label filters on a list of destination label selectors
     repeated string destination_label = 11;
+    // destination_service filters on a list of destination service names
+    repeated string destination_service = 17;
 
     // only return Flows that were classified with a particular verdict.
     repeated Verdict verdict = 5;
