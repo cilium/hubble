@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Hubble
+// Copyright 2019-2020 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -452,6 +452,74 @@ func TestPodFilter(t *testing.T) {
 				},
 			},
 			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fl, err := BuildFilterList(tt.args.f)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BuildFilterList() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			for i, ev := range tt.args.ev {
+				if filterResult := fl.MatchOne(ev); filterResult != tt.want[i] {
+					t.Errorf("\"%s\" filterResult %d = %v, want %v", tt.name, i, filterResult, tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestServiceFilter(t *testing.T) {
+	type args struct {
+		f  []*pb.FlowFilter
+		ev []*v1.Event
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    []bool
+	}{
+		{
+			name: "source service",
+			args: args{
+				f: []*pb.FlowFilter{
+					{SourceService: []string{"deathstar", "kube-system/kube-dns"}},
+				},
+				ev: []*v1.Event{
+					{Event: &pb.Flow{SourceService: &pb.Service{Namespace: "default", Name: "xwing"}}},
+					{Event: &pb.Flow{SourceService: &pb.Service{Namespace: "default", Name: "deathstar"}}},
+					{Event: &pb.Flow{SourceService: &pb.Service{Namespace: "kube-system", Name: "kube-dns"}}},
+					{Event: &pb.Flow{DestinationService: &pb.Service{Namespace: "kube-system", Name: "deathstar"}}},
+				},
+			},
+			want: []bool{
+				false,
+				true,
+				true,
+				false,
+			},
+		},
+		{
+			name: "destination service",
+			args: args{
+				f: []*pb.FlowFilter{
+					{DestinationService: []string{"default/", "kube-system/kube-"}},
+				},
+				ev: []*v1.Event{
+					{Event: &pb.Flow{DestinationService: &pb.Service{Namespace: "default", Name: "xwing"}}},
+					{Event: &pb.Flow{DestinationService: &pb.Service{Namespace: "default", Name: "deathstar"}}},
+					{Event: &pb.Flow{DestinationService: &pb.Service{Namespace: "kube-system", Name: "kube-dns"}}},
+					{Event: &pb.Flow{SourceService: &pb.Service{Namespace: "kube-system", Name: "deathstar"}}},
+				},
+			},
+			want: []bool{
+				true,
+				true,
+				true,
+				false,
+			},
 		},
 	}
 	for _, tt := range tests {
