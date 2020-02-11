@@ -180,6 +180,16 @@ programs attached to endpoints and devices. This includes:
 		"Show only flows terminating in an endpoint with given labels (e.g. \"key1=value1\", \"reserved:world\")"))
 
 	observerCmd.Flags().Var(filterVar(
+		"from-service", ofilter,
+		"Show all flows originating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+	observerCmd.Flags().Var(filterVar(
+		"service", ofilter,
+		"Show all flows related to the given service ([namespace/]<svc-name>)."))
+	observerCmd.Flags().Var(filterVar(
+		"to-service", ofilter,
+		"Show all flows terminating in the given service ([namespace/]<svc-name>)."))
+
+	observerCmd.Flags().Var(filterVar(
 		"verdict", ofilter,
 		fmt.Sprintf("Show only flows with this verdict [%v, %v]", pb.Verdict_FORWARDED, pb.Verdict_DROPPED)))
 

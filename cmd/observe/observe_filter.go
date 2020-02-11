@@ -114,6 +114,8 @@ func newObserveFilter() *observeFilter {
 			{"to-fqdn", "to-ip", "to-namespace", "to-pod", "fqdn", "ip", "namespace", "pod"},
 			{"label", "from-label"},
 			{"label", "to-label"},
+			{"service", "from-service"},
+			{"service", "to-service"},
 			{"verdict"},
 			{"type"},
 			{"http-status"},
@@ -279,6 +281,23 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 		f.apply(func(f *pb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val+"/")
 		})
+	// service filters
+	case "service":
+		f.applyLeft(func(f *pb.FlowFilter) {
+			f.SourceService = append(f.SourceService, val)
+		})
+		f.applyRight(func(f *pb.FlowFilter) {
+			f.DestinationService = append(f.DestinationService, val)
+		})
+	case "from-service":
+		f.apply(func(f *pb.FlowFilter) {
+			f.SourceService = append(f.SourceService, val)
+		})
+	case "to-service":
+		f.apply(func(f *pb.FlowFilter) {
+			f.DestinationService = append(f.DestinationService, val)
+		})
+
 	// port filters
 	case "port":
 		f.applyLeft(func(f *pb.FlowFilter) {
