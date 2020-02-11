@@ -121,7 +121,7 @@ func New(log *zap.Logger) *cobra.Command {
 	serverCmd.Flags().StringSliceVar(&enabledMetrics, "metric", []string{}, "Enable metrics reporting")
 	serverCmd.Flags().StringVar(&metricsServer, "metrics-server", "", "Address to serve metrics on")
 
-	serverCmd.Flags().BoolVar(&gopsVar, "gops", false, "Run gops agent")
+	serverCmd.Flags().BoolVar(&gopsVar, "gops", true, "Run gops agent")
 	serverCmd.Flags().BoolVar(&pprofVar, "pprof", false, "Run http/pprof handler")
 	serverCmd.Flags().Lookup("gops").Hidden = true
 	serverCmd.Flags().Lookup("pprof").Hidden = true
