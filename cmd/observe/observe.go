@@ -154,10 +154,10 @@ programs attached to endpoints and devices. This includes:
 		"Show all flows originating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
 	observerCmd.Flags().Var(filterVar(
 		"pod", ofilter,
-		"Show all flows related to the given pod name ([namespace/]<pod-name>)."))
+		"Show all flows related to the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
 	observerCmd.Flags().Var(filterVar(
 		"to-pod", ofilter,
-		"Show all flows terminating in the given pod name ([namespace/]<pod-name>)."))
+		"Show all flows terminating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
 
 	observerCmd.Flags().Var(filterVar(
 		"from-namespace", ofilter,
@@ -184,10 +184,10 @@ programs attached to endpoints and devices. This includes:
 		"Show all flows originating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 	observerCmd.Flags().Var(filterVar(
 		"service", ofilter,
-		"Show all flows related to the given service ([namespace/]<svc-name>)."))
+		"Show all flows related to the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 	observerCmd.Flags().Var(filterVar(
 		"to-service", ofilter,
-		"Show all flows terminating in the given service ([namespace/]<svc-name>)."))
+		"Show all flows terminating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 
 	observerCmd.Flags().Var(filterVar(
 		"verdict", ofilter,
