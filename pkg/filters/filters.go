@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Hubble
+// Copyright 2019-2020 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -125,25 +125,35 @@ func destinationPod(ev *v1.Event) (ns, pod string) {
 	return ep.GetNamespace(), ep.GetPodName()
 }
 
-func filterByPods(podNames []string, getPod func(*v1.Event) (ns, pod string)) (FilterFunc, error) {
-	type podFilter struct{ ns, prefix string }
-	pods := make([]podFilter, 0, len(podNames))
-	for _, podName := range podNames {
-		ns, prefix := k8s.ParseNamespaceName(podName)
+func sourceService(ev *v1.Event) (ns, svc string) {
+	s := ev.GetFlow().GetSourceService()
+	return s.GetNamespace(), s.GetName()
+}
+
+func destinationService(ev *v1.Event) (ns, svc string) {
+	s := ev.GetFlow().GetDestinationService()
+	return s.GetNamespace(), s.GetName()
+}
+
+func filterByNamespacedName(names []string, getName func(*v1.Event) (ns, name string)) (FilterFunc, error) {
+	type nameFilter struct{ ns, prefix string }
+	nameFilters := make([]nameFilter, 0, len(names))
+	for _, name := range names {
+		ns, prefix := k8s.ParseNamespaceName(name)
 		if ns == "" && prefix == "" {
-			return nil, fmt.Errorf("invalid pod filter, must be [namespace/][<pod-name>], got %q", podName)
+			return nil, fmt.Errorf("invalid filter, must be [namespace/][<name>], got %q", name)
 		}
-		pods = append(pods, podFilter{ns, prefix})
+		nameFilters = append(nameFilters, nameFilter{ns, prefix})
 	}
 
 	return func(ev *v1.Event) bool {
-		eventNs, eventPod := getPod(ev)
-		if eventNs == "" && eventPod == "" {
+		eventNs, eventName := getName(ev)
+		if eventNs == "" && eventName == "" {
 			return false
 		}
 
-		for _, p := range pods {
-			if (p.prefix == "" || strings.HasPrefix(eventPod, p.prefix)) && p.ns == eventNs {
+		for _, f := range nameFilters {
+			if (f.prefix == "" || strings.HasPrefix(eventName, f.prefix)) && f.ns == eventNs {
 				return true
 			}
 		}
@@ -514,7 +524,7 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 	}
 
 	if ff.GetSourcePod() != nil {
-		pf, err := filterByPods(ff.GetSourcePod(), sourcePod)
+		pf, err := filterByNamespacedName(ff.GetSourcePod(), sourcePod)
 		if err != nil {
 			return nil, err
 		}
@@ -522,7 +532,7 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 	}
 
 	if ff.GetDestinationPod() != nil {
-		pf, err := filterByPods(ff.GetDestinationPod(), destinationPod)
+		pf, err := filterByNamespacedName(ff.GetDestinationPod(), destinationPod)
 		if err != nil {
 			return nil, err
 		}
@@ -576,6 +586,22 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 			return nil, fmt.Errorf("invalid destination label filter: %v", err)
 		}
 		fs = append(fs, dlf)
+	}
+
+	if ff.GetSourceService() != nil {
+		ssf, err := filterByNamespacedName(ff.GetSourceService(), sourceService)
+		if err != nil {
+			return nil, fmt.Errorf("invalid source service filter: %v", err)
+		}
+		fs = append(fs, ssf)
+	}
+
+	if ff.GetDestinationService() != nil {
+		dsf, err := filterByNamespacedName(ff.GetDestinationService(), destinationService)
+		if err != nil {
+			return nil, fmt.Errorf("invalid destination service filter: %v", err)
+		}
+		fs = append(fs, dsf)
 	}
 
 	if ff.GetProtocol() != nil {
