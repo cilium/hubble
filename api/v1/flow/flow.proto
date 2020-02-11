@@ -250,6 +250,8 @@ message FlowFilter {
     repeated string destination_port = 14;
     // reply filters flows based on the direction of the flow.
     repeated bool reply = 15;
+    // dns_query filters L7 DNS flows by query patterns (RE2 regex), e.g. 'kube.*local'.
+    repeated string dns_query = 18;
 }
 
 // EventType are constants are based on the ones from <linux/perf_event.h>.

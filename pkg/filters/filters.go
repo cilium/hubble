@@ -493,6 +493,32 @@ func filterByReplyField(replyParams []bool) FilterFunc {
 	}
 }
 
+// filterByDNSQueries returns a FilterFunc that filters a flow by L7.DNS.query field.
+// The filter function returns true if and only if the DNS query field matches any of
+// the regular expressions.
+func filterByDNSQueries(queryPatterns []string) (FilterFunc, error) {
+	var queries []*regexp.Regexp
+	for _, pattern := range queryPatterns {
+		query, err := regexp.Compile(pattern)
+		if err != nil {
+			return nil, fmt.Errorf("failed to compile regexp: %v", err)
+		}
+		queries = append(queries, query)
+	}
+	return func(ev *v1.Event) bool {
+		dns := ev.GetFlow().GetL7().GetDns()
+		if dns == nil {
+			return false
+		}
+		for _, query := range queries {
+			if query.MatchString(dns.Query) {
+				return true
+			}
+		}
+		return false
+	}, nil
+}
+
 // BuildFilter builds a filter based on a FlowFilter. It returns:
 // - the FilterFunc to be used to filter packets based on the requested
 //   FlowFilter;
@@ -630,6 +656,14 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 
 	if ff.GetReply() != nil {
 		fs = append(fs, filterByReplyField(ff.GetReply()))
+	}
+
+	if ff.GetDnsQuery() != nil {
+		dnsFilters, err := filterByDNSQueries(ff.GetDnsQuery())
+		if err != nil {
+			return nil, fmt.Errorf("invalid DNS query filter: %v", err)
+		}
+		fs = append(fs, dnsFilters)
 	}
 
 	return fs, nil
