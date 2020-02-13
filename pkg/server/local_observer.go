@@ -183,7 +183,7 @@ func getFlows(
 		)
 	}()
 
-	ringReader, err := newRingReader(server.Context(), ring, req)
+	ringReader, err := newRingReader(ring, req)
 	if err != nil {
 		if err == io.EOF {
 			return nil
@@ -300,14 +300,17 @@ func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
 			return nil, ctx.Err()
 		default:
 		}
-		if r.maxFlows > 0 && !r.follow && (r.flowsCount >= r.maxFlows) {
-			return nil, io.EOF
+		var e *v1.Event
+		if r.follow {
+			e = r.ringReader.NextFollow(ctx)
+		} else {
+			if r.maxFlows > 0 && (r.flowsCount >= r.maxFlows) {
+				return nil, io.EOF
+			}
+			e = r.ringReader.Next()
 		}
-		e := r.ringReader.Next(ctx)
 		if e == nil {
-			// if the buffer is not full, we might receive nil values
-			// just keep reading then
-			continue
+			return nil, io.EOF
 		}
 		flow, ok := e.Event.(*pb.Flow)
 		if ok && filters.Apply(r.whitelist, r.blacklist, e) {
@@ -331,7 +334,7 @@ func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
 
 // newRingReader creates a new RingReader that starts at the correct ring
 // offset to match the flow request.
-func newRingReader(ctx context.Context, ring *container.Ring, req *observer.GetFlowsRequest) (*container.RingReader, error) {
+func newRingReader(ring *container.Ring, req *observer.GetFlowsRequest) (*container.RingReader, error) {
 	if req.Follow && req.Number == 0 { // no need to rewind
 		return container.NewRingReader(ring, ring.LastWriteParallel()), nil
 	}
@@ -364,9 +367,9 @@ func newRingReader(ctx context.Context, ring *container.Ring, req *observer.GetF
 	// In order to avoid buffering events, we have to rewind first to find the
 	// correct index, then create a new reader that starts from there
 	for i := ring.Len(); i > 0; i, idx = i-1, idx-1 {
-		e := reader.Previous(ctx)
+		e := reader.Previous()
 		if e == nil {
-			continue
+			break
 		}
 		_, ok := e.Event.(*pb.Flow)
 		if !ok || !filters.Apply(whitelist, blacklist, e) {
