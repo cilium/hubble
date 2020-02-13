@@ -292,7 +292,8 @@ func handleArgs(
 }
 
 func runObserve(serverURL string, ofilter *observeFilter) error {
-	ctx, _ := context.WithTimeout(context.Background(), serverTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), serverTimeout)
+	defer cancel()
 	conn, err := grpc.DialContext(ctx, serverURL, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("failed to dial grpc: %v", err)
@@ -358,6 +359,7 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 
 func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) error {
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	b, err := client.GetFlows(ctx, req)
 	if err != nil {
 		return err
