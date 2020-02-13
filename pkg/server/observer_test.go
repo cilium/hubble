@@ -196,6 +196,72 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	}
 }
 
+func TestObserverServer_GetLastNFlows_MustNotBlock(t *testing.T) {
+	es := v1.NewEndpoints()
+	ipc := ipcache.New()
+	svcc := servicecache.New()
+	fqdnc := fqdncache.New()
+
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	assert.NoError(t, err)
+
+	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0x4, logger.GetLogger())
+	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x8 {
+		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x8)
+	}
+	go s.Start()
+
+	m := s.GetGRPCServer().GetEventsChannel()
+	for i := uint64(0); i < 3; i++ {
+		tn := monitor.TraceNotifyV0{
+			Type: byte(monitorAPI.MessageTypeTrace),
+			Hash: uint32(i),
+		}
+		data := testutils.MustCreateL3L4Payload(tn)
+		pl := &pb.Payload{
+			Time: &types.Timestamp{Seconds: int64(i)},
+			Type: pb.EventType_EventSample,
+			Data: data,
+		}
+		m <- pl
+	}
+	close(m)
+	<-s.GetGRPCServer().GetStopped()
+
+	if lastWrite := s.GetGRPCServer().GetRingBuffer().LastWriteParallel(); lastWrite != 0x1 {
+		t.Errorf("LastWriteParallel() returns = %v, want %v", lastWrite, 0x1)
+	}
+
+	// request last 5 flows but only 3 are in the ring buffer
+	req := &observer.GetFlowsRequest{
+		Number:    5,
+		Follow:    false,
+		Whitelist: []*pb.FlowFilter{{EventType: allTypes}},
+	}
+	got := []*observer.GetFlowsResponse{}
+	fakeServer := &FakeGetFlowsServer{
+		OnSend: func(response *observer.GetFlowsResponse) error {
+			got = append(got, response)
+			return nil
+		},
+		FakeGRPCServerStream: &FakeGRPCServerStream{
+			OnContext: func() context.Context {
+				return context.Background()
+			},
+		},
+	}
+	err = s.GetGRPCServer().GetFlows(req, fakeServer)
+	assert.Nil(t, err)
+	// FIXME: we have an off-by one here due to ring.LastWriteParallel() which
+	// returns len-2 (instead of len-1) to be 100% sure to return an entry
+	// that has been written to. This means that we only get to read 2 flows
+	// because the ring reader cannot position itself as far back as required.
+	assert.Equal(t, 2, len(got))
+	for i := 0; i < 2; i++ {
+		assert.Equal(t, int64(i), got[i].GetFlow().Time.Seconds)
+	}
+}
+
 func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	es := v1.NewEndpoints()
 	ipc := ipcache.New()
