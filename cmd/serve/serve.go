@@ -106,7 +106,6 @@ func New(log *zap.Logger) *cobra.Command {
 			if err != nil {
 				log.Fatal("", zap.Error(err))
 			}
-			fmt.Printf("Press Ctrl-C to quit\n")
 			if err := s.HandleMonitorSocket(nodeName); err != nil {
 				log.Fatal("HandleMonitorSocket failed", zap.Error(err))
 			}
