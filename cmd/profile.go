@@ -19,7 +19,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"go.uber.org/zap"
+	"github.com/cilium/hubble/pkg/logger"
 )
 
 // Look at the set observe flags, and optionally enable cpu, memory, or both,
@@ -30,10 +30,11 @@ import (
 func maybeProfile() func() {
 	var cf, mf *os.File
 	var err error
+	log := logger.GetLogger()
 	if cpuprofile != "" {
 		cf, err = os.Create(cpuprofile)
 		if err != nil {
-			log.Fatal("failed to create cpu profile", zap.Error(err))
+			log.WithError(err).Fatal("failed to create cpu profile")
 		}
 		pprof.StartCPUProfile(cf)
 	}
@@ -41,7 +42,7 @@ func maybeProfile() func() {
 	if memprofile != "" {
 		mf, err = os.Create(memprofile)
 		if err != nil {
-			log.Fatal("failed to create memory profile", zap.Error(err))
+			log.WithError(err).Fatal("failed to create memory profile")
 		}
 	}
 
@@ -53,7 +54,7 @@ func maybeProfile() func() {
 		if mf != nil {
 			runtime.GC() // get up-to-date statistics
 			if err := pprof.WriteHeapProfile(mf); err != nil {
-				log.Fatal("failed to write memory profile", zap.Error(err))
+				log.WithError(err).Fatal("failed to write memory profile")
 			}
 			mf.Close()
 		}

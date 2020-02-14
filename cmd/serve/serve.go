@@ -39,28 +39,28 @@ import (
 	"github.com/cilium/hubble/pkg/server"
 	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/google/gops/agent"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // New ...
-func New(log *zap.Logger) *cobra.Command {
+func New(log *logrus.Logger) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start gRPC server",
 		Run: func(cmd *cobra.Command, args []string) {
 			err := validateArgs(log)
 			if err != nil {
-				log.Fatal("failed to parse arguments", zap.Error(err))
+				log.WithError(err).Fatal("failed to parse arguments")
 			}
 
 			if gopsVar {
 				log.Debug("starting gops agent")
 				if err := agent.Listen(agent.Options{}); err != nil {
-					log.Fatal("failed to start gops agent", zap.Error(err))
+					log.WithError(err).Fatal("failed to start gops agent")
 				}
 			}
 
@@ -77,7 +77,7 @@ func New(log *zap.Logger) *cobra.Command {
 
 			ciliumClient, err := client.NewClient()
 			if err != nil {
-				log.Fatal("failed to get Cilium client", zap.Error(err))
+				log.WithError(err).Fatal("failed to get Cilium client")
 			}
 			ipCache := ipcache.New()
 			fqdnCache := fqdncache.New()
@@ -89,7 +89,7 @@ func New(log *zap.Logger) *cobra.Command {
 			}
 			payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
 			if err != nil {
-				log.Fatal("failed to get parser", zap.Error(err))
+				log.WithError(err).Fatal("failed to get parser")
 			}
 			s := server.NewServer(
 				ciliumClient,
@@ -104,11 +104,11 @@ func New(log *zap.Logger) *cobra.Command {
 			s.Start()
 			err = Serve(log, listenClientUrls, s.GetGRPCServer())
 			if err != nil {
-				log.Fatal("", zap.Error(err))
+				log.WithError(err).Fatal("")
 			}
 			fmt.Printf("Press Ctrl-C to quit\n")
 			if err := s.HandleMonitorSocket(nodeName); err != nil {
-				log.Fatal("HandleMonitorSocket failed", zap.Error(err))
+				log.WithError(err).Fatal("HandleMonitorSocket failed")
 			}
 		},
 	}
@@ -153,38 +153,35 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-func enableMetrics(log *zap.Logger, m []string) {
+func enableMetrics(log *logrus.Logger, m []string) {
 	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
 	if err != nil {
-		log.Fatal("Unable to setup metrics", zap.Error(err))
+		log.WithError(err).Fatal("Unable to setup metrics")
 	}
 
 	go func() {
 		err := <-errChan
 		if err != nil {
-			log.Fatal("Unable to initialize metrics server", zap.Error(err))
+			log.WithError(err).Fatal("Unable to initialize metrics server")
 		}
 	}()
 
 }
 
-func validateArgs(log *zap.Logger) error {
+func validateArgs(log *logrus.Logger) error {
 	if serveDurationVar != "" {
 		d, err := time.ParseDuration(serveDurationVar)
 		if err != nil {
-			log.Fatal(
-				"failed to parse the provided --duration",
-				zap.String("duration", serveDurationVar),
-			)
+			log.WithField("duration", serveDurationVar).
+				Fatal("failed to parse the provided --duration")
 		}
 		serveDuration = d
 	}
 
-	log.Info(
-		"Started server with args",
-		zap.Uint32("max-flows", maxFlows),
-		zap.Duration("duration", serveDuration),
-	)
+	log.WithFields(logrus.Fields{
+		"max-flows": maxFlows,
+		"duration":  serveDuration,
+	}).Info("Started server with args")
 
 	if metricsServer != "" {
 		enableMetrics(log, enabledMetrics)
@@ -237,7 +234,7 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(log *zap.Logger, listenClientUrls []string, s server.GRPCServer) error {
+func Serve(log *logrus.Logger, listenClientUrls []string, s server.GRPCServer) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err
@@ -249,9 +246,8 @@ func Serve(log *zap.Logger, listenClientUrls []string, s server.GRPCServer) erro
 		// Register a server shutdown
 		go func() {
 			<-time.After(serveDuration)
-			log.Info(
+			log.WithField("duration", serveDuration).Info(
 				"Shutting down after the configured duration",
-				zap.Duration("duration", serveDuration),
 			)
 			os.Exit(0)
 		}()
@@ -267,10 +263,10 @@ func Serve(log *zap.Logger, listenClientUrls []string, s server.GRPCServer) erro
 
 	for clientListURL, clientList := range clientListeners {
 		go func(clientListURL string, clientList net.Listener) {
-			log.Info("Starting gRPC server on client-listener", zap.String("client-listener", clientListURL))
+			log.WithField("client-listener", clientListURL).Info("Starting gRPC server on client-listener")
 			err = clientGRPC.Serve(clientList)
 			if err != nil {
-				log.Fatal("failed to close grpc server", zap.Error(err))
+				log.WithError(err).Fatal("failed to close grpc server")
 			}
 		}(clientListURL, clientList)
 	}

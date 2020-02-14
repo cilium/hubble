@@ -26,9 +26,9 @@ import (
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 func TestObserverServer_syncAllEndpoints(t *testing.T) {
@@ -105,7 +105,7 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	c := &State{
 		ciliumClient: fakeClient,
 		endpoints:    fakeHandler,
-		log:          zap.L(),
+		log:          logger.GetLogger(),
 	}
 	go c.syncEndpoints()
 
@@ -228,7 +228,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
-		log:            zap.L(),
+		log:            logger.GetLogger(),
 	}
 	go c.consumeEndpointEvents()
 
@@ -252,7 +252,7 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
-		log:            zap.L(),
+		log:            logger.GetLogger(),
 	}
 	go c.consumeEndpointEvents()
 
@@ -293,7 +293,7 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 	c := &State{
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
-		log:            zap.L(),
+		log:            logger.GetLogger(),
 	}
 	go c.consumeEndpointEvents()
 
@@ -357,7 +357,7 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 		ciliumClient:   fakeClient,
 		endpoints:      fakeHandler,
 		endpointEvents: epEventsCh,
-		log:            zap.L(),
+		log:            logger.GetLogger(),
 	}
 	go c.consumeEndpointEvents()
 

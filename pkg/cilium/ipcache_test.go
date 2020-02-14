@@ -22,14 +22,13 @@ import (
 	"github.com/cilium/cilium/pkg/identity"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/cilium/pkg/source"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
-
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/cilium/hubble/pkg/testutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestObserverServer_syncIPCache(t *testing.T) {
@@ -59,7 +58,7 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 	c := &State{
 		ciliumClient: fakeClient,
 		ipcache:      ipc,
-		log:          zap.L(),
+		log:          logger.GetLogger(),
 	}
 
 	ipCacheEvents := make(chan monitorAPI.AgentNotify, 100)

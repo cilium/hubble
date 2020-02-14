@@ -22,12 +22,12 @@ import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestNewLocalServer(t *testing.T) {
@@ -38,7 +38,7 @@ func TestNewLocalServer(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 10, zap.L())
+	s := NewLocalServer(pp, 10, logger.GetLogger())
 	assert.NotNil(t, s.GetStopped())
 	assert.NotNil(t, s.GetPayloadParser())
 	assert.NotNil(t, s.GetRingBuffer())
@@ -54,7 +54,7 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 1, zap.L())
+	s := NewLocalServer(pp, 1, logger.GetLogger())
 	res, err := s.ServerStatus(context.Background(), &observer.ServerStatusRequest{})
 	require.NoError(t, err)
 	assert.Equal(t, &observer.ServerStatusResponse{NumFlows: 0, MaxFlows: 2}, res)
@@ -82,7 +82,7 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, numFlows, zap.L())
+	s := NewLocalServer(pp, numFlows, logger.GetLogger())
 	go s.Start()
 
 	m := s.GetEventsChannel()

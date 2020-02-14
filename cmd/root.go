@@ -25,13 +25,10 @@ import (
 	"github.com/cilium/hubble/pkg/logger"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 var (
-	cfgFile string
-	log     *zap.Logger
-
+	cfgFile                string
 	cpuprofile, memprofile string
 )
 
@@ -77,7 +74,7 @@ func init() {
 	// initialize all subcommands
 	rootCmd.AddCommand(status.New())
 	rootCmd.AddCommand(serve.New(l))
-	rootCmd.AddCommand(observe.New(l))
+	rootCmd.AddCommand(observe.New())
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -21,11 +21,10 @@ import (
 
 	"github.com/cilium/cilium/pkg/identity"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"go.uber.org/zap"
-
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/parser/getters"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -68,7 +67,7 @@ func (s *State) fetchIPCache() error {
 	if err != nil {
 		return err
 	}
-	s.log.Debug("Fetched ipcache from cilium", zap.Int("entries", len(entries)))
+	s.log.WithField("entries", len(entries)).Debug("Fetched ipcache from cilium")
 	return nil
 }
 
@@ -78,8 +77,10 @@ func (s *State) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
 	n := monitorAPI.IPCacheNotification{}
 	err := json.Unmarshal([]byte(an.Text), &n)
 	if err != nil {
-		s.log.Error("Unable to unmarshal IPCacheNotification",
-			zap.Int("type", int(an.Type)), zap.String("IPCacheNotification", an.Text))
+		s.log.WithFields(logrus.Fields{
+			"type":                int(an.Type),
+			"IPCacheNotification": an.Text,
+		}).Error("Unable to unmarshal IPCacheNotification")
 		return false
 	}
 
@@ -97,7 +98,7 @@ func (s *State) processIPCacheEvent(an monitorAPI.AgentNotify) bool {
 	case monitorAPI.AgentNotifyIPCacheDeleted:
 		return s.ipcache.Delete(n.CIDR)
 	default:
-		s.log.Warn("Received unknown IPCache notification type", zap.Int("type", int(an.Type)))
+		s.log.WithField("type", int(an.Type)).Warn("Received unknown IPCache notification type")
 	}
 
 	return false
@@ -116,7 +117,7 @@ func (s *State) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
 					"this is expected. Pod names of endpoints running on remote nodes will not be resolved.")
 				return
 			}
-			s.log.Error("Failed to fetch IPCache from Cilium", zap.Error(err))
+			s.log.WithError(err).Error("Failed to fetch IPCache from Cilium")
 			time.Sleep(ipcacheInitRetryInterval)
 			continue
 		}
@@ -132,7 +133,7 @@ func (s *State) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
 		case <-refresh.C:
 			err := s.fetchIPCache()
 			if err != nil {
-				s.log.Error("Failed to fetch IPCache from Cilium", zap.Error(err))
+				s.log.WithError(err).Error("Failed to fetch IPCache from Cilium")
 				refresh.Reset(ipcacheInitRetryInterval)
 				continue
 			}
@@ -147,9 +148,15 @@ func (s *State) syncIPCache(ipcacheEvents <-chan monitorAPI.AgentNotify) {
 			updated := s.processIPCacheEvent(an)
 			switch {
 			case !updated && !inSync:
-				s.log.Debug("Received stale ipcache update", zap.Int("type", int(an.Type)), zap.String("IPCacheNotification", an.Text))
+				s.log.WithFields(logrus.Fields{
+					"type":                int(an.Type),
+					"IPCacheNotification": an.Text,
+				}).Debug("Received stale ipcache update")
 			case !updated && inSync:
-				s.log.Warn("Received unapplicable ipcache update", zap.Int("type", int(an.Type)), zap.String("IPCacheNotification", an.Text))
+				s.log.WithFields(logrus.Fields{
+					"type":                int(an.Type),
+					"IPCacheNotification": an.Text,
+				}).Warn("Received unapplicable ipcache update")
 			case updated && !inSync:
 				inSync = true
 			}

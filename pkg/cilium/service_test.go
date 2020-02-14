@@ -18,16 +18,14 @@ import (
 	"net"
 	"testing"
 
-	"github.com/cilium/hubble/pkg/testutils"
-
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/servicecache"
-
+	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestObserverServer_syncServiceCache(t *testing.T) {
@@ -67,7 +65,7 @@ func TestObserverServer_syncServiceCache(t *testing.T) {
 	c := &State{
 		ciliumClient: fakeClient,
 		serviceCache: svcc,
-		log:          zap.L(),
+		log:          logger.GetLogger(),
 	}
 
 	serviceCacheEvents := make(chan monitorAPI.AgentNotify, 100)

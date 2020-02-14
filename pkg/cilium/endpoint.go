@@ -21,10 +21,9 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"go.uber.org/zap"
-
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/parser/endpoint"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -38,14 +37,17 @@ func (s *State) syncEndpoints() {
 	for {
 		eps, err := s.ciliumClient.EndpointList()
 		if err != nil {
-			s.log.Error("Unable to get cilium endpoint list", zap.Error(err))
+			s.log.WithError(err).Error("Unable to get cilium endpoint list")
 			time.Sleep(time.Second)
 			continue
 		}
 
 		for _, modelUpdateEP := range eps {
 			updatedEp := endpoint.ParseEndpointFromModel(modelUpdateEP)
-			s.log.Debug("Found pod", zap.String("namespace", updatedEp.PodNamespace), zap.String("pod-name", updatedEp.PodName))
+			s.log.WithFields(logrus.Fields{
+				"namespace": updatedEp.PodNamespace,
+				"pod-name":  updatedEp.PodName,
+			}).Debug("Found pod")
 			s.endpoints.UpdateEndpoint(updatedEp)
 		}
 		break
@@ -54,7 +56,7 @@ func (s *State) syncEndpoints() {
 		time.Sleep(refreshEndpointList)
 		eps, err := s.ciliumClient.EndpointList()
 		if err != nil {
-			s.log.Error("Unable to get cilium endpoint list", zap.Error(err))
+			s.log.WithError(err).Error("Unable to get cilium endpoint list")
 			continue
 		}
 		var parsedEPs []*v1.Endpoint
@@ -77,13 +79,13 @@ func (s *State) consumeEndpointEvents() {
 			ern := monitorAPI.EndpointRegenNotification{}
 			err := json.Unmarshal([]byte(an.Text), &ern)
 			if err != nil {
-				s.log.Error("Unable to unmarshal EndpointRegenNotification", zap.String("EndpointRegenNotification", an.Text))
+				s.log.WithField("EndpointRegenNotification", an.Text).Error("Unable to unmarshal EndpointRegenNotification")
 				continue
 			}
 
 			ciliumEP, err := s.ciliumClient.GetEndpoint(ern.ID)
 			if err != nil {
-				s.log.Error("Updated or created endpoint not found!", zap.Uint64("id", ern.ID), zap.Error(err))
+				s.log.WithField("id", ern.ID).WithError(err).Error("Updated or created endpoint not found!")
 				continue
 			}
 			ep := endpoint.ParseEndpointFromModel(ciliumEP)
@@ -96,15 +98,17 @@ func (s *State) consumeEndpointEvents() {
 			edn := monitorAPI.EndpointDeleteNotification{}
 			err := json.Unmarshal([]byte(an.Text), &edn)
 			if err != nil {
-				s.log.Error("Unable to unmarshal EndpointDeleteNotification", zap.String("EndpointDeleteNotification", an.Text))
+				s.log.WithField("EndpointDeleteNotification", an.Text).Error("Unable to unmarshal EndpointDeleteNotification")
 				continue
 			}
 
 			ep := endpoint.ParseEndpointFromEndpointDeleteNotification(edn)
 			s.endpoints.MarkDeleted(ep)
 		default:
-			s.log.Debug("Ignoring unknown endpoint event",
-				zap.Int("type", int(an.Type)), zap.String("notification", an.Text))
+			s.log.WithFields(logrus.Fields{
+				"type":         int(an.Type),
+				"notification": an.Text,
+			}).Debug("Ignoring unknown endpoint event")
 		}
 	}
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/servicecache"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 // State contains various caches for Cilium state and channels to notify
@@ -47,7 +47,7 @@ type State struct {
 	// logRecord is a channel used to exchange L7 DNS requests seens from the
 	// monitor
 	logRecord chan monitor.LogRecordNotify
-	log       *zap.Logger
+	log       *logrus.Logger
 
 	// epAdd is a channel used to exchange endpoint events from Cilium
 	endpointEvents chan monitorAPI.AgentNotify
@@ -60,7 +60,7 @@ func NewCiliumState(
 	ipCache *ipcache.IPCache,
 	fqdnCache FqdnCache,
 	serviceCache *servicecache.ServiceCache,
-	logger *zap.Logger,
+	logger *logrus.Logger,
 ) *State {
 	return &State{
 		ciliumClient: ciliumClient,

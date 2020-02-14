@@ -27,7 +27,6 @@ import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,11 +78,11 @@ func eventTypes() (l []string) {
 }
 
 // New observer command.
-func New(log *zap.Logger) *cobra.Command {
-	return newObserveCmd(log, newObserveFilter())
+func New() *cobra.Command {
+	return newObserveCmd(newObserveFilter())
 }
 
-func newObserveCmd(log *zap.Logger, ofilter *observeFilter) *cobra.Command {
+func newObserveCmd(ofilter *observeFilter) *cobra.Command {
 	observerCmd := &cobra.Command{
 		Use:   "observe",
 		Short: "Display BPF program events running in the local node",
@@ -93,7 +92,7 @@ programs attached to endpoints and devices. This includes:
   * Captured packet traces
   * Debugging information`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(log, cmd, ofilter); err != nil {
+			if err := handleArgs(ofilter); err != nil {
 				return err
 			}
 
@@ -250,8 +249,6 @@ programs attached to endpoints and devices. This includes:
 }
 
 func handleArgs(
-	log *zap.Logger,
-	cmd *cobra.Command,
 	ofilter *observeFilter,
 ) (err error) {
 	if ofilter.blacklisting {

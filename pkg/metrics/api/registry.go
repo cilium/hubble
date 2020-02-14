@@ -19,9 +19,8 @@ import (
 	"sync"
 
 	"github.com/cilium/hubble/pkg/logger"
-
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 // Registry holds a set of registered metric handlers
@@ -69,8 +68,7 @@ func (r *Registry) ConfigureHandlers(registry *prometheus.Registry, enabled Map)
 		if err := handler.Init(registry, opts); err != nil {
 			return nil, fmt.Errorf("unable to initialize metric '%s': %s", name, err)
 		}
-
-		log.Info("Configured metrics plugin", zap.String("name", name), zap.String("status", handler.Status()))
+		log.WithFields(logrus.Fields{"name": name, "status": handler.Status()}).Info("Configured metrics plugin")
 
 		initialized = append(initialized, handler)
 	}
