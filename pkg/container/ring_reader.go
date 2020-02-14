@@ -17,7 +17,7 @@ package container
 import (
 	"context"
 
-	"github.com/cilium/hubble/pkg/api/v1"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 )
 
 // RingReader is a reader for a Ring container.
@@ -39,20 +39,33 @@ func NewRingReader(ring *Ring, start uint64) *RingReader {
 }
 
 // Previous reads the event at the current position and decrement the read
-// position by one.
-func (r *RingReader) Previous(ctx context.Context) *v1.Event {
-	e, ok := r.ring.read(r.idx)
-	if e == nil || !ok {
-		return nil
+// position. When no more event can be read, Previous returns nil.
+func (r *RingReader) Previous() *v1.Event {
+	var e *v1.Event
+	// when the ring is not full, ring.read() may return <nil>, true
+	// in such a case, one should continue reading
+	for ok := true; e == nil && ok; r.idx-- {
+		e, ok = r.ring.read(r.idx)
 	}
-	r.idx--
 	return e
 }
 
-// Next reads the event at the current position and increment the read position
-// by one. If there are no more event to read, Next blocks until the next event
-// is added to the ring or the context is cancelled.
-func (r *RingReader) Next(ctx context.Context) *v1.Event {
+// Next reads the event at the current position and increment the read position.
+// When no more event can be read, Next returns nil.
+func (r *RingReader) Next() *v1.Event {
+	var e *v1.Event
+	// when the ring is not full, ring.read() may return <nil>, true
+	// in such a case, one should continue reading
+	for ok := true; e == nil && ok; r.idx++ {
+		e, ok = r.ring.read(r.idx)
+	}
+	return e
+}
+
+// NextFollow reads the event at the current position and increment the read
+// position by one. If there are no more event to read, NextFollow blocks
+// until the next event is added to the ring or the context is cancelled.
+func (r *RingReader) NextFollow(ctx context.Context) *v1.Event {
 	if r.c == nil {
 		r.c = r.ring.readFrom(r.stop, r.idx)
 	}
