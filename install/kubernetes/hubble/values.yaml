@@ -49,6 +49,8 @@ ui:
     pullPolicy: Always
   clusterDomain: cluster.local
   replicas: 1
+  resources: {}
+  priorityClassName: ""
 
 ingress:
   enabled: false
@@ -62,3 +64,6 @@ ingress:
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
+
+resources: {}
+priorityClassName: system-node-critical
