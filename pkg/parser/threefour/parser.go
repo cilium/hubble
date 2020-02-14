@@ -31,10 +31,8 @@ import (
 	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/cilium/hubble/pkg/parser/getters"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"go.uber.org/zap"
 )
 
 // Parser is a parser for L3/L4 payloads
@@ -196,7 +194,7 @@ func filterCidrLabels(labels []string) []string {
 			currLabel := label[len(cidrPrefix):]
 			_, curr, err := net.ParseCIDR(currLabel)
 			if err != nil {
-				log.Warn("got an invalid cidr label", zap.String("label", label))
+				log.WithField("label", label).Warn("got an invalid cidr label")
 				continue
 			}
 			if max == nil {
@@ -252,9 +250,9 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoin
 	var labels []string
 	if p.identityGetter != nil {
 		if id, err := p.identityGetter.GetIdentity(securityIdentity); err != nil {
-			logger.GetLogger().Warn("failed to resolve identity",
-				zap.Error(err),
-				zap.Uint64("identity", securityIdentity))
+			logger.GetLogger().
+				WithError(err).WithField("identity", securityIdentity).
+				Warn("failed to resolve identity")
 		} else {
 			labels = sortAndFilterLabels(id.Labels, securityIdentity)
 		}

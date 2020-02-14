@@ -24,8 +24,8 @@ import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor"
 	"github.com/cilium/cilium/pkg/proxy/accesslog"
 	"github.com/cilium/cilium/pkg/u8proto"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
 )
 
 type fakeFQDNCache struct {
@@ -101,7 +101,7 @@ func TestObserverServer_consumeLogRecordNotifyChannel(t *testing.T) {
 	c := &State{
 		fqdnCache: fakeFQDNCache,
 		logRecord: make(chan monitorAPI.LogRecordNotify, 1),
-		log:       zap.L(),
+		log:       logger.GetLogger(),
 	}
 	go c.consumeLogRecordNotifyChannel()
 

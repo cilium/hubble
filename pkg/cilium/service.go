@@ -19,7 +19,7 @@ import (
 	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -37,7 +37,7 @@ func (s *State) fetchServiceCache() error {
 	if err := s.serviceCache.InitializeFrom(entries); err != nil {
 		return err
 	}
-	s.log.Debug("Fetched service cache from cilium", zap.Int("entries", len(entries)))
+	s.log.WithField("entries", len(entries)).Debug("Fetched service cache from cilium")
 	return nil
 }
 
@@ -48,28 +48,32 @@ func (s *State) processServiceEvent(an monitorAPI.AgentNotify) bool {
 	case monitorAPI.AgentNotifyServiceUpserted:
 		n := monitorAPI.ServiceUpsertNotification{}
 		if err := json.Unmarshal([]byte(an.Text), &n); err != nil {
-			s.log.Error("Unable to unmarshal service upsert notification",
-				zap.Int("type", int(an.Type)), zap.String("ServiceUpsertNotification", an.Text))
+			s.log.WithFields(logrus.Fields{
+				"type":                      int(an.Type),
+				"ServiceUpsertNotification": an.Text,
+			}).Error("Unable to unmarshal service upsert notification")
 			return false
 		}
 		return s.serviceCache.Upsert(int64(n.ID), n.Name, n.Type, n.Namespace, n.Frontend.IP, n.Frontend.Port)
 	case monitorAPI.AgentNotifyServiceDeleted:
 		n := monitorAPI.ServiceDeleteNotification{}
 		if err := json.Unmarshal([]byte(an.Text), &n); err != nil {
-			s.log.Error("Unable to unmarshal service delete notification",
-				zap.Int("type", int(an.Type)), zap.String("ServiceDeleteNotification", an.Text))
+			s.log.WithFields(logrus.Fields{
+				"type":                      int(an.Type),
+				"ServiceDeleteNotification": an.Text,
+			}).Error("Unable to unmarshal service delete notification")
 			return false
 		}
 		return s.serviceCache.DeleteByID(int64(n.ID))
 	default:
-		s.log.Warn("Received unknown service notification type", zap.Int("type", int(an.Type)))
+		s.log.WithField("type", int(an.Type)).Warn("Received unknown service notification type")
 		return false
 	}
 }
 
 func (s *State) syncServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
 	for err := s.fetchServiceCache(); err != nil; err = s.fetchServiceCache() {
-		s.log.Error("Failed to fetch service cache from Cilium", zap.Error(err))
+		s.log.WithError(err).Error("Failed to fetch service cache from Cilium")
 		time.Sleep(serviceCacheInitRetryInterval)
 	}
 
@@ -80,7 +84,7 @@ func (s *State) syncServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
 		select {
 		case <-refresh.C:
 			if err := s.fetchServiceCache(); err != nil {
-				s.log.Error("Failed to fetch service cache from Cilium", zap.Error(err))
+				s.log.WithError(err).Error("Failed to fetch service cache from Cilium")
 			}
 			refresh.Reset(serviceCacheInitRetryInterval)
 		case an, ok := <-serviceEvents:
@@ -94,9 +98,15 @@ func (s *State) syncServiceCache(serviceEvents <-chan monitorAPI.AgentNotify) {
 			updated := s.processServiceEvent(an)
 			switch {
 			case !updated && !inSync:
-				s.log.Debug("Received stale service update", zap.Int("type", int(an.Type)), zap.String("AgentNotification", an.Text))
+				s.log.WithFields(logrus.Fields{
+					"type":              int(an.Type),
+					"AgentNotification": an.Text,
+				}).Debug("Received stale service update")
 			case !updated && inSync:
-				s.log.Warn("Received unapplicable service update", zap.Int("type", int(an.Type)), zap.String("AgentNotification", an.Text))
+				s.log.WithFields(logrus.Fields{
+					"type":              int(an.Type),
+					"AgentNotification": an.Text,
+				}).Warn("Received unapplicable service update")
 			case updated && !inSync:
 				inSync = true
 			}

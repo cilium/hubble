@@ -19,7 +19,6 @@ import (
 	"encoding/gob"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"strings"
 	"time"
@@ -38,7 +37,7 @@ import (
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/gogo/protobuf/types"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 // ObserverServer is a server that can store events in memory
@@ -48,7 +47,7 @@ type ObserverServer struct {
 
 	ciliumState *cilium.State
 
-	log *zap.Logger
+	log *logrus.Logger
 }
 
 // NewServer returns a server that can store up to the given of maxFlows
@@ -61,7 +60,7 @@ func NewServer(
 	serviceCache *servicecache.ServiceCache,
 	payloadParser *parser.Parser,
 	maxFlows int,
-	logger *zap.Logger,
+	logger *logrus.Logger,
 ) *ObserverServer {
 	ciliumState := cilium.NewCiliumState(ciliumClient, endpoints, ipCache, fqdnCache, serviceCache, logger)
 	return &ObserverServer{
@@ -86,7 +85,7 @@ func (s *ObserverServer) HandleMonitorSocket(nodeName string) error {
 	for ; ; time.Sleep(api.ConnectionTimeout) {
 		conn, version, err := openMonitorSock()
 		if err != nil {
-			s.log.Error("Cannot open monitor serverSocketPath", zap.Error(err))
+			s.log.WithError(err).Error("Cannot open monitor serverSocketPath")
 			return err
 		}
 
@@ -96,11 +95,11 @@ func (s *ObserverServer) HandleMonitorSocket(nodeName string) error {
 			// no-op
 
 		case err == io.EOF, err == io.ErrUnexpectedEOF:
-			s.log.Warn("connection closed", zap.Error(err))
+			s.log.WithError(err).Warn("connection closed")
 			continue
 
 		default:
-			log.Fatal("decoding error", zap.Error(err))
+			s.log.WithError(err).Fatal("decoding error")
 		}
 	}
 }

@@ -30,7 +30,7 @@ import (
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/gogo/protobuf/types"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 // GRPCServer defines the interface for Hubble gRPC server, extending the
@@ -50,7 +50,7 @@ type GRPCServer interface {
 	// in unit testing.
 	GetStopped() chan struct{}
 	// GetLogger returns the logger assigned to this gRPC server.
-	GetLogger() *zap.Logger
+	GetLogger() *logrus.Logger
 }
 
 // LocalObserverServer is an implementation of the server.Observer interface
@@ -68,7 +68,7 @@ type LocalObserverServer struct {
 	// channel is empty, once it's closed.
 	stopped chan struct{}
 
-	log *zap.Logger
+	log *logrus.Logger
 
 	// channel to receive events from observer server.
 	eventschan chan *observer.GetFlowsResponse
@@ -81,7 +81,7 @@ type LocalObserverServer struct {
 func NewLocalServer(
 	payloadParser *parser.Parser,
 	maxFlows int,
-	logger *zap.Logger,
+	logger *logrus.Logger,
 ) *LocalObserverServer {
 	return &LocalObserverServer{
 		log:  logger,
@@ -100,7 +100,7 @@ func (s *LocalObserverServer) Start() {
 		flow, err := decodeFlow(s.payloadParser, pl)
 		if err != nil {
 			if !errors.IsErrInvalidType(err) {
-				s.log.Debug("failed to decode payload", zap.ByteString("data", pl.Data), zap.Error(err))
+				s.log.WithError(err).WithField("data", pl.Data).Debug("failed to decode payload")
 			}
 			continue
 		}
@@ -130,7 +130,7 @@ func (s *LocalObserverServer) GetRingBuffer() *container.Ring {
 }
 
 // GetLogger implements GRPCServer.GetLogger.
-func (s *LocalObserverServer) GetLogger() *zap.Logger {
+func (s *LocalObserverServer) GetLogger() *logrus.Logger {
 	return s.log
 }
 
@@ -173,14 +173,13 @@ func getFlows(
 
 	i := uint64(0)
 	defer func() {
-		log.Debug(
-			"GetFlows finished",
-			zap.Uint64("number_of_flows", i),
-			zap.Uint64("buffer_size", ring.Cap()),
-			zap.String("whitelist", logFilters(req.Whitelist)),
-			zap.String("blacklist", logFilters(req.Blacklist)),
-			zap.Duration("took", time.Now().Sub(start)),
-		)
+		log.WithFields(logrus.Fields{
+			"number_of_flows": i,
+			"buffer_size":     ring.Cap(),
+			"whitelist":       logFilters(req.Whitelist),
+			"blacklist":       logFilters(req.Blacklist),
+			"took":            time.Now().Sub(start),
+		}).Debug("GetFlows finished")
 	}()
 
 	ringReader, err := newRingReader(ring, req)
@@ -255,7 +254,7 @@ type flowsReader struct {
 // newFlowsReader creates a new flowsReader that uses the given RingReader to
 // read through the ring buffer. Only flows that match the request criterias
 // are returned.
-func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *zap.Logger) (*flowsReader, error) {
+func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *logrus.Logger) (*flowsReader, error) {
 	whitelist, err := filters.BuildFilterList(req.Whitelist)
 	if err != nil {
 		return nil, err
@@ -265,11 +264,11 @@ func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log 
 		return nil, err
 	}
 
-	log.Debug("creating a new flowsReader",
-		zap.Any("req", req),
-		zap.Any("whitelist", whitelist),
-		zap.Any("blacklist", blacklist),
-	)
+	log.WithFields(logrus.Fields{
+		"req":       req,
+		"whitelist": whitelist,
+		"blacklist": blacklist,
+	}).Debug("creating a new flowsReader")
 
 	reader := &flowsReader{
 		ringReader: r,

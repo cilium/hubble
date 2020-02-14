@@ -20,7 +20,6 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/proxy/accesslog"
-	"go.uber.org/zap"
 )
 
 const (
@@ -41,13 +40,13 @@ func (s *State) syncFQDNCache() {
 	for {
 		entries, err := s.ciliumClient.GetFqdnCache()
 		if err != nil {
-			s.log.Error("Unable to obtain fqdn cache from cilium", zap.Error(err))
+			s.log.WithError(err).Error("Unable to obtain fqdn cache from cilium")
 			time.Sleep(fqdnCacheRetryInterval)
 			continue
 		}
 
 		s.fqdnCache.InitializeFrom(entries)
-		s.log.Debug("Fetched DNS cache from cilium", zap.Int("entries", len(entries)))
+		s.log.WithField("entries", len(entries)).Debug("Fetched DNS cache from cilium")
 		time.Sleep(fqdnCacheRefreshInterval)
 	}
 }
@@ -74,7 +73,7 @@ func (s *State) consumeLogRecordNotifyChannel() {
 			}
 			lookupTime, err := time.Parse(time.RFC3339Nano, logRecord.Timestamp)
 			if err != nil {
-				s.log.Warn("Unable to parse timestamp of DNS lookup", zap.Error(err))
+				s.log.WithError(err).Warn("Unable to parse timestamp of DNS lookup")
 				continue
 			}
 			s.fqdnCache.AddDNSLookup(epID, lookupTime, domainName, ips, logRecord.DNS.TTL)
