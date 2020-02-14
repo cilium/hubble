@@ -15,6 +15,9 @@ spec:
       labels:
         k8s-app: hubble-ui
     spec:
+      {{- if .Values.ui.priorityClassName }}
+      priorityClassName: {{ .Values.ui.priorityClassName }}
+      {{- end }}
       serviceAccountName: hubble-ui
       containers:
         - name: hubble-ui
@@ -34,4 +37,6 @@ spec:
           ports:
             - containerPort: 12000
               name: http
+          resources:
+            {{- toYaml .Values.ui.resources | trim | nindent 12 }}
 {{- end }}
