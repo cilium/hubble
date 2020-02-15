@@ -49,7 +49,18 @@ ui:
     pullPolicy: Always
   clusterDomain: cluster.local
   replicas: 1
+  # Resource requests and limits for the 'hubble-ui' container of the 'hubble-ui' deployment, such as
+  #
+  #     resources:
+  #       limits:
+  #         cpu: 1000m
+  #         memory: 1024Mi
+  #       requests:
+  #         cpu: 100m
+  #         memory: 64Mi
   resources: {}
+  # The priority class system-node-critical marks add-on pods as critical to the node itself.
+  # This priority class is only valid under the kube-system namespace.
   priorityClassName: ""
 
 ingress:
@@ -65,5 +76,16 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
+# Resource requests and limits for the 'hubble' container of the 'hubble' daemonset, such as
+#
+#     resources:
+#       limits:
+#         cpu: 1000m
+#         memory: 1024Mi
+#       requests:
+#         cpu: 100m
+#         memory: 64Mi
 resources: {}
+# The priority class system-node-critical marks add-on pods as critical to the node itself.
+# This priority class is only valid under the kube-system namespace.
 priorityClassName: system-node-critical
