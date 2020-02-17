@@ -23,8 +23,9 @@ RAW_GO_MAPPINGS += observer/observer.proto=github.com/cilium/hubble/api/v1/obser
 
 # Add mapping separators and remove the trailing slash
 # but first create "/ " and ",M"
-file_sep := /
-file_sep +=
+null :=
+space := ${null} ${null}
+file_sep := /${space}
 map_sep := ,M
 GO_MAPPINGS := $(patsubst %/,%,$(map_sep)$(subst $(file_sep),$(map_sep),$(RAW_GO_MAPPINGS)))
 
