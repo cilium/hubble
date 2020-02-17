@@ -99,6 +99,8 @@ spec:
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 5
+        resources:
+          {{- toYaml .Values.resources | trim | nindent 10 }}
         volumeMounts:
         - mountPath: /var/run/cilium
           name: cilium-run
@@ -108,8 +110,6 @@ spec:
       terminationGracePeriodSeconds: 1
       tolerations:
       - operator: Exists
-      resources:
-        {{- toYaml .Values.resources | trim | nindent 8 }}
       volumes:
       - hostPath:
           # We need to access Cilium's monitor socket
