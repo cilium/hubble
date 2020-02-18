@@ -32,7 +32,6 @@ import (
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
-	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/metrics"
 	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
 	"github.com/cilium/hubble/pkg/parser"
@@ -47,7 +46,7 @@ import (
 )
 
 // New ...
-func New(log *logrus.Logger) *cobra.Command {
+func New(log *logrus.Entry) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start gRPC server",
@@ -99,7 +98,7 @@ func New(log *logrus.Logger) *cobra.Command {
 				serviceCache,
 				payloadParser,
 				int(maxFlows),
-				logger.GetLogger(),
+				log,
 			)
 			s.Start()
 			err = Serve(log, listenClientUrls, s.GetGRPCServer())
@@ -152,7 +151,7 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-func enableMetrics(log *logrus.Logger, m []string) {
+func enableMetrics(log *logrus.Entry, m []string) {
 	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
 	if err != nil {
 		log.WithError(err).Fatal("Unable to setup metrics")
@@ -167,7 +166,7 @@ func enableMetrics(log *logrus.Logger, m []string) {
 
 }
 
-func validateArgs(log *logrus.Logger) error {
+func validateArgs(log *logrus.Entry) error {
 	if serveDurationVar != "" {
 		d, err := time.ParseDuration(serveDurationVar)
 		if err != nil {
@@ -233,7 +232,7 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(log *logrus.Logger, listenClientUrls []string, s server.GRPCServer) error {
+func Serve(log *logrus.Entry, listenClientUrls []string, s server.GRPCServer) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err

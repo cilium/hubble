@@ -47,7 +47,7 @@ type ObserverServer struct {
 
 	ciliumState *cilium.State
 
-	log *logrus.Logger
+	log *logrus.Entry
 }
 
 // NewServer returns a server that can store up to the given of maxFlows
@@ -60,7 +60,7 @@ func NewServer(
 	serviceCache *servicecache.ServiceCache,
 	payloadParser *parser.Parser,
 	maxFlows int,
-	logger *logrus.Logger,
+	logger *logrus.Entry,
 ) *ObserverServer {
 	ciliumState := cilium.NewCiliumState(ciliumClient, endpoints, ipCache, fqdnCache, serviceCache, logger)
 	return &ObserverServer{
