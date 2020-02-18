@@ -2,27 +2,14 @@
 
 ## Requirements
 
- * [Cilium] Recommended: >= 1.7.0-rc1, Minimal: >= 1.6.3
- * [Helm]
+ * [Cilium] Recommended: >= 1.7.0-rc4, Minimal: >= 1.6.3
  * [Kubernetes]
 
 ## Install Cilium
 
-Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0-rc1 via
-Helm, download the chart as follows:
+Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0-rc4 using quick-install.yaml:
 
-    curl -LO https://github.com/cilium/cilium/archive/v1.7.0-rc1.tar.gz
-    tar xzvf v1.7.0-rc1.tar.gz
-    cd cilium-1.7.0-rc1/install/kubernetes
-
-To install Cilium 1.7.0-rc1, make sure to specify the image tag by setting
-`global.tag=v1.7.0-rc1`:
-
-    helm template cilium \
-      --namespace kube-system \
-      --set global.tag=v1.7.0-rc1 \
-      > cilium.yaml
-    kubectl create -f cilium.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0-rc4/install/kubernetes/quick-install.yaml
 
 If you need help to troubleshoot installation issues, ping us on the
 [Cilium Slack].
@@ -39,22 +26,14 @@ This is the default setting for new installs of Cilium 1.6 or later.
 
 ## Install Hubble
 
-Generate the deployment files using [Helm] and deploy it:
+Deploy Hubble using hubble-all-minikube.yaml:
 
-    git clone https://github.com/cilium/hubble.git
-    cd hubble/install/kubernetes
-    helm template hubble \
-        --namespace kube-system \
-        --set metrics.enabled="{dns,drop,tcp,flow,port-distribution,icmp,http}" \
-        > hubble.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/hubble/master/tutorials/deploy-hubble-servicemap/hubble-all-minikube.yaml
 
-Configure Hubble (Optional):
+### Optional: Configure Metrics
 
- * [Configure metrics](metrics.md)
-
-Deploy Hubble:
-
-    kubectl apply -f hubble.yaml
+When you deploy Hubble with hubble-all-minikube.yaml, Hubble is configured with a default set of metric plugins. Follow
+instructions in [this page](metrics.md) if you need to customize metric plugins.
 
 ## Optional: Enable L7 Visibility
 
