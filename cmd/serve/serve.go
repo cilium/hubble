@@ -151,7 +151,8 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-func enableMetrics(log *logrus.Entry, m []string) {
+// EnableMetrics starts the metrics server with a given list of metrics.
+func EnableMetrics(log *logrus.Entry, metricsServer string, m []string) {
 	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
 	if err != nil {
 		log.WithError(err).Fatal("Unable to setup metrics")
@@ -182,7 +183,7 @@ func validateArgs(log *logrus.Entry) error {
 	}).Info("Started server with args")
 
 	if metricsServer != "" {
-		enableMetrics(log, enabledMetrics)
+		EnableMetrics(log, metricsServer, enabledMetrics)
 	}
 
 	return nil
