@@ -22,17 +22,18 @@ import (
 )
 
 var (
-	log  *logrus.Logger
+	log  *logrus.Entry
 	once sync.Once
 )
 
 // GetLogger returns the logger properly set up accordingly with the debug flag.
-func GetLogger() *logrus.Logger {
+func GetLogger() *logrus.Entry {
 	once.Do(func() {
-		log = logrus.New()
+		logger := logrus.New()
 		if viper.GetBool("debug") {
-			log.SetLevel(logrus.DebugLevel)
+			logger.SetLevel(logrus.DebugLevel)
 		}
+		log = logrus.NewEntry(logger)
 	})
 	return log
 }

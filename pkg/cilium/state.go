@@ -47,7 +47,7 @@ type State struct {
 	// logRecord is a channel used to exchange L7 DNS requests seens from the
 	// monitor
 	logRecord chan monitor.LogRecordNotify
-	log       *logrus.Logger
+	log       *logrus.Entry
 
 	// epAdd is a channel used to exchange endpoint events from Cilium
 	endpointEvents chan monitorAPI.AgentNotify
@@ -60,7 +60,7 @@ func NewCiliumState(
 	ipCache *ipcache.IPCache,
 	fqdnCache FqdnCache,
 	serviceCache *servicecache.ServiceCache,
-	logger *logrus.Logger,
+	logger *logrus.Entry,
 ) *State {
 	return &State{
 		ciliumClient: ciliumClient,
