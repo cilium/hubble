@@ -30,11 +30,11 @@ import (
 	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/testutils"
+	"github.com/gogo/protobuf/types"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-
-	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,7 +105,7 @@ func TestL34Decode(t *testing.T) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter)
+	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -176,7 +176,7 @@ func TestL34Decode(t *testing.T) {
 	}
 	ipGetter = &testutils.NoopIPGetter
 	serviceGetter = &testutils.NoopServiceGetter
-	parser, err = New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter)
+	parser, err = New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	p = &pb.Payload{
@@ -225,7 +225,7 @@ func BenchmarkL34Decode(b *testing.B) {
 		Nanos:   4884,
 	}
 	nodeName := "k8s1"
-	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter)
+	parser, err := New(endpointGetter, identityCache, dnsGetter, ipGetter, serviceGetter, logger.GetLogger())
 	require.NoError(b, err)
 
 	f := &pb.Flow{}
@@ -276,7 +276,7 @@ func TestDecodeTraceNotify(t *testing.T) {
 		return nil, fmt.Errorf("identity not found for %d", securityIdentity)
 	}}
 
-	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -321,7 +321,7 @@ func TestDecodeDropNotify(t *testing.T) {
 		},
 	}
 
-	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -340,7 +340,7 @@ func TestDecodeDropReason(t *testing.T) {
 	data, err := testutils.CreateL3L4Payload(dn)
 	require.NoError(t, err)
 
-	parser, err := New(nil, nil, nil, nil, nil)
+	parser, err := New(nil, nil, nil, nil, nil, logger.GetLogger())
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -364,7 +364,7 @@ func TestDecodeLocalIdentity(t *testing.T) {
 		},
 	}
 
-	parser, err := New(nil, identityGetter, nil, nil, nil)
+	parser, err := New(nil, identityGetter, nil, nil, nil, logger.GetLogger())
 	require.NoError(t, err)
 
 	f := &pb.Flow{}
@@ -413,9 +413,11 @@ func Test_filterCidrLabels(t *testing.T) {
 			want: nil,
 		},
 	}
+	p, err := New(nil, nil, nil, nil, nil, logger.GetLogger())
+	require.NoError(t, err)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := filterCidrLabels(tt.args.labels); !reflect.DeepEqual(got, tt.want) {
+			if got := p.filterCidrLabels(tt.args.labels); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("filterCidrLabels() = %v, want %v", got, tt.want)
 			}
 		})
@@ -424,7 +426,7 @@ func Test_filterCidrLabels(t *testing.T) {
 
 func TestTraceNotifyOriginalIP(t *testing.T) {
 	f := &pb.Flow{}
-	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	v0 := monitor.TraceNotifyV0{
@@ -462,7 +464,7 @@ func TestTraceNotifyOriginalIP(t *testing.T) {
 }
 
 func TestICMP(t *testing.T) {
-	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	parser, err := New(&testutils.NoopEndpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter, logger.GetLogger())
 	require.NoError(t, err)
 	message := monitor.TraceNotifyV1{
 		TraceNotifyV0: monitor.TraceNotifyV0{
@@ -533,7 +535,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 		},
 	}
 
-	parser, err := New(endpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	parser, err := New(endpointGetter, nil, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter, logger.GetLogger())
 	require.NoError(t, err)
 
 	v0 := monitor.TraceNotifyV0{

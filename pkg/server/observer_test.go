@@ -132,7 +132,7 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
@@ -202,7 +202,7 @@ func TestObserverServer_GetLastNFlows_MustNotBlock(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0x4, logger.GetLogger())
@@ -268,7 +268,7 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
@@ -370,7 +370,7 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, logger.GetLogger())
@@ -465,7 +465,7 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())
@@ -530,7 +530,7 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())
@@ -609,7 +609,7 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 	svcc := servicecache.New()
 	fqdnc := fqdncache.New()
 
-	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter, svcc)
+	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter, svcc, logger.GetLogger())
 	assert.NoError(t, err)
 
 	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, logger.GetLogger())

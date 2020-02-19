@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cilium/hubble/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
@@ -49,10 +48,9 @@ func (r *Registry) Register(name string, p Plugin) {
 // ConfigureHandlers enables a set of metric handlers and initializes them.
 // Only metrics handlers which have been previously registered via the
 // Register() function can be configured.
-func (r *Registry) ConfigureHandlers(registry *prometheus.Registry, enabled Map) (Handlers, error) {
+func (r *Registry) ConfigureHandlers(registry *prometheus.Registry, enabled Map, log *logrus.Entry) (Handlers, error) {
 	var (
 		initialized Handlers
-		log         = logger.GetLogger()
 	)
 
 	r.mutex.Lock()

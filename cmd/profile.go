@@ -19,7 +19,7 @@ import (
 	"runtime"
 	"runtime/pprof"
 
-	"github.com/cilium/hubble/pkg/logger"
+	"github.com/sirupsen/logrus"
 )
 
 // Look at the set observe flags, and optionally enable cpu, memory, or both,
@@ -27,10 +27,9 @@ import (
 //
 // Returns a function which should be deferred to the end of the execution so
 // profiles can be finalized.
-func maybeProfile() func() {
+func maybeProfile(log *logrus.Entry) func() {
 	var cf, mf *os.File
 	var err error
-	log := logger.GetLogger()
 	if cpuprofile != "" {
 		cf, err = os.Create(cpuprofile)
 		if err != nil {

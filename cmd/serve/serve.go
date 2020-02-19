@@ -86,7 +86,7 @@ func New(log *logrus.Entry) *cobra.Command {
 				PodGetter:      ipCache,
 				EndpointGetter: endpoints,
 			}
-			payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
+			payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache, log)
 			if err != nil {
 				log.WithError(err).Fatal("failed to get parser")
 			}
@@ -153,7 +153,7 @@ const (
 
 // EnableMetrics starts the metrics server with a given list of metrics.
 func EnableMetrics(log *logrus.Entry, metricsServer string, m []string) {
-	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
+	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m), log)
 	if err != nil {
 		log.WithError(err).Fatal("Unable to setup metrics")
 	}

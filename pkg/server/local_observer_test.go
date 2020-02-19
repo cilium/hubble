@@ -36,7 +36,8 @@ func TestNewLocalServer(t *testing.T) {
 		&testutils.NoopIdentityGetter,
 		&testutils.NoopDNSGetter,
 		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
+		&testutils.NoopServiceGetter,
+		logger.GetLogger())
 	require.NoError(t, err)
 	s := NewLocalServer(pp, 10, logger.GetLogger())
 	assert.NotNil(t, s.GetStopped())
@@ -52,7 +53,8 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 		&testutils.NoopIdentityGetter,
 		&testutils.NoopDNSGetter,
 		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
+		&testutils.NoopServiceGetter,
+		logger.GetLogger())
 	require.NoError(t, err)
 	s := NewLocalServer(pp, 1, logger.GetLogger())
 	res, err := s.ServerStatus(context.Background(), &observer.ServerStatusRequest{})
@@ -80,7 +82,8 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 		&testutils.NoopIdentityGetter,
 		&testutils.NoopDNSGetter,
 		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
+		&testutils.NoopServiceGetter,
+		logger.GetLogger())
 	require.NoError(t, err)
 	s := NewLocalServer(pp, numFlows, logger.GetLogger())
 	go s.Start()

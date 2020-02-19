@@ -23,6 +23,7 @@ import (
 	"github.com/cilium/hubble/cmd/serve"
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/pkg/logger"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -30,6 +31,7 @@ import (
 var (
 	cfgFile                string
 	cpuprofile, memprofile string
+	log                    *logrus.Entry
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,7 +44,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	fin := maybeProfile()
+	fin := maybeProfile(log)
 	defer fin() // make sure update memory profile is written in the end
 
 	if err := rootCmd.Execute(); err != nil {
@@ -69,11 +71,11 @@ func init() {
 	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
 	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
 
-	l := logger.GetLogger()
+	log = logger.GetLogger()
 
 	// initialize all subcommands
 	rootCmd.AddCommand(status.New())
-	rootCmd.AddCommand(serve.New(l))
+	rootCmd.AddCommand(serve.New(log))
 	rootCmd.AddCommand(observe.New())
 }
 

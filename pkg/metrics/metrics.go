@@ -17,7 +17,7 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/cilium/hubble/pkg/api/v1"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 	_ "github.com/cilium/hubble/pkg/metrics/dns"               // invoke init
 	_ "github.com/cilium/hubble/pkg/metrics/drop"              // invoke init
@@ -26,9 +26,9 @@ import (
 	_ "github.com/cilium/hubble/pkg/metrics/icmp"              // invoke init
 	_ "github.com/cilium/hubble/pkg/metrics/port-distribution" // invoke init
 	_ "github.com/cilium/hubble/pkg/metrics/tcp"               // invoke init
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -44,8 +44,8 @@ func ProcessFlow(flow v1.Flow) {
 }
 
 // Init initialies the metrics system
-func Init(address string, enabled api.Map) (<-chan error, error) {
-	e, err := api.DefaultRegistry().ConfigureHandlers(registry, enabled)
+func Init(address string, enabled api.Map, log *logrus.Entry) (<-chan error, error) {
+	e, err := api.DefaultRegistry().ConfigureHandlers(registry, enabled, log)
 	if err != nil {
 		return nil, err
 	}

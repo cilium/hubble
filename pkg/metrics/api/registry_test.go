@@ -17,8 +17,8 @@ package api
 import (
 	"testing"
 
-	"github.com/cilium/hubble/pkg/api/v1"
-
+	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,11 +56,11 @@ func TestRegister(t *testing.T) {
 
 	r.Register("test", &testPlugin{})
 
-	handlers, err := r.ConfigureHandlers(nil, Map{})
+	handlers, err := r.ConfigureHandlers(nil, Map{}, logger.GetLogger())
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, len(handlers), 0)
 
-	handlers, err = r.ConfigureHandlers(nil, Map{"test": Options{}})
+	handlers, err = r.ConfigureHandlers(nil, Map{"test": Options{}}, logger.GetLogger())
 	assert.EqualValues(t, err, nil)
 	assert.EqualValues(t, len(handlers), 1)
 	assert.EqualValues(t, handlers[0].(*testHandler).InitCalled, 1)

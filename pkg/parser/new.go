@@ -16,13 +16,13 @@ package parser
 
 import (
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/pkg/parser/errors"
 	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/cilium/hubble/pkg/parser/options"
 	"github.com/cilium/hubble/pkg/parser/seven"
 	"github.com/cilium/hubble/pkg/parser/threefour"
+	"github.com/sirupsen/logrus"
 )
 
 // Parser for all flows
@@ -38,10 +38,11 @@ func New(
 	dnsGetter getters.DNSGetter,
 	ipGetter getters.IPGetter,
 	serviceGetter getters.ServiceGetter,
+	log *logrus.Entry,
 	opts ...options.Option,
 ) (*Parser, error) {
 
-	l34, err := threefour.New(endpointGetter, identityGetter, dnsGetter, ipGetter, serviceGetter)
+	l34, err := threefour.New(endpointGetter, identityGetter, dnsGetter, ipGetter, serviceGetter, log)
 	if err != nil {
 		return nil, err
 	}

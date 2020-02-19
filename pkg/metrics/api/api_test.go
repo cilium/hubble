@@ -17,6 +17,7 @@ package api
 import (
 	"testing"
 
+	"github.com/cilium/hubble/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +28,7 @@ func TestDefaultRegistry(t *testing.T) {
 
 	assert.NotNil(t, registry)
 
-	registry.ConfigureHandlers(prometheusRegistry, Map{"drop": Options{}})
+	registry.ConfigureHandlers(prometheusRegistry, Map{"drop": Options{}}, logger.GetLogger())
 }
 
 func TestParseMetricOptions(t *testing.T) {
