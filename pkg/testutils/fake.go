@@ -75,7 +75,6 @@ var NoopIPGetter = FakeIPGetter{
 // FakeServiceGetter is used for unit tests that need ServiceGetter.
 type FakeServiceGetter struct {
 	OnGetServiceByAddr func(ip net.IP, port uint16) (service pb.Service, ok bool)
-	OnGetServiceByID   func(id int64) (service pb.Service, ok bool)
 }
 
 // GetServiceByAddr implements FakeServiceGetter.GetServiceByAddr.
@@ -86,20 +85,9 @@ func (f *FakeServiceGetter) GetServiceByAddr(ip net.IP, port uint16) (service pb
 	panic("OnGetServiceByAddr not set")
 }
 
-// GetServiceByID implements FakeServiceGetter.GetServiceByID.
-func (f *FakeServiceGetter) GetServiceByID(id int64) (service pb.Service, ok bool) {
-	if f.OnGetServiceByID != nil {
-		return f.OnGetServiceByID(id)
-	}
-	panic("OnGetServiceByID not set")
-}
-
 // NoopServiceGetter always returns an empty response.
 var NoopServiceGetter = FakeServiceGetter{
 	OnGetServiceByAddr: func(ip net.IP, port uint16) (service pb.Service, ok bool) {
-		return pb.Service{}, false
-	},
-	OnGetServiceByID: func(id int64) (service pb.Service, ok bool) {
 		return pb.Service{}, false
 	},
 }
