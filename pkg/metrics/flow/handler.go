@@ -15,7 +15,7 @@
 package flow
 
 import (
-	"github.com/cilium/hubble/pkg/api/v1"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/metrics/api"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
@@ -23,22 +23,32 @@ import (
 )
 
 type flowHandler struct {
-	flows *prometheus.CounterVec
+	flows   *prometheus.CounterVec
+	context *api.ContextOptions
 }
 
 func (h *flowHandler) Init(registry *prometheus.Registry, options api.Options) error {
+	c, err := api.ParseContextOptions(options)
+	if err != nil {
+		return err
+	}
+	h.context = c
+
+	labels := []string{"type", "subtype", "verdict"}
+	labels = append(labels, h.context.GetLabelNames()...)
+
 	h.flows = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: api.DefaultPrometheusNamespace,
 		Name:      "flows_processed_total",
 		Help:      "Total number of flows processed",
-	}, []string{"type", "subtype", "verdict"})
+	}, labels)
 
 	registry.MustRegister(h.flows)
 	return nil
 }
 
 func (h *flowHandler) Status() string {
-	return ""
+	return h.context.Status()
 }
 
 func (h *flowHandler) ProcessFlow(flow v1.Flow) {
@@ -70,5 +80,7 @@ func (h *flowHandler) ProcessFlow(flow v1.Flow) {
 		subType = monitorAPI.TraceObservationPoints[uint8(flow.GetEventType().SubType)]
 	}
 
-	h.flows.WithLabelValues(typeName, subType, flow.GetVerdict().String()).Inc()
+	labels := []string{typeName, subType, flow.GetVerdict().String()}
+	labels = append(labels, h.context.GetLabelValues(flow)...)
+	h.flows.WithLabelValues(labels...).Inc()
 }

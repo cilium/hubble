@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/cilium/cilium/api/v1/models"
+	"github.com/gogo/protobuf/types"
 
 	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
@@ -260,4 +261,125 @@ func (c *FakeCiliumClient) GetServiceCache() ([]*models.Service, error) {
 		return c.FakeGetServiceCache()
 	}
 	panic("GetServiceCache() should not have been called since it was not defined")
+}
+
+// FakeFlow implements v1.Flow for unit tests. All interface methods
+// return values exposed in the fields.
+type FakeFlow struct {
+	Time               *types.Timestamp
+	Verdict            pb.Verdict
+	DropReason         uint32
+	Ethernet           *pb.Ethernet
+	IP                 *pb.IP
+	L4                 *pb.Layer4
+	Source             *pb.Endpoint
+	Destination        *pb.Endpoint
+	Type               pb.FlowType
+	NodeName           string
+	SourceNames        []string
+	DestinationNames   []string
+	L7                 *pb.Layer7
+	Reply              bool
+	EventType          *pb.CiliumEventType
+	SourceService      *pb.Service
+	DestinationService *pb.Service
+}
+
+// Reset implements pb.Message for the FakeFlow.
+func (f *FakeFlow) Reset() {}
+
+// ProtoMessage implements pb.Message for the FakeFlow.
+func (f *FakeFlow) ProtoMessage() {}
+
+// String implements pb.Message for the FakeFlow.
+func (f *FakeFlow) String() string { return "fake flow message" }
+
+// GetTime implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetTime() *types.Timestamp {
+	return f.Time
+}
+
+// GetVerdict implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetVerdict() pb.Verdict {
+	return f.Verdict
+}
+
+// GetDropReason implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetDropReason() uint32 {
+	return f.DropReason
+}
+
+// GetEthernet implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetEthernet() *pb.Ethernet {
+	return f.Ethernet
+}
+
+// GetIP implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetIP() *pb.IP {
+	return f.IP
+}
+
+// GetL4 implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetL4() *pb.Layer4 {
+	return f.L4
+}
+
+// GetSource implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetSource() *pb.Endpoint {
+	return f.Source
+}
+
+// GetDestination implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetDestination() *pb.Endpoint {
+	return f.Destination
+}
+
+// GetType implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetType() pb.FlowType {
+	return f.Type
+}
+
+// GetNodeName implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetNodeName() string {
+	return f.NodeName
+}
+
+// GetSourceNames implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetSourceNames() []string {
+	return f.SourceNames
+}
+
+// GetDestinationNames implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetDestinationNames() []string {
+	return f.DestinationNames
+}
+
+// GetL7 implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetL7() *pb.Layer7 {
+	return f.L7
+}
+
+// GetReply implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetReply() bool {
+	return f.Reply
+}
+
+// GetEventType implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetEventType() *pb.CiliumEventType {
+	return f.EventType
+}
+
+// GetSourceService implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetSourceService() *pb.Service {
+	return f.SourceService
+}
+
+// GetDestinationService implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetDestinationService() *pb.Service {
+	return f.DestinationService
+}
+
+// GetSummary implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetSummary() string {
+	return "deprecated"
 }
