@@ -30,7 +30,9 @@ Reports metrics related to flow processing
 
 Metrics:
   hubble_flows_processed_total  Number of flows processed
-`
+
+Options:` +
+		api.ContextOptionsHelp
 }
 
 func init() {
