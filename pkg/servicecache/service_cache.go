@@ -61,21 +61,6 @@ func (svcc *ServiceCache) GetServiceByAddr(ip net.IP, port uint16) (service pb.S
 	return pb.Service{}, false
 }
 
-// GetServiceByID retrieves a service from the cache given its ID. If the
-// service was found in the cache, ok is true.
-func (svcc *ServiceCache) GetServiceByID(id int64) (service pb.Service, ok bool) {
-	svcc.mu.RLock()
-	defer svcc.mu.RUnlock()
-
-	if e, ok := svcc.cache[genIDKey(id)]; ok {
-		return pb.Service{
-			Name:      e.Name,
-			Namespace: e.Namespace,
-		}, true
-	}
-	return pb.Service{}, false
-}
-
 // InitializeFrom initializes the cache with the given list of services.
 func (svcc *ServiceCache) InitializeFrom(entries []*models.Service) error {
 	cache := map[string]*entry{}
