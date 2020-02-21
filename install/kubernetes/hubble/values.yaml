@@ -11,6 +11,10 @@ image:
 # defaults to using unix domain socket.
 listenClientUrls: ~
 
+# groupName specifies the group to use for unix domain socket Hubble uses for
+# the gRPC server. Defaults to "hubble".
+groupName: ~
+
 # Server URL to connect to hubble server. If this parameter is not specified,
 # it defaults to using unix domain socket.
 server: ~
