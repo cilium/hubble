@@ -80,6 +80,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.namespace
+{{- if .Values.groupName }}
+          - name: HUBBLE_GROUP_NAME
+            value: {{ .Values.groupName | quote }}
+{{- end }}
         ports:
 {{- if .Values.metrics.enabled }}
         - containerPort: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" }}

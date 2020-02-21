@@ -22,8 +22,11 @@ import (
 const (
 	// GroupFilePath is the unix group file path.
 	GroupFilePath = "/etc/group"
-	// HubbleGroupName is the hubble's unix group name.
+	// HubbleGroupName is the hubble's default unix group name. Set HUBBLE_GROUP_NAME environment
+	// variable to override.
 	HubbleGroupName = "hubble"
+	// HubbleGroupNameKey is the environment variable name to override the group for unix domain socket.
+	HubbleGroupNameKey = "HUBBLE_GROUP_NAME"
 	// SocketFileMode is the default file mode for the sockets.
 	SocketFileMode os.FileMode = 0660
 	// ClientTimeout specifies timeout to be used by clients
