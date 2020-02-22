@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2
+# github.com/cilium/cilium v1.7.0-rc2.0.20200222022717-43d984a3c191
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
 github.com/cilium/cilium/api/v1/client/endpoint
@@ -211,7 +211,7 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# github.com/vishvananda/netlink v1.0.1-0.20191113183427-d71301a47b60
+# github.com/vishvananda/netlink v1.1.1-0.20200210222539-bfba8e4149db
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
 # github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df
@@ -241,7 +241,7 @@ golang.org/x/net/ipv6
 golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7
+# golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
@@ -291,9 +291,9 @@ google.golang.org/grpc/status
 google.golang.org/grpc/tap
 # gopkg.in/ini.v1 v1.51.0
 gopkg.in/ini.v1
-# gopkg.in/yaml.v2 v2.2.4
+# gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# k8s.io/apimachinery v0.17.1 => k8s.io/kubernetes/staging/src/k8s.io/apimachinery v0.0.0-20200111014337-d224476cd073
+# k8s.io/apimachinery v0.17.3 => k8s.io/kubernetes/staging/src/k8s.io/apimachinery v0.0.0-20200111014337-d224476cd073
 k8s.io/apimachinery/pkg/labels
 k8s.io/apimachinery/pkg/selection
 k8s.io/apimachinery/pkg/util/errors

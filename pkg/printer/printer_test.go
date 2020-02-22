@@ -76,8 +76,8 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 				f: &f,
 			},
 			wantErr: false,
-			expected: `TIMESTAMP             SOURCE          DESTINATION              TYPE                 VERDICT   SUMMARY
-Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3)   DROPPED   TCP Flags: SYN`,
+			expected: `TIMESTAMP             SOURCE          DESTINATION              TYPE            VERDICT   SUMMARY
+Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   DROPPED   TCP Flags: SYN`,
 		},
 		{
 			name: "compact",
@@ -92,7 +92,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 " +
 				"[k8s1]: 1.1.1.1:31793 -> 2.2.2.2:8080(http-alt) " +
-				"Policy denied (L3) DROPPED (TCP Flags: SYN)\n",
+				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
 			name: "json",
@@ -126,7 +126,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied (L3
 			expected: `  TIMESTAMP: Jan  1 00:20:34.567
      SOURCE: 1.1.1.1:31793
 DESTINATION: 2.2.2.2:8080(http-alt)
-       TYPE: Policy denied (L3)
+       TYPE: Policy denied
     VERDICT: DROPPED
     SUMMARY: TCP Flags: SYN`,
 		},

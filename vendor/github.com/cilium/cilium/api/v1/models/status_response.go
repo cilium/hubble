@@ -30,6 +30,9 @@ type StatusResponse struct {
 	// Status of cluster
 	Cluster *ClusterStatus `json:"cluster,omitempty"`
 
+	// Status of ClusterMesh
+	ClusterMesh *ClusterMeshStatus `json:"cluster-mesh,omitempty"`
+
 	// Status of local container runtime
 	ContainerRuntime *Status `json:"container-runtime,omitempty"`
 
@@ -38,6 +41,9 @@ type StatusResponse struct {
 
 	// Status of IP address management
 	Ipam *IPAMStatus `json:"ipam,omitempty"`
+
+	// Status of kube-proxy replacement
+	KubeProxyReplacement *KubeProxyReplacement `json:"kube-proxy-replacement,omitempty"`
 
 	// Status of Kubernetes integration
 	Kubernetes *K8sStatus `json:"kubernetes,omitempty"`
@@ -67,6 +73,10 @@ func (m *StatusResponse) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateClusterMesh(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateContainerRuntime(formats); err != nil {
 		res = append(res, err)
 	}
@@ -76,6 +86,10 @@ func (m *StatusResponse) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIpam(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateKubeProxyReplacement(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -141,6 +155,24 @@ func (m *StatusResponse) validateCluster(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *StatusResponse) validateClusterMesh(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.ClusterMesh) { // not required
+		return nil
+	}
+
+	if m.ClusterMesh != nil {
+		if err := m.ClusterMesh.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("cluster-mesh")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *StatusResponse) validateContainerRuntime(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.ContainerRuntime) { // not required
@@ -185,6 +217,24 @@ func (m *StatusResponse) validateIpam(formats strfmt.Registry) error {
 		if err := m.Ipam.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("ipam")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *StatusResponse) validateKubeProxyReplacement(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.KubeProxyReplacement) { // not required
+		return nil
+	}
+
+	if m.KubeProxyReplacement != nil {
+		if err := m.KubeProxyReplacement.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("kube-proxy-replacement")
 			}
 			return err
 		}
