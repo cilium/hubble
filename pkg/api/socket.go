@@ -75,3 +75,11 @@ func getGroupName() string {
 	}
 	return HubbleGroupName
 }
+
+// GetDefaultSocketPath returns the default server for status and observe command.
+func GetDefaultSocketPath() string {
+	if path, ok := os.LookupEnv(DefaultSocketPathKey); ok {
+		return path
+	}
+	return DefaultSocketPath
+}

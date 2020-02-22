@@ -34,6 +34,9 @@ const (
 
 	// DefaultSocketPath which hubble listens to
 	DefaultSocketPath = "unix:///var/run/hubble.sock"
+	// DefaultSocketPathKey is the environment variable name to override the default socket path for
+	// observe and status commands.
+	DefaultSocketPathKey = "HUBBLE_DEFAULT_SOCKET_PATH"
 
 	// ConnectionTimeout ...
 	ConnectionTimeout = 12 * time.Second
