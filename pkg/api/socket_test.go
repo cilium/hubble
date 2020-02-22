@@ -27,3 +27,10 @@ func Test_getGroupName(t *testing.T) {
 	assert.NoError(t, os.Unsetenv(HubbleGroupNameKey))
 	assert.Equal(t, getGroupName(), HubbleGroupName)
 }
+
+func Test_GetDefaultSocketPath(t *testing.T) {
+	assert.NoError(t, os.Setenv(DefaultSocketPathKey, "unix:///socket/path"))
+	assert.Equal(t, GetDefaultSocketPath(), "unix:///socket/path")
+	assert.NoError(t, os.Unsetenv(DefaultSocketPathKey))
+	assert.Equal(t, GetDefaultSocketPath(), DefaultSocketPath)
+}

@@ -84,6 +84,10 @@ spec:
           - name: HUBBLE_GROUP_NAME
             value: {{ .Values.groupName | quote }}
 {{- end }}
+{{- if .Values.defaultServer }}
+          - name: HUBBLE_DEFAULT_SOCKET_PATH
+            value: {{ .Values.defaultServer | quote }}
+{{- end }}
         ports:
 {{- if .Values.metrics.enabled }}
         - containerPort: {{ regexReplaceAll ":([0-9]+)$" .Values.metrics.address "${1}" }}

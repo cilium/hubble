@@ -109,7 +109,7 @@ programs attached to endpoints and devices. This includes:
 		},
 	}
 	observerCmd.Flags().StringVarP(&serverURL,
-		"server", "", api.DefaultSocketPath,
+		"server", "", api.GetDefaultSocketPath(),
 		"URL to connect to server")
 	observerCmd.Flags().StringVar(&serverTimeoutVar,
 		"timeout", "5s",

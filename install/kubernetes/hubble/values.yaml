@@ -19,6 +19,10 @@ groupName: ~
 # it defaults to using unix domain socket.
 server: ~
 
+# Specify the default server for observe and status commands when the --server
+# option is not specified. It defaults to "unix:///var/run/hubble.sock".
+defaultServer: ~
+
 # maxFlows the server will store in memory
 maxFlows: ~
 

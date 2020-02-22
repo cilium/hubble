@@ -45,7 +45,7 @@ func New() *cobra.Command {
 	}
 
 	statusCmd.Flags().StringVarP(&serverURL,
-		"server", "", api.DefaultSocketPath, "URL to connect to server")
+		"server", "", api.GetDefaultSocketPath(), "URL to connect to server")
 	viper.BindEnv("server", "HUBBLE_SOCK")
 
 	return statusCmd
