@@ -1,4 +1,4 @@
-// Copyright 2016-2019 Authors of Cilium
+// Copyright 2016-2020 Authors of Cilium
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -223,13 +223,30 @@ func FormatStatusResponseBrief(w io.Writer, sr *models.StatusResponse) {
 	}
 }
 
+func clusterReadiness(cluster *models.RemoteCluster) string {
+	if !cluster.Ready {
+		return "not-ready"
+	}
+	return "ready"
+}
+
+func numReadyClusters(clustermesh *models.ClusterMeshStatus) int {
+	numReady := 0
+	for _, cluster := range clustermesh.Clusters {
+		if cluster.Ready {
+			numReady++
+		}
+	}
+	return numReady
+}
+
 // FormatStatusResponse writes a StatusResponse as a string to the writer.
 //
 // The parameters 'allAddresses', 'allControllers', 'allNodes', respectively,
 // cause all details about that aspect of the status to be printed to the
 // terminal. For each of these, if they are false then only a summary will be
 // printed, with perhaps some detail if there are errors.
-func FormatStatusResponse(w io.Writer, sr *models.StatusResponse, allAddresses, allControllers, allNodes, allRedirects bool) {
+func FormatStatusResponse(w io.Writer, sr *models.StatusResponse, allAddresses, allControllers, allNodes, allRedirects, allClusters bool) {
 	if sr.Kvstore != nil {
 		fmt.Fprintf(w, "KVStore:\t%s\t%s\n", sr.Kvstore.State, sr.Kvstore.Msg)
 	}
@@ -242,6 +259,26 @@ func FormatStatusResponse(w io.Writer, sr *models.StatusResponse, allAddresses, 
 		if sr.Kubernetes.State != models.K8sStatusStateDisabled {
 			sort.Strings(sr.Kubernetes.K8sAPIVersions)
 			fmt.Fprintf(w, "Kubernetes APIs:\t[\"%s\"]\n", strings.Join(sr.Kubernetes.K8sAPIVersions, "\", \""))
+		}
+		if sr.KubeProxyReplacement != nil {
+			features := []string{}
+
+			if np := sr.KubeProxyReplacement.Features.NodePort; np.Enabled {
+				features = append(features,
+					fmt.Sprintf("NodePort (%s, %d-%d)", np.Mode, np.PortMin, np.PortMax))
+			}
+
+			if sr.KubeProxyReplacement.Features.ExternalIPs.Enabled {
+				features = append(features, "ExternalIPs")
+			}
+
+			if hs := sr.KubeProxyReplacement.Features.HostReachableServices; hs.Enabled {
+				features = append(features, fmt.Sprintf("HostReachableServices (%s)",
+					strings.Join(hs.Protocols, ", ")))
+			}
+
+			fmt.Fprintf(w, "KubeProxyReplacement:\t%s\t[%s]\n",
+				sr.KubeProxyReplacement.Mode, strings.Join(features, ", "))
 		}
 	}
 	if sr.Cilium != nil {
@@ -295,6 +332,20 @@ func FormatStatusResponse(w io.Writer, sr *models.StatusResponse, allAddresses, 
 		}
 	}
 
+	if sr.ClusterMesh != nil {
+		fmt.Fprintf(w, "ClusterMesh:\t%d/%d clusters ready, %d global-services\n",
+			numReadyClusters(sr.ClusterMesh), len(sr.ClusterMesh.Clusters), sr.ClusterMesh.NumGlobalServices)
+
+		for _, cluster := range sr.ClusterMesh.Clusters {
+			if allClusters || !cluster.Ready {
+				fmt.Fprintf(w, "   %s: %s, %d nodes, %d identities, %d services\n",
+					cluster.Name, clusterReadiness(cluster), cluster.NumNodes,
+					cluster.NumIdentities, cluster.NumSharedServices)
+				fmt.Fprintf(w, "   └  %s\n", cluster.Status)
+			}
+		}
+	}
+
 	if sr.Controllers != nil {
 		nFailing, out := 0, []string{"  Name\tLast success\tLast error\tCount\tMessage\n"}
 		for _, ctrl := range sr.Controllers {
@@ -335,8 +386,21 @@ func FormatStatusResponse(w io.Writer, sr *models.StatusResponse, allAddresses, 
 	}
 
 	if sr.Proxy != nil {
-		fmt.Fprintf(w, "Proxy Status:\tOK, ip %s, port-range %s\n",
-			sr.Proxy.IP, sr.Proxy.PortRange)
+		fmt.Fprintf(w, "Proxy Status:\tOK, ip %s, %d redirects active on ports %s\n",
+			sr.Proxy.IP, sr.Proxy.TotalRedirects, sr.Proxy.PortRange)
+		if allRedirects && sr.Proxy.TotalRedirects > 0 {
+			out := make([]string, 0, len(sr.Proxy.Redirects)+1)
+			for _, r := range sr.Proxy.Redirects {
+				out = append(out, fmt.Sprintf("  %s\t%s\t%d\n", r.Proxy, r.Name, r.ProxyPort))
+			}
+			tab := tabwriter.NewWriter(w, 0, 0, 3, ' ', 0)
+			fmt.Fprint(tab, "  Protocol\tRedirect\tProxy Port\n")
+			sort.Strings(out)
+			for _, s := range out {
+				fmt.Fprint(tab, s)
+			}
+			tab.Flush()
+		}
 	} else {
 		fmt.Fprintf(w, "Proxy Status:\tNo managed proxy redirect\n")
 	}
