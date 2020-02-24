@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.13
 
 require (
-	github.com/cilium/cilium v1.7.0-rc2.0.20200222022717-43d984a3c191
+	github.com/cilium/cilium v1.7.0
 	github.com/fatih/color v1.7.1-0.20181010231311-3f9d52f7176a // indirect
 	github.com/francoispqt/gojay v1.2.13
 	github.com/go-openapi/strfmt v0.19.3
@@ -12,9 +12,7 @@ require (
 	github.com/google/gopacket v1.1.17
 	github.com/google/gops v0.3.6
 	github.com/hashicorp/golang-lru v0.5.3
-	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/mattn/go-isatty v0.0.9 // indirect
 	github.com/miekg/dns v1.1.22 // indirect
 	github.com/mitchellh/protoc-gen-go-json v0.0.0-20200113165135-fd297ce346f1
 	github.com/pelletier/go-toml v1.4.0 // indirect
@@ -22,10 +20,11 @@ require (
 	github.com/sasha-s/go-deadlock v0.2.1-0.20190130213442-5dc88f41ca59 // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
+	github.com/vishvananda/netlink v1.1.1-0.20200210222539-bfba8e4149db // indirect
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	google.golang.org/genproto v0.0.0-20190801165951-fa694d86fc64 // indirect
 	google.golang.org/grpc v1.23.1
 	k8s.io/apimachinery v0.17.3
