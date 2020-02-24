@@ -306,6 +306,30 @@ func Test_getHostNames(t *testing.T) {
 				src: "default/xwing:55555",
 				dst: "deathstar/tiefighter:53(domain)",
 			},
+		}, {
+			name: "dns",
+			args: args{
+				f: &pb.Flow{
+					IP: &pb.IP{
+						Source:      "1.1.1.1",
+						Destination: "2.2.2.2",
+					},
+					L4: &pb.Layer4{
+						Protocol: &pb.Layer4_TCP{
+							TCP: &pb.TCP{
+								SourcePort:      54321,
+								DestinationPort: 65432,
+							},
+						},
+					},
+					SourceNames:      []string{"a"},
+					DestinationNames: []string{"b"},
+				},
+			},
+			want: want{
+				src: "a:54321",
+				dst: "b:65432",
+			},
 		},
 	}
 	p := New(WithPortTranslation(), WithIPTranslation())
