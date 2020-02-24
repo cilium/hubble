@@ -18,6 +18,8 @@ import (
 	"fmt"
 
 	"github.com/cilium/cilium/pkg/idpool"
+	"github.com/cilium/cilium/pkg/logging"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 )
 
 const (
@@ -27,6 +29,7 @@ const (
 
 var (
 	pool = idpool.NewIDPool(minID, maxID)
+	log  = logging.DefaultLogger.WithField(logfields.LogSubsys, "endpoint")
 )
 
 // ReallocatePool starts over with a new pool.
