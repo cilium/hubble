@@ -2,14 +2,14 @@
 
 ## Requirements
 
- * [Cilium] Recommended: >= 1.7.0-rc4, Minimal: >= 1.6.3
+ * [Cilium] Recommended: >= 1.7.0, Minimal: >= 1.6.3
  * [Kubernetes]
 
 ## Install Cilium
 
-Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0-rc4 using quick-install.yaml:
+Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0 using quick-install.yaml:
 
-    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0-rc4/install/kubernetes/quick-install.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0/install/kubernetes/quick-install.yaml
 
 If you need help to troubleshoot installation issues, ping us on the
 [Cilium Slack].
