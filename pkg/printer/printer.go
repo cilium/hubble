@@ -146,7 +146,7 @@ func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
 	}
 	srcPort, dstPort := p.GetPorts(f)
 	src := p.Hostname(f.GetIP().Source, srcPort, srcNamespace, srcPodName, srcSvcName, f.GetSourceNames())
-	dst := p.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetSourceNames())
+	dst := p.Hostname(f.GetIP().Destination, dstPort, dstNamespace, dstPodName, dstSvcName, f.GetDestinationNames())
 	return src, dst
 }
 
