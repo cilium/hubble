@@ -45,6 +45,7 @@ var (
 	jsonOutput            bool
 	compactOutput         bool
 	dictOutput            bool
+	output                string
 	follow                bool
 	ignoreStderr          bool
 	enableIPTranslation   bool
@@ -211,13 +212,17 @@ programs attached to endpoints and devices. This includes:
 		"Show only flows with the given destination port (e.g. 8080)"))
 
 	observerCmd.Flags().BoolVarP(
-		&jsonOutput, "json", "j", false, "Use json output",
+		&jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
 	)
 	observerCmd.Flags().BoolVar(
-		&compactOutput, "compact", false, "Use compact output. Automatically used with --follow, unless --json is specified.",
+		&compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
 	)
 	observerCmd.Flags().BoolVar(
-		&dictOutput, "dict", false, "Use dictionary output. Each flow will be shown as KEY:VALUE pairs.",
+		&dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
+	)
+	observerCmd.Flags().StringVarP(
+		&output, "output", "o", "",
+		"Specify the output format, one of:\n -compact:\tcompact output\n -dict:\teach flow is shown as KEY:VALUE pair\n -json:\tJSON encoding\n -table:\ttab-aligned columns",
 	)
 	observerCmd.Flags().BoolVarP(
 		&ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
@@ -248,9 +253,7 @@ programs attached to endpoints and devices. This includes:
 	return observerCmd
 }
 
-func handleArgs(
-	ofilter *observeFilter,
-) (err error) {
+func handleArgs(ofilter *observeFilter) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}
@@ -262,14 +265,39 @@ func handleArgs(
 
 	// initialize the printer with any options that were passed in
 	var opts []hubprinter.Option
-	if jsonOutput {
-		opts = append(opts, hubprinter.JSON(), hubprinter.WithJSONEncoder())
-	} else if dictOutput {
-		opts = append(opts, hubprinter.Dict())
+
+	if output == "" { // support deprecated output flags if provided
+		if jsonOutput {
+			output = "json"
+		} else if dictOutput {
+			output = "dict"
+		} else if compactOutput {
+			output = "compact"
+		}
 	}
 
-	if compactOutput || (follow && !jsonOutput) {
+	switch output {
+	case "compact":
 		opts = append(opts, hubprinter.Compact())
+	case "dict":
+		opts = append(opts, hubprinter.Dict())
+	case "json", "JSON":
+		opts = append(opts, hubprinter.JSON(), hubprinter.WithJSONEncoder())
+	case "tab", "table":
+		if follow {
+			return fmt.Errorf("table output format is not compatible with follow mode")
+		}
+		opts = append(opts, hubprinter.Tab())
+	case "":
+		// no format specified, choose most appropriate format based on
+		// user provided flags
+		if follow {
+			opts = append(opts, hubprinter.Compact())
+		} else {
+			opts = append(opts, hubprinter.Tab())
+		}
+	default:
+		return fmt.Errorf("invalid output format: %s", output)
 	}
 	if ignoreStderr {
 		opts = append(opts, hubprinter.IgnoreStderr())
