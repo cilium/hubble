@@ -70,6 +70,13 @@ func Dict() Option {
 	}
 }
 
+// Tab prints flows in even tab-aligned columns.
+func Tab() Option {
+	return func(opts *Options) {
+		opts.output = TabOutput
+	}
+}
+
 // Writer sets the custom destination for where the bytes are sent.
 func Writer(w io.Writer) Option {
 	return func(opts *Options) {
