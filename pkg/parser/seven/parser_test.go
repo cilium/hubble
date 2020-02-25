@@ -103,9 +103,9 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
 			ipStr := ip.String()
 			switch {
-			case epID == fakeDestinationEndpoint.ID && ipStr == fakeDestinationEndpoint.IPv4:
+			case epID == fakeSourceEndpoint.ID && ipStr == fakeDestinationEndpoint.IPv4:
 				return []string{"endpoint-1234"}
-			case epID == fakeSourceEndpoint.ID && ipStr == fakeSourceEndpoint.IPv4:
+			case epID == fakeDestinationEndpoint.ID && ipStr == fakeSourceEndpoint.IPv4:
 				return []string{"endpoint-4321"}
 			}
 			return nil
