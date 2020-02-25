@@ -79,12 +79,13 @@ func (e *ParseError) Error() (s string) {
 }
 
 type lex struct {
-	token  string // text of the token
-	err    bool   // when true, token text has lexer error
-	value  uint8  // value: zString, _BLANK, etc.
-	torc   uint16 // type or class as parsed in the lexer, we only need to look this up in the grammar
-	line   int    // line in the file
-	column int    // column in the file
+	token   string // text of the token
+	err     bool   // when true, token text has lexer error
+	value   uint8  // value: zString, _BLANK, etc.
+	torc    uint16 // type or class as parsed in the lexer, we only need to look this up in the grammar
+	line    int    // line in the file
+	column  int    // column in the file
+	comment string // any comment text seen
 }
 
 // Token holds the token that are returned when a zone file is parsed.
@@ -243,6 +244,8 @@ type ZoneParser struct {
 	sub    *ZoneParser
 	osFile *os.File
 
+	com string
+
 	includeDepth uint8
 
 	includeAllowed bool
@@ -315,19 +318,12 @@ func (zp *ZoneParser) setParseError(err string, l lex) (RR, bool) {
 // Comment returns an optional text comment that occurred alongside
 // the RR.
 func (zp *ZoneParser) Comment() string {
-	if zp.parseErr != nil {
-		return ""
-	}
-
-	if zp.sub != nil {
-		return zp.sub.Comment()
-	}
-
-	return zp.c.Comment()
+	return zp.com
 }
 
 func (zp *ZoneParser) subNext() (RR, bool) {
 	if rr, ok := zp.sub.Next(); ok {
+		zp.com = zp.sub.com
 		return rr, true
 	}
 
@@ -351,6 +347,8 @@ func (zp *ZoneParser) subNext() (RR, bool) {
 // error. After Next returns (nil, false), the Err method will return
 // any error that occurred during parsing.
 func (zp *ZoneParser) Next() (RR, bool) {
+	zp.com = ""
+
 	if zp.parseErr != nil {
 		return nil, false
 	}
@@ -503,7 +501,7 @@ func (zp *ZoneParser) Next() (RR, bool) {
 				return zp.setParseError("expecting $TTL value, not this...", l)
 			}
 
-			if e := slurpRemainder(zp.c, zp.file); e != nil {
+			if e, _ := slurpRemainder(zp.c, zp.file); e != nil {
 				zp.parseErr = e
 				return nil, false
 			}
@@ -527,7 +525,7 @@ func (zp *ZoneParser) Next() (RR, bool) {
 				return zp.setParseError("expecting $ORIGIN value, not this...", l)
 			}
 
-			if e := slurpRemainder(zp.c, zp.file); e != nil {
+			if e, _ := slurpRemainder(zp.c, zp.file); e != nil {
 				zp.parseErr = e
 				return nil, false
 			}
@@ -650,7 +648,7 @@ func (zp *ZoneParser) Next() (RR, bool) {
 
 			st = zExpectRdata
 		case zExpectRdata:
-			r, e := setRR(*h, zp.c, zp.origin, zp.file)
+			r, e, c1 := setRR(*h, zp.c, zp.origin, zp.file)
 			if e != nil {
 				// If e.lex is nil than we have encounter a unknown RR type
 				// in that case we substitute our current lex token
@@ -662,6 +660,7 @@ func (zp *ZoneParser) Next() (RR, bool) {
 				return nil, false
 			}
 
+			zp.com = c1
 			return r, true
 		}
 	}
@@ -679,8 +678,7 @@ type zlexer struct {
 	line   int
 	column int
 
-	comBuf  string
-	comment string
+	com string
 
 	l lex
 
@@ -769,15 +767,14 @@ func (zl *zlexer) Next() (lex, bool) {
 		escape bool
 	)
 
-	if zl.comBuf != "" {
-		comi = copy(com[:], zl.comBuf)
-		zl.comBuf = ""
+	if zl.com != "" {
+		comi = copy(com[:], zl.com)
+		zl.com = ""
 	}
-
-	zl.comment = ""
 
 	for x, ok := zl.readByte(); ok; x, ok = zl.readByte() {
 		l.line, l.column = zl.line, zl.column
+		l.comment = ""
 
 		if stri >= len(str) {
 			l.token = "token length insufficient for parsing"
@@ -901,7 +898,7 @@ func (zl *zlexer) Next() (lex, bool) {
 			}
 
 			zl.commt = true
-			zl.comBuf = ""
+			zl.com = ""
 
 			if comi > 1 {
 				// A newline was previously seen inside a comment that
@@ -914,7 +911,7 @@ func (zl *zlexer) Next() (lex, bool) {
 			comi++
 
 			if stri > 0 {
-				zl.comBuf = string(com[:comi])
+				zl.com = string(com[:comi])
 
 				l.value = zString
 				l.token = string(str[:stri])
@@ -950,11 +947,11 @@ func (zl *zlexer) Next() (lex, bool) {
 
 					l.value = zNewline
 					l.token = "\n"
-					zl.comment = string(com[:comi])
+					l.comment = string(com[:comi])
 					return *l, true
 				}
 
-				zl.comBuf = string(com[:comi])
+				zl.com = string(com[:comi])
 				break
 			}
 
@@ -980,9 +977,9 @@ func (zl *zlexer) Next() (lex, bool) {
 
 				l.value = zNewline
 				l.token = "\n"
+				l.comment = zl.com
 
-				zl.comment = zl.comBuf
-				zl.comBuf = ""
+				zl.com = ""
 				zl.rrtype = false
 				zl.owner = true
 
@@ -1118,7 +1115,7 @@ func (zl *zlexer) Next() (lex, bool) {
 		// Send remainder of com
 		l.value = zNewline
 		l.token = "\n"
-		zl.comment = string(com[:comi])
+		l.comment = string(com[:comi])
 
 		if retL != (lex{}) {
 			zl.nextL = true
@@ -1129,20 +1126,13 @@ func (zl *zlexer) Next() (lex, bool) {
 	}
 
 	if zl.brace != 0 {
+		l.comment = "" // in case there was left over string and comment
 		l.token = "unbalanced brace"
 		l.err = true
 		return *l, true
 	}
 
 	return lex{value: zEOF}, false
-}
-
-func (zl *zlexer) Comment() string {
-	if zl.l.err {
-		return ""
-	}
-
-	return zl.comment
 }
 
 // Extract the class number from CLASSxx
@@ -1173,7 +1163,8 @@ func typeToInt(token string) (uint16, bool) {
 
 // stringToTTL parses things like 2w, 2m, etc, and returns the time in seconds.
 func stringToTTL(token string) (uint32, bool) {
-	var s, i uint32
+	s := uint32(0)
+	i := uint32(0)
 	for _, c := range token {
 		switch c {
 		case 's', 'S':
@@ -1261,7 +1252,7 @@ func toAbsoluteName(name, origin string) (absolute string, ok bool) {
 	}
 
 	// check if name is already absolute
-	if IsFqdn(name) {
+	if name[len(name)-1] == '.' {
 		return name, true
 	}
 
@@ -1301,21 +1292,24 @@ func locCheckEast(token string, longitude uint32) (uint32, bool) {
 	return longitude, false
 }
 
-// "Eat" the rest of the "line"
-func slurpRemainder(c *zlexer, f string) *ParseError {
+// "Eat" the rest of the "line". Return potential comments
+func slurpRemainder(c *zlexer, f string) (*ParseError, string) {
 	l, _ := c.Next()
+	com := ""
 	switch l.value {
 	case zBlank:
 		l, _ = c.Next()
+		com = l.comment
 		if l.value != zNewline && l.value != zEOF {
-			return &ParseError{f, "garbage after rdata", l}
+			return &ParseError{f, "garbage after rdata", l}, ""
 		}
 	case zNewline:
+		com = l.comment
 	case zEOF:
 	default:
-		return &ParseError{f, "garbage after rdata", l}
+		return &ParseError{f, "garbage after rdata", l}, ""
 	}
-	return nil
+	return nil, com
 }
 
 // Parse a 64 bit-like ipv6 address: "0014:4fff:ff20:ee64"
