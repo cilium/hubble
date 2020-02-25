@@ -265,36 +265,24 @@ func unpackString(msg []byte, off int) (string, int, error) {
 		return "", off, &Error{err: "overflow unpacking txt"}
 	}
 	l := int(msg[off])
-	off++
-	if off+l > len(msg) {
+	if off+l+1 > len(msg) {
 		return "", off, &Error{err: "overflow unpacking txt"}
 	}
 	var s strings.Builder
-	consumed := 0
-	for i, b := range msg[off : off+l] {
+	s.Grow(l)
+	for _, b := range msg[off+1 : off+1+l] {
 		switch {
 		case b == '"' || b == '\\':
-			if consumed == 0 {
-				s.Grow(l * 2)
-			}
-			s.Write(msg[off+consumed : off+i])
 			s.WriteByte('\\')
 			s.WriteByte(b)
-			consumed = i + 1
 		case b < ' ' || b > '~': // unprintable
-			if consumed == 0 {
-				s.Grow(l * 2)
-			}
-			s.Write(msg[off+consumed : off+i])
 			s.WriteString(escapeByte(b))
-			consumed = i + 1
+		default:
+			s.WriteByte(b)
 		}
 	}
-	if consumed == 0 { // no escaping needed
-		return string(msg[off : off+l]), off + l, nil
-	}
-	s.Write(msg[off+consumed : off+l])
-	return s.String(), off + l, nil
+	off += 1 + l
+	return s.String(), off, nil
 }
 
 func packString(s string, msg []byte, off int) (int, error) {
@@ -507,7 +495,7 @@ Option:
 func packDataOpt(options []EDNS0, msg []byte, off int) (int, error) {
 	for _, el := range options {
 		b, err := el.pack()
-		if err != nil || off+4 > len(msg) {
+		if err != nil || off+3 > len(msg) {
 			return len(msg), &Error{err: "overflow packing opt"}
 		}
 		binary.BigEndian.PutUint16(msg[off:], el.Option())      // Option code
@@ -597,29 +585,6 @@ func unpackDataNsec(msg []byte, off int) ([]uint16, int, error) {
 		lastwindow = window
 	}
 	return nsec, off, nil
-}
-
-// typeBitMapLen is a helper function which computes the "maximum" length of
-// a the NSEC Type BitMap field.
-func typeBitMapLen(bitmap []uint16) int {
-	var l int
-	var lastwindow, lastlength uint16
-	for _, t := range bitmap {
-		window := t / 256
-		length := (t-window*256)/8 + 1
-		if window > lastwindow && lastlength != 0 { // New window, jump to the new offset
-			l += int(lastlength) + 2
-			lastlength = 0
-		}
-		if window < lastwindow || length < lastlength {
-			// packDataNsec would return Error{err: "nsec bits out of order"} here, but
-			// when computing the length, we want do be liberal.
-			continue
-		}
-		lastwindow, lastlength = window, length
-	}
-	l += int(lastlength) + 2
-	return l
 }
 
 func packDataNsec(bitmap []uint16, msg []byte, off int) (int, error) {

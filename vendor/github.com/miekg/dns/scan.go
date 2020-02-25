@@ -134,7 +134,7 @@ func ReadRR(r io.Reader, file string) (RR, error) {
 }
 
 // ParseZone reads a RFC 1035 style zonefile from r. It returns
-// Tokens on the returned channel, each consisting of either a
+// *Tokens on the returned channel, each consisting of either a
 // parsed RR and optional comment or a nil RR and an error. The
 // channel is closed by ParseZone when the end of r is reached.
 //
@@ -143,8 +143,7 @@ func ReadRR(r io.Reader, file string) (RR, error) {
 // origin, as if the file would start with an $ORIGIN directive.
 //
 // The directives $INCLUDE, $ORIGIN, $TTL and $GENERATE are all
-// supported. Note that $GENERATE's range support up to a maximum of
-// of 65535 steps.
+// supported.
 //
 // Basic usage pattern when reading from a string (z) containing the
 // zone data:
@@ -204,7 +203,6 @@ func parseZone(r io.Reader, origin, file string, t chan *Token) {
 //
 // The directives $INCLUDE, $ORIGIN, $TTL and $GENERATE are all
 // supported. Although $INCLUDE is disabled by default.
-// Note that $GENERATE's range support up to a maximum of 65535 steps.
 //
 // Basic usage pattern when reading from a string (z) containing the
 // zone data:
@@ -505,8 +503,9 @@ func (zp *ZoneParser) Next() (RR, bool) {
 				return zp.setParseError("expecting $TTL value, not this...", l)
 			}
 
-			if err := slurpRemainder(zp.c); err != nil {
-				return zp.setParseError(err.err, err.lex)
+			if e := slurpRemainder(zp.c, zp.file); e != nil {
+				zp.parseErr = e
+				return nil, false
 			}
 
 			ttl, ok := stringToTTL(l.token)
@@ -528,8 +527,9 @@ func (zp *ZoneParser) Next() (RR, bool) {
 				return zp.setParseError("expecting $ORIGIN value, not this...", l)
 			}
 
-			if err := slurpRemainder(zp.c); err != nil {
-				return zp.setParseError(err.err, err.lex)
+			if e := slurpRemainder(zp.c, zp.file); e != nil {
+				zp.parseErr = e
+				return nil, false
 			}
 
 			name, ok := toAbsoluteName(l.token, zp.origin)
@@ -650,62 +650,25 @@ func (zp *ZoneParser) Next() (RR, bool) {
 
 			st = zExpectRdata
 		case zExpectRdata:
-			var rr RR
-			if newFn, ok := TypeToRR[h.Rrtype]; ok && canParseAsRR(h.Rrtype) {
-				rr = newFn()
-				*rr.Header() = *h
-			} else {
-				rr = &RFC3597{Hdr: *h}
-			}
-
-			_, isPrivate := rr.(*PrivateRR)
-			if !isPrivate && zp.c.Peek().token == "" {
-				// This is a dynamic update rr.
-
-				// TODO(tmthrgd): Previously slurpRemainder was only called
-				// for certain RR types, which may have been important.
-				if err := slurpRemainder(zp.c); err != nil {
-					return zp.setParseError(err.err, err.lex)
+			r, e := setRR(*h, zp.c, zp.origin, zp.file)
+			if e != nil {
+				// If e.lex is nil than we have encounter a unknown RR type
+				// in that case we substitute our current lex token
+				if e.lex.token == "" && e.lex.value == 0 {
+					e.lex = l // Uh, dirty
 				}
 
-				return rr, true
-			} else if l.value == zNewline {
-				return zp.setParseError("unexpected newline", l)
+				zp.parseErr = e
+				return nil, false
 			}
 
-			if err := rr.parse(zp.c, zp.origin); err != nil {
-				// err is a concrete *ParseError without the file field set.
-				// The setParseError call below will construct a new
-				// *ParseError with file set to zp.file.
-
-				// If err.lex is nil than we have encounter an unknown RR type
-				// in that case we substitute our current lex token.
-				if err.lex == (lex{}) {
-					return zp.setParseError(err.err, l)
-				}
-
-				return zp.setParseError(err.err, err.lex)
-			}
-
-			return rr, true
+			return r, true
 		}
 	}
 
 	// If we get here, we and the h.Rrtype is still zero, we haven't parsed anything, this
 	// is not an error, because an empty zone file is still a zone file.
 	return nil, false
-}
-
-// canParseAsRR returns true if the record type can be parsed as a
-// concrete RR. It blacklists certain record types that must be parsed
-// according to RFC 3597 because they lack a presentation format.
-func canParseAsRR(rrtype uint16) bool {
-	switch rrtype {
-	case TypeANY, TypeNULL, TypeOPT, TypeTSIG:
-		return false
-	default:
-		return true
-	}
 }
 
 type zlexer struct {
@@ -719,8 +682,7 @@ type zlexer struct {
 	comBuf  string
 	comment string
 
-	l       lex
-	cachedL *lex
+	l lex
 
 	brace  int
 	quote  bool
@@ -786,37 +748,13 @@ func (zl *zlexer) readByte() (byte, bool) {
 	return c, true
 }
 
-func (zl *zlexer) Peek() lex {
-	if zl.nextL {
-		return zl.l
-	}
-
-	l, ok := zl.Next()
-	if !ok {
-		return l
-	}
-
-	if zl.nextL {
-		// Cache l. Next returns zl.cachedL then zl.l.
-		zl.cachedL = &l
-	} else {
-		// In this case l == zl.l, so we just tell Next to return zl.l.
-		zl.nextL = true
-	}
-
-	return l
-}
-
 func (zl *zlexer) Next() (lex, bool) {
 	l := &zl.l
-	switch {
-	case zl.cachedL != nil:
-		l, zl.cachedL = zl.cachedL, nil
-		return *l, true
-	case zl.nextL:
+	if zl.nextL {
 		zl.nextL = false
 		return *l, true
-	case l.err:
+	}
+	if l.err {
 		// Parsing errors should be sticky.
 		return lex{value: zEOF}, false
 	}
@@ -970,11 +908,6 @@ func (zl *zlexer) Next() (lex, bool) {
 				// was inside braces and we delayed adding it until now.
 				com[comi] = ' ' // convert newline to space
 				comi++
-				if comi >= len(com) {
-					l.token = "comment length insufficient for parsing"
-					l.err = true
-					return *l, true
-				}
 			}
 
 			com[comi] = ';'
@@ -1369,18 +1302,18 @@ func locCheckEast(token string, longitude uint32) (uint32, bool) {
 }
 
 // "Eat" the rest of the "line"
-func slurpRemainder(c *zlexer) *ParseError {
+func slurpRemainder(c *zlexer, f string) *ParseError {
 	l, _ := c.Next()
 	switch l.value {
 	case zBlank:
 		l, _ = c.Next()
 		if l.value != zNewline && l.value != zEOF {
-			return &ParseError{"", "garbage after rdata", l}
+			return &ParseError{f, "garbage after rdata", l}
 		}
 	case zNewline:
 	case zEOF:
 	default:
-		return &ParseError{"", "garbage after rdata", l}
+		return &ParseError{f, "garbage after rdata", l}
 	}
 	return nil
 }
