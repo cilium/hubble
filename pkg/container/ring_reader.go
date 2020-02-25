@@ -69,11 +69,17 @@ func (r *RingReader) NextFollow(ctx context.Context) *v1.Event {
 	if r.c == nil {
 		r.c = r.ring.readFrom(r.stop, r.idx)
 	}
-	select {
-	case e := <-r.c:
-		r.idx++
-		return e
-	case <-ctx.Done():
-		return nil
+	// when the ring is not full, nil events may be sent to the channel
+	// one should keep reading in such a case
+	for {
+		select {
+		case e := <-r.c:
+			r.idx++
+			if e != nil {
+				return e
+			}
+		case <-ctx.Done():
+			return nil
+		}
 	}
 }
