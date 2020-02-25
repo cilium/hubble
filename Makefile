@@ -23,7 +23,7 @@ clean:
 	rm -f $(TARGET)
 
 test:
-	go test -timeout=$(TEST_TIMEOUT) -cover $$(go list ./...)
+	go test -timeout=$(TEST_TIMEOUT) -race -cover $$(go list ./...)
 
 bench:
 	go test -timeout=30s -bench=. $$(go list ./...)
