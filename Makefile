@@ -7,6 +7,8 @@ TARGET=hubble
 GIT_BRANCH != which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD
 GIT_HASH != which git >/dev/null 2>&1 && git rev-parse --short HEAD
 
+TEST_TIMEOUT ?= 5s
+
 all: hubble
 
 hubble:
@@ -21,7 +23,7 @@ clean:
 	rm -f $(TARGET)
 
 test:
-	go test -timeout=30s -cover $$(go list ./...)
+	go test -timeout=$(TEST_TIMEOUT) -cover $$(go list ./...)
 
 bench:
 	go test -timeout=30s -bench=. $$(go list ./...)
