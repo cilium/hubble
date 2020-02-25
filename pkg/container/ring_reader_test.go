@@ -219,3 +219,20 @@ func TestRingReader_NextFollow(t *testing.T) {
 		})
 	}
 }
+
+func TestRingReader_NextFollow_WithEmptyRing(t *testing.T) {
+	ring := NewRing(15)
+	reader := NewRingReader(ring, ring.LastWriteParallel())
+	ctx, cancel := context.WithCancel(context.Background())
+	c := make(chan *v1.Event)
+	go func() {
+		c <- reader.NextFollow(ctx)
+	}()
+	select {
+	case <-c:
+		t.Fail()
+	case <-time.After(1 * time.Millisecond):
+		// the call blocked, we're good
+	}
+	cancel()
+}
