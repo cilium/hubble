@@ -36,6 +36,16 @@ type Endpoint struct {
 	Labels       []string   `json:"labels"`
 }
 
+// EndpointInfo is a subset of Endpoint type that's used by EndpointGetter interface.
+// It strips out the fields used by EndpointHandler but not by EndpointGetter. In
+// embedded mode, we need EndpointInfo, but not Endpoint struct.
+type EndpointInfo struct {
+	ID           uint64
+	PodName      string
+	PodNamespace string
+	Labels       []string
+}
+
 // Event represents a single event observed and stored by Hubble
 type Event struct {
 	// Timestamp when event was observed in Hubble

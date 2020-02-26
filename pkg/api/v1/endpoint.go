@@ -235,6 +235,23 @@ func (es *Endpoints) GetEndpoint(ip net.IP) (endpoint *Endpoint, ok bool) {
 	return
 }
 
+// GetEndpointInfo returns the endpoint info that has the given ip.
+func (es *Endpoints) GetEndpointInfo(ip net.IP) (info *EndpointInfo, ok bool) {
+	es.mutex.RLock()
+	defer es.mutex.RUnlock()
+	for _, ep := range es.eps {
+		if ep.Deleted == nil && (ep.IPv4.Equal(ip) || ep.IPv6.Equal(ip)) {
+			return &EndpointInfo{
+				ID:           ep.ID,
+				PodName:      ep.PodName,
+				PodNamespace: ep.PodNamespace,
+				Labels:       ep.Labels,
+			}, true
+		}
+	}
+	return nil, false
+}
+
 // GetEndpointByContainerID returns the endpoint that has the given container ID.
 func (es *Endpoints) GetEndpointByContainerID(id string) (*Endpoint, bool) {
 	es.mutex.RLock()

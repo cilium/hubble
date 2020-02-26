@@ -47,7 +47,7 @@ func (l *LegacyPodGetter) GetIPIdentity(ip net.IP) (identity ipcache.IPIdentity,
 	}
 
 	// fallback on local endpoints
-	if ep, ok := l.EndpointGetter.GetEndpoint(ip); ok {
+	if ep, ok := l.EndpointGetter.GetEndpointInfo(ip); ok {
 		return ipcache.IPIdentity{
 			Namespace: ep.PodNamespace,
 			PodName:   ep.PodName,
