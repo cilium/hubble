@@ -228,13 +228,13 @@ func sortAndFilterLabels(labels []string, securityIdentity uint64) []string {
 func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoint {
 	// for local endpoints, use the available endpoint information
 	if p.endpointGetter != nil {
-		if ep, ok := p.endpointGetter.GetEndpoint(ip); ok {
+		if ep, ok := p.endpointGetter.GetEndpointInfo(ip); ok {
 			return &pb.Endpoint{
-				ID:        ep.ID,
+				ID:        ep.GetID(),
 				Identity:  securityIdentity,
-				Namespace: ep.PodNamespace,
-				Labels:    sortAndFilterLabels(ep.Labels, securityIdentity),
-				PodName:   ep.PodName,
+				Namespace: ep.GetK8sNamespace(),
+				Labels:    sortAndFilterLabels(ep.GetLabels(), securityIdentity),
+				PodName:   ep.GetK8sPodName(),
 			}
 		}
 	}

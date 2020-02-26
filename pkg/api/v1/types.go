@@ -36,6 +36,26 @@ type Endpoint struct {
 	Labels       []string   `json:"labels"`
 }
 
+// GetID returns the ID of the endpoint.
+func (e *Endpoint) GetID() uint64 {
+	return e.ID
+}
+
+// GetK8sPodName returns the pod name of the endpoint.
+func (e *Endpoint) GetK8sPodName() string {
+	return e.PodName
+}
+
+// GetK8sNamespace returns the pod namespace of the endpoint.
+func (e *Endpoint) GetK8sNamespace() string {
+	return e.PodNamespace
+}
+
+// GetLabels returns the labels of the endpoint.
+func (e *Endpoint) GetLabels() []string {
+	return e.Labels
+}
+
 // Event represents a single event observed and stored by Hubble
 type Event struct {
 	// Timestamp when event was observed in Hubble

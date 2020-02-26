@@ -51,7 +51,7 @@ func TestL34Decode(t *testing.T) {
 		98, 0, 90, 176, 97, 0, 0}
 
 	endpointGetter := &testutils.FakeEndpointGetter{
-		OnGetEndpoint: func(ip net.IP) (endpoint *v1.Endpoint, ok bool) {
+		OnGetEndpointInfo: func(ip net.IP) (endpoint v1.EndpointInfo, ok bool) {
 			if ip.Equal(net.ParseIP("10.16.236.178")) {
 				return &v1.Endpoint{
 					ID:           1234,
@@ -154,7 +154,7 @@ func TestL34Decode(t *testing.T) {
 		0, 0, 0, 0, 0}
 
 	endpointGetter = &testutils.FakeEndpointGetter{
-		OnGetEndpoint: func(ip net.IP) (endpoint *v1.Endpoint, ok bool) {
+		OnGetEndpointInfo: func(ip net.IP) (endpoint v1.EndpointInfo, ok bool) {
 			if ip.Equal(net.ParseIP("ff02::1:ff00:b3e5")) {
 				return &v1.Endpoint{
 					ID: 1234,
@@ -528,7 +528,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 		Labels:       []string{"a", "b", "c"},
 	}
 	endpointGetter := &testutils.FakeEndpointGetter{
-		OnGetEndpoint: func(ip net.IP) (endpoint *v1.Endpoint, ok bool) {
+		OnGetEndpointInfo: func(ip net.IP) (endpoint v1.EndpointInfo, ok bool) {
 			return ep, true
 		},
 	}
