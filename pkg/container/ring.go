@@ -41,9 +41,6 @@ type Ring struct {
 	cycleMask uint64
 	// dataLen is the length of the internal buffer.
 	dataLen uint64
-	// ring is at full capacity and will not overwrite oldest elements by
-	// cycling around
-	full bool
 	// data is the internal buffer of this ring buffer.
 	data []*v1.Event
 	// cond is used to signal when a write was made so a "waiting" reader in
@@ -81,10 +78,11 @@ func NewRing(n int) *Ring {
 
 // Len returns the number of elements in the ring buffer, similar to builtin `len()`.
 func (r *Ring) Len() uint64 {
-	if r.full {
+	write := atomic.LoadUint64(&r.write)
+	if write >= r.dataLen {
 		return r.dataLen
 	}
-	return r.write
+	return write
 }
 
 // Cap returns the total capacity of the ring buffer, similar to builtin `cap()`.
@@ -96,9 +94,6 @@ func (r *Ring) Cap() uint64 {
 // writing block.
 func (r *Ring) Write(entry *v1.Event) {
 	write := atomic.AddUint64(&r.write, 1)
-	if write >= r.dataLen {
-		r.full = true
-	}
 	writeIdx := (write - 1) & r.mask
 	r.data[writeIdx] = entry
 	r.cond.Broadcast()
