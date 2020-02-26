@@ -167,9 +167,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 		halfCycle := (^uint64(0) >> r.cycleExp) >> 1
 		go func() {
 			<-stop
-			r.cond.L.Lock()
 			r.cond.Broadcast()
-			r.cond.L.Unlock()
 		}()
 		defer func() {
 			close(ch)
