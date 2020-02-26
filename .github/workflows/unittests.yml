@@ -21,6 +21,6 @@ jobs:
         GOPATH: /home/runner/work/hubble/go
       run: |
         export PATH=${PATH}:${GOPATH}/bin
-        go get -u github.com/gordonklaus/ineffassign
-        go get -u golang.org/x/lint/golint
+        GO111MODULE=off go get -u github.com/gordonklaus/ineffassign
+        GO111MODULE=off go get -u golang.org/x/lint/golint
         make check-fmt lint test
