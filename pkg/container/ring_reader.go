@@ -77,6 +77,7 @@ func (r *RingReader) NextFollow(ctx context.Context) *v1.Event {
 				return e
 			}
 		case <-ctx.Done():
+			r.c = nil
 			return nil
 		}
 	}
