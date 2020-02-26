@@ -24,6 +24,7 @@ import (
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/gogo/protobuf/types"
+	"go.uber.org/goleak"
 )
 
 func BenchmarkRingWrite(b *testing.B) {
@@ -558,6 +559,7 @@ func TestRingFunctionalitySerialized(t *testing.T) {
 }
 
 func TestRing_ReadFrom_Test_1(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	r := NewRing(0xf)
 	if len(r.data) != 0x10 {
 		t.Errorf("r.data should have a lenght of 0x10. Got %x", len(r.data))
@@ -602,6 +604,7 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 }
 
 func TestRing_ReadFrom_Test_2(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	r := NewRing(0xf)
 	if len(r.data) != 0x10 {
 		t.Errorf("r.data should have a lenght of 0x10. Got %x", len(r.data))
@@ -663,6 +666,7 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 }
 
 func TestRing_ReadFrom_Test_3(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	r := NewRing(0xf)
 	if len(r.data) != 0x10 {
 		t.Errorf("r.data should have a lenght of 0x10. Got %x", len(r.data))
