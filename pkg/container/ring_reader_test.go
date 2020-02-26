@@ -24,6 +24,7 @@ import (
 
 	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/goleak"
 )
 
 func TestRingReader_Previous(t *testing.T) {
@@ -151,6 +152,7 @@ func TestRingReader_Next(t *testing.T) {
 }
 
 func TestRingReader_NextFollow(t *testing.T) {
+	defer goleak.VerifyNone(t)
 	ring := NewRing(15)
 	for i := 0; i < 15; i++ {
 		ring.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
