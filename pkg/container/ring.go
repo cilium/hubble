@@ -17,10 +17,11 @@
 package container
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 
-	"github.com/cilium/hubble/pkg/api/v1"
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/math"
 )
 
@@ -154,9 +155,9 @@ func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	return nil, false
 }
 
-// readFrom continues to read from the given position until the stop channel
-// is closed.
-func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
+// readFrom continues to read from the given position until the context is
+// cancelled.
+func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 	// TODO should we create the channel or the caller?
 	const returnedBufferChLen = 1000
 	ch := make(chan *v1.Event, returnedBufferChLen)
@@ -166,7 +167,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 		// which translates into (^uint64(0)>>r.dataLen)>>1
 		halfCycle := (^uint64(0) >> r.cycleExp) >> 1
 		go func() {
-			<-stop
+			<-ctx.Done()
 			r.cond.Broadcast()
 		}()
 		defer func() {
@@ -193,7 +194,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 				select {
 				case ch <- flow:
 					continue
-				case <-stop:
+				case <-ctx.Done():
 					return
 				}
 			// This case is where X is marked
@@ -208,7 +209,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 					select {
 					case ch <- flow:
 						continue
-					case <-stop:
+					case <-ctx.Done():
 						return
 					}
 				}
@@ -247,7 +248,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 				}
 				r.cond.L.Lock()
 				select {
-				case <-stop:
+				case <-ctx.Done():
 					r.cond.L.Unlock()
 					return
 				default:
@@ -256,7 +257,7 @@ func (r *Ring) readFrom(stop <-chan struct{}, read uint64) <-chan *v1.Event {
 					read--
 				}
 				select {
-				case <-stop:
+				case <-ctx.Done():
 					return
 				default:
 					continue

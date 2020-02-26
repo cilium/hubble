@@ -17,12 +17,12 @@ package container
 import (
 	"container/list"
 	"container/ring"
+	"context"
 	"reflect"
 	"sync"
 	"testing"
 
-	"github.com/cilium/hubble/pkg/api/v1"
-
+	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/gogo/protobuf/types"
 )
 
@@ -582,8 +582,8 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 		}
 	}
 
-	stop := make(chan struct{})
-	ch := r.readFrom(stop, 0)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := r.readFrom(ctx, 0)
 	i := int64(0)
 	for entry := range ch {
 		if !entry.Timestamp.Equal(&types.Timestamp{Seconds: i}) {
@@ -594,7 +594,7 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 			break
 		}
 	}
-	close(stop)
+	cancel()
 	flow, ok := <-ch
 	if ok {
 		t.Errorf("Channel should have been closed, received %+v", flow)
@@ -626,10 +626,10 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 		}
 	}
 
-	stop := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 	// We should be able to read from a previou 'cycles' and ReadFrom will
 	// be able to catch up with the writer.
-	ch := r.readFrom(stop, ^uint64(0)-15)
+	ch := r.readFrom(ctx, ^uint64(0)-15)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
@@ -655,7 +655,7 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 			break
 		}
 	}
-	close(stop)
+	cancel()
 	flow, ok := <-ch
 	if ok {
 		t.Errorf("Channel should have been closed, received %+v", flow)
@@ -687,10 +687,10 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 		}
 	}
 
-	stop := make(chan struct{})
 	// We should be able to read from a previous 'cycle' and ReadFrom will
 	// be able to catch up with the writer.
-	ch := r.readFrom(stop, ^uint64(0)-30)
+	ctx, cancel := context.WithCancel(context.Background())
+	ch := r.readFrom(ctx, ^uint64(0)-30)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
@@ -716,7 +716,7 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 			break
 		}
 	}
-	close(stop)
+	cancel()
 	flow, ok := <-ch
 	if ok {
 		t.Errorf("Channel should have been closed, received %+v", flow)

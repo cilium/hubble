@@ -25,7 +25,6 @@ type RingReader struct {
 	ring *Ring
 	idx  uint64
 	c    <-chan *v1.Event
-	stop chan struct{}
 }
 
 // NewRingReader creates a new RingReader that starts reading the ring at the
@@ -34,7 +33,6 @@ func NewRingReader(ring *Ring, start uint64) *RingReader {
 	return &RingReader{
 		ring: ring,
 		idx:  start,
-		stop: make(chan struct{}),
 	}
 }
 
@@ -67,7 +65,7 @@ func (r *RingReader) Next() *v1.Event {
 // until the next event is added to the ring or the context is cancelled.
 func (r *RingReader) NextFollow(ctx context.Context) *v1.Event {
 	if r.c == nil {
-		r.c = r.ring.readFrom(r.stop, r.idx)
+		r.c = r.ring.readFrom(ctx, r.idx)
 	}
 	// when the ring is not full, nil events may be sent to the channel
 	// one should keep reading in such a case
