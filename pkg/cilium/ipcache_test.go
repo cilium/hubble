@@ -147,11 +147,7 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
-				EndpointGetter: &testutils.FakeEndpointsHandler{
-					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
-						return nil, false
-					},
-				},
+				EndpointGetter: &testutils.NoopEndpointGetter,
 			},
 			args: args{
 				ip: net.ParseIP("1.1.1.15"),
@@ -165,8 +161,8 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 			name: "available in endpoints",
 			fields: fields{
 				IPGetter: &testutils.NoopIPGetter,
-				EndpointGetter: &testutils.FakeEndpointsHandler{
-					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
+				EndpointGetter: &testutils.FakeEndpointGetter{
+					OnGetEndpointInfo: func(_ net.IP) (v1.EndpointInfo, bool) {
 						return &v1.Endpoint{
 							ID:           16,
 							IPv4:         net.ParseIP("1.1.1.15"),
@@ -192,8 +188,8 @@ func TestLegacyPodGetter_GetPodNameOf(t *testing.T) {
 						return ipcache.IPIdentity{Namespace: "default", PodName: "xwing"}, true
 					},
 				},
-				EndpointGetter: &testutils.FakeEndpointsHandler{
-					FakeGetEndpoint: func(_ net.IP) (*v1.Endpoint, bool) {
+				EndpointGetter: &testutils.FakeEndpointGetter{
+					OnGetEndpointInfo: func(_ net.IP) (v1.EndpointInfo, bool) {
 						return &v1.Endpoint{
 							ID:           16,
 							IPv4:         net.ParseIP("1.1.1.15"),

@@ -46,3 +46,11 @@ type Flow interface {
 
 // This ensures that the protobuf definition implements the interface
 var _ Flow = &pb.Flow{}
+
+// EndpointInfo defines readable fields of a Cilium endpoint.
+type EndpointInfo interface {
+	GetID() uint64
+	GetK8sPodName() string
+	GetK8sNamespace() string
+	GetLabels() []string
+}
