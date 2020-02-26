@@ -226,7 +226,10 @@ func TestRingReader_NextFollow_WithEmptyRing(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan *v1.Event)
 	go func() {
-		c <- reader.NextFollow(ctx)
+		select {
+		case <-ctx.Done():
+		case c <- reader.NextFollow(ctx):
+		}
 	}()
 	select {
 	case <-c:
