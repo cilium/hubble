@@ -8,7 +8,7 @@ TARGET=hubble
 all: hubble
 
 hubble:
-	$(GO) build -mod=vendor -o $(TARGET)
+	$(GO) build -o $(TARGET)
 
 install:
 	groupadd -f hubble
@@ -19,7 +19,7 @@ clean:
 	rm -f $(TARGET)
 
 test:
-	go test -timeout=30s -cover -mod=vendor $$(go list ./...)
+	go test -timeout=30s -cover $$(go list ./...)
 
 lint: check-fmt ineffassign
 ifeq (, $(shell which golint))
