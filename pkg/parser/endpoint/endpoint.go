@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/cilium/cilium/api/v1/models"
+	"github.com/cilium/cilium/pkg/identity"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
@@ -29,6 +30,7 @@ import (
 // ParseEndpointFromModel parses all elements from modelEP into a Endpoint.
 func ParseEndpointFromModel(modelEP *models.Endpoint) *v1.Endpoint {
 	var ns, podName, containerID string
+	var securityIdentity identity.NumericIdentity
 	var labels []string
 	if modelEP.Status != nil {
 		if modelEP.Status.ExternalIdentifiers != nil {
@@ -36,12 +38,14 @@ func ParseEndpointFromModel(modelEP *models.Endpoint) *v1.Endpoint {
 			ns, podName = k8s.ParseNamespaceName(modelEP.Status.ExternalIdentifiers.PodName)
 		}
 		if modelEP.Status.Identity != nil {
+			securityIdentity = identity.NumericIdentity(modelEP.Status.Identity.ID)
 			labels = modelEP.Status.Identity.Labels
 			sort.Strings(labels)
 		}
 	}
 	ep := &v1.Endpoint{
 		ID:           uint64(modelEP.ID),
+		Identity:     securityIdentity,
 		PodName:      podName,
 		PodNamespace: ns,
 		Created:      time.Now(),

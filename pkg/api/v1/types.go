@@ -19,26 +19,33 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cilium/cilium/pkg/identity"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/gogo/protobuf/types"
 )
 
 // Endpoint is the representation of an endpoint running in the Cilium agent
 type Endpoint struct {
-	Created      time.Time  `json:"created"`
-	Deleted      *time.Time `json:"deleted"`
-	ContainerIDs []string   `json:"container-ids"`
-	ID           uint64     `json:"id"`
-	IPv4         net.IP     `json:"ipv4"`
-	IPv6         net.IP     `json:"ipv6"`
-	PodName      string     `json:"pod-name"`
-	PodNamespace string     `json:"pod-namespace"`
-	Labels       []string   `json:"labels"`
+	Created      time.Time                `json:"created"`
+	Deleted      *time.Time               `json:"deleted"`
+	ContainerIDs []string                 `json:"container-ids"`
+	ID           uint64                   `json:"id"`
+	Identity     identity.NumericIdentity `json:"identity"`
+	IPv4         net.IP                   `json:"ipv4"`
+	IPv6         net.IP                   `json:"ipv6"`
+	PodName      string                   `json:"pod-name"`
+	PodNamespace string                   `json:"pod-namespace"`
+	Labels       []string                 `json:"labels"`
 }
 
 // GetID returns the ID of the endpoint.
 func (e *Endpoint) GetID() uint64 {
 	return e.ID
+}
+
+// GetIdentity returns the numerical security identity of the endpoint.
+func (e *Endpoint) GetIdentity() identity.NumericIdentity {
+	return e.Identity
 }
 
 // GetK8sPodName returns the pod name of the endpoint.
