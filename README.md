@@ -180,7 +180,7 @@ Identifying pods which have received DNS response indicating failure:
 
 # Community
 
-Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat with Cilium Hublbe developers and other Cilium / Hubble users. This is a good place to learn about Hubble and Cilium, ask questions, and share your experiences.
+Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat with Cilium Hubble developers and other Cilium / Hubble users. This is a good place to learn about Hubble and Cilium, ask questions, and share your experiences.
 
 Learn more about [Cilium](http://cilium.io).
 
