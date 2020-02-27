@@ -98,6 +98,7 @@ func New(log *logrus.Entry) *cobra.Command {
 				serviceCache,
 				payloadParser,
 				int(maxFlows),
+				int(eventQueueSize),
 				log,
 			)
 			s.Start()
@@ -113,6 +114,8 @@ func New(log *logrus.Entry) *cobra.Command {
 
 	serverCmd.Flags().StringArrayVarP(&listenClientUrls, "listen-client-urls", "", []string{serverSocketPath}, "List of URLs to listen on for client traffic.")
 	serverCmd.Flags().Uint32Var(&maxFlows, "max-flows", 131071, "Max number of flows to store in memory (gets rounded up to closest (2^n)-1")
+	serverCmd.Flags().Uint32Var(&eventQueueSize, "event-queue-size", 128, "Size of the event queue for received monitor events")
+
 	serverCmd.Flags().StringVar(&serveDurationVar, "duration", "", "Shut the server down after this duration")
 	serverCmd.Flags().StringVar(&nodeName, "node-name", os.Getenv(envNodeName), "Node name where hubble is running (defaults to value set in env variable '"+envNodeName+"'")
 
@@ -129,7 +132,8 @@ func New(log *logrus.Entry) *cobra.Command {
 
 // observerCmd represents the monitor command
 var (
-	maxFlows uint32
+	maxFlows       uint32
+	eventQueueSize uint32
 
 	serveDurationVar string
 	serveDuration    time.Duration
