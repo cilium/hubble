@@ -307,7 +307,7 @@ func TestRing_Write(t *testing.T) {
 		write uint64
 	}
 	type args struct {
-		flow *v1.Event
+		event *v1.Event
 	}
 	tests := []struct {
 		name   string
@@ -318,7 +318,7 @@ func TestRing_Write(t *testing.T) {
 		{
 			name: "normal write",
 			args: args{
-				flow: &v1.Event{Timestamp: &types.Timestamp{Seconds: 5}},
+				event: &v1.Event{Timestamp: &types.Timestamp{Seconds: 5}},
 			},
 			fields: fields{
 				len:   0x3,
@@ -344,7 +344,7 @@ func TestRing_Write(t *testing.T) {
 		{
 			name: "overflow write",
 			args: args{
-				flow: &v1.Event{Timestamp: &types.Timestamp{Seconds: 5}},
+				event: &v1.Event{Timestamp: &types.Timestamp{Seconds: 5}},
 			},
 			fields: fields{
 				len:   0x3,
@@ -376,7 +376,7 @@ func TestRing_Write(t *testing.T) {
 				write: tt.fields.write,
 				cond:  sync.NewCond(&sync.RWMutex{}),
 			}
-			r.Write(tt.args.flow)
+			r.Write(tt.args.event)
 			want := &Ring{
 				mask:  tt.want.len,
 				data:  tt.want.data,
@@ -575,7 +575,7 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 		t.Errorf("lastWrite should be %x. Got %x", ^uint64(0)-1, lastWrite)
 	}
 
-	// Add 5 flows
+	// Add 5 events
 	for i := uint64(0); i < 5; i++ {
 		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
 		lastWrite = r.LastWrite()
@@ -597,9 +597,9 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 		}
 	}
 	cancel()
-	flow, ok := <-ch
+	event, ok := <-ch
 	if ok {
-		t.Errorf("Channel should have been closed, received %+v", flow)
+		t.Errorf("Channel should have been closed, received %+v", event)
 	}
 }
 
@@ -620,7 +620,7 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 		t.Errorf("lastWrite should be %x. Got %x", ^uint64(0)-1, lastWrite)
 	}
 
-	// Add 5 flows
+	// Add 5 events
 	for i := uint64(0); i < 5; i++ {
 		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
 		lastWrite = r.LastWrite()
@@ -636,7 +636,7 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
-		// we will receive 16-5=11 nil flows and 5 non-nil flows
+		// we will receive 16-5=11 nil events and 5 non-nil events
 		//
 		//   ReadFrom +           +----------------valid read------------+  +position possibly being written
 		//            |           |                                      |  |  +next position to be written (r.write)
@@ -659,9 +659,9 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 		}
 	}
 	cancel()
-	flow, ok := <-ch
+	event, ok := <-ch
 	if ok {
-		t.Errorf("Channel should have been closed, received %+v", flow)
+		t.Errorf("Channel should have been closed, received %+v", event)
 	}
 }
 
@@ -682,7 +682,7 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 		t.Errorf("lastWrite should be %x. Got %x", ^uint64(0)-1, lastWrite)
 	}
 
-	// Add 5 flows
+	// Add 5 events
 	for i := uint64(0); i < 5; i++ {
 		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
 		lastWrite = r.LastWrite()
@@ -698,7 +698,7 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
-		// we will receive 16-5=11 nil flows and 5 non-nil flows
+		// we will receive 16-5=11 nil events and 5 non-nil events
 		//
 		//   ReadFrom +           +----------------valid read------------+  +position possibly being written
 		//            |           |                                      |  |  +next position to be written (r.write)
@@ -721,8 +721,8 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 		}
 	}
 	cancel()
-	flow, ok := <-ch
+	event, ok := <-ch
 	if ok {
-		t.Errorf("Channel should have been closed, received %+v", flow)
+		t.Errorf("Channel should have been closed, received %+v", event)
 	}
 }

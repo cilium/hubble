@@ -90,7 +90,7 @@ func (r *Ring) Cap() uint64 {
 	return r.dataLen
 }
 
-// Write writes the given flow into the ring buffer in the next available
+// Write writes the given event into the ring buffer in the next available
 // writing block.
 func (r *Ring) Write(entry *v1.Event) {
 	write := atomic.AddUint64(&r.write, 1)
@@ -120,7 +120,7 @@ func (r *Ring) LastWrite() uint64 {
 // that position is no longer available to be read, returns true otherwise.
 func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	readIdx := read & r.mask
-	flow := r.data[readIdx]
+	event := r.data[readIdx]
 
 	lastWrite := atomic.LoadUint64(&r.write) - 1
 	lastWriteIdx := lastWrite & r.mask
@@ -145,7 +145,7 @@ func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	writeCycle := lastWrite >> r.cycleExp
 	if (readCycle == writeCycle && readIdx < lastWriteIdx) ||
 		(readCycle == (writeCycle-1)&r.cycleMask && readIdx > lastWriteIdx) {
-		return flow, true
+		return event, true
 	}
 	return nil, false
 }
@@ -171,7 +171,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 		// read forever until stop is closed
 		for ; ; read++ {
 			readIdx := read & r.mask
-			flow := r.data[readIdx]
+			event := r.data[readIdx]
 
 			lastWrite := atomic.LoadUint64(&r.write) - 1
 			lastWriteIdx := lastWrite & r.mask
@@ -187,7 +187,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
 			case readCycle == (writeCycle-1)&r.cycleMask && readIdx > lastWriteIdx:
 				select {
-				case ch <- flow:
+				case ch <- event:
 					continue
 				case <-ctx.Done():
 					return
@@ -202,15 +202,15 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			case readCycle == writeCycle:
 				if readIdx < lastWriteIdx {
 					select {
-					case ch <- flow:
+					case ch <- event:
 						continue
 					case <-ctx.Done():
 						return
 					}
 				}
 				// If we are in the same cycle as the writer and we are in this
-				// branch it means the reader caught the writer so it needs
-				// to wait until a new flow is received by the writer.
+				// branch it means the reader caught the writer so it needs to
+				// wait until a new event is received by the writer.
 				fallthrough
 
 			// This is a ring buffer, we will stop the reader, i.e. we will
@@ -227,13 +227,13 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
 			case readCycle >= (writeCycle+1)&r.cycleMask && readCycle < (halfCycle+writeCycle)&r.cycleMask:
-				// The writer has already written a new flow so there's no need
-				// to stop the reader.
+				// The writer has already written a new event so there's no
+				// need to stop the reader.
 				//
 				// FIXME?: It is still possible the writer will
 				//  write something after we check for `r.write` and before
 				//  we do r.cond.Wait, which means we will only receive
-				//  a broadcast() from the writer after a new flow arrives,
+				//  a broadcast() from the writer after a new event arrives,
 				//  making the reader block.
 				//  We can sort of avoiding it by checking if r.write got
 				//  incremented before we block while we wait for a broadcast
