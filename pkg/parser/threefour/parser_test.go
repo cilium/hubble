@@ -522,6 +522,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 
 	ep := &v1.Endpoint{
 		ID:           1234,
+		Identity:     4567,
 		IPv4:         net.ParseIP("1.1.1.1"),
 		PodName:      "xwing",
 		PodNamespace: "default",
@@ -538,7 +539,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 
 	v0 := monitor.TraceNotifyV0{
 		Type:     byte(api.MessageTypeTrace),
-		SrcLabel: 456,
+		SrcLabel: 456, // overwritten by ep.Identity
 		Version:  monitor.TraceNotifyVersion0,
 	}
 
@@ -559,7 +560,7 @@ func TestTraceNotifyLocalEndpoint(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, ep.ID, f.Source.ID)
-	assert.Equal(t, uint64(v0.SrcLabel), f.Source.Identity)
+	assert.Equal(t, uint64(ep.Identity), f.Source.Identity)
 	assert.Equal(t, ep.PodNamespace, f.Source.Namespace)
 	assert.Equal(t, ep.Labels, f.Source.Labels)
 	assert.Equal(t, ep.PodName, f.Source.PodName)
