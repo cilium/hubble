@@ -231,7 +231,7 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoin
 		if ep, ok := p.endpointGetter.GetEndpointInfo(ip); ok {
 			return &pb.Endpoint{
 				ID:        ep.GetID(),
-				Identity:  securityIdentity,
+				Identity:  uint64(ep.GetIdentity()),
 				Namespace: ep.GetK8sNamespace(),
 				Labels:    sortAndFilterLabels(ep.GetLabels(), securityIdentity),
 				PodName:   ep.GetK8sPodName(),
