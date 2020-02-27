@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Ensure build fails on versions of Go that are not supported by Hubble.
+// This build tag should be kept in sync with the version specified in go.mod.
+// +build go1.14
+
 package main
 
 import (
