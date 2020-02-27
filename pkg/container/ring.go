@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package container implements a ring buffer that can be accessed by multiple
-// RingReader readers.
 package container
 
 import (
