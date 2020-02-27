@@ -60,12 +60,13 @@ func NewServer(
 	serviceCache *servicecache.ServiceCache,
 	payloadParser *parser.Parser,
 	maxFlows int,
+	eventQueueSize int,
 	logger *logrus.Entry,
 ) *ObserverServer {
 	ciliumState := cilium.NewCiliumState(ciliumClient, endpoints, ipCache, fqdnCache, serviceCache, logger)
 	return &ObserverServer{
 		log:         logger,
-		grpcServer:  NewLocalServer(payloadParser, maxFlows, logger),
+		grpcServer:  NewLocalServer(payloadParser, maxFlows, eventQueueSize, logger),
 		ciliumState: ciliumState,
 	}
 }

@@ -38,7 +38,7 @@ func TestNewLocalServer(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 10, logger.GetLogger())
+	s := NewLocalServer(pp, 10, 0, logger.GetLogger())
 	assert.NotNil(t, s.GetStopped())
 	assert.NotNil(t, s.GetPayloadParser())
 	assert.NotNil(t, s.GetRingBuffer())
@@ -54,7 +54,7 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 1, logger.GetLogger())
+	s := NewLocalServer(pp, 1, 0, logger.GetLogger())
 	res, err := s.ServerStatus(context.Background(), &observer.ServerStatusRequest{})
 	require.NoError(t, err)
 	assert.Equal(t, &observer.ServerStatusResponse{NumFlows: 0, MaxFlows: 2}, res)
@@ -62,6 +62,7 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 
 func TestLocalObserverServer_GetFlows(t *testing.T) {
 	numFlows := 100
+	queueSize := 0
 	req := &observer.GetFlowsRequest{Number: uint64(10)}
 	i := 0
 	fakeServer := &FakeGetFlowsServer{
@@ -82,7 +83,7 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, numFlows, logger.GetLogger())
+	s := NewLocalServer(pp, numFlows, queueSize, logger.GetLogger())
 	go s.Start()
 
 	m := s.GetEventsChannel()

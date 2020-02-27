@@ -20,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cilium/cilium/pkg/math"
 	pb "github.com/cilium/hubble/api/v1/flow"
 	"github.com/cilium/hubble/api/v1/observer"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
@@ -81,13 +80,13 @@ type LocalObserverServer struct {
 func NewLocalServer(
 	payloadParser *parser.Parser,
 	maxFlows int,
+	eventQueueSize int,
 	logger *logrus.Entry,
 ) *LocalObserverServer {
 	return &LocalObserverServer{
-		log:  logger,
-		ring: container.NewRing(maxFlows),
-		// have a channel with 1% of the max flows that we can receive
-		events:        make(chan *pb.Payload, uint64(math.IntMin(maxFlows/100, 100))),
+		log:           logger,
+		ring:          container.NewRing(maxFlows),
+		events:        make(chan *pb.Payload, eventQueueSize),
 		stopped:       make(chan struct{}),
 		eventschan:    make(chan *observer.GetFlowsResponse, 100),
 		payloadParser: payloadParser,
