@@ -104,14 +104,16 @@ func TestParseEndpointFromModel(t *testing.T) {
 					ID: 1,
 					Status: &models.EndpointStatus{
 						Identity: &models.Identity{
+							ID:     1234,
 							Labels: []string{"a=b", "c=d"},
 						},
 					},
 				},
 			},
 			want: &v1.Endpoint{
-				ID:     1,
-				Labels: []string{"a=b", "c=d"},
+				ID:       1,
+				Identity: 1234,
+				Labels:   []string{"a=b", "c=d"},
 			},
 		},
 	}

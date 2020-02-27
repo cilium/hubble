@@ -15,6 +15,7 @@
 package v1
 
 import (
+	"github.com/cilium/cilium/pkg/identity"
 	pb "github.com/cilium/hubble/api/v1/flow"
 
 	"github.com/gogo/protobuf/types"
@@ -50,6 +51,7 @@ var _ Flow = &pb.Flow{}
 // EndpointInfo defines readable fields of a Cilium endpoint.
 type EndpointInfo interface {
 	GetID() uint64
+	GetIdentity() identity.NumericIdentity
 	GetK8sPodName() string
 	GetK8sNamespace() string
 	GetLabels() []string
