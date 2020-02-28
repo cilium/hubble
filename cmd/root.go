@@ -1,4 +1,4 @@
-// Copyright 2017-2019 Authors of Hubble
+// Copyright 2017-2020 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import (
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/serve"
 	"github.com/cilium/hubble/cmd/status"
+	"github.com/cilium/hubble/pkg"
 	"github.com/cilium/hubble/pkg/logger"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -34,9 +36,10 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "hubble",
-	Short: "CLI",
-	Long:  `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
+	Use:     "hubble",
+	Short:   "CLI",
+	Long:    `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
+	Version: pkg.Version,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -68,6 +71,8 @@ func init() {
 	)
 	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
 	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
+
+	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
 	l := logger.GetLogger()
 
