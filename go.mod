@@ -20,7 +20,9 @@ require (
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/goleak v1.0.0
 	google.golang.org/grpc v1.23.1
+	k8s.io/api v0.17.3
 	k8s.io/apimachinery v0.17.3
+	k8s.io/client-go v0.17.3
 )
 
 replace (
