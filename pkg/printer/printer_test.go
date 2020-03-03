@@ -98,7 +98,6 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   D
 			name: "json",
 			options: []Option{
 				JSON(),
-				WithJSONEncoder(),
 				Writer(&buf),
 			},
 			args: args{
