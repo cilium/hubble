@@ -4,11 +4,13 @@ BINDIR ?= /usr/local/bin
 IMAGE_REPOSITORY ?= quay.io/covalent/hubble
 CONTAINER_ENGINE ?= docker
 TARGET=hubble
+GIT_BRANCH != which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD
+GIT_HASH != which git >/dev/null 2>&1 && git rev-parse --short HEAD
 
 all: hubble
 
 hubble:
-	$(GO) build -o $(TARGET)
+	$(GO) build -ldflags "-X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
 
 install:
 	groupadd -f hubble
