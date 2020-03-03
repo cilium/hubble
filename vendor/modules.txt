@@ -57,9 +57,6 @@ github.com/cilium/cilium/pkg/u8proto
 github.com/cilium/cilium/pkg/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/francoispqt/gojay v1.2.13
-## explicit
-github.com/francoispqt/gojay
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
@@ -223,8 +220,6 @@ github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
 # github.com/vishvananda/netns v0.0.0-20191106174202-0a2b9b5464df
 github.com/vishvananda/netns
-# go.etcd.io/etcd v0.5.0-alpha.5.0.20190911215424-9ed5f76dc03b
-## explicit
 # go.mongodb.org/mongo-driver v1.3.0
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
