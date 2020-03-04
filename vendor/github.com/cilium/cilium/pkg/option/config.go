@@ -1,4 +1,4 @@
-// Copyright 2016-2019 Authors of Cilium
+// Copyright 2016-2020 Authors of Cilium
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,9 +48,6 @@ var (
 )
 
 const (
-	// AccessLog is the path to access log of supported L7 requests observed
-	AccessLog = "access-log"
-
 	// AgentLabels are additional labels to identify this agent
 	AgentLabels = "agent-labels"
 
@@ -93,6 +90,15 @@ const (
 	// CertsDirectory is the root directory used to find out certificates used
 	// in L7 HTTPs policy enforcement.
 	CertsDirectory = "certificates-directory"
+
+	// CNPNodeStatusGCInterval is the GC interval for nodes which have been
+	// removed from the cluster in CiliumNetworkPolicy and
+	// CiliumClusterwideNetworkPolicy Status.
+	CNPNodeStatusGCInterval = "cnp-node-status-gc-interval"
+
+	// CNPStatusUpdateInterval is the interval between status updates
+	// being sent to the K8s apiserver for a given CNP.
+	CNPStatusUpdateInterval = "cnp-status-update-interval"
 
 	// CGroupRoot is the path to Cgroup2 filesystem
 	CGroupRoot = "cgroup-root"
@@ -142,11 +148,41 @@ const (
 	// Docker is the path to docker runtime socket (DEPRECATED: use container-runtime-endpoint instead)
 	Docker = "docker"
 
+	// EnableCEPGC enables CiliumEndpoint garbage collector
+	// Deprecated: use EndpointGCInterval and remove in 1.9
+	EnableCEPGC = "cilium-endpoint-gc"
+
+	// EnableCCNPNodeStatusGC enables CiliumClusterwideNetworkPolicy Status
+	// garbage collection for nodes which have been removed from the cluster
+	// Deprecated: use CNPNodeStatusGCInterval and remove in 1.9
+	EnableCCNPNodeStatusGC = "ccnp-node-status-gc"
+
+	// EnableCNPNodeStatusGC enables CiliumNetworkPolicy Status garbage collection
+	// for nodes which have been removed from the cluster
+	// Deprecated: use CNPNodeStatusGCInterval and remove in 1.9
+	EnableCNPNodeStatusGC = "cnp-node-status-gc"
+
 	// EnablePolicy enables policy enforcement in the agent.
 	EnablePolicy = "enable-policy"
 
+	// EnableMetrics enables prometheus metrics.
+	EnableMetrics = "enable-metrics"
+
 	// EnableExternalIPs enables implementation of k8s services with externalIPs in datapath
 	EnableExternalIPs = "enable-external-ips"
+
+	// ENIParallelWorkersDeprecated is the deprecated name of the option
+	// ParallelAllocWorkers that can be removed in Cilium 1.9
+	ENIParallelWorkersDeprecated = "eni-parallel-workers"
+
+	// ParallelAllocWorkers specifies the number of parallel workers to be used for IPAM allocation
+	ParallelAllocWorkers = "parallel-alloc-workers"
+
+	// EndpointGCInterval is the interval between attempts of the CEP GC
+	// controller.
+	// Note that only one node per cluster should run this, and most iterations
+	// will simply return.
+	EndpointGCInterval = "cilium-endpoint-gc-interval"
 
 	// K8sEnableEndpointSlice enables the k8s EndpointSlice feature into Cilium
 	K8sEnableEndpointSlice = "enable-k8s-endpoint-slice"
@@ -170,6 +206,13 @@ const (
 	// which allows to use reserved label for fixed identities
 	FixedIdentityMapping = "fixed-identity-mapping"
 
+	// IdentityGCInterval is the interval in which allocator identities are
+	// attempted to be expired from the kvstore
+	IdentityGCInterval = "identity-gc-interval"
+
+	// IdentityHeartbeatTimeout is the timeout used to GC identities from k8s
+	IdentityHeartbeatTimeout = "identity-heartbeat-timeout"
+
 	// IPv4ClusterCIDRMaskSize is the mask size for the cluster wide CIDR
 	IPv4ClusterCIDRMaskSize = "ipv4-cluster-cidr-mask-size"
 
@@ -190,6 +233,9 @@ const (
 
 	// ModePreFilterGeneric for loading progs with xdpgeneric
 	ModePreFilterGeneric = "generic"
+
+	// NodesGCInterval is the duration for which the nodes are GC in the KVStore.
+	NodesGCInterval = "nodes-gc-interval"
 
 	// IPv6ClusterAllocCIDRName is the name of the IPv6ClusterAllocCIDR option
 	IPv6ClusterAllocCIDRName = "ipv6-cluster-alloc-cidr"
@@ -284,9 +330,6 @@ const (
 	// Restore restores state, if possible, from previous daemon
 	Restore = "restore"
 
-	// SidecarHTTPProxy disable host HTTP proxy, assuming proxies in sidecar containers
-	SidecarHTTPProxy = "sidecar-http-proxy"
-
 	// SidecarIstioProxyImage regular expression matching compatible Istio sidecar istio-proxy container image names
 	SidecarIstioProxyImage = "sidecar-istio-proxy-image"
 
@@ -331,6 +374,12 @@ const (
 	// PrometheusServeAddr IP:Port on which to serve prometheus metrics (pass ":Port" to bind on all interfaces, "" is off)
 	PrometheusServeAddr = "prometheus-serve-addr"
 
+	// OperatorPrometheusServeAddr IP:Port on which to serve prometheus metrics (pass ":Port" to bind on all interfaces, "" is off)
+	OperatorPrometheusServeAddr = "operator-prometheus-serve-addr"
+
+	// OperatorAPIServeAddr IP:Port on which to serve api requests in operator (pass ":Port" to bind on all interfaces, "" is off)
+	OperatorAPIServeAddr = "operator-api-serve-addr"
+
 	// PrometheusServeAddrDeprecated IP:Port on which to serve prometheus metrics (pass ":Port" to bind on all interfaces, "" is off)
 	PrometheusServeAddrDeprecated = "prometheus-serve-addr-deprecated"
 
@@ -361,6 +410,19 @@ const (
 	// global cache on startup.
 	// The file is not re-read after agent start.
 	ToFQDNsPreCache = "tofqdns-pre-cache"
+
+	// ToFQDNsEnableDNSCompression allows the DNS proxy to compress responses to
+	// endpoints that are larger than 512 Bytes or the EDNS0 option, if present.
+	ToFQDNsEnableDNSCompression = "tofqdns-enable-dns-compression"
+
+	// UnmanagedPodWatcherInterval is the interval to check for unmanaged kube-dns pods (0 to disable)
+	UnmanagedPodWatcherInterval = "unmanaged-pod-watcher-interval"
+
+	// SyncK8sServices synchronizes k8s services into the kvstore
+	SyncK8sServices = "synchronize-k8s-services"
+
+	// SyncK8sNodes synchronizes k8s nodes into the kvstore
+	SyncK8sNodes = "synchronize-k8s-nodes"
 
 	// MTUName is the name of the MTU option
 	MTUName = "mtu"
@@ -513,6 +575,9 @@ const (
 	// PreAllocateMapsName is the name of the option PreAllocateMaps
 	PreAllocateMapsName = "preallocate-bpf-maps"
 
+	// EnableXTSocketFallbackName is the name of the EnableXTSocketFallback option
+	EnableXTSocketFallbackName = "enable-xt-socket-fallback"
+
 	// EnableAutoDirectRoutingName is the name for the EnableAutoDirectRouting option
 	EnableAutoDirectRoutingName = "auto-direct-node-routes"
 
@@ -602,6 +667,14 @@ const (
 	// IPAM is the IPAM method to use
 	IPAM = "ipam"
 
+	// IPAMHostScopeLegacy is the value to select the legacy hostscope IPAM mode
+	// This option will disappear in Cilium v1.9
+	IPAMHostScopeLegacy = "hostscope-legacy"
+
+	// IPAMKubernetes is the value to select the Kubernetes PodCIDR based
+	// hostscope IPAM mode
+	IPAMKubernetes = "kubernetes"
+
 	// IPAMCRD is the value to select the CRD-backed IPAM plugin for
 	// option.IPAM
 	IPAMCRD = "crd"
@@ -609,11 +682,21 @@ const (
 	// IPAMENI is the value to select the AWS ENI IPAM plugin for option.IPAM
 	IPAMENI = "eni"
 
-	// AWSClientQPSLimit is the queries per second limit for the AWS client used by AWS ENI IPAM
-	AWSClientQPSLimit = "aws-client-qps"
+	// IPAMAPIQPSLimit is the queries per second limit when accessing external IPAM APIs
+	IPAMAPIQPSLimit = "limit-ipam-api-qps"
 
-	// AWSClientBurst is the burst value allowed for the AWS client used by the AWS ENI IPAM
-	AWSClientBurst = "aws-client-burst"
+	// AWSClientQPSLimitDeprecated is the deprecated version of IPAMAPIQPSLimit and will be removed in v1.9
+	AWSClientQPSLimitDeprecated = "aws-client-qps"
+
+	// IPAMAPIBurst is the burst value allowed when accessing external IPAM APIs
+	IPAMAPIBurst = "limit-ipam-api-burst"
+
+	// AWSClientBurstDeprecated is the deprecated version of IPAMAPIBurst and will be rewmoved in v1.9
+	AWSClientBurstDeprecated = "aws-client-burst"
+
+	// IPAMAzure is the value to select the Azure IPAM plugin for
+	// option.IPAM
+	IPAMAzure = "azure"
 
 	// ENITags are the tags that will be added to every ENI created by the AWS ENI IPAM
 	ENITags = "eni-tags"
@@ -669,6 +752,15 @@ const (
 
 	// EnableRemoteNodeIdentity enables use of the remote-node identity
 	EnableRemoteNodeIdentity = "enable-remote-node-identity"
+
+	// AzureSubscriptionID is the subscription ID to use when accessing the Azure API
+	AzureSubscriptionID = "azure-subscription-id"
+
+	// AzureResourceGroup is the resource group of the nodes used for the cluster
+	AzureResourceGroup = "azure-resource-group"
+
+	// PolicyAuditModeArg argument enables policy audit mode.
+	PolicyAuditModeArg = "policy-audit-mode"
 )
 
 // Default string arguments
@@ -899,9 +991,6 @@ type DaemonConfig struct {
 	// Monitor contains the configuration for the node monitor.
 	Monitor *models.MonitorStatus
 
-	// AccessLog is the path to the access log of supported L7 requests observed.
-	AccessLog string
-
 	// AgentLabels contains additional labels to identify this agent in monitor events.
 	AgentLabels []string
 
@@ -1086,6 +1175,8 @@ type DaemonConfig struct {
 	IPv6ServiceRange              string
 	K8sAPIServer                  string
 	K8sKubeConfigPath             string
+	K8sClientBurst                int
+	K8sClientQPSLimit             float64
 	K8sWatcherEndpointSelector    string
 	KVStore                       string
 	KVStoreOpt                    map[string]string
@@ -1099,20 +1190,21 @@ type DaemonConfig struct {
 
 	// Masquerade specifies whether or not to masquerade packets from endpoints
 	// leaving the host.
-	Masquerade             bool
-	InstallIptRules        bool
-	MonitorAggregation     string
-	PreAllocateMaps        bool
-	IPv6NodeAddr           string
-	IPv4NodeAddr           string
-	SidecarHTTPProxy       bool
-	SidecarIstioProxyImage string
-	SocketPath             string
-	TracePayloadlen        int
-	Version                string
-	PProf                  bool
-	PrometheusServeAddr    string
-	ToFQDNsMinTTL          int
+	Masquerade                  bool
+	InstallIptRules             bool
+	MonitorAggregation          string
+	PreAllocateMaps             bool
+	IPv6NodeAddr                string
+	IPv4NodeAddr                string
+	SidecarIstioProxyImage      string
+	SocketPath                  string
+	TracePayloadlen             int
+	Version                     string
+	PProf                       bool
+	PrometheusServeAddr         string
+	OperatorPrometheusServeAddr string
+	OperatorAPIServeAddr        string
+	ToFQDNsMinTTL               int
 
 	// ToFQDNsProxyPort is the user-configured global, shared, DNS listen port used
 	// by the DNS Proxy. Both UDP and TCP are handled on the same port. When it
@@ -1146,6 +1238,10 @@ type DaemonConfig struct {
 	// Path to a file with DNS cache data to preload on startup
 	ToFQDNsPreCache string
 
+	// ToFQDNsEnableDNSCompression allows the DNS proxy to compress responses to
+	// endpoints that are larger than 512 Bytes or the EDNS0 option, if present.
+	ToFQDNsEnableDNSCompression bool
+
 	// HostDevice will be device used by Cilium to connect to the outside world.
 	HostDevice string
 
@@ -1156,6 +1252,10 @@ type DaemonConfig struct {
 	// FlannelUninstallOnExit removes the BPF programs that were installed by
 	// Cilium on all interfaces created by the flannel.
 	FlannelUninstallOnExit bool
+
+	// EnableXTSocketFallback allows disabling of kernel's ip_early_demux
+	// sysctl option if `xt_socket` kernel module is not available.
+	EnableXTSocketFallback bool
 
 	// EnableAutoDirectRouting enables installation of direct routes to
 	// other nodes when available
@@ -1331,16 +1431,6 @@ type DaemonConfig struct {
 	// the network policy for cilium-agent.
 	AllowICMPFragNeeded bool
 
-	// AwsInstanceLimitMapping allows overwirting AWS instance limits defined in
-	// pkg/aws/eni/limits.go
-	// e.g. {"a1.medium": "2,4,4", "a2.custom2": "4,5,6"}
-	AwsInstanceLimitMapping map[string]string
-
-	// AwsReleaseExcessIps allows releasing excess free IP addresses from ENI.
-	// Enabling this option reduces waste of IP addresses but may increase
-	// the number of API calls to AWS EC2 service.
-	AwsReleaseExcessIps bool
-
 	// EnableWellKnownIdentities enables the use of well-known identities.
 	// This is requires if identiy resolution is required to bring up the
 	// control plane, e.g. when using the managed etcd feature
@@ -1352,11 +1442,103 @@ type DaemonConfig struct {
 
 	// EnableRemoteNodeIdentity enables use of the remote-node identity
 	EnableRemoteNodeIdentity bool
+
+	// Operator-specific options
+
+	// EnableCEPGC enables CiliumEndpoint garbage collector
+	// Deprecated: use EndpointGCInterval and remove in 1.9
+	EnableCEPGC bool
+
+	// EnableCNPNodeStatusGC enables CiliumNetworkPolicy Status garbage collection
+	// for nodes which have been removed from the cluster
+	// Deprecated: use CNPNodeStatusGCInterval and remove in 1.9
+	EnableCNPNodeStatusGC bool
+
+	// EnableCCNPNodeStatusGC enables CiliumClusterwideNetworkPolicy Status
+	// garbage collection for nodes which have been removed from the cluster
+	// Deprecated: use CNPNodeStatusGCInterval and remove in 1.9
+	EnableCCNPNodeStatusGC bool
+
+	// EnableMetrics enables prometheus metrics.
+	EnableMetrics bool
+
+	// SyncK8sServices synchronizes k8s services into the kvstore
+	SyncK8sServices bool
+
+	// SyncK8sNodes synchronizes k8s nodes into the kvstore
+	SyncK8sNodes bool
+
+	// CNPNodeStatusGCInterval is the GC interval for nodes which have been
+	// removed from the cluster in CiliumNetworkPolicy and
+	// CiliumClusterwideNetworkPolicy Status.
+	CNPNodeStatusGCInterval time.Duration
+
+	// CNPStatusUpdateInterval is the interval between status updates
+	// being sent to the K8s apiserver for a given CNP.
+	CNPStatusUpdateInterval time.Duration
+
+	// EndpointGCInterval is the interval between attempts of the CEP GC
+	// controller.
+	// Note that only one node per cluster should run this, and most iterations
+	// will simply return.
+	EndpointGCInterval time.Duration
+
+	// IdentityGCInterval is the interval in which allocator identities are
+	// attempted to be expired from the kvstore
+	IdentityGCInterval time.Duration
+
+	// IdentityHeartbeatTimeout is the timeout used to GC identities from k8s
+	IdentityHeartbeatTimeout time.Duration
+
+	// NodesGCInterval is the duration for which the nodes are GC in the KVStore.
+	NodesGCInterval time.Duration
+
+	// UnmanagedPodWatcherInterval is the interval to check for unmanaged kube-dns pods (0 to disable)
+	UnmanagedPodWatcherInterval int
+
+	// IPAMAPIQPSLimit is the queries per second limit when accessing external IPAM APIs
+	IPAMAPIQPSLimit float64
+
+	// IPAMAPIBurst is the burst value allowed when accessing external IPAM APIs
+	IPAMAPIBurst int
+
+	// AWS options
+
+	// ENITags are the tags that will be added to every ENI created by the AWS ENI IPAM
+	ENITags map[string]string
+
+	// ParallelAllocWorkers specifies the number of parallel workers to be used in ENI mode.
+	ParallelAllocWorkers int64
+
+	// AwsInstanceLimitMapping allows overwirting AWS instance limits defined in
+	// pkg/aws/eni/limits.go
+	// e.g. {"a1.medium": "2,4,4", "a2.custom2": "4,5,6"}
+	AwsInstanceLimitMapping map[string]string
+
+	// AwsReleaseExcessIps allows releasing excess free IP addresses from ENI.
+	// Enabling this option reduces waste of IP addresses but may increase
+	// the number of API calls to AWS EC2 service.
+	AwsReleaseExcessIps bool
+
+	// UpdateEC2AdapterLimitViaAPI configures the operator to use the EC2 API to fill out the instnacetype to adapter limit mapping
+	UpdateEC2AdapterLimitViaAPI bool
+
+	// AzureSubscriptionID is the subscription ID to use when accessing the Azure API
+	AzureSubscriptionID string
+
+	// AzureResourceGroup is the resource group of the nodes used for the cluster
+	AzureResourceGroup string
+
+	// PolicyAuditMode enables non-drop mode for installed policies. In
+	// audit mode packets affected by policies will not be dropped.
+	// Policy related decisions can be checked via the poicy verdict messages.
+	PolicyAuditMode bool
 }
 
 var (
 	// Config represents the daemon configuration
 	Config = &DaemonConfig{
+		AwsInstanceLimitMapping:      make(map[string]string),
 		Opts:                         NewIntOptions(&DaemonOptionLibrary),
 		Monitor:                      &models.MonitorStatus{Cpus: int64(runtime.NumCPU()), Npages: 64, Pagesize: int64(os.Getpagesize()), Lost: 0, Unknown: 0},
 		IPv6ClusterAllocCIDR:         defaults.IPv6ClusterAllocCIDR,
@@ -1367,6 +1549,7 @@ var (
 		EnableIPv4:                   defaults.EnableIPv4,
 		EnableIPv6:                   defaults.EnableIPv6,
 		EnableL7Proxy:                defaults.EnableL7Proxy,
+		ENITags:                      make(map[string]string),
 		ToFQDNsMaxIPsPerHost:         defaults.ToFQDNsMaxIPsPerHost,
 		KVstorePeriodicSync:          defaults.KVstorePeriodicSync,
 		KVstoreConnectivityTimeout:   defaults.KVstoreConnectivityTimeout,
@@ -1444,6 +1627,32 @@ func (c *DaemonConfig) AlwaysAllowLocalhost() bool {
 	default:
 		return false
 	}
+}
+
+// IPv4Enabled returns true if IPv4 is enabled
+func (c *DaemonConfig) IPv4Enabled() bool {
+	return c.EnableIPv4
+}
+
+// IPv6Enabled returns true if IPv6 is enabled
+func (c *DaemonConfig) IPv6Enabled() bool {
+	return c.EnableIPv6
+}
+
+// HealthCheckingEnabled returns true if health checking is enabled
+func (c *DaemonConfig) HealthCheckingEnabled() bool {
+	return c.EnableHealthChecking
+}
+
+// IPAMMode returns the IPAM mode
+func (c *DaemonConfig) IPAMMode() string {
+	return strings.ToLower(c.IPAM)
+}
+
+// BlacklistConflictingRoutesEnabled returns true when blacklisting of
+// conflicting routes is enabled
+func (c *DaemonConfig) BlacklistConflictingRoutesEnabled() bool {
+	return c.BlacklistConflictingRoutes
 }
 
 // TracingEnabled returns if tracing policy (outlining which rules apply to a
@@ -1661,12 +1870,13 @@ func (c *DaemonConfig) parseExcludedLocalAddresses(s []string) error {
 func (c *DaemonConfig) Populate() {
 	var err error
 
-	c.AccessLog = viper.GetString(AccessLog)
 	c.AgentLabels = viper.GetStringSlice(AgentLabels)
 	c.AllowICMPFragNeeded = viper.GetBool(AllowICMPFragNeeded)
 	c.AllowLocalhost = viper.GetString(AllowLocalhost)
 	c.AnnotateK8sNode = viper.GetBool(AnnotateK8sNode)
 	c.AutoCreateCiliumNodeResource = viper.GetBool(AutoCreateCiliumNodeResource)
+	c.AzureSubscriptionID = viper.GetString(AzureSubscriptionID)
+	c.AzureResourceGroup = viper.GetString(AzureResourceGroup)
 	c.BPFCompilationDebug = viper.GetBool(BPFCompileDebugName)
 	c.CTMapEntriesGlobalTCP = viper.GetInt(CTMapEntriesGlobalTCPName)
 	c.CTMapEntriesGlobalAny = viper.GetInt(CTMapEntriesGlobalAnyName)
@@ -1677,6 +1887,8 @@ func (c *DaemonConfig) Populate() {
 	c.ClusterID = viper.GetInt(ClusterIDName)
 	c.ClusterName = viper.GetString(ClusterName)
 	c.ClusterMeshConfig = viper.GetString(ClusterMeshConfigName)
+	c.CNPNodeStatusGCInterval = viper.GetDuration(CNPNodeStatusGCInterval)
+	c.CNPStatusUpdateInterval = viper.GetDuration(CNPStatusUpdateInterval)
 	c.DatapathMode = viper.GetString(DatapathMode)
 	c.Debug = viper.GetBool(DebugArg)
 	c.DebugVerbose = viper.GetStringSlice(DebugVerbose)
@@ -1694,6 +1906,7 @@ func (c *DaemonConfig) Populate() {
 	c.EnableHostReachableServices = viper.GetBool(EnableHostReachableServices)
 	c.EnableRemoteNodeIdentity = viper.GetBool(EnableRemoteNodeIdentity)
 	c.DockerEndpoint = viper.GetString(Docker)
+	c.EnableXTSocketFallback = viper.GetBool(EnableXTSocketFallbackName)
 	c.EnableAutoDirectRouting = viper.GetBool(EnableAutoDirectRoutingName)
 	c.EnableEndpointRoutes = viper.GetBool(EnableEndpointRoutes)
 	c.EnableHealthChecking = viper.GetBool(EnableHealthChecking)
@@ -1706,8 +1919,13 @@ func (c *DaemonConfig) Populate() {
 	c.EnableNodePort = viper.GetBool(EnableNodePort)
 	c.NodePortMode = viper.GetString(NodePortMode)
 	c.KubeProxyReplacement = viper.GetString(KubeProxyReplacement)
+	c.EnableCEPGC = viper.GetBool(EnableCEPGC)
+	c.EnableCNPNodeStatusGC = viper.GetBool(EnableCNPNodeStatusGC)
+	c.EnableCCNPNodeStatusGC = viper.GetBool(EnableCCNPNodeStatusGC)
+	c.EnableMetrics = viper.GetBool(EnableMetrics)
 	c.EncryptInterface = viper.GetString(EncryptInterface)
 	c.EncryptNode = viper.GetBool(EncryptNode)
+	c.EndpointGCInterval = viper.GetDuration(EndpointGCInterval)
 	c.EnvoyLogPath = viper.GetString(EnvoyLog)
 	c.ForceLocalPolicyEvalAtSource = viper.GetBool(ForceLocalPolicyEvalAtSource)
 	c.HostDevice = getHostDevice()
@@ -1717,6 +1935,7 @@ func (c *DaemonConfig) Populate() {
 	c.HTTPRetryCount = viper.GetInt(HTTPRetryCount)
 	c.HTTPRetryTimeout = viper.GetInt(HTTPRetryTimeout)
 	c.IdentityChangeGracePeriod = viper.GetDuration(IdentityChangeGracePeriod)
+	c.IdentityGCInterval = viper.GetDuration(IdentityGCInterval)
 	c.IPAM = viper.GetString(IPAM)
 	c.IPv4Range = viper.GetString(IPv4Range)
 	c.IPv4NodeAddr = viper.GetString(IPv4NodeAddr)
@@ -1726,6 +1945,8 @@ func (c *DaemonConfig) Populate() {
 	c.IPv6Range = viper.GetString(IPv6Range)
 	c.IPv6ServiceRange = viper.GetString(IPv6ServiceRange)
 	c.K8sAPIServer = viper.GetString(K8sAPIServer)
+	c.K8sClientBurst = viper.GetInt(K8sClientBurst)
+	c.K8sClientQPSLimit = viper.GetFloat64(K8sClientQPSLimit)
 	c.K8sEnableK8sEndpointSlice = viper.GetBool(K8sEnableEndpointSlice)
 	c.K8sKubeConfigPath = viper.GetString(K8sKubeConfigPath)
 	c.K8sRequireIPv4PodCIDR = viper.GetBool(K8sRequireIPv4PodCIDRName)
@@ -1751,6 +1972,7 @@ func (c *DaemonConfig) Populate() {
 	c.Logstash = viper.GetBool(Logstash)
 	c.LoopbackIPv4 = viper.GetString(LoopbackIPv4)
 	c.Masquerade = viper.GetBool(Masquerade)
+	c.IdentityHeartbeatTimeout = viper.GetDuration(IdentityHeartbeatTimeout)
 	c.InstallIptRules = viper.GetBool(InstallIptRules)
 	c.IPSecKeyFile = viper.GetString(IPSecKeyFileName)
 	c.ModePreFilter = viper.GetString(PrefilterMode)
@@ -1759,6 +1981,7 @@ func (c *DaemonConfig) Populate() {
 	c.MonitorQueueSize = viper.GetInt(MonitorQueueSizeName)
 	c.MTU = viper.GetInt(MTUName)
 	c.NAT46Range = viper.GetString(NAT46Range)
+	c.NodesGCInterval = viper.GetDuration(NodesGCInterval)
 	c.FlannelMasterDevice = viper.GetString(FlannelMasterDevice)
 	c.FlannelUninstallOnExit = viper.GetBool(FlannelUninstallOnExit)
 	c.PolicyMapMaxEntries = viper.GetInt(PolicyMapEntriesName)
@@ -1766,6 +1989,8 @@ func (c *DaemonConfig) Populate() {
 	c.PreAllocateMaps = viper.GetBool(PreAllocateMapsName)
 	c.PrependIptablesChains = viper.GetBool(PrependIptablesChainsName)
 	c.PrometheusServeAddr = getPrometheusServerAddr()
+	c.OperatorPrometheusServeAddr = viper.GetString(OperatorPrometheusServeAddr)
+	c.OperatorAPIServeAddr = viper.GetString(OperatorAPIServeAddr)
 	c.ProxyConnectTimeout = viper.GetInt(ProxyConnectTimeout)
 	c.BlacklistConflictingRoutes = viper.GetBool(BlacklistConflictingRoutes)
 	c.ReadCNIConfiguration = viper.GetString(ReadCNIConfiguration)
@@ -1775,8 +2000,12 @@ func (c *DaemonConfig) Populate() {
 	c.UseSingleClusterRoute = viper.GetBool(SingleClusterRouteName)
 	c.SocketPath = viper.GetString(SocketPath)
 	c.SockopsEnable = viper.GetBool(SockopsEnableName)
+	c.SyncK8sServices = viper.GetBool(SyncK8sServices)
+	c.SyncK8sNodes = viper.GetBool(SyncK8sNodes)
 	c.TracePayloadlen = viper.GetInt(TracePayloadlen)
 	c.Tunnel = viper.GetString(TunnelName)
+	c.UnmanagedPodWatcherInterval = viper.GetInt(UnmanagedPodWatcherInterval)
+	c.UpdateEC2AdapterLimitViaAPI = viper.GetBool(UpdateEC2AdapterLimitViaAPI)
 	c.Version = viper.GetString(Version)
 	c.WriteCNIConfigurationWhenReady = viper.GetString(WriteCNIConfigurationWhenReady)
 	c.PolicyTriggerInterval = viper.GetDuration(PolicyTriggerInterval)
@@ -1786,6 +2015,7 @@ func (c *DaemonConfig) Populate() {
 	c.CTMapEntriesTimeoutSVCAny = viper.GetDuration(CTMapEntriesTimeoutSVCAnyName)
 	c.CTMapEntriesTimeoutSYN = viper.GetDuration(CTMapEntriesTimeoutSYNName)
 	c.CTMapEntriesTimeoutFIN = viper.GetDuration(CTMapEntriesTimeoutFINName)
+	c.PolicyAuditMode = viper.GetBool(PolicyAuditModeArg)
 
 	if nativeCIDR := viper.GetString(IPv4NativeRoutingCIDR); nativeCIDR != "" {
 		c.ipv4NativeRoutingCIDR = cidr.MustParseCIDR(nativeCIDR)
@@ -1814,6 +2044,7 @@ func (c *DaemonConfig) Populate() {
 	}
 	c.ToFQDNsProxyPort = viper.GetInt(ToFQDNsProxyPort)
 	c.ToFQDNsPreCache = viper.GetString(ToFQDNsPreCache)
+	c.ToFQDNsEnableDNSCompression = viper.GetBool(ToFQDNsEnableDNSCompression)
 
 	// Convert IP strings into net.IPNet types
 	subnets, invalid := ip.ParseCIDRs(viper.GetStringSlice(IPv4PodSubnets))
@@ -1839,20 +2070,9 @@ func (c *DaemonConfig) Populate() {
 		log.WithError(err).Fatal("Failed to populate NodePortRange")
 	}
 
-	hostServicesProtos := viper.GetStringSlice(HostReachableServicesProtos)
-	if len(hostServicesProtos) > 2 {
-		log.Fatal("Unable to parse protocols for host reachable services!")
-	}
-	for i := 0; i < len(hostServicesProtos); i++ {
-		switch strings.ToLower(hostServicesProtos[i]) {
-		case HostServicesTCP:
-			c.EnableHostServicesTCP = true
-		case HostServicesUDP:
-			c.EnableHostServicesUDP = true
-		default:
-			log.Fatalf("Unable to parse protocol %s for host reachable services!",
-				hostServicesProtos[i])
-		}
+	err = c.populateHostServicesProtos()
+	if err != nil {
+		log.WithError(err).Fatal("Failed to populate HostReachableServicesProtos")
 	}
 
 	monitorAggregationFlags := viper.GetStringSlice(MonitorAggregationFlags)
@@ -1869,12 +2089,20 @@ func (c *DaemonConfig) Populate() {
 	c.MonitorAggregationFlags = ctMonitorReportFlags
 
 	// Map options
+	if m := viper.GetStringMapString(AwsInstanceLimitMapping); len(m) != 0 {
+		c.AwsInstanceLimitMapping = m
+	}
+
 	if m := viper.GetStringMapString(FixedIdentityMapping); len(m) != 0 {
 		c.FixedIdentityMapping = m
 	}
 
 	if m := viper.GetStringMapString(KVStoreOpt); len(m) != 0 {
 		c.KVStoreOpt = m
+	}
+
+	if m := viper.GetStringMapString(ENITags); len(m) != 0 {
+		c.ENITags = m
 	}
 
 	if m := viper.GetStringMapString(LogOpt); len(m) != 0 {
@@ -1885,6 +2113,24 @@ func (c *DaemonConfig) Populate() {
 		c.ConntrackGCInterval = time.Duration(val) * time.Second
 	} else {
 		c.ConntrackGCInterval = viper.GetDuration(ConntrackGCInterval)
+	}
+
+	if val := viper.GetInt64(ENIParallelWorkersDeprecated); val != 0 {
+		c.ParallelAllocWorkers = val
+	} else {
+		c.ParallelAllocWorkers = viper.GetInt64(ParallelAllocWorkers)
+	}
+
+	if val := viper.GetFloat64(AWSClientQPSLimitDeprecated); val != 0 {
+		c.IPAMAPIQPSLimit = val
+	} else {
+		c.IPAMAPIQPSLimit = viper.GetFloat64(IPAMAPIQPSLimit)
+	}
+
+	if val := viper.GetInt(AWSClientBurstDeprecated); val != 0 {
+		c.IPAMAPIBurst = val
+	} else {
+		c.IPAMAPIBurst = viper.GetInt(IPAMAPIBurst)
 	}
 
 	if c.MonitorQueueSize == 0 {
@@ -1936,13 +2182,23 @@ func (c *DaemonConfig) Populate() {
 		}
 	}
 
+	switch c.IPAM {
+	case IPAMKubernetes:
+		if c.EnableIPv4 {
+			c.K8sRequireIPv4PodCIDR = true
+		}
+
+		if c.EnableIPv6 {
+			c.K8sRequireIPv6PodCIDR = true
+		}
+	}
+
 	// Hidden options
 	c.ConfigFile = viper.GetString(ConfigFile)
 	c.HTTP403Message = viper.GetString(HTTP403Message)
 	c.DisableEnvoyVersionCheck = viper.GetBool(DisableEnvoyVersionCheck)
 	c.K8sNamespace = viper.GetString(K8sNamespaceName)
 	c.MaxControllerInterval = viper.GetInt(MaxCtrlIntervalName)
-	c.SidecarHTTPProxy = viper.GetBool(SidecarHTTPProxy)
 	c.PolicyQueueSize = sanitizeIntParam(PolicyQueueSize, defaults.PolicyQueueSize)
 	c.EndpointQueueSize = sanitizeIntParam(EndpointQueueSize, defaults.EndpointQueueSize)
 	c.SelectiveRegeneration = viper.GetBool(SelectiveRegeneration)
@@ -1953,6 +2209,11 @@ func (c *DaemonConfig) Populate() {
 
 func (c *DaemonConfig) populateNodePortRange() error {
 	nodePortRange := viper.GetStringSlice(NodePortRange)
+	// When passed via configmap, we might not get a slice but single
+	// string instead, so split it if needed.
+	if len(nodePortRange) == 1 {
+		nodePortRange = strings.Split(nodePortRange[0], ",")
+	}
 	switch len(nodePortRange) {
 	case 2:
 		var err error
@@ -1972,6 +2233,32 @@ func (c *DaemonConfig) populateNodePortRange() error {
 		log.Warning("NodePort range was set but is empty.")
 	default:
 		return fmt.Errorf("Unable to parse min/max port value for NodePort range: %s", NodePortRange)
+	}
+
+	return nil
+}
+
+func (c *DaemonConfig) populateHostServicesProtos() error {
+	hostServicesProtos := viper.GetStringSlice(HostReachableServicesProtos)
+	// When passed via configmap, we might not get a slice but single
+	// string instead, so split it if needed.
+	if len(hostServicesProtos) == 1 {
+		hostServicesProtos = strings.Split(hostServicesProtos[0], ",")
+	}
+	if len(hostServicesProtos) > 2 {
+		return fmt.Errorf("More than two protocols for host reachable services not supported: %s",
+			hostServicesProtos)
+	}
+	for i := 0; i < len(hostServicesProtos); i++ {
+		switch strings.ToLower(hostServicesProtos[i]) {
+		case HostServicesTCP:
+			c.EnableHostServicesTCP = true
+		case HostServicesUDP:
+			c.EnableHostServicesUDP = true
+		default:
+			return fmt.Errorf("Protocol other than %s,%s not supported for host reachable services: %s",
+				HostServicesTCP, HostServicesUDP, hostServicesProtos[i])
+		}
 	}
 
 	return nil
@@ -2012,4 +2299,52 @@ func getHostDevice() string {
 		return defaults.HostDevice
 	}
 	return hostDevice
+}
+
+// InitConfig reads in config file and ENV variables if set.
+func InitConfig(configName string) func() {
+	return func() {
+		if viper.GetString(CMDRef) != "" {
+			return
+		}
+
+		Config.ConfigFile = viper.GetString(ConfigFile) // enable ability to specify config file via flag
+		Config.ConfigDir = viper.GetString(ConfigDir)
+		viper.SetEnvPrefix("cilium")
+
+		if Config.ConfigDir != "" {
+			if _, err := os.Stat(Config.ConfigDir); os.IsNotExist(err) {
+				log.Fatalf("Non-existent configuration directory %s", Config.ConfigDir)
+			}
+
+			if m, err := ReadDirConfig(Config.ConfigDir); err != nil {
+				log.Fatalf("Unable to read configuration directory %s: %s", Config.ConfigDir, err)
+			} else {
+				// replace deprecated fields with new fields
+				ReplaceDeprecatedFields(m)
+				err := MergeConfig(m)
+				if err != nil {
+					log.Fatalf("Unable to merge configuration: %s", err)
+				}
+			}
+		}
+
+		if Config.ConfigFile != "" {
+			viper.SetConfigFile(Config.ConfigFile)
+		} else {
+			viper.SetConfigName(configName) // name of config file (without extension)
+			viper.AddConfigPath("$HOME")    // adding home directory as first search path
+		}
+
+		// If a config file is found, read it in.
+		if err := viper.ReadInConfig(); err == nil {
+			log.WithField(logfields.Path, viper.ConfigFileUsed()).
+				Info("Using config from file")
+		} else if Config.ConfigFile != "" {
+			log.WithField(logfields.Path, Config.ConfigFile).
+				Fatal("Error reading config file")
+		} else {
+			log.WithField(logfields.Reason, err).Info("Skipped reading configuration file")
+		}
+	}
 }

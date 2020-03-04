@@ -3,9 +3,9 @@ module github.com/cilium/hubble
 go 1.14
 
 require (
-	github.com/cilium/cilium v1.7.0-rc2.0.20200225155839-f0d65d667e33
+	github.com/cilium/cilium v1.7.0-rc2.0.20200304124244-647a43c7953f
 	github.com/francoispqt/gojay v1.2.13
-	github.com/go-openapi/strfmt v0.19.3
+	github.com/go-openapi/strfmt v0.19.4
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.2
 	github.com/google/gopacket v1.1.17
