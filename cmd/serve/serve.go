@@ -181,10 +181,7 @@ func validateArgs(log *logrus.Entry) error {
 		serveDuration = d
 	}
 
-	log.WithFields(logrus.Fields{
-		"max-flows": maxFlows,
-		"duration":  serveDuration,
-	}).Info("Started server with args")
+	log.WithField("duration", serveDuration).Info("Started server with duration")
 
 	if metricsServer != "" {
 		EnableMetrics(log, metricsServer, enabledMetrics)

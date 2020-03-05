@@ -83,6 +83,10 @@ func NewLocalServer(
 	eventQueueSize int,
 	logger *logrus.Entry,
 ) *LocalObserverServer {
+	logger.WithFields(logrus.Fields{
+		"maxFlows":       maxFlows,
+		"eventQueueSize": eventQueueSize,
+	}).Info("Configuring Hubble server")
 	return &LocalObserverServer{
 		log:           logger,
 		ring:          container.NewRing(maxFlows),
