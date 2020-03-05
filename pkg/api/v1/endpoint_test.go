@@ -322,53 +322,46 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 }
 
 func TestEndpoints_FindEPs(t *testing.T) {
-	type fields struct {
-		mutex sync.RWMutex
-		eps   []*Endpoint
-	}
 	type args struct {
 		epID      uint64
 		namespace string
 		podName   string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   []Endpoint
+		name string
+		eps  []*Endpoint
+		args args
+		want []Endpoint
 	}{
 		{
 			name: "return all eps in a particular namespace",
-			fields: fields{
-				mutex: sync.RWMutex{},
-				eps: []*Endpoint{
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-						ID:           1,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.1").To4(),
-						IPv6:         net.ParseIP("fd00::1").To16(),
-						PodName:      "foo",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-						ID:           2,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.2").To4(),
-						IPv6:         net.ParseIP("fd00::2").To16(),
-						PodName:      "bar",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
-						ID:           3,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.3").To4(),
-						IPv6:         net.ParseIP("fd00::3").To16(),
-						PodName:      "bar",
-						PodNamespace: "kube-system",
-					},
+			eps: []*Endpoint{
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
+					ID:           1,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.1").To4(),
+					IPv6:         net.ParseIP("fd00::1").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+					ID:           2,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.2").To4(),
+					IPv6:         net.ParseIP("fd00::2").To16(),
+					PodName:      "bar",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
+					ID:           3,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.3").To4(),
+					IPv6:         net.ParseIP("fd00::3").To16(),
+					PodName:      "bar",
+					PodNamespace: "kube-system",
 				},
 			},
 			args: args{
@@ -397,36 +390,33 @@ func TestEndpoints_FindEPs(t *testing.T) {
 		},
 		{
 			name: "return the ep of a pod",
-			fields: fields{
-				mutex: sync.RWMutex{},
-				eps: []*Endpoint{
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-						ID:           1,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.1").To4(),
-						IPv6:         net.ParseIP("fd00::1").To16(),
-						PodName:      "foo",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-						ID:           2,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.2").To4(),
-						IPv6:         net.ParseIP("fd00::2").To16(),
-						PodName:      "bar",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
-						ID:           3,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.3").To4(),
-						IPv6:         net.ParseIP("fd00::3").To16(),
-						PodName:      "bar",
-						PodNamespace: "kube-system",
-					},
+			eps: []*Endpoint{
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
+					ID:           1,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.1").To4(),
+					IPv6:         net.ParseIP("fd00::1").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+					ID:           2,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.2").To4(),
+					IPv6:         net.ParseIP("fd00::2").To16(),
+					PodName:      "bar",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
+					ID:           3,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.3").To4(),
+					IPv6:         net.ParseIP("fd00::3").To16(),
+					PodName:      "bar",
+					PodNamespace: "kube-system",
 				},
 			},
 			args: args{
@@ -447,36 +437,33 @@ func TestEndpoints_FindEPs(t *testing.T) {
 		},
 		{
 			name: "return eps with the given pod name and namespace",
-			fields: fields{
-				mutex: sync.RWMutex{},
-				eps: []*Endpoint{
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-						ID:           1,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.1").To4(),
-						IPv6:         net.ParseIP("fd00::1").To16(),
-						PodName:      "foo",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-						ID:           2,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.2").To4(),
-						IPv6:         net.ParseIP("fd00::2").To16(),
-						PodName:      "bar",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
-						ID:           3,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.3").To4(),
-						IPv6:         net.ParseIP("fd00::3").To16(),
-						PodName:      "bar",
-						PodNamespace: "kube-system",
-					},
+			eps: []*Endpoint{
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
+					ID:           1,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.1").To4(),
+					IPv6:         net.ParseIP("fd00::1").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+					ID:           2,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.2").To4(),
+					IPv6:         net.ParseIP("fd00::2").To16(),
+					PodName:      "bar",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
+					ID:           3,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.3").To4(),
+					IPv6:         net.ParseIP("fd00::3").To16(),
+					PodName:      "bar",
+					PodNamespace: "kube-system",
 				},
 			},
 			args: args{
@@ -496,37 +483,34 @@ func TestEndpoints_FindEPs(t *testing.T) {
 		},
 		{
 			name: "do not return deleted endpoint",
-			fields: fields{
-				mutex: sync.RWMutex{},
-				eps: []*Endpoint{
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-						ID:           1,
-						Created:      time.Unix(0, 0),
-						Deleted:      &time.Time{},
-						IPv4:         net.ParseIP("1.1.1.1").To4(),
-						IPv6:         net.ParseIP("fd00::1").To16(),
-						PodName:      "foo",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-						ID:           2,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.2").To4(),
-						IPv6:         net.ParseIP("fd00::2").To16(),
-						PodName:      "foo",
-						PodNamespace: "default",
-					},
-					{
-						ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
-						ID:           3,
-						Created:      time.Unix(0, 0),
-						IPv4:         net.ParseIP("1.1.1.3").To4(),
-						IPv6:         net.ParseIP("fd00::3").To16(),
-						PodName:      "bar",
-						PodNamespace: "kube-system",
-					},
+			eps: []*Endpoint{
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
+					ID:           1,
+					Created:      time.Unix(0, 0),
+					Deleted:      &time.Time{},
+					IPv4:         net.ParseIP("1.1.1.1").To4(),
+					IPv6:         net.ParseIP("fd00::1").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
+					ID:           2,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.2").To4(),
+					IPv6:         net.ParseIP("fd00::2").To16(),
+					PodName:      "foo",
+					PodNamespace: "default",
+				},
+				{
+					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
+					ID:           3,
+					Created:      time.Unix(0, 0),
+					IPv4:         net.ParseIP("1.1.1.3").To4(),
+					IPv6:         net.ParseIP("fd00::3").To16(),
+					PodName:      "bar",
+					PodNamespace: "kube-system",
 				},
 			},
 			args: args{
@@ -548,10 +532,7 @@ func TestEndpoints_FindEPs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := &Endpoints{
-				mutex: tt.fields.mutex,
-				eps:   tt.fields.eps,
-			}
+			es := &Endpoints{eps: tt.eps}
 			if got := es.FindEPs(tt.args.epID, tt.args.namespace, tt.args.podName); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FindEPs() = %v, want %v", got, tt.want)
 			}
@@ -659,28 +640,22 @@ func TestEndpoints_MarkDeleted(t *testing.T) {
 }
 
 func TestEndpoints_GetEndpoint(t *testing.T) {
-	type fields struct {
-		mutex sync.RWMutex
-		eps   []*Endpoint
-	}
 	type args struct {
 		ip net.IP
 	}
 	tests := []struct {
 		name         string
-		fields       fields
+		eps          []*Endpoint
 		args         args
 		wantEndpoint *Endpoint
 		wantOk       bool
 	}{
 		{
 			name: "found",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:   15,
-						IPv4: net.ParseIP("1.1.1.1"),
-					},
+			eps: []*Endpoint{
+				{
+					ID:   15,
+					IPv4: net.ParseIP("1.1.1.1"),
 				},
 			},
 			args: args{
@@ -694,12 +669,10 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 		},
 		{
 			name: "not found",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:   15,
-						IPv4: net.ParseIP("1.1.1.1"),
-					},
+			eps: []*Endpoint{
+				{
+					ID:   15,
+					IPv4: net.ParseIP("1.1.1.1"),
 				},
 			},
 			args: args{
@@ -710,13 +683,11 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 		},
 		{
 			name: "deleted",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:      15,
-						IPv4:    net.ParseIP("1.1.1.1"),
-						Deleted: &time.Time{},
-					},
+			eps: []*Endpoint{
+				{
+					ID:      15,
+					IPv4:    net.ParseIP("1.1.1.1"),
+					Deleted: &time.Time{},
 				},
 			},
 			args: args{
@@ -728,10 +699,7 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := &Endpoints{
-				mutex: tt.fields.mutex,
-				eps:   tt.fields.eps,
-			}
+			es := &Endpoints{eps: tt.eps}
 			gotEndpoint, gotOk := es.GetEndpoint(tt.args.ip)
 			if !reflect.DeepEqual(gotEndpoint, tt.wantEndpoint) {
 				t.Errorf("GetEndpoint() gotEndpoint = %v, want %v", gotEndpoint, tt.wantEndpoint)
@@ -782,28 +750,22 @@ func TestEndpoints_GarbageCollect(t *testing.T) {
 }
 
 func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
-	type fields struct {
-		mutex sync.RWMutex
-		eps   []*Endpoint
-	}
 	type args struct {
 		id string
 	}
 	tests := []struct {
 		name         string
-		fields       fields
+		eps          []*Endpoint
 		args         args
 		wantEndpoint *Endpoint
 		wantOk       bool
 	}{
 		{
 			name: "found",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:           15,
-						ContainerIDs: []string{"c0", "c1"},
-					},
+			eps: []*Endpoint{
+				{
+					ID:           15,
+					ContainerIDs: []string{"c0", "c1"},
 				},
 			},
 			args: args{
@@ -817,12 +779,10 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 		},
 		{
 			name: "not found",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:           15,
-						ContainerIDs: []string{"c0", "c1"},
-					},
+			eps: []*Endpoint{
+				{
+					ID:           15,
+					ContainerIDs: []string{"c0", "c1"},
 				},
 			},
 			args: args{
@@ -833,13 +793,11 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 		},
 		{
 			name: "deleted",
-			fields: fields{
-				eps: []*Endpoint{
-					{
-						ID:           15,
-						ContainerIDs: []string{"c0", "c1"},
-						Deleted:      &time.Time{},
-					},
+			eps: []*Endpoint{
+				{
+					ID:           15,
+					ContainerIDs: []string{"c0", "c1"},
+					Deleted:      &time.Time{},
 				},
 			},
 			args: args{
@@ -851,10 +809,7 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := Endpoints{
-				mutex: tt.fields.mutex,
-				eps:   tt.fields.eps,
-			}
+			es := Endpoints{eps: tt.eps}
 			gotEndpoint, gotOk := es.GetEndpointByContainerID(tt.args.id)
 			assert.Equal(t, tt.wantEndpoint, gotEndpoint)
 			assert.Equal(t, tt.wantOk, gotOk)
@@ -907,28 +862,22 @@ func TestEndpoint_Copy(t *testing.T) {
 }
 
 func TestEndpoints_GetEndpointByPodName(t *testing.T) {
-	type fields struct {
-		mutex sync.RWMutex
-		eps   []*Endpoint
-	}
 	type args struct {
 		namespace string
 		name      string
 	}
 	tests := []struct {
 		name         string
-		fields       fields
+		eps          []*Endpoint
 		args         args
 		wantEndpoint *Endpoint
 		wantOk       bool
 	}{
 		{
 			name: "found",
-			fields: fields{
-				eps: []*Endpoint{
-					{PodNamespace: "ns1", PodName: "pod1"},
-					{PodNamespace: "ns2", PodName: "pod2"},
-				},
+			eps: []*Endpoint{
+				{PodNamespace: "ns1", PodName: "pod1"},
+				{PodNamespace: "ns2", PodName: "pod2"},
 			},
 			args: args{
 				namespace: "ns2",
@@ -942,11 +891,9 @@ func TestEndpoints_GetEndpointByPodName(t *testing.T) {
 		},
 		{
 			name: "not found",
-			fields: fields{
-				eps: []*Endpoint{
-					{PodNamespace: "ns1", PodName: "pod1"},
-					{PodNamespace: "ns2", PodName: "pod2"},
-				},
+			eps: []*Endpoint{
+				{PodNamespace: "ns1", PodName: "pod1"},
+				{PodNamespace: "ns2", PodName: "pod2"},
 			},
 			args: args{
 				namespace: "ns3",
@@ -957,10 +904,8 @@ func TestEndpoints_GetEndpointByPodName(t *testing.T) {
 		},
 		{
 			name: "deleted",
-			fields: fields{
-				eps: []*Endpoint{
-					{PodNamespace: "ns1", PodName: "pod1", Deleted: &time.Time{}},
-				},
+			eps: []*Endpoint{
+				{PodNamespace: "ns1", PodName: "pod1", Deleted: &time.Time{}},
 			},
 			args: args{
 				namespace: "ns1",
@@ -972,10 +917,7 @@ func TestEndpoints_GetEndpointByPodName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			es := Endpoints{
-				mutex: tt.fields.mutex,
-				eps:   tt.fields.eps,
-			}
+			es := Endpoints{eps: tt.eps}
 			gotEndpoint, gotOk := es.GetEndpointByPodName(tt.args.namespace, tt.args.name)
 			assert.Equal(t, tt.wantEndpoint, gotEndpoint)
 			assert.Equal(t, tt.wantOk, gotOk)
