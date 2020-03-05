@@ -45,6 +45,9 @@ type Ring struct {
 	// ReadFrom(<-chan struct{}, uint64) <-chan *pb.Payload knows the writer
 	// has written into the internal buffer.
 	cond *sync.Cond
+	// mutex is used to prevent races when different goroutines read from or
+	// write into the internal buffer.
+	mutex sync.Mutex
 }
 
 // NewRing creates a ring buffer. For efficiency, the internal
@@ -71,6 +74,7 @@ func NewRing(n int) *Ring {
 		dataLen:   dataLen,
 		data:      make([]*v1.Event, dataLen, dataLen),
 		cond:      sync.NewCond(&sync.RWMutex{}),
+		mutex:     sync.Mutex{},
 	}
 }
 
@@ -93,7 +97,9 @@ func (r *Ring) Cap() uint64 {
 func (r *Ring) Write(entry *v1.Event) {
 	write := atomic.AddUint64(&r.write, 1)
 	writeIdx := (write - 1) & r.mask
+	r.mutex.Lock()
 	r.data[writeIdx] = entry
+	r.mutex.Unlock()
 	r.cond.Broadcast()
 }
 
@@ -118,7 +124,9 @@ func (r *Ring) LastWrite() uint64 {
 // that position is no longer available to be read, returns true otherwise.
 func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	readIdx := read & r.mask
+	r.mutex.Lock()
 	event := r.data[readIdx]
+	r.mutex.Unlock()
 
 	lastWrite := atomic.LoadUint64(&r.write) - 1
 	lastWriteIdx := lastWrite & r.mask
@@ -169,7 +177,9 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 		// read forever until stop is closed
 		for ; ; read++ {
 			readIdx := read & r.mask
+			r.mutex.Lock()
 			event := r.data[readIdx]
+			r.mutex.Unlock()
 
 			lastWrite := atomic.LoadUint64(&r.write) - 1
 			lastWriteIdx := lastWrite & r.mask
