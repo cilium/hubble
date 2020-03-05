@@ -18,6 +18,7 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"unsafe"
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/math"
@@ -74,6 +75,24 @@ func NewRing(n int) *Ring {
 	}
 }
 
+// dataLoadAtomic performs an atomic load on `r.data[dataIdx]`.
+// `dataIdx` is the array index with the cycle counter already masked out.
+// This ensures that the point load/store itself is data race free. However,
+// it is the callers responsibility to ensure that the read is semantically
+// correct, i.e. by checking that the read cycle is ahead of the write cycle.
+func (r *Ring) dataLoadAtomic(dataIdx uint64) (e *v1.Event) {
+	slot := unsafe.Pointer(&r.data[dataIdx])
+	return (*v1.Event)(atomic.LoadPointer((*unsafe.Pointer)(slot)))
+}
+
+// dataLoadAtomic performs an atomic store as `r.data[dataIdx] = e`.
+// `dataIdx` is the array index with the cycle counter already masked out.
+// This ensures that the point load/store itself is a data race.
+func (r *Ring) dataStoreAtomic(dataIdx uint64, e *v1.Event) {
+	slot := unsafe.Pointer(&r.data[dataIdx])
+	atomic.StorePointer((*unsafe.Pointer)(slot), unsafe.Pointer(e))
+}
+
 // Len returns the number of elements in the ring buffer, similar to builtin `len()`.
 func (r *Ring) Len() uint64 {
 	write := atomic.LoadUint64(&r.write)
@@ -93,7 +112,7 @@ func (r *Ring) Cap() uint64 {
 func (r *Ring) Write(entry *v1.Event) {
 	write := atomic.AddUint64(&r.write, 1)
 	writeIdx := (write - 1) & r.mask
-	r.data[writeIdx] = entry
+	r.dataStoreAtomic(writeIdx, entry)
 	r.cond.Broadcast()
 }
 
@@ -118,7 +137,7 @@ func (r *Ring) LastWrite() uint64 {
 // that position is no longer available to be read, returns true otherwise.
 func (r *Ring) read(read uint64) (*v1.Event, bool) {
 	readIdx := read & r.mask
-	event := r.data[readIdx]
+	event := r.dataLoadAtomic(readIdx)
 
 	lastWrite := atomic.LoadUint64(&r.write) - 1
 	lastWriteIdx := lastWrite & r.mask
@@ -169,7 +188,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 		// read forever until stop is closed
 		for ; ; read++ {
 			readIdx := read & r.mask
-			event := r.data[readIdx]
+			event := r.dataLoadAtomic(readIdx)
 
 			lastWrite := atomic.LoadUint64(&r.write) - 1
 			lastWriteIdx := lastWrite & r.mask
