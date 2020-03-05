@@ -23,4 +23,4 @@ jobs:
         export PATH=${PATH}:${GOPATH}/bin
         GO111MODULE=off go get -u github.com/gordonklaus/ineffassign
         GO111MODULE=off go get -u golang.org/x/lint/golint
-        make check-fmt lint test
+        make lint vet test
