@@ -41,7 +41,10 @@ ifeq (, $(shell which ineffassign))
 endif
 	ineffassign .
 
+vet:
+	go vet $$(go list ./...)
+
 image:
 	$(CONTAINER_ENGINE) build -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
-.PHONY: all hubble install clean test bench lint check-fmt ineffassign image
+.PHONY: all hubble install clean test bench lint check-fmt ineffassign vet image
