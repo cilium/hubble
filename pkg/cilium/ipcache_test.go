@@ -105,9 +105,9 @@ func TestObserverServer_syncIPCache(t *testing.T) {
 		id ipcache.IPIdentity
 		ok bool
 	}{
-		{ip: net.ParseIP("1.1.1.1"), id: ipcache.IPIdentity{id100, "ns-1", "pod-1"}, ok: true},
-		{ip: net.ParseIP("2.2.2.2"), id: ipcache.IPIdentity{id100, "ns-2", "pod-2"}, ok: true},
-		{ip: net.ParseIP("3.3.3.3"), id: ipcache.IPIdentity{id100, "ns-3", "pod-3"}, ok: true},
+		{ip: net.ParseIP("1.1.1.1"), id: ipcache.IPIdentity{Identity: id100, Namespace: "ns-1", PodName: "pod-1"}, ok: true},
+		{ip: net.ParseIP("2.2.2.2"), id: ipcache.IPIdentity{Identity: id100, Namespace: "ns-2", PodName: "pod-2"}, ok: true},
+		{ip: net.ParseIP("3.3.3.3"), id: ipcache.IPIdentity{Identity: id100, Namespace: "ns-3", PodName: "pod-3"}, ok: true},
 		{ip: net.ParseIP("4.4.4.4"), ok: false},
 	}
 	for _, tt := range tests {
