@@ -87,11 +87,8 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	fakeHandler := &testutils.FakeEndpointsHandler{
 		FakeSyncEndpoints: func(newEndpoint []*v1.Endpoint) {
 			if len(newEndpoint) == 0 {
-				now := time.Now()
 				endpointsMutex.Lock()
-				for _, ep := range endpoints {
-					ep.Deleted = &now
-				}
+				endpoints = nil
 				endpointsMutex.Unlock()
 			}
 		},
@@ -100,7 +97,6 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 			endpoints = append(endpoints, ep)
 			endpointsMutex.Unlock()
 		},
-		FakeGarbageCollect: func() {},
 	}
 	c := &State{
 		ciliumClient: fakeClient,
@@ -135,39 +131,15 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 	for _, ep := range endpoints {
 		ep.Created = time.Unix(0, 0)
 	}
-	assert.EqualValues(t, endpoints, endpointsWanted)
+	assert.EqualValues(t, endpointsWanted, endpoints)
 	endpointsMutex.Unlock()
 
 	// stop returning any endpoints so all of them will be marked as deleted
 	atomic.StoreInt32(&returnEmptyEndpoints, 1)
 	time.Sleep(2 * refreshEndpointList)
-	endpointsWanted = []*v1.Endpoint{
-		{
-			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-			ID:           1,
-			Created:      time.Unix(0, 0),
-			IPv4:         net.ParseIP("1.1.1.1").To4(),
-			IPv6:         net.ParseIP("fd00::1").To16(),
-			PodName:      "foo",
-			PodNamespace: "default",
-		},
-		{
-			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-			ID:           2,
-			Created:      time.Unix(0, 0),
-			IPv4:         net.ParseIP("1.1.1.2").To4(),
-			IPv6:         net.ParseIP("fd00::2").To16(),
-			PodName:      "bar",
-			PodNamespace: "default",
-		},
-	}
+	endpointsWanted = nil
 	endpointsMutex.Lock()
-	for _, ep := range endpoints {
-		assert.NotNil(t, ep.Deleted)
-		ep.Created = time.Unix(0, 0)
-		ep.Deleted = nil
-	}
-	assert.EqualValues(t, endpoints, endpointsWanted)
+	assert.EqualValues(t, endpointsWanted, endpoints)
 	endpointsMutex.Unlock()
 }
 
@@ -276,16 +248,14 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 	ednMarshal, err := json.Marshal(edn)
 	assert.Nil(t, err)
 	fakeHandler := &testutils.FakeEndpointsHandler{
-		FakeMarkDeleted: func(ep *v1.Endpoint) {
+		FakeDeleteEndpoint: func(ep *v1.Endpoint) {
 			defer wg.Done()
-			assert.NotNil(t, ep.Deleted)
 			wanted := &v1.Endpoint{
 				ID:           13,
 				Created:      time.Unix(0, 0),
 				PodName:      "bar",
 				PodNamespace: "default",
 			}
-			ep.Deleted = nil
 			assert.Equal(t, wanted, ep)
 		},
 	}

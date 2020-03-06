@@ -22,7 +22,6 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/stretchr/testify/assert"
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 )
@@ -123,8 +122,6 @@ func TestParseEndpointFromModel(t *testing.T) {
 			zeroTime := time.Unix(0, 0)
 			got.Created = zeroTime
 			tt.want.Created = zeroTime
-			got.Deleted = &zeroTime
-			tt.want.Deleted = &zeroTime
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseEndpointFromModel()\n =   %+v, \nwant %+v", got, tt.want)
 			}
@@ -163,8 +160,6 @@ func TestParseEndpointFromEndpointDeleteNotification(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ParseEndpointFromEndpointDeleteNotification(tt.args.edn)
-			assert.NotNil(t, got.Deleted)
-			got.Deleted = nil
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseEndpointFromEndpointDeleteNotification() = %v, want %v", got, tt.want)
 			}
