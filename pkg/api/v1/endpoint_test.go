@@ -27,7 +27,6 @@ import (
 func TestEndpoint_EqualsByID(t *testing.T) {
 	type fields struct {
 		Created      time.Time
-		Deleted      *time.Time
 		ContainerID  []string
 		ID           uint64
 		IPv4         net.IP
@@ -137,7 +136,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Endpoint{
 				Created:      tt.fields.Created,
-				Deleted:      tt.fields.Deleted,
 				ContainerIDs: tt.fields.ContainerID,
 				ID:           tt.fields.ID,
 				IPv4:         tt.fields.IPv4,
@@ -155,7 +153,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 func TestEndpoint_SetFrom(t *testing.T) {
 	type fields struct {
 		Created      time.Time
-		Deleted      *time.Time
 		ContainerIDs []string
 		ID           uint64
 		IPv4         net.IP
@@ -188,7 +185,6 @@ func TestEndpoint_SetFrom(t *testing.T) {
 			args: args{
 				o: &Endpoint{
 					Created:      time.Unix(1, 1),
-					Deleted:      &time.Time{},
 					ContainerIDs: []string{"foo"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -214,7 +210,6 @@ func TestEndpoint_SetFrom(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Endpoint{
 				Created:      tt.fields.Created,
-				Deleted:      tt.fields.Deleted,
 				ContainerIDs: tt.fields.ContainerIDs,
 				ID:           tt.fields.ID,
 				IPv4:         tt.fields.IPv4,
@@ -304,13 +299,11 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 	assert.EqualValues(t, endpointsWanted[0:2], es.eps)
 	es.mutex.RUnlock()
 
-	// Add only the first endpoint, meaning the 2nd one will be marked as deleted
+	// Add only the first endpoint,
 	es.SyncEndpoints(eps[0:1])
 
 	es.mutex.Lock()
-	assert.NotNil(t, es.eps[1].Deleted)
-	es.eps[1].Deleted = nil
-	assert.EqualValues(t, endpointsWanted[0:2], es.eps)
+	assert.EqualValues(t, endpointsWanted[0:1], es.eps)
 	es.mutex.Unlock()
 
 	// Re-add all endpoints
@@ -481,54 +474,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				},
 			},
 		},
-		{
-			name: "do not return deleted endpoint",
-			eps: []*Endpoint{
-				{
-					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
-					ID:           1,
-					Created:      time.Unix(0, 0),
-					Deleted:      &time.Time{},
-					IPv4:         net.ParseIP("1.1.1.1").To4(),
-					IPv6:         net.ParseIP("fd00::1").To16(),
-					PodName:      "foo",
-					PodNamespace: "default",
-				},
-				{
-					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-					ID:           2,
-					Created:      time.Unix(0, 0),
-					IPv4:         net.ParseIP("1.1.1.2").To4(),
-					IPv6:         net.ParseIP("fd00::2").To16(),
-					PodName:      "foo",
-					PodNamespace: "default",
-				},
-				{
-					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
-					ID:           3,
-					Created:      time.Unix(0, 0),
-					IPv4:         net.ParseIP("1.1.1.3").To4(),
-					IPv6:         net.ParseIP("fd00::3").To16(),
-					PodName:      "bar",
-					PodNamespace: "kube-system",
-				},
-			},
-			args: args{
-				podName:   "foo",
-				namespace: "default",
-			},
-			want: []Endpoint{
-				{
-					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
-					ID:           2,
-					Created:      time.Unix(0, 0),
-					IPv4:         net.ParseIP("1.1.1.2").To4(),
-					IPv6:         net.ParseIP("fd00::2").To16(),
-					PodName:      "foo",
-					PodNamespace: "default",
-				},
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -575,70 +520,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 	assert.Equal(t, gotEps[0], epWantModified, 1)
 }
 
-func TestEndpoints_MarkDeleted(t *testing.T) {
-	t1 := time.Unix(0, 0)
-	es := &Endpoints{
-		mutex: sync.RWMutex{},
-		eps:   nil,
-	}
-	ep1 := &Endpoint{
-		Created:      time.Time{},
-		Deleted:      &t1,
-		ContainerIDs: nil,
-		ID:           1,
-		IPv4:         nil,
-		IPv6:         nil,
-		PodName:      "",
-		PodNamespace: "",
-	}
-	ep2 := &Endpoint{
-		Created:      time.Time{},
-		ContainerIDs: nil,
-		ID:           2,
-		IPv4:         net.ParseIP("1.1.1.1").To4(),
-		IPv6:         nil,
-		PodName:      "",
-		PodNamespace: "",
-	}
-	wantedEPs := []*Endpoint{ep1}
-	es.MarkDeleted(ep1)
-
-	es.mutex.Lock()
-	// check if the endpoints were added
-	assert.EqualValues(t, wantedEPs, es.eps)
-
-	// manually add one more endpoint
-	es.eps = append(es.eps, ep2)
-	es.mutex.Unlock()
-
-	ep2Copy := &Endpoint{
-		Created:      time.Time{},
-		Deleted:      &t1,
-		ContainerIDs: nil,
-		ID:           2,
-		IPv4:         nil,
-		IPv6:         nil,
-		PodName:      "",
-		PodNamespace: "",
-	}
-	// Make sure we only mark the endpoint as deleted, i.e. we don't copy
-	// any other fields into the internal copy
-	es.MarkDeleted(ep2Copy)
-
-	ep2Wanted := &Endpoint{
-		Created:      time.Time{},
-		Deleted:      &t1,
-		ContainerIDs: nil,
-		ID:           2,
-		IPv4:         net.ParseIP("1.1.1.1").To4(),
-		IPv6:         nil,
-		PodName:      "",
-		PodNamespace: "",
-	}
-	wantedEPs = append(wantedEPs, ep2Wanted)
-	assert.EqualValues(t, wantedEPs, es.eps)
-}
-
 func TestEndpoints_GetEndpoint(t *testing.T) {
 	type args struct {
 		ip net.IP
@@ -681,21 +562,6 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 			wantEndpoint: nil,
 			wantOk:       false,
 		},
-		{
-			name: "deleted",
-			eps: []*Endpoint{
-				{
-					ID:      15,
-					IPv4:    net.ParseIP("1.1.1.1"),
-					Deleted: &time.Time{},
-				},
-			},
-			args: args{
-				ip: net.ParseIP("1.1.1.1"),
-			},
-			wantEndpoint: nil,
-			wantOk:       false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -711,42 +577,37 @@ func TestEndpoints_GetEndpoint(t *testing.T) {
 	}
 }
 
-func TestEndpoints_GarbageCollect(t *testing.T) {
-	es := &Endpoints{
-		eps: []*Endpoint{
-			{
-				ID:   1,
-				IPv4: net.ParseIP("1.1.1.1"),
-			},
-			{
-				ID:   2,
-				IPv4: net.ParseIP("1.1.1.2"),
-			},
-			{
-				ID:   3,
-				IPv4: net.ParseIP("1.1.1.3"),
-			},
+func TestEndpoints_DeleteEndpoint(t *testing.T) {
+	tests := []struct {
+		name    string
+		eps     []*Endpoint
+		del     *Endpoint
+		wantEps []*Endpoint
+	}{
+		{
+			name:    "delete non-existing endpoint",
+			eps:     []*Endpoint{{ID: 15}},
+			del:     &Endpoint{ID: 12},
+			wantEps: []*Endpoint{{ID: 15}},
+		}, {
+			name:    "delete first endpoint",
+			eps:     []*Endpoint{{ID: 15}, {ID: 20}},
+			del:     &Endpoint{ID: 15},
+			wantEps: []*Endpoint{{ID: 20}},
+		}, {
+			name:    "delete last endpoint",
+			eps:     []*Endpoint{{ID: 15}, {ID: 20}},
+			del:     &Endpoint{ID: 20},
+			wantEps: []*Endpoint{{ID: 15}},
 		},
 	}
-
-	del := time.Unix(0, 0)
-	es.MarkDeleted(&Endpoint{ID: 2, Deleted: &del})
-	assert.Equal(t, 3, len(es.eps))
-
-	es.GarbageCollect()
-	assert.Equal(t, 2, len(es.eps))
-
-	_, ok := es.GetEndpoint(net.ParseIP("1.1.1.1"))
-	assert.True(t, ok)
-	_, ok = es.GetEndpoint(net.ParseIP("1.1.1.2"))
-	assert.False(t, ok)
-	_, ok = es.GetEndpoint(net.ParseIP("1.1.1.3"))
-	assert.True(t, ok)
-
-	es.MarkDeleted(&Endpoint{ID: 1, Deleted: &del})
-	es.MarkDeleted(&Endpoint{ID: 3, Deleted: &del})
-	es.GarbageCollect()
-	assert.Equal(t, 0, len(es.eps))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			es := &Endpoints{eps: tt.eps}
+			es.DeleteEndpoint(tt.del)
+			assert.Equal(t, tt.wantEps, es.eps)
+		})
+	}
 }
 
 func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
@@ -791,21 +652,6 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 			wantEndpoint: nil,
 			wantOk:       false,
 		},
-		{
-			name: "deleted",
-			eps: []*Endpoint{
-				{
-					ID:           15,
-					ContainerIDs: []string{"c0", "c1"},
-					Deleted:      &time.Time{},
-				},
-			},
-			args: args{
-				id: "c0",
-			},
-			wantEndpoint: nil,
-			wantOk:       false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -820,7 +666,6 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 func TestEndpoint_Copy(t *testing.T) {
 	ep := &Endpoint{
 		Created:      time.Unix(1, 2),
-		Deleted:      nil,
 		ContainerIDs: nil,
 		ID:           0,
 		IPv4:         nil,
@@ -832,10 +677,8 @@ func TestEndpoint_Copy(t *testing.T) {
 	cp := ep.DeepCopy()
 	assert.Equal(t, ep, cp)
 
-	deleted := time.Unix(3, 4)
 	ep = &Endpoint{
 		Created:      time.Unix(1, 2),
-		Deleted:      &deleted,
 		ContainerIDs: []string{"c1", "c2"},
 		ID:           3,
 		IPv4:         net.ParseIP("1.1.1.1"),
@@ -849,7 +692,6 @@ func TestEndpoint_Copy(t *testing.T) {
 	assert.Equal(t, ep, cp2)
 	assert.Equal(t, cp1, cp2)
 	cp1.Created = time.Unix(5, 6)
-	*cp1.Deleted = time.Unix(7, 8)
 	cp1.ContainerIDs = []string{"c3", "c4"}
 	cp1.ID = 4
 	cp1.IPv4 = net.ParseIP("2.2.2.2")
@@ -898,18 +740,6 @@ func TestEndpoints_GetEndpointByPodName(t *testing.T) {
 			args: args{
 				namespace: "ns3",
 				name:      "pod3",
-			},
-			wantEndpoint: nil,
-			wantOk:       false,
-		},
-		{
-			name: "deleted",
-			eps: []*Endpoint{
-				{PodNamespace: "ns1", PodName: "pod1", Deleted: &time.Time{}},
-			},
-			args: args{
-				namespace: "ns1",
-				name:      "pod1",
 			},
 			wantEndpoint: nil,
 			wantOk:       false,

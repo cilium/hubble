@@ -117,10 +117,9 @@ var NoopIdentityGetter = FakeIdentityGetter{
 type FakeEndpointsHandler struct {
 	FakeSyncEndpoints            func([]*v1.Endpoint)
 	FakeUpdateEndpoint           func(*v1.Endpoint)
-	FakeMarkDeleted              func(*v1.Endpoint)
+	FakeDeleteEndpoint           func(*v1.Endpoint)
 	FakeFindEPs                  func(epID uint64, ns, pod string) []v1.Endpoint
 	FakeGetEndpoint              func(ip net.IP) (endpoint *v1.Endpoint, ok bool)
-	FakeGarbageCollect           func()
 	FakeGetEndpointByContainerID func(id string) (endpoint *v1.Endpoint, ok bool)
 	FakeGetEndpointByPodName     func(namespace string, name string) (*v1.Endpoint, bool)
 }
@@ -143,13 +142,13 @@ func (f *FakeEndpointsHandler) UpdateEndpoint(ep *v1.Endpoint) {
 	panic("UpdateEndpoint(*v1.Endpoint) should not have been called since it was not defined")
 }
 
-// MarkDeleted calls FakeMarkDeleted.
-func (f *FakeEndpointsHandler) MarkDeleted(ep *v1.Endpoint) {
-	if f.FakeMarkDeleted != nil {
-		f.FakeMarkDeleted(ep)
+// DeleteEndpoint calls FakeDeleteEndpoint.
+func (f *FakeEndpointsHandler) DeleteEndpoint(ep *v1.Endpoint) {
+	if f.FakeDeleteEndpoint != nil {
+		f.FakeDeleteEndpoint(ep)
 		return
 	}
-	panic("MarkDeleted(ep *v1.Endpoint) should not have been called since it was not defined")
+	panic("DeleteEndpoint(*v1.Endpoint) should not have been called since it was not defined")
 }
 
 // FindEPs calls FakeFindEPs.
@@ -182,15 +181,6 @@ func (f *FakeEndpointsHandler) GetEndpointByPodName(namespace string, name strin
 		return f.FakeGetEndpointByPodName(namespace, name)
 	}
 	panic("GetEndpointByPodName(namespace string, name string) (ep *v1.Endpoint, ok bool) should not have been called since it was not defined")
-}
-
-// GarbageCollect calls FakeGarbageCollect.
-func (f *FakeEndpointsHandler) GarbageCollect() {
-	if f.FakeGarbageCollect != nil {
-		f.FakeGarbageCollect()
-		return
-	}
-	panic("GarbageCollect() should not have been called since it was not defined")
 }
 
 // FakeCiliumClient implements CliliumClient interface for unit testing.
