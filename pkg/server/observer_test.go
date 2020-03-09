@@ -135,7 +135,8 @@ func TestObserverServer_GetLastNFlows(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	require.NoError(t, err)
 	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
@@ -205,7 +206,8 @@ func TestObserverServer_GetLastNFlows_MustNotBlock(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0x4, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0x4, 0, logger.GetLogger())
+	require.NoError(t, err)
 	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x8 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x8)
 	}
@@ -271,7 +273,8 @@ func TestObserverServer_GetLastNFlows_With_Follow(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	require.NoError(t, err)
 	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
@@ -373,7 +376,8 @@ func TestObserverServer_GetFlowsBetween(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 0xff, 0, logger.GetLogger())
+	require.NoError(t, err)
 	if s.GetGRPCServer().GetRingBuffer().Cap() != 0x100 {
 		t.Errorf("s.ring.Len() got = %#v, want %#v", s.GetGRPCServer().GetRingBuffer().Cap(), 0x100)
 	}
@@ -468,7 +472,8 @@ func TestObserverServer_GetFlows(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	require.NoError(t, err)
 	go s.Start()
 	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{
@@ -533,7 +538,8 @@ func TestObserverServer_GetFlowsWithFilters(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, ipc, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	require.NoError(t, err)
 	go s.Start()
 	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{
@@ -612,7 +618,8 @@ func TestObserverServer_GetFlowsOfANonLocalPod(t *testing.T) {
 	pp, err := parser.New(es, fakeDummyCiliumClient, fqdnc, fakeIPGetter, svcc)
 	assert.NoError(t, err)
 
-	s := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	s, err := NewServer(fakeDummyCiliumClient, es, ipc, fqdnc, svcc, pp, 30, 0, logger.GetLogger())
+	require.NoError(t, err)
 	go s.Start()
 	m := s.GetGRPCServer().GetEventsChannel()
 	eth := layers.Ethernet{

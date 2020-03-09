@@ -24,6 +24,7 @@ import (
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/logger"
 	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/server/serveroption"
 	"github.com/cilium/hubble/pkg/testutils"
 	"github.com/gogo/protobuf/types"
 	"github.com/stretchr/testify/assert"
@@ -36,9 +37,11 @@ func TestNewLocalServer(t *testing.T) {
 		&testutils.NoopIdentityGetter,
 		&testutils.NoopDNSGetter,
 		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
+		&testutils.NoopServiceGetter,
+	)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 10, 0, logger.GetLogger())
+	s, err := NewLocalServer(pp, logger.GetLogger())
+	require.NoError(t, err)
 	assert.NotNil(t, s.GetStopped())
 	assert.NotNil(t, s.GetPayloadParser())
 	assert.NotNil(t, s.GetRingBuffer())
@@ -47,6 +50,9 @@ func TestNewLocalServer(t *testing.T) {
 }
 
 func TestLocalObserverServer_ServerStatus(t *testing.T) {
+	// (glibsm): This test is really confusing. `serveroption.WithMaxFlows(1)`
+	// results in the actual flow capacity of 2.
+
 	pp, err := parser.New(
 		&testutils.NoopEndpointGetter,
 		&testutils.NoopIdentityGetter,
@@ -54,7 +60,8 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, 1, 0, logger.GetLogger())
+	s, err := NewLocalServer(pp, logger.GetLogger(), serveroption.WithMaxFlows(1))
+	require.NoError(t, err)
 	res, err := s.ServerStatus(context.Background(), &observer.ServerStatusRequest{})
 	require.NoError(t, err)
 	assert.Equal(t, &observer.ServerStatusResponse{NumFlows: 0, MaxFlows: 2}, res)
@@ -83,7 +90,11 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 		&testutils.NoopIPGetter,
 		&testutils.NoopServiceGetter)
 	require.NoError(t, err)
-	s := NewLocalServer(pp, numFlows, queueSize, logger.GetLogger())
+	s, err := NewLocalServer(pp, logger.GetLogger(),
+		serveroption.WithMaxFlows(numFlows),
+		serveroption.WithMonitorBuffer(queueSize),
+	)
+	require.NoError(t, err)
 	go s.Start()
 
 	m := s.GetEventsChannel()

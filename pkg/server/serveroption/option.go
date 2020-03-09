@@ -14,9 +14,39 @@
 
 package serveroption
 
-// Options ...
-type Options struct {
+// Default serves only as reference point for default values. Very useful for
+// the CLI to pick these up instead of defining own defaults that need to be
+// kept in sync.
+var Default = Options{
+	MaxFlows:      131071, // 2^17-1
+	MonitorBuffer: 1024,
 }
 
-// Option ...
+// Options stores all the configurations values for the hubble server.
+type Options struct {
+	// Both sizes should really be uint32 but it's better saved for a single
+	// refactor commit.
+
+	MaxFlows      int // max number of flows that can be stored in the ring buffer
+	MonitorBuffer int // buffer size for monitor payload
+}
+
+// Option customizes the configuration of the hubble server.
 type Option func(o *Options) error
+
+// WithMonitorBuffer controls the size of the buffered channel between the
+// monitor socket and the hubble ring buffer.
+func WithMonitorBuffer(size int) Option {
+	return func(o *Options) error {
+		o.MonitorBuffer = size
+		return nil
+	}
+}
+
+// WithMaxFlows that the ring buffer is initialized to hold.
+func WithMaxFlows(size int) Option {
+	return func(o *Options) error {
+		o.MaxFlows = size
+		return nil
+	}
+}
