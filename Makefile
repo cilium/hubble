@@ -26,11 +26,7 @@ test:
 bench:
 	go test -timeout=30s -bench=. $$(go list ./...)
 
-lint: check-fmt ineffassign
-ifeq (, $(shell which golint))
-	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
-endif
-	golint -set_exit_status $$(go list ./...)
+check: check-fmt ineffassign lint vet
 
 check-fmt:
 	./contrib/scripts/check-fmt.sh
@@ -41,10 +37,16 @@ ifeq (, $(shell which ineffassign))
 endif
 	ineffassign .
 
+lint:
+ifeq (, $(shell which golint))
+	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
+endif
+	golint -set_exit_status $$(go list ./...)
+
 vet:
 	go vet $$(go list ./...)
 
 image:
 	$(CONTAINER_ENGINE) build -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
-.PHONY: all hubble install clean test bench lint check-fmt ineffassign vet image
+.PHONY: all hubble install clean test bench check check-fmt ineffassign lint vet image
