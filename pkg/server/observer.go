@@ -35,6 +35,7 @@ import (
 	"github.com/cilium/hubble/pkg/cilium/client"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/parser"
+	"github.com/cilium/hubble/pkg/server/serveroption"
 	"github.com/cilium/hubble/pkg/servicecache"
 	"github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
@@ -62,13 +63,21 @@ func NewServer(
 	maxFlows int,
 	eventQueueSize int,
 	logger *logrus.Entry,
-) *ObserverServer {
+) (*ObserverServer, error) {
 	ciliumState := cilium.NewCiliumState(ciliumClient, endpoints, ipCache, fqdnCache, serviceCache, logger)
+	s, err := NewLocalServer(
+		payloadParser, logger,
+		serveroption.WithMaxFlows(maxFlows),
+		serveroption.WithMonitorBuffer(eventQueueSize),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create local server: %v", err)
+	}
 	return &ObserverServer{
 		log:         logger,
-		grpcServer:  NewLocalServer(payloadParser, maxFlows, eventQueueSize, logger),
+		grpcServer:  s,
 		ciliumState: ciliumState,
-	}
+	}, nil
 }
 
 // Start starts the server to handle the events sent to the events channel as

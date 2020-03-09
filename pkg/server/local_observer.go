@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -82,30 +83,32 @@ type LocalObserverServer struct {
 // NewLocalServer returns a new local observer server.
 func NewLocalServer(
 	payloadParser *parser.Parser,
-	maxFlows int,
-	eventQueueSize int,
 	logger *logrus.Entry,
 	options ...serveroption.Option,
-) *LocalObserverServer {
+) (*LocalObserverServer, error) {
+	opts := serveroption.Default // start with defaults
+	for _, opt := range options {
+		if err := opt(&opts); err != nil {
+			return nil, fmt.Errorf("failed to apply option: %v", err)
+		}
+	}
+
 	logger.WithFields(logrus.Fields{
-		"maxFlows":       maxFlows,
-		"eventQueueSize": eventQueueSize,
+		"maxFlows":       opts.MaxFlows,
+		"eventQueueSize": opts.MonitorBuffer,
 	}).Info("Configuring Hubble server")
+
 	s := &LocalObserverServer{
 		log:           logger,
-		ring:          container.NewRing(maxFlows),
-		events:        make(chan *pb.Payload, eventQueueSize),
+		ring:          container.NewRing(opts.MaxFlows),
+		events:        make(chan *pb.Payload, opts.MonitorBuffer),
 		stopped:       make(chan struct{}),
-		eventschan:    make(chan *observer.GetFlowsResponse, 100),
+		eventschan:    make(chan *observer.GetFlowsResponse, 100), // option here?
 		payloadParser: payloadParser,
+		opts:          opts,
 	}
 
-	for _, opt := range options {
-		// TODO: err checking (needs signature change on NewLocalServer
-		_ = opt(&s.opts)
-	}
-
-	return s
+	return s, nil
 }
 
 // Start implements GRPCServer.Start.
