@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Run unit static checks and unit tests
 on:
   push:
     branches:
@@ -16,11 +16,13 @@ jobs:
     - uses: actions/setup-go@v1
       with:
         go-version: '1.14'
-    - name: Run unit tests
+    - name: Run static checks
       env:
         GOPATH: /home/runner/work/hubble/go
       run: |
         export PATH=${PATH}:${GOPATH}/bin
         GO111MODULE=off go get -u github.com/gordonklaus/ineffassign
         GO111MODULE=off go get -u golang.org/x/lint/golint
-        make lint vet test
+        make check
+    - name: Run unit tests
+      run: make test
