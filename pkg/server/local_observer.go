@@ -28,6 +28,7 @@ import (
 	"github.com/cilium/hubble/pkg/metrics"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/parser/errors"
+	"github.com/cilium/hubble/pkg/server/serveroption"
 	"github.com/gogo/protobuf/types"
 	"github.com/sirupsen/logrus"
 )
@@ -74,6 +75,8 @@ type LocalObserverServer struct {
 
 	// payloadParser decodes pb.Payload into pb.Flow
 	payloadParser *parser.Parser
+
+	opts serveroption.Options
 }
 
 // NewLocalServer returns a new local observer server.
@@ -82,12 +85,13 @@ func NewLocalServer(
 	maxFlows int,
 	eventQueueSize int,
 	logger *logrus.Entry,
+	options ...serveroption.Option,
 ) *LocalObserverServer {
 	logger.WithFields(logrus.Fields{
 		"maxFlows":       maxFlows,
 		"eventQueueSize": eventQueueSize,
 	}).Info("Configuring Hubble server")
-	return &LocalObserverServer{
+	s := &LocalObserverServer{
 		log:           logger,
 		ring:          container.NewRing(maxFlows),
 		events:        make(chan *pb.Payload, eventQueueSize),
@@ -95,6 +99,13 @@ func NewLocalServer(
 		eventschan:    make(chan *observer.GetFlowsResponse, 100),
 		payloadParser: payloadParser,
 	}
+
+	for _, opt := range options {
+		// TODO: err checking (needs signature change on NewLocalServer
+		_ = opt(&s.opts)
+	}
+
+	return s
 }
 
 // Start implements GRPCServer.Start.
