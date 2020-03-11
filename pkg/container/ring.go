@@ -108,7 +108,8 @@ func (r *Ring) Cap() uint64 {
 }
 
 // Write writes the given event into the ring buffer in the next available
-// writing block.
+// writing block. The entry must not be nil, otherwise readFrom will block when
+// reading back this event.
 func (r *Ring) Write(entry *v1.Event) {
 	write := atomic.AddUint64(&r.write, 1)
 	writeIdx := (write - 1) & r.mask
@@ -202,7 +203,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			// write: f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-			case readCycle == (writeCycle-1)&r.cycleMask && readIdx > lastWriteIdx:
+			case event != nil && readCycle == (writeCycle-1)&r.cycleMask && readIdx > lastWriteIdx:
 				select {
 				case ch <- event:
 					continue
@@ -216,7 +217,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			// write: f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-			case readCycle == writeCycle:
+			case event != nil && readCycle == writeCycle:
 				if readIdx < lastWriteIdx {
 					select {
 					case ch <- event:
@@ -243,7 +244,7 @@ func (r *Ring) readFrom(ctx context.Context, read uint64) <-chan *v1.Event {
 			// write: f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
 			// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-			case readCycle >= (writeCycle+1)&r.cycleMask && readCycle < (halfCycle+writeCycle)&r.cycleMask:
+			case event == nil || readCycle >= (writeCycle+1)&r.cycleMask && readCycle < (halfCycle+writeCycle)&r.cycleMask:
 				// The writer has already written a new event so there's no
 				// need to stop the reader.
 				//
