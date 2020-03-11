@@ -126,7 +126,6 @@ func New(log *logrus.Entry) *cobra.Command {
 		"Size of the event queue for received monitor events",
 	)
 
-	serverCmd.Flags().StringVar(&serveDurationVar, "duration", "", "Shut the server down after this duration")
 	serverCmd.Flags().StringVar(&nodeName, "node-name", os.Getenv(envNodeName), "Node name where hubble is running (defaults to value set in env variable '"+envNodeName+"'")
 
 	serverCmd.Flags().StringSliceVar(&enabledMetrics, "metric", []string{}, "Enable metrics reporting")
@@ -144,9 +143,7 @@ var (
 	maxFlows       uint32
 	eventQueueSize uint32
 
-	serveDurationVar string
-	serveDuration    time.Duration
-	nodeName         string
+	nodeName string
 
 	listenClientUrls []string
 
@@ -181,21 +178,9 @@ func EnableMetrics(log *logrus.Entry, metricsServer string, m []string) {
 }
 
 func validateArgs(log *logrus.Entry) error {
-	if serveDurationVar != "" {
-		d, err := time.ParseDuration(serveDurationVar)
-		if err != nil {
-			log.WithField("duration", serveDurationVar).
-				Fatal("failed to parse the provided --duration")
-		}
-		serveDuration = d
-	}
-
-	log.WithField("duration", serveDuration).Info("Started server with duration")
-
 	if metricsServer != "" {
 		EnableMetrics(log, metricsServer, enabledMetrics)
 	}
-
 	return nil
 }
 
@@ -250,17 +235,6 @@ func Serve(log *logrus.Entry, listenClientUrls []string, s server.GRPCServer) er
 	}
 
 	serverStart = time.Now()
-
-	if serveDuration != 0 {
-		// Register a server shutdown
-		go func() {
-			<-time.After(serveDuration)
-			log.WithField("duration", serveDuration).Info(
-				"Shutting down after the configured duration",
-			)
-			os.Exit(0)
-		}()
-	}
 
 	healthSrv := health.NewServer()
 	healthSrv.SetServingStatus(v1.ObserverServiceName, healthpb.HealthCheckResponse_SERVING)
