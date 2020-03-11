@@ -19,7 +19,6 @@ import (
 	"container/ring"
 	"context"
 	"reflect"
-	"sync"
 	"testing"
 
 	v1 "github.com/cilium/hubble/pkg/api/v1"
@@ -374,7 +373,6 @@ func TestRing_Write(t *testing.T) {
 				mask:  tt.fields.len,
 				data:  tt.fields.data,
 				write: tt.fields.write,
-				cond:  sync.NewCond(&sync.RWMutex{}),
 			}
 			r.Write(tt.args.event)
 			want := &Ring{
