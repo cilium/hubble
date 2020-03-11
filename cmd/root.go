@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime"
+	"runtime/pprof"
 
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/serve"
@@ -31,8 +33,9 @@ import (
 )
 
 var (
-	cfgFile                string
-	cpuprofile, memprofile string
+	cfgFile                        string
+	cpuprofile, memprofile         string
+	cpuprofileFile, memprofileFile *os.File
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -42,6 +45,45 @@ var rootCmd = &cobra.Command{
 	Long:         `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
 	SilenceUsage: true,
 	Version:      pkg.Version,
+	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+		return pprofInit()
+	},
+	PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
+		return pprofTearDown()
+	},
+}
+
+func pprofInit() error {
+	var err error
+	if cpuprofile != "" {
+		cpuprofileFile, err = os.Create(cpuprofile)
+		if err != nil {
+			return fmt.Errorf("failed to create cpu profile: %v", err)
+		}
+		pprof.StartCPUProfile(cpuprofileFile)
+	}
+	if memprofile != "" {
+		memprofileFile, err = os.Create(memprofile)
+		if err != nil {
+			return fmt.Errorf("failed to create memory profile: %v", err)
+		}
+	}
+	return nil
+}
+
+func pprofTearDown() error {
+	if cpuprofileFile != nil {
+		pprof.StopCPUProfile()
+		cpuprofileFile.Close()
+	}
+	if memprofileFile != nil {
+		runtime.GC() // get up-to-date statistics
+		if err := pprof.WriteHeapProfile(memprofileFile); err != nil {
+			return fmt.Errorf("failed to write memory profile: %v", err)
+		}
+		memprofileFile.Close()
+	}
+	return nil
 }
 
 // Execute adds all child commands to the root command sets flags
