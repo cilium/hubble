@@ -44,16 +44,11 @@ var rootCmd = &cobra.Command{
 	Version:      pkg.Version,
 }
 
-// Execute adds all child commands to the root command sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	fin := maybeProfile()
-	defer fin() // make sure update memory profile is written in the end
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
+// Execute adds all child commands to the root command sets flags
+// appropriately. This is called by main.main(). It only needs to happen once
+// to the rootCmd.
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 func init() {

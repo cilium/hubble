@@ -16,6 +16,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -88,28 +89,31 @@ func (s *ObserverServer) Start() {
 }
 
 // HandleMonitorSocket connects to the monitor socket and consumes monitor events.
-func (s *ObserverServer) HandleMonitorSocket(nodeName string) error {
+func (s *ObserverServer) HandleMonitorSocket(ctx context.Context, nodeName string) error {
 	// On EOF, retry
-	// On other errors, exit
+	// On other errors and done ctx, exit
 	// always wait connTimeout when retrying
-	for ; ; time.Sleep(api.ConnectionTimeout) {
+	for {
 		conn, version, err := openMonitorSock()
 		if err != nil {
 			s.log.WithError(err).Error("Cannot open monitor serverSocketPath")
 			return err
 		}
 
-		err = s.consumeMonitorEvents(conn, version, nodeName)
-		switch {
-		case err == nil:
+		err = s.consumeMonitorEvents(ctx, conn, version, nodeName)
+		switch err {
+		case nil:
 			// no-op
-
-		case err == io.EOF, err == io.ErrUnexpectedEOF:
+		case io.EOF, io.ErrUnexpectedEOF:
 			s.log.WithError(err).Warn("connection closed")
-			continue
-
 		default:
-			s.log.WithError(err).Fatal("decoding error")
+			return fmt.Errorf("decoding error: %v", err)
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-time.After(api.ConnectionTimeout):
 		}
 	}
 }
@@ -153,7 +157,7 @@ func getMonitorParser(conn net.Conn, version listener.Version, nodeName string) 
 // consumeMonitorEvents handles and prints events on a monitor connection. It
 // calls getMonitorParsed to construct a monitor-version appropriate parser.
 // It closes conn on return, and returns on error, including io.EOF
-func (s *ObserverServer) consumeMonitorEvents(conn net.Conn, version listener.Version, nodeName string) error {
+func (s *ObserverServer) consumeMonitorEvents(ctx context.Context, conn net.Conn, version listener.Version, nodeName string) error {
 	defer conn.Close()
 	ch := s.GetGRPCServer().GetEventsChannel()
 	endpointEvents := s.ciliumState.GetEndpointEventsChannel()
@@ -177,7 +181,12 @@ func (s *ObserverServer) consumeMonitorEvents(conn net.Conn, version listener.Ve
 			return err
 		}
 
-		ch <- pl
+		select {
+		case <-ctx.Done():
+			return nil
+		case ch <- pl:
+		}
+
 		// we don't expect to have many MessageTypeAgent so we
 		// can "decode" this messages as they come.
 		switch pl.Data[0] {
