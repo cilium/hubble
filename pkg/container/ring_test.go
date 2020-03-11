@@ -588,14 +588,22 @@ func TestRing_ReadFrom_Test_1(t *testing.T) {
 	ch := r.readFrom(ctx, 0)
 	i := int64(0)
 	for entry := range ch {
-		if !entry.Timestamp.Equal(&types.Timestamp{Seconds: i}) {
-			t.Errorf("Read Event should be %+v, got %+v instead", &types.Timestamp{Seconds: i}, entry.Timestamp)
+		want := &types.Timestamp{Seconds: i}
+		if !entry.Timestamp.Equal(want) {
+			t.Errorf("Read Event should be %+v, got %+v instead", want, entry.Timestamp)
 		}
 		i++
 		if i == 4 {
 			break
 		}
 	}
+	// next read must be blocked, since ring was not full
+	select {
+	case entry := <-ch:
+		t.Errorf("Read Event %v received when channel should be empty", entry)
+	default:
+	}
+
 	cancel()
 	event, ok := <-ch
 	if ok {
@@ -607,10 +615,10 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	r := NewRing(0xf)
 	if len(r.data) != 0x10 {
-		t.Errorf("r.data should have a lenght of 0x10. Got %x", len(r.data))
+		t.Errorf("r.data should have a length of 0x10. Got %x", len(r.data))
 	}
 	if r.dataLen != 0x10 {
-		t.Errorf("r.dataLen should have a lenght of 0x10. Got %x", r.dataLen)
+		t.Errorf("r.dataLen should have a length of 0x10. Got %x", r.dataLen)
 	}
 	if r.mask != 0xf {
 		t.Errorf("r.mask should be 0xf. Got %x", r.mask)
@@ -620,8 +628,8 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 		t.Errorf("lastWrite should be %x. Got %x", ^uint64(0)-1, lastWrite)
 	}
 
-	// Add 5 events
-	for i := uint64(0); i < 5; i++ {
+	// Add 20 events
+	for i := uint64(0); i < 20; i++ {
 		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
 		lastWrite = r.LastWrite()
 		if lastWrite != i {
@@ -630,34 +638,50 @@ func TestRing_ReadFrom_Test_2(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	// We should be able to read from a previou 'cycles' and ReadFrom will
+	// We should be able to read from a previous 'cycles' and ReadFrom will
 	// be able to catch up with the writer.
-	ch := r.readFrom(ctx, ^uint64(0)-15)
+	ch := r.readFrom(ctx, 1)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
-		// we will receive 16-5=11 nil events and 5 non-nil events
+		// we will receive 15 non-nil events, after that the channel must stall.
 		//
 		//   ReadFrom +           +----------------valid read------------+  +position possibly being written
 		//            |           |                                      |  |  +next position to be written (r.write)
 		//            v           V                                      V  V  V
-		// write: f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+		// write:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
 		// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
-		// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-		if i < 16-5 {
-			if entry != nil {
-				t.Errorf("Read Event should be nil, got %+v instead", entry)
-			}
-		} else {
-			if !entry.Timestamp.Equal(&types.Timestamp{Seconds: i - (16 - 5)}) {
-				t.Errorf("Read Event should be %+v, got %+v instead", &types.Timestamp{Seconds: i - (16 - 5)}, entry.Timestamp)
-			}
+		// cycle:  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1
+		want := &types.Timestamp{Seconds: 4 + i}
+		if !entry.Timestamp.Equal(want) {
+			t.Errorf("Read Event should be %+v, got %+v instead", want, entry.Timestamp)
 		}
-		i++
-		if i == 0xf {
+		if i == 14 {
 			break
 		}
+		i++
 	}
+	// next read must be blocked, since reader is waiting for the writer
+	select {
+	case entry := <-ch:
+		t.Errorf("Read Event %v received when channel should be empty", entry)
+	default:
+	}
+
+	// Add 20 more events that we read back immediately
+	for i := uint64(0); i < 20; i++ {
+		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(20 + i)}})
+
+		want := &types.Timestamp{Seconds: int64(20 + (i - 1))}
+		entry, ok := <-ch
+		if !ok {
+			t.Errorf("Channel was have been closed, expected %+v", entry)
+		}
+		if !entry.Timestamp.Equal(want) {
+			t.Errorf("Read Event should be %+v, got %+v instead", want, entry.Timestamp)
+		}
+	}
+
 	cancel()
 	event, ok := <-ch
 	if ok {
@@ -669,10 +693,10 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 	defer goleak.VerifyNone(t)
 	r := NewRing(0xf)
 	if len(r.data) != 0x10 {
-		t.Errorf("r.data should have a lenght of 0x10. Got %x", len(r.data))
+		t.Errorf("r.data should have a length of 0x10. Got %x", len(r.data))
 	}
 	if r.dataLen != 0x10 {
-		t.Errorf("r.dataLen should have a lenght of 0x10. Got %x", r.dataLen)
+		t.Errorf("r.dataLen should have a length of 0x10. Got %x", r.dataLen)
 	}
 	if r.mask != 0xf {
 		t.Errorf("r.mask should be 0xf. Got %x", r.mask)
@@ -682,8 +706,8 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 		t.Errorf("lastWrite should be %x. Got %x", ^uint64(0)-1, lastWrite)
 	}
 
-	// Add 5 events
-	for i := uint64(0); i < 5; i++ {
+	// Add 20 events
+	for i := uint64(0); i < 20; i++ {
 		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(i)}})
 		lastWrite = r.LastWrite()
 		if lastWrite != i {
@@ -691,35 +715,51 @@ func TestRing_ReadFrom_Test_3(t *testing.T) {
 		}
 	}
 
-	// We should be able to read from a previous 'cycle' and ReadFrom will
-	// be able to catch up with the writer.
 	ctx, cancel := context.WithCancel(context.Background())
-	ch := r.readFrom(ctx, ^uint64(0)-30)
+	// We should be able to read from a previous 'cycles' and ReadFrom will
+	// be able to catch up with the writer.
+	ch := r.readFrom(ctx, ^uint64(0)-15)
 	i := int64(0)
 	for entry := range ch {
 		// Given the buffer length is 16 and there are no more writes being made,
-		// we will receive 16-5=11 nil events and 5 non-nil events
+		// we will receive 15 non-nil events, after that the channel must stall.
 		//
 		//   ReadFrom +           +----------------valid read------------+  +position possibly being written
 		//            |           |                                      |  |  +next position to be written (r.write)
 		//            v           V                                      V  V  V
-		// write: f0 f1 f2 f3 f4 f5 f6 f7 f8 f9 fa fb fc fd fe ff  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
-		// index:  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
-		// cycle: 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f 1f  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
-		if i < 16-5 {
-			if entry != nil {
-				t.Errorf("Read Event should be nil, got %+v instead", entry)
-			}
-		} else {
-			if !entry.Timestamp.Equal(&types.Timestamp{Seconds: i - (16 - 5)}) {
-				t.Errorf("Read Event should be %+v, got %+v instead", &types.Timestamp{Seconds: i - (16 - 5)}, entry.Timestamp)
-			}
+		// write: f0 f1 //  3  4  5  6  7  8  9  a  b  c  d  e  f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
+		// index:  0  1 //  3  4  5  6  7  8  9  a  b  c  d  e  f  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+		// cycle: ff ff //  0  0  0  0  0  0  0  0  0  0  0  0  0  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1  1
+		want := &types.Timestamp{Seconds: 4 + i}
+		if !entry.Timestamp.Equal(want) {
+			t.Errorf("Read Event should be %+v, got %+v instead", want, entry.Timestamp)
 		}
-		i++
-		if i == 0xf {
+		if i == 14 {
 			break
 		}
+		i++
 	}
+	// next read must be blocked, since reader is waiting for the writer
+	select {
+	case entry := <-ch:
+		t.Errorf("Read Event %v received when channel should be empty", entry)
+	default:
+	}
+
+	// Add 20 more events that we read back immediately
+	for i := uint64(0); i < 20; i++ {
+		r.Write(&v1.Event{Timestamp: &types.Timestamp{Seconds: int64(20 + i)}})
+
+		want := &types.Timestamp{Seconds: int64(20 + (i - 1))}
+		entry, ok := <-ch
+		if !ok {
+			t.Errorf("Channel was have been closed, expected %+v", entry)
+		}
+		if !entry.Timestamp.Equal(want) {
+			t.Errorf("Read Event should be %+v, got %+v instead", want, entry.Timestamp)
+		}
+	}
+
 	cancel()
 	event, ok := <-ch
 	if ok {
