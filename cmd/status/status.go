@@ -16,8 +16,8 @@ package status
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
 
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
@@ -47,7 +47,6 @@ func New() *cobra.Command {
 	statusCmd.Flags().StringVarP(&serverURL,
 		"server", "", api.GetDefaultSocketPath(), "URL to connect to server")
 	viper.BindEnv("server", "HUBBLE_SOCK")
-
 	return statusCmd
 }
 
@@ -55,18 +54,17 @@ func runStatus() error {
 	// get the standard GRPC health check to see if the server is up
 	healthy, status, err := getHC(serverURL)
 	if err != nil {
-		fmt.Println("Failed getting status:", err)
-		os.Exit(-1) // TODO: rewrite without os.Exit, return an error
+		return fmt.Errorf("failed getting status: %v", err)
 	}
 	fmt.Printf("Healthcheck (via %s): %s\n", serverURL, status)
 	if !healthy {
-		os.Exit(-1) // TODO: rewrite without os.Exit, return an error
+		return errors.New("not healthy")
 	}
 
 	// if the server is up, lets try to get hubble specific status
 	ss, err := getStatus(serverURL)
 	if err != nil {
-		fmt.Println("Failed to get hubble server status:", err)
+		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
 	fmt.Println("Max Flows:", ss.MaxFlows)
 	fmt.Printf(
@@ -74,16 +72,13 @@ func runStatus() error {
 		ss.NumFlows,
 		(float64(ss.NumFlows)/float64(ss.MaxFlows))*100,
 	)
-
 	return nil
 }
 
-func getHC(s string) (bool, string, error) {
-	healthy := false
-	status := ""
+func getHC(s string) (healthy bool, status string, err error) {
 	conn, err := grpc.Dial(s, grpc.WithInsecure())
 	if err != nil {
-		return healthy, status, err
+		return false, "", err
 	}
 	defer conn.Close()
 
@@ -93,21 +88,18 @@ func getHC(s string) (bool, string, error) {
 	req := &healthpb.HealthCheckRequest{Service: v1.ObserverServiceName}
 	resp, err := healthpb.NewHealthClient(conn).Check(ctx, req)
 	if err != nil {
-		status = fmt.Sprintf("Error: %s", err)
-	} else if st := resp.GetStatus(); st != healthpb.HealthCheckResponse_SERVING {
-		status = fmt.Sprintf("Unavailable: %s", st)
-	} else {
-		status = "Ok"
-		healthy = true
+		return false, "", err
 	}
-
-	return healthy, status, err
+	if st := resp.GetStatus(); st != healthpb.HealthCheckResponse_SERVING {
+		return false, fmt.Sprintf("Unavailable: %s", st), nil
+	}
+	return true, "Ok", nil
 }
 
 func getStatus(s string) (*observer.ServerStatusResponse, error) {
 	conn, err := grpc.Dial(s, grpc.WithInsecure())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer conn.Close()
 
@@ -119,6 +111,5 @@ func getStatus(s string) (*observer.ServerStatusResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return res, nil
 }

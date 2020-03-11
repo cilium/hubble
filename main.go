@@ -20,8 +20,12 @@ package main
 
 import (
 	"github.com/cilium/hubble/cmd"
+	"github.com/cilium/hubble/pkg/logger"
 )
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		log := logger.GetLogger()
+		log.WithError(err).Fatal("main program execution encountered a fatal error")
+	}
 }

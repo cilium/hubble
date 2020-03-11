@@ -103,8 +103,7 @@ programs attached to endpoints and devices. This includes:
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unknown {
 					msg = s.Message()
 				}
-				fmt.Fprintf(os.Stderr, "Error: %s\n", msg)
-				os.Exit(-1)
+				return errors.New(msg)
 			}
 			return nil
 		},

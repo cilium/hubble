@@ -15,6 +15,7 @@
 package serve
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -51,16 +52,15 @@ func New(log *logrus.Entry) *cobra.Command {
 	serverCmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Start gRPC server",
-		Run: func(cmd *cobra.Command, args []string) {
-			err := validateArgs(log)
-			if err != nil {
-				log.WithError(err).Fatal("failed to parse arguments")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := validateArgs(log); err != nil {
+				return fmt.Errorf("failed to parse arguments: %v", err)
 			}
 
 			if gopsVar {
 				log.Debug("starting gops agent")
 				if err := agent.Listen(agent.Options{}); err != nil {
-					log.WithError(err).Fatal("failed to start gops agent")
+					return fmt.Errorf("failed to start gops agent: %v", err)
 				}
 			}
 
@@ -77,7 +77,7 @@ func New(log *logrus.Entry) *cobra.Command {
 
 			ciliumClient, err := client.NewClient()
 			if err != nil {
-				log.WithError(err).Fatal("failed to get Cilium client")
+				return fmt.Errorf("failed to get Cilium client: %v", err)
 			}
 			ipCache := ipcache.New()
 			fqdnCache := fqdncache.New()
@@ -89,7 +89,7 @@ func New(log *logrus.Entry) *cobra.Command {
 			}
 			payloadParser, err := parser.New(endpoints, ciliumClient, fqdnCache, podGetter, serviceCache)
 			if err != nil {
-				log.WithError(err).Fatal("failed to get parser")
+				return fmt.Errorf("failed to get parser: %v", err)
 			}
 			s, err := server.NewServer(
 				ciliumClient,
@@ -103,16 +103,19 @@ func New(log *logrus.Entry) *cobra.Command {
 				log,
 			)
 			if err != nil {
-				log.WithError(err).Fatal("failed to initialize server")
+				return fmt.Errorf("failed to initialize server: %v", err)
 			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			setupSigHandler(ctx, cancel)
 			s.Start()
-			err = Serve(log, listenClientUrls, s.GetGRPCServer())
-			if err != nil {
-				log.WithError(err).Fatal("")
+			if err = Serve(ctx, log, listenClientUrls, s.GetGRPCServer()); err != nil {
+				return err
 			}
-			if err := s.HandleMonitorSocket(nodeName); err != nil {
-				log.WithError(err).Fatal("HandleMonitorSocket failed")
+			if err := s.HandleMonitorSocket(ctx, nodeName); err != nil {
+				return fmt.Errorf("failed to handle monitor socket: %v", err)
 			}
+			return nil
 		},
 	}
 
@@ -161,25 +164,26 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-// EnableMetrics starts the metrics server with a given list of metrics.
-func EnableMetrics(log *logrus.Entry, metricsServer string, m []string) {
+// enableMetrics starts the metrics server with a given list of metrics.
+func enableMetrics(log *logrus.Entry, metricsServer string, m []string) error {
 	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
 	if err != nil {
-		log.WithError(err).Fatal("Unable to setup metrics")
+		return fmt.Errorf("unable to setup metrics: %v", err)
 	}
-
 	go func() {
 		err := <-errChan
 		if err != nil {
-			log.WithError(err).Fatal("Unable to initialize metrics server")
+			log.WithError(err).Error("Unable to initialize metrics server")
 		}
 	}()
-
+	return nil
 }
 
 func validateArgs(log *logrus.Entry) error {
 	if metricsServer != "" {
-		EnableMetrics(log, metricsServer, enabledMetrics)
+		if err := enableMetrics(log, metricsServer, enabledMetrics); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -228,7 +232,7 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 
 // Serve starts the GRPC server on the provided socketPath. If the port is non-zero, it listens
 // to the TCP port instead of the unix domain socket.
-func Serve(log *logrus.Entry, listenClientUrls []string, s server.GRPCServer) error {
+func Serve(ctx context.Context, log *logrus.Entry, listenClientUrls []string, s server.GRPCServer) error {
 	clientListeners, err := setupListeners(listenClientUrls)
 	if err != nil {
 		return err
@@ -249,22 +253,27 @@ func Serve(log *logrus.Entry, listenClientUrls []string, s server.GRPCServer) er
 			log.WithField("client-listener", clientListURL).Info("Starting gRPC server on client-listener")
 			err = clientGRPC.Serve(clientList)
 			if err != nil {
-				log.WithError(err).Fatal("failed to close grpc server")
+				log.WithError(err).Error("failed to close grpc server")
 			}
 		}(clientListURL, clientList)
 	}
+	go func() {
+		<-ctx.Done()
+		clientGRPC.Stop()
+	}()
 
-	setupSigHandler()
 	return nil
 }
 
-func setupSigHandler() {
+func setupSigHandler(ctx context.Context, cancel context.CancelFunc) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	go func() {
-		for range signalChan {
+		select {
+		case <-ctx.Done():
+		case <-signalChan:
 			fmt.Printf("\nReceived an interrupt, disconnecting from monitor...\n\n")
-			os.Exit(0)
+			cancel()
 		}
 	}()
 }
