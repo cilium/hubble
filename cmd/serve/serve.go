@@ -24,7 +24,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
@@ -150,9 +149,6 @@ var (
 
 	listenClientUrls []string
 
-	// when the server started
-	serverStart time.Time
-
 	enabledMetrics []string
 	metricsServer  string
 
@@ -237,8 +233,6 @@ func Serve(ctx context.Context, log *logrus.Entry, listenClientUrls []string, s 
 	if err != nil {
 		return err
 	}
-
-	serverStart = time.Now()
 
 	healthSrv := health.NewServer()
 	healthSrv.SetServingStatus(v1.ObserverServiceName, healthpb.HealthCheckResponse_SERVING)
