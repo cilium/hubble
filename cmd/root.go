@@ -40,11 +40,12 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:          "hubble",
-	Short:        "CLI",
-	Long:         `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
-	SilenceUsage: true,
-	Version:      pkg.Version,
+	Use:           "hubble",
+	Short:         "CLI",
+	Long:          `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
+	SilenceErrors: true, // this is being handled in main, no need to duplicate error messages
+	SilenceUsage:  true,
+	Version:       pkg.Version,
 	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
 		return pprofInit()
 	},
