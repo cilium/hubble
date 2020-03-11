@@ -111,7 +111,6 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 			ID:           1,
-			Created:      time.Unix(0, 0),
 			IPv4:         net.ParseIP("1.1.1.1").To4(),
 			IPv6:         net.ParseIP("fd00::1").To16(),
 			PodName:      "foo",
@@ -120,7 +119,6 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 			ID:           2,
-			Created:      time.Unix(0, 0),
 			IPv4:         net.ParseIP("1.1.1.2").To4(),
 			IPv6:         net.ParseIP("fd00::2").To16(),
 			PodName:      "bar",
@@ -128,9 +126,6 @@ func TestObserverServer_syncAllEndpoints(t *testing.T) {
 		},
 	}
 	endpointsMutex.Lock()
-	for _, ep := range endpoints {
-		ep.Created = time.Unix(0, 0)
-	}
 	assert.EqualValues(t, endpointsWanted, endpoints)
 	endpointsMutex.Unlock()
 
@@ -183,14 +178,12 @@ func TestObserverServer_EndpointAddEvent(t *testing.T) {
 				defer wg.Done()
 				wanted := &v1.Endpoint{
 					ContainerIDs: []string{"123"},
-					Created:      time.Unix(12, 34),
 					ID:           13,
 					IPv4:         net.ParseIP("10.0.0.1").To4(),
 					IPv6:         net.ParseIP("fd00::1").To16(),
 					PodName:      "bar",
 					PodNamespace: "default",
 				}
-				ep.Created = time.Unix(12, 34)
 				assert.Equal(t, wanted, ep)
 			})
 		},
@@ -252,7 +245,6 @@ func TestObserverServer_EndpointDeleteEvent(t *testing.T) {
 			defer wg.Done()
 			wanted := &v1.Endpoint{
 				ID:           13,
-				Created:      time.Unix(0, 0),
 				PodName:      "bar",
 				PodNamespace: "default",
 			}
@@ -310,14 +302,12 @@ func TestObserverServer_EndpointRegenEvent(t *testing.T) {
 			defer wg.Done()
 			wanted := &v1.Endpoint{
 				ContainerIDs: []string{"123"},
-				Created:      time.Unix(12, 34),
 				ID:           13,
 				IPv4:         net.ParseIP("10.0.0.1").To4(),
 				IPv6:         net.ParseIP("fd00::1").To16(),
 				PodName:      "bar",
 				PodNamespace: "default",
 			}
-			ep.Created = time.Unix(12, 34)
 			assert.Equal(t, wanted, ep)
 		},
 	}

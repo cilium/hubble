@@ -38,32 +38,6 @@ func (e *Endpoint) EqualsByID(o *Endpoint) bool {
 			e.PodNamespace == o.PodNamespace
 }
 
-// SetFrom sets all fields that are not time based (all but Created) from the
-// given endpoint 'o' in receiver's endpoint.
-func (e *Endpoint) SetFrom(o *Endpoint) {
-	if o.ContainerIDs != nil {
-		e.ContainerIDs = o.ContainerIDs
-	}
-	if o.ID != 0 {
-		e.ID = o.ID
-	}
-	if o.IPv4 != nil {
-		e.IPv4 = o.IPv4
-	}
-	if o.IPv6 != nil {
-		e.IPv6 = o.IPv6
-	}
-	if len(o.Labels) != 0 {
-		e.Labels = o.Labels
-	}
-	if o.PodName != "" {
-		e.PodName = o.PodName
-	}
-	if o.PodNamespace != "" {
-		e.PodNamespace = o.PodNamespace
-	}
-}
-
 // DeepCopy returns a deep copy of this endpoint.
 func (e *Endpoint) DeepCopy() *Endpoint {
 	result := *e
@@ -136,13 +110,38 @@ func (es *Endpoints) FindEPs(epID uint64, namespace string, podName string) []En
 	return eps
 }
 
+// setFrom sets all fields from the given endpoint 'o' in receiver's endpoint.
+func (e *Endpoint) setFrom(o *Endpoint) {
+	if o.ContainerIDs != nil {
+		e.ContainerIDs = o.ContainerIDs
+	}
+	if o.ID != 0 {
+		e.ID = o.ID
+	}
+	if o.IPv4 != nil {
+		e.IPv4 = o.IPv4
+	}
+	if o.IPv6 != nil {
+		e.IPv6 = o.IPv6
+	}
+	if len(o.Labels) != 0 {
+		e.Labels = o.Labels
+	}
+	if o.PodName != "" {
+		e.PodName = o.PodName
+	}
+	if o.PodNamespace != "" {
+		e.PodNamespace = o.PodNamespace
+	}
+}
+
 func (es *Endpoints) updateEndpoint(updateEp *Endpoint) {
 	for _, ep := range es.eps {
 		// Update endpoint if the ID is the same *and* the podName and
 		// podNamespace do not exist, otherwise check if the given updateEp
 		// equals to ep.
 		if ep.EqualsByID(updateEp) {
-			ep.SetFrom(updateEp)
+			ep.setFrom(updateEp)
 			return
 		}
 	}

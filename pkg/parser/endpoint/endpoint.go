@@ -17,7 +17,6 @@ package endpoint
 import (
 	"net"
 	"sort"
-	"time"
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/identity"
@@ -48,7 +47,6 @@ func ParseEndpointFromModel(modelEP *models.Endpoint) *v1.Endpoint {
 		Identity:     securityIdentity,
 		PodName:      podName,
 		PodNamespace: ns,
-		Created:      time.Now(),
 		Labels:       labels,
 	}
 
@@ -77,6 +75,5 @@ func ParseEndpointFromEndpointDeleteNotification(edn monitorAPI.EndpointDeleteNo
 		ID:           edn.ID,
 		PodName:      edn.PodName,
 		PodNamespace: edn.Namespace,
-		Created:      time.Unix(0, 0),
 	}
 }

@@ -19,14 +19,12 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestEndpoint_EqualsByID(t *testing.T) {
 	type fields struct {
-		Created      time.Time
 		ContainerID  []string
 		ID           uint64
 		IPv4         net.IP
@@ -46,7 +44,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		{
 			name: "compare by a same ID and all other fields different should be considered equal",
 			fields: fields{
-				Created:      time.Unix(0, 1),
 				ContainerID:  []string{"foo"},
 				ID:           1,
 				IPv4:         net.ParseIP("2.2.2.2"),
@@ -55,7 +52,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 			},
 			args: args{
 				o: &Endpoint{
-					Created:      time.Unix(0, 2),
 					ContainerIDs: []string{"bar"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -68,7 +64,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		{
 			name: "compare by a same ID, but different pod name should be considered different",
 			fields: fields{
-				Created:      time.Unix(0, 1),
 				ContainerID:  []string{"foo"},
 				ID:           1,
 				IPv4:         net.ParseIP("2.2.2.2"),
@@ -77,7 +72,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 			},
 			args: args{
 				o: &Endpoint{
-					Created:      time.Unix(0, 2),
 					ContainerIDs: []string{"bar"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -90,7 +84,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		{
 			name: "compare by a same ID, but different namespace should be considered different",
 			fields: fields{
-				Created:      time.Unix(0, 1),
 				ContainerID:  []string{"foo"},
 				ID:           1,
 				IPv4:         net.ParseIP("2.2.2.2"),
@@ -99,7 +92,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 			},
 			args: args{
 				o: &Endpoint{
-					Created:      time.Unix(0, 2),
 					ContainerIDs: []string{"bar"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -112,7 +104,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		{
 			name: "compare by a same ID where podname and podnamespace are empty should be considered equal",
 			fields: fields{
-				Created:      time.Unix(0, 1),
 				ContainerID:  []string{"foo"},
 				ID:           1,
 				IPv4:         net.ParseIP("2.2.2.2"),
@@ -121,7 +112,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 			},
 			args: args{
 				o: &Endpoint{
-					Created:      time.Unix(0, 2),
 					ContainerIDs: []string{"bar"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -135,7 +125,6 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Endpoint{
-				Created:      tt.fields.Created,
 				ContainerIDs: tt.fields.ContainerID,
 				ID:           tt.fields.ID,
 				IPv4:         tt.fields.IPv4,
@@ -150,9 +139,8 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 	}
 }
 
-func TestEndpoint_SetFrom(t *testing.T) {
+func TestEndpoint_setFrom(t *testing.T) {
 	type fields struct {
-		Created      time.Time
 		ContainerIDs []string
 		ID           uint64
 		IPv4         net.IP
@@ -171,9 +159,8 @@ func TestEndpoint_SetFrom(t *testing.T) {
 		want   *Endpoint
 	}{
 		{
-			name: "all fields are copied except the time based ones",
+			name: "all fields are copied",
 			fields: fields{
-				Created:      time.Unix(0, 0),
 				ContainerIDs: nil,
 				ID:           0,
 				IPv4:         nil,
@@ -184,7 +171,6 @@ func TestEndpoint_SetFrom(t *testing.T) {
 			},
 			args: args{
 				o: &Endpoint{
-					Created:      time.Unix(1, 1),
 					ContainerIDs: []string{"foo"},
 					ID:           1,
 					IPv4:         net.ParseIP("1.1.1.1"),
@@ -195,7 +181,6 @@ func TestEndpoint_SetFrom(t *testing.T) {
 				},
 			},
 			want: &Endpoint{
-				Created:      time.Unix(0, 0),
 				ContainerIDs: []string{"foo"},
 				ID:           1,
 				IPv4:         net.ParseIP("1.1.1.1"),
@@ -209,7 +194,6 @@ func TestEndpoint_SetFrom(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := &Endpoint{
-				Created:      tt.fields.Created,
 				ContainerIDs: tt.fields.ContainerIDs,
 				ID:           tt.fields.ID,
 				IPv4:         tt.fields.IPv4,
@@ -217,9 +201,9 @@ func TestEndpoint_SetFrom(t *testing.T) {
 				PodName:      tt.fields.PodName,
 				PodNamespace: tt.fields.PodNamespace,
 			}
-			e.SetFrom(tt.args.o)
+			e.setFrom(tt.args.o)
 			if !reflect.DeepEqual(e, tt.want) {
-				t.Errorf("SetFrom() got = %v, want %v", e, tt.want)
+				t.Errorf("setFrom() got = %v, want %v", e, tt.want)
 			}
 		})
 	}
@@ -235,7 +219,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 			ID:           1,
-			Created:      time.Unix(0, 0),
 			IPv4:         net.ParseIP("1.1.1.1").To4(),
 			IPv6:         net.ParseIP("fd00::1").To16(),
 			PodName:      "foo",
@@ -244,7 +227,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 			ID:           2,
-			Created:      time.Unix(0, 1),
 			IPv4:         net.ParseIP("1.1.1.2").To4(),
 			IPv6:         net.ParseIP("fd00::2").To16(),
 			PodName:      "bar",
@@ -253,7 +235,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 			ID:           3,
-			Created:      time.Unix(0, 2),
 			IPv4:         net.ParseIP("1.1.1.3").To4(),
 			IPv6:         net.ParseIP("fd00::3").To16(),
 			PodName:      "bar",
@@ -265,7 +246,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 			ID:           1,
-			Created:      time.Unix(0, 0),
 			IPv4:         net.ParseIP("1.1.1.1").To4(),
 			IPv6:         net.ParseIP("fd00::1").To16(),
 			PodName:      "foo",
@@ -274,7 +254,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 			ID:           2,
-			Created:      time.Unix(0, 1),
 			IPv4:         net.ParseIP("1.1.1.2").To4(),
 			IPv6:         net.ParseIP("fd00::2").To16(),
 			PodName:      "bar",
@@ -283,7 +262,6 @@ func TestEndpoints_SyncEndpoints(t *testing.T) {
 		{
 			ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 			ID:           3,
-			Created:      time.Unix(0, 2),
 			IPv4:         net.ParseIP("1.1.1.3").To4(),
 			IPv6:         net.ParseIP("fd00::3").To16(),
 			PodName:      "bar",
@@ -332,7 +310,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 					ID:           1,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.1").To4(),
 					IPv6:         net.ParseIP("fd00::1").To16(),
 					PodName:      "foo",
@@ -341,7 +318,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 					ID:           2,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.2").To4(),
 					IPv6:         net.ParseIP("fd00::2").To16(),
 					PodName:      "bar",
@@ -350,7 +326,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
 					ID:           3,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.3").To4(),
 					IPv6:         net.ParseIP("fd00::3").To16(),
 					PodName:      "bar",
@@ -364,7 +339,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 					ID:           1,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.1").To4(),
 					IPv6:         net.ParseIP("fd00::1").To16(),
 					PodName:      "foo",
@@ -373,7 +347,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 					ID:           2,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.2").To4(),
 					IPv6:         net.ParseIP("fd00::2").To16(),
 					PodName:      "bar",
@@ -387,7 +360,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 					ID:           1,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.1").To4(),
 					IPv6:         net.ParseIP("fd00::1").To16(),
 					PodName:      "foo",
@@ -396,7 +368,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 					ID:           2,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.2").To4(),
 					IPv6:         net.ParseIP("fd00::2").To16(),
 					PodName:      "bar",
@@ -405,7 +376,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
 					ID:           3,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.3").To4(),
 					IPv6:         net.ParseIP("fd00::3").To16(),
 					PodName:      "bar",
@@ -420,7 +390,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
 					ID:           3,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.3").To4(),
 					IPv6:         net.ParseIP("fd00::3").To16(),
 					PodName:      "bar",
@@ -434,7 +403,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 					ID:           1,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.1").To4(),
 					IPv6:         net.ParseIP("fd00::1").To16(),
 					PodName:      "foo",
@@ -443,7 +411,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 					ID:           2,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.2").To4(),
 					IPv6:         net.ParseIP("fd00::2").To16(),
 					PodName:      "bar",
@@ -452,7 +419,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb473"},
 					ID:           3,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.3").To4(),
 					IPv6:         net.ParseIP("fd00::3").To16(),
 					PodName:      "bar",
@@ -466,7 +432,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 				{
 					ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb471"},
 					ID:           2,
-					Created:      time.Unix(0, 0),
 					IPv4:         net.ParseIP("1.1.1.2").To4(),
 					IPv6:         net.ParseIP("fd00::2").To16(),
 					PodName:      "bar",
@@ -489,7 +454,6 @@ func TestEndpoints_FindEPs(t *testing.T) {
 	epWant := Endpoint{
 		ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479"},
 		ID:           1,
-		Created:      time.Unix(0, 0),
 		IPv4:         net.ParseIP("1.1.1.1").To4(),
 		IPv6:         net.ParseIP("fd00::1").To16(),
 		PodName:      "foo",
@@ -503,13 +467,11 @@ func TestEndpoints_FindEPs(t *testing.T) {
 	gotEps := es.FindEPs(1, "", "")
 	assert.Len(t, gotEps, 1)
 	assert.Equal(t, gotEps[0], epWant, 1)
-	gotEps[0].Created = time.Unix(1, 1)
 	gotEps[0].ContainerIDs = append(gotEps[0].ContainerIDs, "foo")
 
 	epWantModified := Endpoint{
 		ContainerIDs: []string{"313c63b8b164a19ec0fe42cd86c4159f3276ba8a415d77f340817fcfee2cb479", "foo"},
 		ID:           1,
-		Created:      time.Unix(1, 1),
 		IPv4:         net.ParseIP("1.1.1.1").To4(),
 		IPv6:         net.ParseIP("fd00::1").To16(),
 		PodName:      "foo",
@@ -665,7 +627,6 @@ func TestEndpoints_GetEndpointByContainerID(t *testing.T) {
 
 func TestEndpoint_Copy(t *testing.T) {
 	ep := &Endpoint{
-		Created:      time.Unix(1, 2),
 		ContainerIDs: nil,
 		ID:           0,
 		IPv4:         nil,
@@ -678,7 +639,6 @@ func TestEndpoint_Copy(t *testing.T) {
 	assert.Equal(t, ep, cp)
 
 	ep = &Endpoint{
-		Created:      time.Unix(1, 2),
 		ContainerIDs: []string{"c1", "c2"},
 		ID:           3,
 		IPv4:         net.ParseIP("1.1.1.1"),
@@ -691,7 +651,6 @@ func TestEndpoint_Copy(t *testing.T) {
 	cp2 := ep.DeepCopy()
 	assert.Equal(t, ep, cp2)
 	assert.Equal(t, cp1, cp2)
-	cp1.Created = time.Unix(5, 6)
 	cp1.ContainerIDs = []string{"c3", "c4"}
 	cp1.ID = 4
 	cp1.IPv4 = net.ParseIP("2.2.2.2")

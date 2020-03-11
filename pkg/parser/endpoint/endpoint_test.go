@@ -18,7 +18,6 @@ import (
 	"net"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/monitor/api"
@@ -119,9 +118,6 @@ func TestParseEndpointFromModel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := ParseEndpointFromModel(tt.args.modelEP)
-			zeroTime := time.Unix(0, 0)
-			got.Created = zeroTime
-			tt.want.Created = zeroTime
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseEndpointFromModel()\n =   %+v, \nwant %+v", got, tt.want)
 			}
@@ -150,7 +146,6 @@ func TestParseEndpointFromEndpointDeleteNotification(t *testing.T) {
 				},
 			},
 			want: &v1.Endpoint{
-				Created:      time.Unix(0, 0),
 				ID:           1,
 				PodName:      "foo",
 				PodNamespace: "bar",
