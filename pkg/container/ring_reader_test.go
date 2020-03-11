@@ -207,7 +207,7 @@ func TestRingReader_NextFollow(t *testing.T) {
 			var timedOut bool
 			var got []*v1.Event
 			for i := 0; i < tt.count; i++ {
-				ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+				ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 				got = append(got, reader.NextFollow(ctx))
 				select {
 				case <-ctx.Done():
@@ -237,7 +237,7 @@ func TestRingReader_NextFollow_WithEmptyRing(t *testing.T) {
 	select {
 	case <-c:
 		t.Fail()
-	case <-time.After(1 * time.Millisecond):
+	case <-time.After(100 * time.Millisecond):
 		// the call blocked, we're good
 	}
 	cancel()
