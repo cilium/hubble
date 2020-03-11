@@ -213,6 +213,7 @@ func TestRingReader_NextFollow(t *testing.T) {
 				case <-ctx.Done():
 					timedOut = true
 				default:
+					assert.NotNil(t, got[i])
 				}
 				cancel()
 			}
