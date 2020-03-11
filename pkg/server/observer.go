@@ -187,7 +187,7 @@ func (s *ObserverServer) consumeMonitorEvents(conn net.Conn, version listener.Ve
 
 			an := monitorAPI.AgentNotify{}
 			if err := dec.Decode(&an); err != nil {
-				fmt.Printf("Error while decoding agent notification message: %s\n", err)
+				s.log.WithError(err).Warning("failed to decoded agent notification message")
 				continue
 			}
 			switch an.Type {
@@ -212,7 +212,7 @@ func (s *ObserverServer) consumeMonitorEvents(conn net.Conn, version listener.Ve
 			lr := monitor.LogRecordNotify{}
 
 			if err := dec.Decode(&lr); err != nil {
-				fmt.Printf("Error while decoding access log message type: %s\n", err)
+				s.log.WithError(err).Warning("failed to decode access logg message type")
 				continue
 			}
 			if lr.DNS != nil {
