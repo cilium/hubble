@@ -17,7 +17,6 @@ package v1
 import (
 	"net"
 	"sync"
-	"time"
 
 	"github.com/cilium/cilium/pkg/identity"
 	pb "github.com/cilium/hubble/api/v1/flow"
@@ -26,7 +25,6 @@ import (
 
 // Endpoint is the representation of an endpoint running in the Cilium agent
 type Endpoint struct {
-	Created      time.Time                `json:"created"`
 	ContainerIDs []string                 `json:"container-ids"`
 	ID           uint64                   `json:"id"`
 	Identity     identity.NumericIdentity `json:"identity"`
