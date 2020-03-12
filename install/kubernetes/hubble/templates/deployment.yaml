@@ -15,7 +15,7 @@ spec:
       labels:
         k8s-app: hubble-ui
     spec:
-      {{- if .Values.ui.priorityClassName }}
+      {{- if and .Values.priorityClassName (eq .Release.Namespace "kube-system") }}
       priorityClassName: {{ .Values.ui.priorityClassName }}
       {{- end }}
       serviceAccountName: hubble-ui

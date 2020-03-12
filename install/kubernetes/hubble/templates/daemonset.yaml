@@ -19,7 +19,7 @@ spec:
         k8s-app: hubble
         kubernetes.io/cluster-service: "true"
     spec:
-      {{- if .Values.priorityClassName }}
+      {{- if and .Values.priorityClassName (eq .Release.Namespace "kube-system") }}
       priorityClassName: {{ .Values.priorityClassName }}
       {{- end }}
       affinity:
