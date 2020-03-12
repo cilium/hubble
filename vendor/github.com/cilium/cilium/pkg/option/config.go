@@ -761,6 +761,21 @@ const (
 
 	// PolicyAuditModeArg argument enables policy audit mode.
 	PolicyAuditModeArg = "policy-audit-mode"
+
+	// HubbleListenAddresses specifies addresses for Hubble server to listen to.
+	HubbleListenAddresses = "hubble-listen-addresses"
+
+	// HubbleFlowBufferSize specifies the maximum number of flows in Hubble's buffer.
+	HubbleFlowBufferSize = "hubble-flow-buffer-size"
+
+	// HubbleEventQueueSize specifies the buffer size of the channel to receive monitor events.
+	HubbleEventQueueSize = "hubble-event-queue-size"
+
+	// HubbleMetricsServer specifies the addresses to serve Hubble metrics on.
+	HubbleMetricsServer = "hubble-metrics-server"
+
+	// HubbleMetrics specifies enabled metrics and their configuration options.
+	HubbleMetrics = "hubble-metrics"
 )
 
 // Default string arguments
@@ -1533,6 +1548,21 @@ type DaemonConfig struct {
 	// audit mode packets affected by policies will not be dropped.
 	// Policy related decisions can be checked via the poicy verdict messages.
 	PolicyAuditMode bool
+
+	// HubbleListenAddresses specifies addresses for Hubble to listen to.
+	HubbleListenAddresses []string
+
+	// HubbleFlowBufferSize specifies the maximum number of flows in Hubble's buffer.
+	HubbleFlowBufferSize int
+
+	// HubbleEventQueueSize specifies the buffer size of the channel to receive monitor events.
+	HubbleEventQueueSize int
+
+	// HubbleMetricsServer specifies the addresses to serve Hubble metrics on.
+	HubbleMetricsServer string
+
+	// HubbleMetrics specifies enabled metrics and their configuration options.
+	HubbleMetrics []string
 }
 
 var (
@@ -2032,7 +2062,8 @@ func (c *DaemonConfig) Populate() {
 	if maxZombies := viper.GetInt(ToFQDNsMaxDeferredConnectionDeletes); maxZombies >= 0 {
 		c.ToFQDNsMaxDeferredConnectionDeletes = viper.GetInt(ToFQDNsMaxDeferredConnectionDeletes)
 	} else {
-		log.Fatal("tofqdns-max-deferred-connection-deletes must be positive, or 0 to disable deferred connection deletion")
+		log.Fatalf("%s must be positive, or 0 to disable deferred connection deletion",
+			ToFQDNsMaxDeferredConnectionDeletes)
 	}
 	switch {
 	case viper.IsSet(ToFQDNsMinTTL): // set by user
@@ -2134,10 +2165,7 @@ func (c *DaemonConfig) Populate() {
 	}
 
 	if c.MonitorQueueSize == 0 {
-		c.MonitorQueueSize = runtime.NumCPU() * defaults.MonitorQueueSizePerCPU
-		if c.MonitorQueueSize > defaults.MonitorQueueSizePerCPUMaximum {
-			c.MonitorQueueSize = defaults.MonitorQueueSizePerCPUMaximum
-		}
+		c.MonitorQueueSize = getDefaultMonitorQueueSize(runtime.NumCPU())
 	}
 
 	// Metrics Setup
@@ -2192,6 +2220,16 @@ func (c *DaemonConfig) Populate() {
 			c.K8sRequireIPv6PodCIDR = true
 		}
 	}
+
+	// Hubble options.
+	c.HubbleListenAddresses = viper.GetStringSlice(HubbleListenAddresses)
+	c.HubbleFlowBufferSize = viper.GetInt(HubbleFlowBufferSize)
+	c.HubbleEventQueueSize = viper.GetInt(HubbleEventQueueSize)
+	if c.HubbleEventQueueSize == 0 {
+		c.HubbleEventQueueSize = getDefaultMonitorQueueSize(runtime.NumCPU())
+	}
+	c.HubbleMetricsServer = viper.GetString(HubbleMetricsServer)
+	c.HubbleMetrics = viper.GetStringSlice(HubbleMetrics)
 
 	// Hidden options
 	c.ConfigFile = viper.GetString(ConfigFile)
@@ -2347,4 +2385,12 @@ func InitConfig(configName string) func() {
 			log.WithField(logfields.Reason, err).Info("Skipped reading configuration file")
 		}
 	}
+}
+
+func getDefaultMonitorQueueSize(numCPU int) int {
+	monitorQueueSize := numCPU * defaults.MonitorQueueSizePerCPU
+	if monitorQueueSize > defaults.MonitorQueueSizePerCPUMaximum {
+		monitorQueueSize = defaults.MonitorQueueSizePerCPUMaximum
+	}
+	return monitorQueueSize
 }
