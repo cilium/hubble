@@ -414,15 +414,6 @@ func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) err
 			}
 			return err
 		}
-		if serverMsg := getFlowResponse.GetServerMsg(); serverMsg != nil {
-			if serverMsg.GetInfo().GetType() == observer.ProtocolMessageType_PROGRESS_PROTOCOL_MESSAGE_TYPE {
-				err := printer.WriteErr(serverMsg.GetInfo().Msg)
-				if err != nil {
-					return err
-				}
-			}
-			continue
-		}
 
 		flow := getFlowResponse.GetFlow()
 		if flow == nil {
