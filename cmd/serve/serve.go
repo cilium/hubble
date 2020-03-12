@@ -33,7 +33,6 @@ import (
 	"github.com/cilium/hubble/pkg/fqdncache"
 	"github.com/cilium/hubble/pkg/ipcache"
 	"github.com/cilium/hubble/pkg/metrics"
-	metricsAPI "github.com/cilium/hubble/pkg/metrics/api"
 	"github.com/cilium/hubble/pkg/parser"
 	"github.com/cilium/hubble/pkg/server"
 	"github.com/cilium/hubble/pkg/server/serveroption"
@@ -160,24 +159,9 @@ const (
 	envNodeName      = "HUBBLE_NODE_NAME"
 )
 
-// enableMetrics starts the metrics server with a given list of metrics.
-func enableMetrics(log *logrus.Entry, metricsServer string, m []string) error {
-	errChan, err := metrics.Init(metricsServer, metricsAPI.ParseMetricList(m))
-	if err != nil {
-		return fmt.Errorf("unable to setup metrics: %v", err)
-	}
-	go func() {
-		err := <-errChan
-		if err != nil {
-			log.WithError(err).Error("Unable to initialize metrics server")
-		}
-	}()
-	return nil
-}
-
 func validateArgs(log *logrus.Entry) error {
 	if metricsServer != "" {
-		if err := enableMetrics(log, metricsServer, enabledMetrics); err != nil {
+		if err := metrics.EnableMetrics(log, metricsServer, enabledMetrics); err != nil {
 			return err
 		}
 	}
