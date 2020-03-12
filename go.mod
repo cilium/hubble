@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.14
 
 require (
-	github.com/cilium/cilium v1.7.0-rc2.0.20200304124244-647a43c7953f
+	github.com/cilium/cilium v1.7.0-rc2.0.20200311180626-711b37ed100c
 	github.com/go-openapi/strfmt v0.19.4
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.2
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/goleak v1.0.0
-	google.golang.org/grpc v1.23.1
+	google.golang.org/grpc v1.25.1
 	k8s.io/apimachinery v0.17.3
 )
 
