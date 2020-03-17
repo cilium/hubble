@@ -23,7 +23,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"syscall"
 
 	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/api"
@@ -40,6 +39,7 @@ import (
 	"github.com/google/gops/agent"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -191,7 +191,7 @@ func setupListeners(listenClientUrls []string) (listeners map[string]net.Listene
 			listeners[listenClientURL] = socket
 		} else {
 			socketPath := strings.TrimPrefix(listenClientURL, "unix://")
-			syscall.Unlink(socketPath)
+			_ = unix.Unlink(socketPath)
 			var socket net.Listener
 			socket, err = net.Listen("unix", socketPath)
 			if err != nil {

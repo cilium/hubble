@@ -254,6 +254,7 @@ golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
+## explicit
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
