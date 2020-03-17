@@ -18,6 +18,7 @@ require (
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/goleak v1.0.0
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 	google.golang.org/grpc v1.25.1
 	k8s.io/apimachinery v0.17.3
 )

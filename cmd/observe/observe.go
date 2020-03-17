@@ -21,12 +21,12 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/gogo/protobuf/types"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -391,7 +391,7 @@ func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) err
 
 	go func() {
 		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+		signal.Notify(sigs, unix.SIGINT, unix.SIGTERM)
 		select {
 		case <-sigs:
 		case <-ctx.Done():
