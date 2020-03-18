@@ -1785,3 +1785,80 @@ func Test_filterByDNSQuery(t *testing.T) {
 		})
 	}
 }
+
+func TestIdentityFilter(t *testing.T) {
+	type args struct {
+		f  []*pb.FlowFilter
+		ev *v1.Event
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "source-nil",
+			args: args{
+				f: []*pb.FlowFilter{{
+					SourceIdentity: []uint64{1},
+				}},
+				ev: nil,
+			},
+			want: false,
+		},
+		{
+			name: "destination-nil",
+			args: args{
+				f: []*pb.FlowFilter{{
+					DestinationIdentity: []uint64{1},
+				}},
+				ev: nil,
+			},
+			want: false,
+		},
+		{
+			name: "source-positive",
+			args: args{
+				f: []*pb.FlowFilter{{
+					SourceIdentity: []uint64{1, 2, 3},
+				}},
+				ev: &v1.Event{Event: &pb.Flow{
+					Source: &pb.Endpoint{Identity: 3},
+				}},
+			},
+			want: true,
+		},
+		{
+			name: "source-negative",
+			args: args{
+				f: []*pb.FlowFilter{{
+					SourceIdentity: []uint64{1, 2, 3},
+				}},
+				ev: &v1.Event{Event: &pb.Flow{
+					Source: &pb.Endpoint{Identity: 4},
+				}},
+			},
+			want: false,
+		},
+		{
+			name: "destination-negative",
+			args: args{
+				f: []*pb.FlowFilter{{
+					DestinationIdentity: []uint64{1, 2, 3},
+				}},
+				ev: &v1.Event{Event: &pb.Flow{
+					Destination: &pb.Endpoint{Identity: 5},
+				}},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fl, err := BuildFilterList(tt.args.f)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, fl.MatchOne(tt.args.ev))
+		})
+	}
+}
