@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewLocalServer(t *testing.T) {
+func noopParser(t *testing.T) *parser.Parser {
 	pp, err := parser.New(
 		&testutils.NoopEndpointGetter,
 		&testutils.NoopIdentityGetter,
@@ -40,6 +40,11 @@ func TestNewLocalServer(t *testing.T) {
 		&testutils.NoopServiceGetter,
 	)
 	require.NoError(t, err)
+	return pp
+}
+
+func TestNewLocalServer(t *testing.T) {
+	pp := noopParser(t)
 	s, err := NewLocalServer(pp, logger.GetLogger())
 	require.NoError(t, err)
 	assert.NotNil(t, s.GetStopped())
@@ -53,13 +58,7 @@ func TestLocalObserverServer_ServerStatus(t *testing.T) {
 	// (glibsm): This test is really confusing. `serveroption.WithMaxFlows(1)`
 	// results in the actual flow capacity of 2.
 
-	pp, err := parser.New(
-		&testutils.NoopEndpointGetter,
-		&testutils.NoopIdentityGetter,
-		&testutils.NoopDNSGetter,
-		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
-	require.NoError(t, err)
+	pp := noopParser(t)
 	s, err := NewLocalServer(pp, logger.GetLogger(), serveroption.WithMaxFlows(1))
 	require.NoError(t, err)
 	res, err := s.ServerStatus(context.Background(), &observer.ServerStatusRequest{})
@@ -83,13 +82,8 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 			},
 		},
 	}
-	pp, err := parser.New(
-		&testutils.NoopEndpointGetter,
-		&testutils.NoopIdentityGetter,
-		&testutils.NoopDNSGetter,
-		&testutils.NoopIPGetter,
-		&testutils.NoopServiceGetter)
-	require.NoError(t, err)
+
+	pp := noopParser(t)
 	s, err := NewLocalServer(pp, logger.GetLogger(),
 		serveroption.WithMaxFlows(numFlows),
 		serveroption.WithMonitorBuffer(queueSize),
@@ -113,4 +107,73 @@ func TestLocalObserverServer_GetFlows(t *testing.T) {
 	err = s.GetFlows(req, fakeServer)
 	assert.NoError(t, err)
 	assert.Equal(t, req.Number, uint64(i))
+}
+
+type fakeCiliumDaemon struct{}
+
+func (f *fakeCiliumDaemon) DebugEnabled() bool {
+	return true
+}
+
+func TestHooks(t *testing.T) {
+	numFlows := 10
+	queueSize := 0
+
+	ciliumDaemon := &fakeCiliumDaemon{}
+	onServerInit := func(srv serveroption.Server) error {
+		assert.Equal(t, srv.GetOptions().CiliumDaemon, ciliumDaemon)
+		return nil
+	}
+
+	seenFlows := int64(0)
+	skipEveryNFlows := int64(2)
+	onMonitorEventFirst := func(ctx context.Context, payload *pb.Payload) (bool, error) {
+		seenFlows++
+
+		assert.Equal(t, payload.Time.Seconds, seenFlows-1)
+		if seenFlows%skipEveryNFlows == 0 {
+			return true, nil
+		}
+		return false, nil
+	}
+	onMonitorEventSecond := func(ctx context.Context, payload *pb.Payload) (bool, error) {
+		if seenFlows%skipEveryNFlows == 0 {
+			assert.Fail(t, "server did not break loop after onMonitorEventFirst")
+		}
+		return false, nil
+	}
+	onDecodedFlow := func(ctx context.Context, f *pb.Flow) (bool, error) {
+		if seenFlows%skipEveryNFlows == 0 {
+			assert.Fail(t, "server did not stop decoding after onMonitorEventFirst")
+		}
+		return false, nil
+	}
+
+	pp := noopParser(t)
+	s, err := NewLocalServer(pp, logger.GetLogger(),
+		serveroption.WithMaxFlows(numFlows),
+		serveroption.WithMonitorBuffer(queueSize),
+		serveroption.WithCiliumDaemon(ciliumDaemon),
+		serveroption.WithOnServerInitFunc(onServerInit),
+		serveroption.WithOnMonitorEventFunc(onMonitorEventFirst),
+		serveroption.WithOnMonitorEventFunc(onMonitorEventSecond),
+		serveroption.WithOnDecodedFlowFunc(onDecodedFlow),
+	)
+	require.NoError(t, err)
+	go s.Start()
+
+	m := s.GetEventsChannel()
+	for i := 0; i < numFlows; i++ {
+		tn := monitor.TraceNotifyV0{Type: byte(monitorAPI.MessageTypeTrace)}
+		data := testutils.MustCreateL3L4Payload(tn)
+		pl := &pb.Payload{
+			Time: &types.Timestamp{Seconds: int64(i)},
+			Type: pb.EventType_EventSample,
+			Data: data,
+		}
+		m <- pl
+	}
+	close(s.GetEventsChannel())
+	<-s.GetStopped()
+	assert.Equal(t, int64(numFlows), seenFlows)
 }
