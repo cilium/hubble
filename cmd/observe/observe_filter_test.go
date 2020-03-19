@@ -172,3 +172,54 @@ func TestLabels(t *testing.T) {
 	}, f.whitelist.flowFilters())
 	assert.Nil(t, f.blacklist)
 }
+
+func TestIdentity(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(f)
+	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
+	assert.Equal(t, []*pb.FlowFilter{
+		{
+			SourceIdentity: []uint64{1, 2},
+			EventType:      []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
+		},
+		{
+			DestinationIdentity: []uint64{1, 2},
+			EventType:           []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
+		},
+	}, f.whitelist.flowFilters())
+	assert.Nil(t, f.blacklist)
+}
+
+func TestFromIdentity(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(f)
+	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
+	assert.Equal(t, []*pb.FlowFilter{
+		{
+			SourceIdentity: []uint64{1, 2},
+			EventType:      []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
+		},
+	}, f.whitelist.flowFilters())
+	assert.Nil(t, f.blacklist)
+}
+
+func TestToIdentity(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(f)
+	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
+	assert.Equal(t, []*pb.FlowFilter{
+		{
+			DestinationIdentity: []uint64{1, 2},
+			EventType:           []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
+		},
+	}, f.whitelist.flowFilters())
+	assert.Nil(t, f.blacklist)
+}
+
+func TestInvalidIdentity(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(f)
+	require.Error(t, cmd.Flags().Parse([]string{"--from-identity", "bad"}))
+	require.Error(t, cmd.Flags().Parse([]string{"--to-identity", "bad"}))
+	require.Error(t, cmd.Flags().Parse([]string{"--identity", "bad"}))
+}
