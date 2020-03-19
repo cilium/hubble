@@ -99,7 +99,7 @@ func TestDecodeL7HTTPRecord(t *testing.T) {
 
 	data := encodeL7Record(t, lr)
 
-	dnsGetter := &testutils.FakeDNSGetter{
+	dnsGetter := &testutils.FakeFQDNCache{
 		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
 			ipStr := ip.String()
 			switch {
