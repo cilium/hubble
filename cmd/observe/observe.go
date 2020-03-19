@@ -210,6 +210,16 @@ programs attached to endpoints and devices. This includes:
 		"to-port", ofilter,
 		"Show only flows with the given destination port (e.g. 8080)"))
 
+	observerCmd.Flags().Var(filterVar(
+		"from-identity", ofilter,
+		"Show all flows originating at an endpoint with the given security identity"))
+	observerCmd.Flags().Var(filterVar(
+		"identity", ofilter,
+		"Show all flows related to an endpoint with the given security identity"))
+	observerCmd.Flags().Var(filterVar(
+		"to-identity", ofilter,
+		"Show all flows terminating at an endpoint with the given security identity"))
+
 	observerCmd.Flags().BoolVarP(
 		&jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
 	)
