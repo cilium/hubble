@@ -62,7 +62,7 @@ func TestL34Decode(t *testing.T) {
 			return nil, false
 		},
 	}
-	dnsGetter := &testutils.FakeDNSGetter{
+	dnsGetter := &testutils.FakeFQDNCache{
 		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
 			if epID == 1234 {
 				switch {
@@ -163,7 +163,7 @@ func TestL34Decode(t *testing.T) {
 			return nil, false
 		},
 	}
-	dnsGetter = &testutils.FakeDNSGetter{
+	dnsGetter = &testutils.FakeFQDNCache{
 		OnGetNamesOf: func(epID uint64, ip net.IP) (names []string) {
 			if epID == 1234 {
 				switch {

@@ -4,30 +4,50 @@ package testutils
 
 import (
 	"net"
+	"time"
 
 	"github.com/cilium/cilium/api/v1/models"
-	"github.com/gogo/protobuf/types"
-
 	pb "github.com/cilium/hubble/api/v1/flow"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/ipcache"
+	"github.com/gogo/protobuf/types"
 )
 
-// FakeDNSGetter is used for unit tests that needs DNSGetter.
-type FakeDNSGetter struct {
-	OnGetNamesOf func(sourceEpID uint64, ip net.IP) (names []string)
+// FakeFQDNCache is used for unit tests that needs FQDNCache and/or DNSGetter.
+type FakeFQDNCache struct {
+	OnInitializeFrom func(entries []*models.DNSLookup)
+	OnAddDNSLookup   func(epID uint64, lookupTime time.Time, domainName string, ips []net.IP, ttl uint32)
+	OnGetNamesOf     func(epID uint64, ip net.IP) []string
 }
 
-// GetNamesOf implements DNSGetter.GetNameOf.
-func (f *FakeDNSGetter) GetNamesOf(sourceEpID uint64, ip net.IP) (fqdns []string) {
-	if f.OnGetNamesOf != nil {
-		return f.OnGetNamesOf(sourceEpID, ip)
+// InitializeFrom implements FQDNCache.InitializeFrom.
+func (f *FakeFQDNCache) InitializeFrom(entries []*models.DNSLookup) {
+	if f.OnInitializeFrom != nil {
+		f.OnInitializeFrom(entries)
+		return
 	}
-	panic("OnGetNamesOf not set")
+	panic("InitializeFrom([]*models.DNSLookup) should not have been called since it was not defined")
+}
+
+// AddDNSLookup implements FQDNCache.AddDNSLookup.
+func (f *FakeFQDNCache) AddDNSLookup(epID uint64, lookupTime time.Time, domainName string, ips []net.IP, ttl uint32) {
+	if f.OnAddDNSLookup != nil {
+		f.OnAddDNSLookup(epID, lookupTime, domainName, ips, ttl)
+		return
+	}
+	panic("AddDNSLookup(uint64, time.Time, string, []net.IP, uint32) should not have been called since it was not defined")
+}
+
+// GetNamesOf implements FQDNCache.GetNameOf.
+func (f *FakeFQDNCache) GetNamesOf(epID uint64, ip net.IP) []string {
+	if f.OnGetNamesOf != nil {
+		return f.OnGetNamesOf(epID, ip)
+	}
+	panic("GetNamesOf(uint64, net.IP) should not have been called since it was not defined")
 }
 
 // NoopDNSGetter always returns an empty response.
-var NoopDNSGetter = FakeDNSGetter{
+var NoopDNSGetter = FakeFQDNCache{
 	OnGetNamesOf: func(sourceEpID uint64, ip net.IP) (fqdns []string) {
 		return nil
 	},
