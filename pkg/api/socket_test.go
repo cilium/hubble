@@ -21,11 +21,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_getGroupName(t *testing.T) {
+func Test_GetGroupName(t *testing.T) {
 	assert.NoError(t, os.Setenv(HubbleGroupNameKey, "mygroup"))
-	assert.Equal(t, getGroupName(), "mygroup")
+	assert.Equal(t, GetGroupName(), "mygroup")
 	assert.NoError(t, os.Unsetenv(HubbleGroupNameKey))
-	assert.Equal(t, getGroupName(), HubbleGroupName)
+	assert.Equal(t, GetGroupName(), HubbleGroupName)
 }
 
 func Test_GetDefaultSocketPath(t *testing.T) {
