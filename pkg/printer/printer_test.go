@@ -52,6 +52,7 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 			},
 		},
 		EventType: &pb.CiliumEventType{
+			Type:    monitorAPI.MessageTypeDrop,
 			SubType: 133,
 		},
 		Summary: "TCP Flags: SYN",
@@ -109,7 +110,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   D
 				`"IP":{"source":"1.1.1.1","destination":"2.2.2.2"},` +
 				`"l4":{"TCP":{"source_port":31793,"destination_port":8080}},` +
 				`"Type":"L3_L4","node_name":"k8s1",` +
-				`"event_type":{"sub_type":133},"Summary":"TCP Flags: SYN"}`,
+				`"event_type":{"type":1,"sub_type":133},"Summary":"TCP Flags: SYN"}`,
 		},
 		{
 			name: "dict",
