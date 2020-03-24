@@ -32,16 +32,18 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 		PodName      string
 		PodNamespace string
 	}
-	type args struct {
-		o *Endpoint
-	}
 	tests := []struct {
 		name   string
 		fields fields
-		args   args
+		arg    *Endpoint
 		want   bool
 	}{
 		{
+			name:   "<nil> endpoint",
+			fields: fields{},
+			arg:    nil,
+			want:   false,
+		}, {
 			name: "compare by a same ID and all other fields different should be considered equal",
 			fields: fields{
 				ContainerID:  []string{"foo"},
@@ -50,14 +52,12 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 				PodName:      "",
 				PodNamespace: "",
 			},
-			args: args{
-				o: &Endpoint{
-					ContainerIDs: []string{"bar"},
-					ID:           1,
-					IPv4:         net.ParseIP("1.1.1.1"),
-					PodName:      "",
-					PodNamespace: "",
-				},
+			arg: &Endpoint{
+				ContainerIDs: []string{"bar"},
+				ID:           1,
+				IPv4:         net.ParseIP("1.1.1.1"),
+				PodName:      "",
+				PodNamespace: "",
 			},
 			want: true,
 		},
@@ -70,14 +70,12 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 				PodName:      "pod-bar",
 				PodNamespace: "",
 			},
-			args: args{
-				o: &Endpoint{
-					ContainerIDs: []string{"bar"},
-					ID:           1,
-					IPv4:         net.ParseIP("1.1.1.1"),
-					PodName:      "pod-foo",
-					PodNamespace: "",
-				},
+			arg: &Endpoint{
+				ContainerIDs: []string{"bar"},
+				ID:           1,
+				IPv4:         net.ParseIP("1.1.1.1"),
+				PodName:      "pod-foo",
+				PodNamespace: "",
 			},
 			want: false,
 		},
@@ -90,14 +88,12 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 				PodName:      "pod-bar",
 				PodNamespace: "kube-system",
 			},
-			args: args{
-				o: &Endpoint{
-					ContainerIDs: []string{"bar"},
-					ID:           1,
-					IPv4:         net.ParseIP("1.1.1.1"),
-					PodName:      "pod-bar",
-					PodNamespace: "cilium",
-				},
+			arg: &Endpoint{
+				ContainerIDs: []string{"bar"},
+				ID:           1,
+				IPv4:         net.ParseIP("1.1.1.1"),
+				PodName:      "pod-bar",
+				PodNamespace: "cilium",
 			},
 			want: false,
 		},
@@ -110,14 +106,12 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 				PodName:      "",
 				PodNamespace: "",
 			},
-			args: args{
-				o: &Endpoint{
-					ContainerIDs: []string{"bar"},
-					ID:           1,
-					IPv4:         net.ParseIP("1.1.1.1"),
-					PodName:      "foo",
-					PodNamespace: "default",
-				},
+			arg: &Endpoint{
+				ContainerIDs: []string{"bar"},
+				ID:           1,
+				IPv4:         net.ParseIP("1.1.1.1"),
+				PodName:      "foo",
+				PodNamespace: "default",
 			},
 			want: true,
 		},
@@ -132,7 +126,7 @@ func TestEndpoint_EqualsByID(t *testing.T) {
 				PodName:      tt.fields.PodName,
 				PodNamespace: tt.fields.PodNamespace,
 			}
-			if got := e.EqualsByID(tt.args.o); got != tt.want {
+			if got := e.EqualsByID(tt.arg); got != tt.want {
 				t.Errorf("Equals() = %v, want %v", got, tt.want)
 			}
 		})
