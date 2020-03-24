@@ -331,6 +331,67 @@ func TestDecodeDropNotify(t *testing.T) {
 	assert.Equal(t, []string{"dst=label"}, f.GetDestination().GetLabels())
 }
 
+func TestDecodePolicyVerdictNotify(t *testing.T) {
+	var remoteLabel uint32 = 123
+	identityGetter := &testutils.FakeIdentityGetter{
+		OnGetIdentity: func(securityIdentity uint64) (*models.Identity, error) {
+			if securityIdentity == uint64(remoteLabel) {
+				return &models.Identity{Labels: []string{"dst=label"}}, nil
+			}
+			return nil, fmt.Errorf("identity not found for %d", securityIdentity)
+		},
+	}
+
+	parser, err := New(&testutils.NoopEndpointGetter, identityGetter, &testutils.NoopDNSGetter, &testutils.NoopIPGetter, &testutils.NoopServiceGetter)
+	require.NoError(t, err)
+
+	// PolicyVerdictNotify for forwarded flow
+	var flags uint8
+	flags |= monitor.PolicyEgress
+	flags |= monitor.PolicyMatchL3L4 << monitor.PolicyVerdictNotifyFlagMatchTypeBitOffset
+	pvn := monitor.PolicyVerdictNotify{
+		Type:        byte(api.MessageTypePolicyVerdict),
+		SubType:     0,
+		Flags:       flags,
+		RemoteLabel: remoteLabel,
+		Verdict:     0, // CTX_ACT_OK
+	}
+	data, err := testutils.CreateL3L4Payload(pvn)
+	require.NoError(t, err)
+
+	f := &pb.Flow{}
+	err = parser.Decode(&pb.Payload{Data: data}, f)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(api.MessageTypePolicyVerdict), f.GetEventType().GetType())
+	assert.Equal(t, pb.TrafficDirection_EGRESS, f.GetTrafficDirection())
+	assert.Equal(t, uint32(monitor.PolicyMatchL3L4), f.GetPolicyMatchType())
+	assert.Equal(t, pb.Verdict_FORWARDED, f.GetVerdict())
+	assert.Equal(t, []string{"dst=label"}, f.GetDestination().GetLabels())
+
+	// PolicyVerdictNotify for dropped flow
+	flags = monitor.PolicyIngress
+	pvn = monitor.PolicyVerdictNotify{
+		Type:        byte(api.MessageTypePolicyVerdict),
+		SubType:     0,
+		Flags:       flags,
+		RemoteLabel: remoteLabel,
+		Verdict:     -151, // drop reason: Stale or unroutable IP
+	}
+	data, err = testutils.CreateL3L4Payload(pvn)
+	require.NoError(t, err)
+
+	f.Reset()
+	err = parser.Decode(&pb.Payload{Data: data}, f)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(api.MessageTypePolicyVerdict), f.GetEventType().GetType())
+	assert.Equal(t, pb.TrafficDirection_INGRESS, f.GetTrafficDirection())
+	assert.Equal(t, uint32(151), f.GetDropReason())
+	assert.Equal(t, pb.Verdict_DROPPED, f.GetVerdict())
+	assert.Equal(t, []string{"dst=label"}, f.GetSource().GetLabels())
+}
+
 func TestDecodeDropReason(t *testing.T) {
 	reason := uint8(130)
 	dn := monitor.DropNotify{
