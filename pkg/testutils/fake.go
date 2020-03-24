@@ -281,6 +281,8 @@ type FakeFlow struct {
 	EventType          *pb.CiliumEventType
 	SourceService      *pb.Service
 	DestinationService *pb.Service
+	TrafficDirection   pb.TrafficDirection
+	PolicyMatchType    uint32
 }
 
 // Reset implements pb.Message for the FakeFlow.
@@ -375,6 +377,16 @@ func (f *FakeFlow) GetSourceService() *pb.Service {
 // GetDestinationService implements v1.Flow for the FakeFlow.
 func (f *FakeFlow) GetDestinationService() *pb.Service {
 	return f.DestinationService
+}
+
+// GetTrafficDirection implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetTrafficDirection() pb.TrafficDirection {
+	return f.TrafficDirection
+}
+
+// GetPolicyMatchType implements v1.Flow for the FakeFlow.
+func (f *FakeFlow) GetPolicyMatchType() uint32 {
+	return f.PolicyMatchType
 }
 
 // GetSummary implements v1.Flow for the FakeFlow.
