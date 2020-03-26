@@ -1,5 +1,4 @@
-# Hijack PATH so we can run the repository's protoc-gen-go version
-PROTOC := PATH=.:${PATH} protoc
+PROTOC ?= protoc
 
 HUBBLE_PROTO_SOURCES := \
 	./flow/flow.proto \
@@ -8,6 +7,10 @@ HUBBLE_PROTO_SOURCES := \
 HUBBLE_GO_TARGETS := $(HUBBLE_PROTO_SOURCES:.proto=.pb.go) $(HUBBLE_PROTO_SOURCES:.proto=.pb.validate.go)
 
 HUBBLE_PROTO_PATH := .
+
+HUBBLE_PROTOC_PLUGINS := --plugin=./protoc-gen-go
+HUBBLE_PROTOC_PLUGINS += --plugin=./protoc-gen-go-json
+HUBBLE_PROTOC_PLUGINS += --plugin=./protoc-gen-validate
 
 PROTO_DEPS = \
 	-I external
@@ -32,7 +35,7 @@ GO_MAPPINGS := $(patsubst %/,%,$(map_sep)$(subst $(file_sep),$(map_sep),$(RAW_GO
 $(HUBBLE_GO_TARGETS): $(HUBBLE_PROTO_SOURCES) Makefile deps
 	$(QUIET)set -e; \
 	for proto in $(HUBBLE_PROTO_SOURCES) ; do \
-		$(PROTOC) -I $(HUBBLE_PROTO_PATH) $(PROTO_DEPS) \
+		$(PROTOC) $(HUBBLE_PROTOC_PLUGINS) -I $(HUBBLE_PROTO_PATH) $(PROTO_DEPS) \
 			--go_out=plugins=grpc$(GO_MAPPINGS):. --validate_out=lang=go$(GO_MAPPINGS):. --go-json_out=orig_name:. \
 			$${proto}; \
 	done
