@@ -55,6 +55,14 @@ const (
 	// SockPathEnv is the environment variable to overwrite SockPath
 	SockPathEnv = "CILIUM_SOCK"
 
+	// HubbleSockPath is the path to the UNIX domain socket exposing the Hubble
+	// API to clients locally.
+	HubbleSockPath = RuntimePath + "/hubble.sock"
+
+	// HubbleSockPathEnv is the environment variable to overwrite
+	// HubbleSockPath.
+	HubbleSockPathEnv = "HUBBLE_SOCK"
+
 	// MonitorSockPath1_2 is the path to the UNIX domain socket used to
 	// distribute BPF and agent events to listeners.
 	// This is the 1.2 protocol version.
@@ -292,9 +300,9 @@ const (
 	// It is calculated as Min(int64 positive max, etcd MaxLeaseTTL, consul MaxLeaseTTL)
 	KVstoreLeaseMaxTTL = 86400 * time.Second
 
-	// ENIPreAllocation is the default value for
-	// CiliumNode.Spec.ENI.PreAllocate if no value is set
-	ENIPreAllocation = 8
+	// IPAMPreAllocation is the default value for
+	// CiliumNode.Spec.IPAM.PreAllocate if no value is set
+	IPAMPreAllocation = 8
 
 	// ENIFirstInterfaceIndex is the default value for
 	// CiliumNode.Spec.ENI.FirstInterfaceIndex if no value is set
