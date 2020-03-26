@@ -57,6 +57,19 @@ github.com/cilium/cilium/pkg/u8proto
 github.com/cilium/cilium/pkg/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/envoyproxy/protoc-gen-validate v0.3.0-java
+## explicit
+github.com/envoyproxy/protoc-gen-validate
+github.com/envoyproxy/protoc-gen-validate/gogoproto
+github.com/envoyproxy/protoc-gen-validate/module
+github.com/envoyproxy/protoc-gen-validate/templates
+github.com/envoyproxy/protoc-gen-validate/templates/cc
+github.com/envoyproxy/protoc-gen-validate/templates/go
+github.com/envoyproxy/protoc-gen-validate/templates/gogo
+github.com/envoyproxy/protoc-gen-validate/templates/goshared
+github.com/envoyproxy/protoc-gen-validate/templates/java
+github.com/envoyproxy/protoc-gen-validate/templates/shared
+github.com/envoyproxy/protoc-gen-validate/validate
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/ghodss/yaml v1.0.0
@@ -143,12 +156,17 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
+# github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
+github.com/iancoleman/strcase
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 github.com/kardianos/osext
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/lyft/protoc-gen-star v0.4.14
+github.com/lyft/protoc-gen-star
+github.com/lyft/protoc-gen-star/lang/go
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.7.1
