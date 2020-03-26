@@ -37,6 +37,7 @@ import (
 	"github.com/cilium/cilium/pkg/logging"
 	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/cilium/pkg/metrics"
+	"github.com/cilium/cilium/pkg/version"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -286,6 +287,9 @@ const (
 	// LabelPrefixFile is the valid label prefixes file path
 	LabelPrefixFile = "label-prefix-file"
 
+	// EnableHostPort enables HostPort forwarding implemented by Cilium in BPF
+	EnableHostPort = "enable-host-port"
+
 	// EnableNodePort enables NodePort services implemented by Cilium in BPF
 	EnableNodePort = "enable-node-port"
 
@@ -487,12 +491,21 @@ const (
 	// BPFCompileDebugName is the name of the option to enable BPF compiliation debugging
 	BPFCompileDebugName = "bpf-compile-debug"
 
-	// CTMapEntriesGlobalTCP retains the Cilium 1.2 (or earlier) size to
-	// minimize disruption during upgrade.
-	CTMapEntriesGlobalTCPDefault = 1000000
+	// CTMapEntriesGlobalTCPDefault is the default maximum number of entries
+	// in the TCP CT table.
+	CTMapEntriesGlobalTCPDefault = 2 << 18 // 512Ki
+
+	// CTMapEntriesGlobalAnyDefault is the default maximum number of entries
+	// in the non-TCP CT table.
 	CTMapEntriesGlobalAnyDefault = 2 << 17 // 256Ki
-	CTMapEntriesGlobalTCPName    = "bpf-ct-global-tcp-max"
-	CTMapEntriesGlobalAnyName    = "bpf-ct-global-any-max"
+
+	// CTMapEntriesGlobalTCPName configures max entries for the TCP CT
+	// table.
+	CTMapEntriesGlobalTCPName = "bpf-ct-global-tcp-max"
+
+	// CTMapEntriesGlobalAnyName configures max entries for the non-TCP CT
+	// table.
+	CTMapEntriesGlobalAnyName = "bpf-ct-global-any-max"
 
 	// CTMapEntriesTimeout* name option and default value mappings
 	CTMapEntriesTimeoutSYNName    = "bpf-ct-timeout-regular-tcp-syn"
@@ -762,6 +775,12 @@ const (
 	// PolicyAuditModeArg argument enables policy audit mode.
 	PolicyAuditModeArg = "policy-audit-mode"
 
+	// EnableHubble enables hubble in the agent.
+	EnableHubble = "enable-hubble"
+
+	// HubbleSocketPath specifies the UNIX domain socket for Hubble server to listen to.
+	HubbleSocketPath = "hubble-socket-path"
+
 	// HubbleListenAddresses specifies addresses for Hubble server to listen to.
 	HubbleListenAddresses = "hubble-listen-addresses"
 
@@ -776,6 +795,32 @@ const (
 
 	// HubbleMetrics specifies enabled metrics and their configuration options.
 	HubbleMetrics = "hubble-metrics"
+
+	// DisableIptablesFeederRules specifies which chains will be excluded
+	// when installing the feeder rules
+	DisableIptablesFeederRules = "disable-iptables-feeder-rules"
+
+	// K8sHeartbeatTimeout configures the timeout for apiserver heartbeat
+	K8sHeartbeatTimeout = "k8s-heartbeat-timeout"
+
+	// EndpointStatus enables population of information in the
+	// CiliumEndpoint.Status resource
+	EndpointStatus = "endpoint-status"
+
+	// EndpointStatusPolicy enables CiliumEndpoint.Status.Policy
+	EndpointStatusPolicy = "policy"
+
+	// EndpointStatusHealth enables CilliumEndpoint.Status.Health
+	EndpointStatusHealth = "health"
+
+	// EndpointStatusControllers enables CiliumEndpoint.Status.Controllers
+	EndpointStatusControllers = "controllers"
+
+	// EndpointStatusLog enables CiliumEndpoint.Status.Log
+	EndpointStatusLog = "log"
+
+	// EndpointStatusState enables CiliumEndpoint.Status.State
+	EndpointStatusState = "state"
 )
 
 // Default string arguments
@@ -1385,6 +1430,9 @@ type DaemonConfig struct {
 	// EnableNodePort enables k8s NodePort service implementation in BPF
 	EnableNodePort bool
 
+	// EnableHostPort enables k8s Pod's hostPort mapping through BPF
+	EnableHostPort bool
+
 	// NodePortMode indicates in which mode NodePort implementation should run
 	// ("snat", "dsr" or "hybrid")
 	NodePortMode string
@@ -1549,6 +1597,12 @@ type DaemonConfig struct {
 	// Policy related decisions can be checked via the poicy verdict messages.
 	PolicyAuditMode bool
 
+	// EnableHubble specifies whether to enable the hubble server.
+	EnableHubble bool
+
+	// HubbleSocketPath specifies the UNIX domain socket for Hubble server to listen to.
+	HubbleSocketPath string
+
 	// HubbleListenAddresses specifies addresses for Hubble to listen to.
 	HubbleListenAddresses []string
 
@@ -1563,6 +1617,17 @@ type DaemonConfig struct {
 
 	// HubbleMetrics specifies enabled metrics and their configuration options.
 	HubbleMetrics []string
+
+	// K8sHeartbeatTimeout configures the timeout for apiserver heartbeat
+	K8sHeartbeatTimeout time.Duration
+
+	// EndpointStatus enables population of information in the
+	// CiliumEndpoint.Status resource
+	EndpointStatus map[string]struct{}
+
+	// DisableIptablesFeederRules specifies which chains will be excluded
+	// when installing the feeder rules
+	DisableIptablesFeederRules []string
 }
 
 var (
@@ -1579,6 +1644,7 @@ var (
 		EnableIPv4:                   defaults.EnableIPv4,
 		EnableIPv6:                   defaults.EnableIPv6,
 		EnableL7Proxy:                defaults.EnableL7Proxy,
+		EndpointStatus:               make(map[string]struct{}),
 		ENITags:                      make(map[string]string),
 		ToFQDNsMaxIPsPerHost:         defaults.ToFQDNsMaxIPsPerHost,
 		KVstorePeriodicSync:          defaults.KVstorePeriodicSync,
@@ -1696,6 +1762,13 @@ func (c *DaemonConfig) IsFlannelMasterDeviceSet() bool {
 	return len(c.FlannelMasterDevice) != 0
 }
 
+// EndpointStatusIsEnabled returns true if a particular EndpointStatus* feature
+// is enabled
+func (c *DaemonConfig) EndpointStatusIsEnabled(option string) bool {
+	_, ok := c.EndpointStatus[option]
+	return ok
+}
+
 func (c *DaemonConfig) validateIPv6ClusterAllocCIDR() error {
 	ip, cidr, err := net.ParseCIDR(c.IPv6ClusterAllocCIDR)
 	if err != nil {
@@ -1803,6 +1876,13 @@ func (c *DaemonConfig) Validate() error {
 	if c.EnableHostReachableServices && !c.EnableHostServicesUDP && !c.EnableHostServicesTCP {
 		return fmt.Errorf("%s must be at minimum one of [%s,%s]",
 			HostReachableServicesProtos, HostServicesTCP, HostServicesUDP)
+	}
+
+	allowedEndpointStatusValues := EndpointStatusValuesMap()
+	for enabledEndpointStatus := range c.EndpointStatus {
+		if _, ok := allowedEndpointStatusValues[enabledEndpointStatus]; !ok {
+			return fmt.Errorf("unknown endpoint-status option '%s'", enabledEndpointStatus)
+		}
 	}
 
 	return nil
@@ -1935,6 +2015,7 @@ func (c *DaemonConfig) Populate() {
 	c.EgressMasqueradeInterfaces = viper.GetString(EgressMasqueradeInterfaces)
 	c.EnableHostReachableServices = viper.GetBool(EnableHostReachableServices)
 	c.EnableRemoteNodeIdentity = viper.GetBool(EnableRemoteNodeIdentity)
+	c.K8sHeartbeatTimeout = viper.GetDuration(K8sHeartbeatTimeout)
 	c.DockerEndpoint = viper.GetString(Docker)
 	c.EnableXTSocketFallback = viper.GetBool(EnableXTSocketFallbackName)
 	c.EnableAutoDirectRouting = viper.GetBool(EnableAutoDirectRoutingName)
@@ -2164,6 +2245,10 @@ func (c *DaemonConfig) Populate() {
 		c.IPAMAPIBurst = viper.GetInt(IPAMAPIBurst)
 	}
 
+	for _, option := range viper.GetStringSlice(EndpointStatus) {
+		c.EndpointStatus[option] = struct{}{}
+	}
+
 	if c.MonitorQueueSize == 0 {
 		c.MonitorQueueSize = getDefaultMonitorQueueSize(runtime.NumCPU())
 	}
@@ -2222,6 +2307,8 @@ func (c *DaemonConfig) Populate() {
 	}
 
 	// Hubble options.
+	c.EnableHubble = viper.GetBool(EnableHubble)
+	c.HubbleSocketPath = viper.GetString(HubbleSocketPath)
 	c.HubbleListenAddresses = viper.GetStringSlice(HubbleListenAddresses)
 	c.HubbleFlowBufferSize = viper.GetInt(HubbleFlowBufferSize)
 	c.HubbleEventQueueSize = viper.GetInt(HubbleEventQueueSize)
@@ -2230,6 +2317,7 @@ func (c *DaemonConfig) Populate() {
 	}
 	c.HubbleMetricsServer = viper.GetString(HubbleMetricsServer)
 	c.HubbleMetrics = viper.GetStringSlice(HubbleMetrics)
+	c.DisableIptablesFeederRules = viper.GetStringSlice(DisableIptablesFeederRules)
 
 	// Hidden options
 	c.ConfigFile = viper.GetString(ConfigFile)
@@ -2268,7 +2356,9 @@ func (c *DaemonConfig) populateNodePortRange() error {
 			return errors.New("NodePort range min port must be smaller than max port")
 		}
 	case 0:
-		log.Warning("NodePort range was set but is empty.")
+		if viper.IsSet(NodePortRange) {
+			log.Warning("NodePort range was set but is empty.")
+		}
 	default:
 		return fmt.Errorf("Unable to parse min/max port value for NodePort range: %s", NodePortRange)
 	}
@@ -2305,11 +2395,13 @@ func (c *DaemonConfig) populateHostServicesProtos() error {
 func sanitizeIntParam(paramName string, paramDefault int) int {
 	intParam := viper.GetInt(paramName)
 	if intParam <= 0 {
-		log.WithFields(
-			logrus.Fields{
-				"parameter":    paramName,
-				"defaultValue": paramDefault,
-			}).Warning("user-provided parameter had value <= 0 , which is invalid ; setting to default")
+		if !viper.IsSet(paramName) {
+			log.WithFields(
+				logrus.Fields{
+					"parameter":    paramName,
+					"defaultValue": paramDefault,
+				}).Warning("user-provided parameter had value <= 0 , which is invalid ; setting to default")
+		}
 		return paramDefault
 	}
 	return intParam
@@ -2340,8 +2432,13 @@ func getHostDevice() string {
 }
 
 // InitConfig reads in config file and ENV variables if set.
-func InitConfig(configName string) func() {
+func InitConfig(programName, configName string) func() {
 	return func() {
+		if viper.GetBool("version") {
+			fmt.Printf("%s %s\n", programName, version.Version)
+			os.Exit(0)
+		}
+
 		if viper.GetString(CMDRef) != "" {
 			return
 		}
@@ -2393,4 +2490,24 @@ func getDefaultMonitorQueueSize(numCPU int) int {
 		monitorQueueSize = defaults.MonitorQueueSizePerCPUMaximum
 	}
 	return monitorQueueSize
+}
+
+// EndpointStatusValues returns all available EndpointStatus option values
+func EndpointStatusValues() []string {
+	return []string{
+		EndpointStatusControllers,
+		EndpointStatusHealth,
+		EndpointStatusLog,
+		EndpointStatusPolicy,
+		EndpointStatusState,
+	}
+}
+
+// EndpointStatusValuesMap returns all EndpointStatus option values as a map
+func EndpointStatusValuesMap() (values map[string]struct{}) {
+	values = map[string]struct{}{}
+	for _, v := range EndpointStatusValues() {
+		values[v] = struct{}{}
+	}
+	return
 }

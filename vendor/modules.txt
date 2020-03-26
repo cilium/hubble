@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2.0.20200311180626-711b37ed100c
+# github.com/cilium/cilium v1.7.0-rc2.0.20200326091627-7c023b53832d
 ## explicit
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
@@ -92,7 +92,7 @@ github.com/go-openapi/swag
 github.com/go-openapi/validate
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/gogo/protobuf v1.3.0
+# github.com/gogo/protobuf v1.3.1
 ## explicit
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
@@ -177,7 +177,7 @@ github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus/testutil
-# github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
+# github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.7.0
 github.com/prometheus/common/expfmt
@@ -232,7 +232,7 @@ go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 ## explicit
 go.uber.org/goleak
 go.uber.org/goleak/internal/stack
-# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+# golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/lint v0.0.0-20190930215403-16217165b5de
@@ -270,9 +270,10 @@ golang.org/x/tools/go/internal/gcimporter
 # google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.25.1
+# google.golang.org/grpc v1.26.0
 ## explicit
 google.golang.org/grpc
+google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
@@ -313,7 +314,7 @@ google.golang.org/grpc/tap
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# k8s.io/apimachinery v0.17.3
+# k8s.io/apimachinery v0.18.0-rc.1
 ## explicit
 k8s.io/apimachinery/pkg/labels
 k8s.io/apimachinery/pkg/selection
