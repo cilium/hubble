@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/gogo/protobuf/types"
 	"github.com/google/gopacket/layers"
@@ -466,6 +467,32 @@ func Test_getFlowType(t *testing.T) {
 				},
 			},
 			want: "to-host",
+		},
+		{
+			name: "L4",
+			args: args{
+				f: &pb.Flow{
+					Verdict: pb.Verdict_FORWARDED,
+					EventType: &pb.CiliumEventType{
+						Type: monitorAPI.MessageTypePolicyVerdict,
+					},
+					PolicyMatchType: monitor.PolicyMatchL3L4,
+				},
+			},
+			want: "L3-L4",
+		},
+		{
+			name: "L4",
+			args: args{
+				f: &pb.Flow{
+					Verdict: pb.Verdict_DROPPED,
+					EventType: &pb.CiliumEventType{
+						Type: monitorAPI.MessageTypePolicyVerdict,
+					},
+					DropReason: 153,
+				},
+			},
+			want: "Error while correcting L3 checksum",
 		},
 		{
 			name: "invalid",
