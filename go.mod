@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/cilium/cilium v1.7.0-rc2.0.20200326091627-7c023b53832d
+	github.com/envoyproxy/protoc-gen-validate v0.3.0-java
 	github.com/go-openapi/strfmt v0.19.4
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.2
