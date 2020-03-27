@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2.0.20200326091627-7c023b53832d
+# github.com/cilium/cilium v1.7.0-rc2.0.20200327082155-88f11f48d940
 ## explicit
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
@@ -332,7 +332,7 @@ google.golang.org/grpc/tap
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# k8s.io/apimachinery v0.18.0-rc.1
+# k8s.io/apimachinery v0.18.0
 ## explicit
 k8s.io/apimachinery/pkg/labels
 k8s.io/apimachinery/pkg/selection
@@ -344,4 +344,4 @@ k8s.io/apimachinery/pkg/util/validation/field
 k8s.io/klog
 # github.com/miekg/dns => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
 # github.com/optiopay/kafka => github.com/cilium/kafka v0.0.0-20180809090225-01ce283b732b
-# k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200217141255-96fd08586691
+# k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200326103132-fe7bd31c2794
