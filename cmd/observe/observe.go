@@ -64,9 +64,8 @@ var (
 		// monitorAPI.MessageTypeAgent,
 	}
 
-	serverURL        string
-	serverTimeoutVar string
-	serverTimeout    time.Duration
+	serverURL     string
+	serverTimeout time.Duration
 
 	numeric bool
 )
@@ -111,8 +110,8 @@ programs attached to endpoints and devices. This includes:
 	observerCmd.Flags().StringVarP(&serverURL,
 		"server", "", api.GetDefaultSocketPath(),
 		"URL to connect to server")
-	observerCmd.Flags().StringVar(&serverTimeoutVar,
-		"timeout", "5s",
+	observerCmd.Flags().DurationVar(&serverTimeout,
+		"timeout", 5*time.Second,
 		"How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, allTypes,
@@ -265,11 +264,6 @@ programs attached to endpoints and devices. This includes:
 func handleArgs(ofilter *observeFilter) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
-	}
-
-	serverTimeout, err = time.ParseDuration(serverTimeoutVar)
-	if err != nil {
-		return fmt.Errorf("failed to parse server-timeout duration: %v", err)
 	}
 
 	// initialize the printer with any options that were passed in
