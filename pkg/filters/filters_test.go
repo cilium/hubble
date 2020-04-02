@@ -15,6 +15,7 @@
 package filters
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -217,9 +218,9 @@ func TestIPFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildFilterList() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildFilterList(context.Background(), ) error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			for i, ev := range tt.args.ev {
@@ -456,9 +457,9 @@ func TestPodFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildFilterList() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildFilterList(context.Background(), ) error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			for i, ev := range tt.args.ev {
@@ -524,9 +525,9 @@ func TestServiceFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildFilterList() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildFilterList(context.Background(), ) error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			for i, ev := range tt.args.ev {
@@ -727,9 +728,9 @@ func TestFQDNFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("BuildFilterList() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("BuildFilterList(context.Background(), ) error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			for i, ev := range tt.args.ev {
@@ -958,7 +959,7 @@ func TestHttpStatusCodeFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -1363,7 +1364,7 @@ func TestLabelSelectorFilter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -1453,7 +1454,7 @@ func TestFlowProtocolFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -1549,7 +1550,7 @@ func TestPortFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -1681,7 +1682,7 @@ func Test_filterByReplyField(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("\"%s\" error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -1776,7 +1777,7 @@ func Test_filterByDNSQuery(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			assert.Equal(t, tt.wantErr, err != nil)
 			if err == nil {
 				got := fl.MatchOne(tt.args.ev)
@@ -1856,9 +1857,49 @@ func TestIdentityFilter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fl, err := BuildFilterList(tt.args.f)
+			fl, err := BuildFilterList(context.Background(), tt.args.f, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, fl.MatchOne(tt.args.ev))
 		})
 	}
+}
+
+type testFilterTrue struct{}
+
+func (t *testFilterTrue) OnBuildFilter(_ context.Context, ff *pb.FlowFilter) ([]FilterFunc, error) {
+	return []FilterFunc{func(ev *v1.Event) bool { return true }}, nil
+}
+
+type testFilterFalse struct{}
+
+func (t *testFilterFalse) OnBuildFilter(_ context.Context, ff *pb.FlowFilter) ([]FilterFunc, error) {
+	return []FilterFunc{func(ev *v1.Event) bool { return false }}, nil
+}
+
+func TestOnBuildFilter(t *testing.T) {
+	fl, err := BuildFilterList(context.Background(),
+		[]*pb.FlowFilter{{SourceIdentity: []uint64{1, 2, 3}}}, // true
+		[]OnBuildFilter{&testFilterTrue{}})                    // true
+	assert.NoError(t, err)
+	assert.Equal(t, true, fl.MatchAll(&v1.Event{Event: &pb.Flow{
+		Source: &pb.Endpoint{Identity: 3},
+	}}))
+
+	fl, err = BuildFilterList(context.Background(),
+		[]*pb.FlowFilter{{SourceIdentity: []uint64{1, 2, 3}}}, // true
+		[]OnBuildFilter{&testFilterFalse{}})                   // false
+	assert.NoError(t, err)
+	assert.Equal(t, false, fl.MatchAll(&v1.Event{Event: &pb.Flow{
+		Source: &pb.Endpoint{Identity: 3},
+	}}))
+
+	fl, err = BuildFilterList(context.Background(),
+		[]*pb.FlowFilter{{SourceIdentity: []uint64{1, 2, 3}}}, // true
+		[]OnBuildFilter{
+			&testFilterFalse{}, // false
+			&testFilterTrue{}}) // true
+	assert.NoError(t, err)
+	assert.Equal(t, false, fl.MatchAll(&v1.Event{Event: &pb.Flow{
+		Source: &pb.Endpoint{Identity: 3},
+	}}))
 }
