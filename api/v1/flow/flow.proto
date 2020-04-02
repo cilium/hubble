@@ -182,6 +182,7 @@ enum Verdict {
     VERDICT_UNKNOWN = 0;
     FORWARDED = 1;
     DROPPED = 2;
+    ERROR = 3;
 }
 
 enum TrafficDirection {

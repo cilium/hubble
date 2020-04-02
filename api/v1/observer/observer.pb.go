@@ -133,6 +133,7 @@ var Verdict_value = flow.Verdict_value
 const Verdict_VERDICT_UNKNOWN = Verdict(flow.Verdict_VERDICT_UNKNOWN)
 const Verdict_FORWARDED = Verdict(flow.Verdict_FORWARDED)
 const Verdict_DROPPED = Verdict(flow.Verdict_DROPPED)
+const Verdict_ERROR = Verdict(flow.Verdict_ERROR)
 
 // TrafficDirection from public import flow/flow.proto
 type TrafficDirection = flow.TrafficDirection
