@@ -211,6 +211,8 @@ func decodeVerdict(verdict accesslog.FlowVerdict) pb.Verdict {
 		return pb.Verdict_DROPPED
 	case accesslog.VerdictForwarded:
 		return pb.Verdict_FORWARDED
+	case accesslog.VerdictError:
+		return pb.Verdict_ERROR
 	default:
 		return pb.Verdict_VERDICT_UNKNOWN
 	}
