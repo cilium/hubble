@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/pkg/filters"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,9 +50,10 @@ type Options struct {
 
 	CiliumDaemon CiliumDaemon // when running inside Cilium, contains a reference to the daemon
 
-	OnServerInit   []OnServerInit   // invoked when the hubble server is initialized
-	OnMonitorEvent []OnMonitorEvent // invoked before an event is decoded
-	OnDecodedFlow  []OnDecodedFlow  // invoked after a flow has been decoded
+	OnServerInit   []OnServerInit          // invoked when the hubble server is initialized
+	OnMonitorEvent []OnMonitorEvent        // invoked before an event is decoded
+	OnDecodedFlow  []OnDecodedFlow         // invoked after a flow has been decoded
+	OnBuildFilter  []filters.OnBuildFilter // invoked while building a flow filter
 }
 
 // returning `stop: true` from a callback stops the execution chain, regardless
@@ -163,4 +165,17 @@ func WithOnDecodedFlow(f OnDecodedFlow) Option {
 // WithOnDecodedFlowFunc adds a new callback to be invoked after decoding
 func WithOnDecodedFlowFunc(f func(context.Context, *pb.Flow) (stop, error)) Option {
 	return WithOnDecodedFlow(OnDecodedFlowFunc(f))
+}
+
+// WithOnBuildFilter adds a new callback to be invoked while building a flow filter
+func WithOnBuildFilter(f filters.OnBuildFilter) Option {
+	return func(o *Options) error {
+		o.OnBuildFilter = append(o.OnBuildFilter, f)
+		return nil
+	}
+}
+
+// WithOnBuildFilterFunc adds a new callback to be invoked while building flow filters
+func WithOnBuildFilterFunc(f filters.OnBuildFilterFunc) Option {
+	return WithOnBuildFilter(filters.OnBuildFilterFunc(f))
 }
