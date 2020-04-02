@@ -220,11 +220,12 @@ func (s *LocalObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	whitelist, err := filters.BuildFilterList(server.Context(), req.Whitelist, s.opts.OnBuildFilter)
+	filterList := append(filters.DefaultFilters, s.opts.OnBuildFilter...)
+	whitelist, err := filters.BuildFilterList(server.Context(), req.Whitelist, filterList)
 	if err != nil {
 		return err
 	}
-	blacklist, err := filters.BuildFilterList(server.Context(), req.Blacklist, s.opts.OnBuildFilter)
+	blacklist, err := filters.BuildFilterList(server.Context(), req.Blacklist, filterList)
 	if err != nil {
 		return err
 	}
