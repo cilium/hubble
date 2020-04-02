@@ -220,13 +220,23 @@ func (s *LocalObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
-	return getFlows(req, server, s)
+	whitelist, err := filters.BuildFilterList(server.Context(), req.Whitelist, s.opts.OnBuildFilter)
+	if err != nil {
+		return err
+	}
+	blacklist, err := filters.BuildFilterList(server.Context(), req.Blacklist, s.opts.OnBuildFilter)
+	if err != nil {
+		return err
+	}
+
+	return getFlows(req, server, s, whitelist, blacklist)
 }
 
 func getFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 	obs GRPCServer,
+	whitelist, blacklist filters.FilterFuncs,
 ) (err error) {
 	start := time.Now()
 	log := obs.GetLogger()
@@ -243,14 +253,14 @@ func getFlows(
 		}).Debug("GetFlows finished")
 	}()
 
-	ringReader, err := newRingReader(ring, req)
+	ringReader, err := newRingReader(ring, req, whitelist, blacklist)
 	if err != nil {
 		if err == io.EOF {
 			return nil
 		}
 		return err
 	}
-	flowsReader, err := newFlowsReader(ringReader, req, log)
+	flowsReader, err := newFlowsReader(ringReader, req, log, whitelist, blacklist)
 	if err != nil {
 		return err
 	}
@@ -315,16 +325,7 @@ type flowsReader struct {
 // newFlowsReader creates a new flowsReader that uses the given RingReader to
 // read through the ring buffer. Only flows that match the request criterias
 // are returned.
-func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *logrus.Entry) (*flowsReader, error) {
-	whitelist, err := filters.BuildFilterList(req.Whitelist)
-	if err != nil {
-		return nil, err
-	}
-	blacklist, err := filters.BuildFilterList(req.Blacklist)
-	if err != nil {
-		return nil, err
-	}
-
+func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log *logrus.Entry, whitelist, blacklist filters.FilterFuncs) (*flowsReader, error) {
 	log.WithFields(logrus.Fields{
 		"req":       req,
 		"whitelist": whitelist,
@@ -340,6 +341,7 @@ func newFlowsReader(r *container.RingReader, req *observer.GetFlowsRequest, log 
 		timeRange:  !req.Follow && req.Number == 0,
 	}
 	if reader.timeRange { // apply time range filtering
+		var err error
 		reader.start, err = types.TimestampFromProto(req.GetSince())
 		if err != nil {
 			return nil, err
@@ -394,7 +396,7 @@ func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
 
 // newRingReader creates a new RingReader that starts at the correct ring
 // offset to match the flow request.
-func newRingReader(ring *container.Ring, req *observer.GetFlowsRequest) (*container.RingReader, error) {
+func newRingReader(ring *container.Ring, req *observer.GetFlowsRequest, whitelist, blacklist filters.FilterFuncs) (*container.RingReader, error) {
 	if req.Follow && req.Number == 0 { // no need to rewind
 		return container.NewRingReader(ring, ring.LastWriteParallel()), nil
 	}
@@ -407,14 +409,6 @@ func newRingReader(ring *container.Ring, req *observer.GetFlowsRequest) (*contai
 		if err != nil {
 			return nil, err
 		}
-	}
-	whitelist, err := filters.BuildFilterList(req.Whitelist)
-	if err != nil {
-		return nil, err
-	}
-	blacklist, err := filters.BuildFilterList(req.Blacklist)
-	if err != nil {
-		return nil, err
 	}
 
 	idx := ring.LastWriteParallel()

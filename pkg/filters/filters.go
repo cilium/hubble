@@ -15,6 +15,7 @@
 package filters
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -540,11 +541,24 @@ func filterByDNSQueries(queryPatterns []string) (FilterFunc, error) {
 	}, nil
 }
 
+// OnBuildFilter is invoked while building a flow filter
+type OnBuildFilter interface {
+	OnBuildFilter(context.Context, *pb.FlowFilter) ([]FilterFunc, error)
+}
+
+// OnBuildFilterFunc implements OnBuildFilter for a single function
+type OnBuildFilterFunc func(context.Context, *pb.FlowFilter) ([]FilterFunc, error)
+
+// OnBuildFilter is invoked while building a flow filter
+func (f OnBuildFilterFunc) OnBuildFilter(ctx context.Context, flow *pb.FlowFilter) ([]FilterFunc, error) {
+	return f(ctx, flow)
+}
+
 // BuildFilter builds a filter based on a FlowFilter. It returns:
 // - the FilterFunc to be used to filter packets based on the requested
 //   FlowFilter;
 // - an error in case something went wrong.
-func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
+func BuildFilter(ctx context.Context, ff *pb.FlowFilter, auxFilters []OnBuildFilter) (FilterFuncs, error) {
 	var fs []FilterFunc
 
 	// Always prioritize the type filter first. If used it will save a lot of
@@ -695,6 +709,14 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 		fs = append(fs, filterByIdentity(ff.GetDestinationIdentity(), destinationEndpoint))
 	}
 
+	for _, f := range auxFilters {
+		fl, err := f.OnBuildFilter(ctx, ff)
+		if err != nil {
+			return nil, err
+		}
+		fs = append(fs, fl...)
+	}
+
 	return fs, nil
 }
 
@@ -703,12 +725,12 @@ func BuildFilter(ff *pb.FlowFilter) (FilterFuncs, error) {
 // - the FilterFunc to be used to filter packets based on the requested
 //   FlowFilter;
 // - an error in case something went wrong.
-func BuildFilterList(ff []*pb.FlowFilter) (FilterFuncs, error) {
+func BuildFilterList(ctx context.Context, ff []*pb.FlowFilter, auxFilters []OnBuildFilter) (FilterFuncs, error) {
 	filterList := make([]FilterFunc, 0, len(ff))
 
 	for _, flowFilter := range ff {
 		// Build filter matching on all requirements of the FlowFilter
-		tf, err := BuildFilter(flowFilter)
+		tf, err := BuildFilter(ctx, flowFilter, auxFilters)
 		if err != nil {
 			return nil, err
 		}
