@@ -375,20 +375,20 @@ func (r *flowsReader) Next(ctx context.Context) (*pb.Flow, error) {
 		if e == nil {
 			return nil, io.EOF
 		}
+		if r.timeRange {
+			ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
+			if err != nil {
+				return nil, err
+			}
+			if ts.After(r.end) {
+				return nil, io.EOF
+			}
+			if ts.Before(r.start) {
+				continue
+			}
+		}
 		flow, ok := e.Event.(*pb.Flow)
 		if ok && filters.Apply(r.whitelist, r.blacklist, e) {
-			if r.timeRange {
-				ts, err := types.TimestampFromProto(e.GetFlow().GetTime())
-				if err != nil {
-					return nil, err
-				}
-				if ts.After(r.end) {
-					return nil, io.EOF
-				}
-				if ts.Before(r.start) {
-					continue
-				}
-			}
 			r.flowsCount++
 			return flow, nil
 		}
