@@ -19,6 +19,7 @@ import (
 	"net"
 
 	"github.com/cilium/hubble/api/v1/observer"
+	"github.com/cilium/hubble/api/v1/peer"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -49,6 +50,9 @@ func (s *Server) initGRPCServer() {
 	}
 	if s.opts.ObserverService != nil {
 		observer.RegisterObserverServer(srv, *s.opts.ObserverService)
+	}
+	if s.opts.PeerService != nil {
+		peer.RegisterPeerServer(srv, *s.opts.PeerService)
 	}
 	s.srv = srv
 }

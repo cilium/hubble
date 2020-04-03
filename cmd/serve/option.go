@@ -20,6 +20,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cilium/hubble/api/v1/peer"
 	"github.com/cilium/hubble/pkg/api"
 	v1 "github.com/cilium/hubble/pkg/api/v1"
 	"github.com/cilium/hubble/pkg/server"
@@ -38,6 +39,7 @@ type Options struct {
 	Listeners       map[string]net.Listener
 	HealthService   *health.Server
 	ObserverService *server.GRPCServer
+	PeerService     *peer.PeerServer
 }
 
 // Option customizes then configuration of the hubble server.
@@ -123,6 +125,14 @@ func WithHealthService() Option {
 func WithObserverService(svc server.GRPCServer) Option {
 	return func(o *Options) error {
 		o.ObserverService = &svc
+		return nil
+	}
+}
+
+// WithPeerService configures the server to expose the given peer server service.
+func WithPeerService(svc peer.PeerServer) Option {
+	return func(o *Options) error {
+		o.PeerService = &svc
 		return nil
 	}
 }
