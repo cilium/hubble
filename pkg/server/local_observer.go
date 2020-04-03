@@ -230,18 +230,9 @@ func (s *LocalObserverServer) GetFlows(
 		return err
 	}
 
-	return getFlows(req, server, s, whitelist, blacklist)
-}
-
-func getFlows(
-	req *observer.GetFlowsRequest,
-	server observer.Observer_GetFlowsServer,
-	obs GRPCServer,
-	whitelist, blacklist filters.FilterFuncs,
-) (err error) {
 	start := time.Now()
-	log := obs.GetLogger()
-	ring := obs.GetRingBuffer()
+	log := s.GetLogger()
+	ring := s.GetRingBuffer()
 
 	i := uint64(0)
 	defer func() {
