@@ -54,6 +54,7 @@ type Options struct {
 	OnMonitorEvent []OnMonitorEvent        // invoked before an event is decoded
 	OnDecodedFlow  []OnDecodedFlow         // invoked after a flow has been decoded
 	OnBuildFilter  []filters.OnBuildFilter // invoked while building a flow filter
+	OnFlowDelivery []OnDecodedFlow         // invoked before a flow is delivered via API
 }
 
 // returning `stop: true` from a callback stops the execution chain, regardless
@@ -178,4 +179,17 @@ func WithOnBuildFilter(f filters.OnBuildFilter) Option {
 // WithOnBuildFilterFunc adds a new callback to be invoked while building flow filters
 func WithOnBuildFilterFunc(f filters.OnBuildFilterFunc) Option {
 	return WithOnBuildFilter(filters.OnBuildFilterFunc(f))
+}
+
+// WithOnFlowDelivery adds a new callback to be invoked before a flow is delivered via the API
+func WithOnFlowDelivery(f OnDecodedFlow) Option {
+	return func(o *Options) error {
+		o.OnFlowDelivery = append(o.OnFlowDelivery, f)
+		return nil
+	}
+}
+
+// WithOnFlowDeliveryFunc adds a new callback to be invoked before a flow is delivered via the API
+func WithOnFlowDeliveryFunc(f OnDecodedFlowFunc) Option {
+	return WithOnFlowDelivery(OnDecodedFlowFunc(f))
 }

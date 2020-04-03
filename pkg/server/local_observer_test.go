@@ -177,3 +177,57 @@ func TestHooks(t *testing.T) {
 	<-s.GetStopped()
 	assert.Equal(t, int64(numFlows), seenFlows)
 }
+
+func TestLocalObserverServer_OnFlowDelivery(t *testing.T) {
+	numFlows := 100
+	queueSize := 0
+	req := &observer.GetFlowsRequest{Number: uint64(100)}
+	flowsReceived := 0
+	fakeServer := &FakeGetFlowsServer{
+		OnSend: func(response *observer.GetFlowsResponse) error {
+			flowsReceived++
+			return nil
+		},
+		FakeGRPCServerStream: &FakeGRPCServerStream{
+			OnContext: func() context.Context {
+				return context.Background()
+			},
+		},
+	}
+
+	count := 0
+	onFlowDelivery := func(ctx context.Context, f *pb.Flow) (bool, error) {
+		count++
+		if count%2 == 0 {
+			return true, nil
+		}
+		return false, nil
+	}
+
+	pp := noopParser(t)
+	s, err := NewLocalServer(pp, logger.GetLogger(),
+		serveroption.WithMaxFlows(numFlows),
+		serveroption.WithMonitorBuffer(queueSize),
+		serveroption.WithOnFlowDeliveryFunc(onFlowDelivery),
+	)
+	require.NoError(t, err)
+	go s.Start()
+
+	m := s.GetEventsChannel()
+	for i := 0; i < numFlows; i++ {
+		tn := monitor.TraceNotifyV0{Type: byte(monitorAPI.MessageTypeTrace)}
+		data := testutils.MustCreateL3L4Payload(tn)
+		pl := &pb.Payload{
+			Time: &types.Timestamp{Seconds: int64(i)},
+			Type: pb.EventType_EventSample,
+			Data: data,
+		}
+		m <- pl
+	}
+	close(s.GetEventsChannel())
+	<-s.GetStopped()
+	err = s.GetFlows(req, fakeServer)
+	assert.NoError(t, err)
+	// Only every second flow should have been received
+	assert.Equal(t, flowsReceived, numFlows/2)
+}

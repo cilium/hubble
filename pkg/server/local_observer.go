@@ -257,6 +257,7 @@ func (s *LocalObserverServer) GetFlows(
 		return err
 	}
 
+nextFlow:
 	for ; ; i++ {
 		flow, err := flowsReader.Next(server.Context())
 		if err != nil {
@@ -265,6 +266,17 @@ func (s *LocalObserverServer) GetFlows(
 			}
 			return err
 		}
+
+		for _, f := range s.opts.OnFlowDelivery {
+			stop, err := f.OnDecodedFlow(server.Context(), flow)
+			if err != nil {
+				return err
+			}
+			if stop {
+				continue nextFlow
+			}
+		}
+
 		err = server.Send(&observer.GetFlowsResponse{
 			ResponseTypes: &observer.GetFlowsResponse_Flow{
 				Flow: flow,
