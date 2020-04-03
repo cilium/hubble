@@ -2,6 +2,7 @@ PROTOC ?= protoc
 
 HUBBLE_PROTO_SOURCES := \
 	./flow/flow.proto \
+	./peer/peer.proto \
 	./observer/observer.proto
 
 HUBBLE_GO_TARGETS := $(HUBBLE_PROTO_SOURCES:.proto=.pb.go) $(HUBBLE_PROTO_SOURCES:.proto=.pb.validate.go)
@@ -22,6 +23,7 @@ RAW_GO_MAPPINGS += google/protobuf/timestamp.proto=github.com/gogo/protobuf/type
 RAW_GO_MAPPINGS += google/protobuf/wrappers.proto=github.com/gogo/protobuf/types/
 
 RAW_GO_MAPPINGS += flow/flow.proto=github.com/cilium/hubble/api/v1/flow/
+RAW_GO_MAPPINGS += peer/peer.proto=github.com/cilium/hubble/api/v1/peer/
 RAW_GO_MAPPINGS += observer/observer.proto=github.com/cilium/hubble/api/v1/observer/
 
 # Add mapping separators and remove the trailing slash
