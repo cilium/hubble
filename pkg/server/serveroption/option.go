@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/cilium/hubble/api/v1/flow"
+	"github.com/cilium/hubble/api/v1/observer"
 	"github.com/cilium/hubble/pkg/filters"
 	"github.com/sirupsen/logrus"
 )
@@ -55,6 +56,7 @@ type Options struct {
 	OnDecodedFlow  []OnDecodedFlow         // invoked after a flow has been decoded
 	OnBuildFilter  []filters.OnBuildFilter // invoked while building a flow filter
 	OnFlowDelivery []OnDecodedFlow         // invoked before a flow is delivered via API
+	OnGetFlows     []OnGetFlows            // invoked on new GetFlows API call
 }
 
 // returning `stop: true` from a callback stops the execution chain, regardless
@@ -102,6 +104,19 @@ type OnDecodedFlowFunc func(context.Context, *pb.Flow) (stop, error)
 // OnDecodedFlow is invoked after a flow has been decoded
 func (f OnDecodedFlowFunc) OnDecodedFlow(ctx context.Context, flow *pb.Flow) (stop, error) {
 	return f(ctx, flow)
+}
+
+// OnGetFlows is invoked for each GetFlows call
+type OnGetFlows interface {
+	OnGetFlows(context.Context, *observer.GetFlowsRequest) (context.Context, error)
+}
+
+// OnGetFlowsFunc implements OnDecodedFlow for a single function
+type OnGetFlowsFunc func(context.Context, *observer.GetFlowsRequest) (context.Context, error)
+
+// OnGetFlows is invoked for each GetFlows call
+func (f OnGetFlowsFunc) OnGetFlows(ctx context.Context, req *observer.GetFlowsRequest) (context.Context, error) {
+	return f(ctx, req)
 }
 
 // WithMonitorBuffer controls the size of the buffered channel between the
@@ -192,4 +207,17 @@ func WithOnFlowDelivery(f OnDecodedFlow) Option {
 // WithOnFlowDeliveryFunc adds a new callback to be invoked before a flow is delivered via the API
 func WithOnFlowDeliveryFunc(f OnDecodedFlowFunc) Option {
 	return WithOnFlowDelivery(OnDecodedFlowFunc(f))
+}
+
+// WithOnGetFlows adds a new callback to be invoked for each GetFlows call
+func WithOnGetFlows(f OnGetFlowsFunc) Option {
+	return func(o *Options) error {
+		o.OnGetFlows = append(o.OnGetFlows, f)
+		return nil
+	}
+}
+
+// WithOnGetFlowsFunc adds a new callback to be invoked for each GetFlows call
+func WithOnGetFlowsFunc(f OnGetFlowsFunc) Option {
+	return WithOnGetFlows(f)
 }
