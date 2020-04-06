@@ -34,7 +34,7 @@ type Server struct {
 
 // NewServer creates a new hubble gRPC server.
 func NewServer(log *logrus.Entry, options ...Option) (*Server, error) {
-	opts := DefaultOptions
+	opts := newOptions()
 	for _, opt := range options {
 		if err := opt(&opts); err != nil {
 			return nil, fmt.Errorf("failed to apply option: %v", err)

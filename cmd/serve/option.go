@@ -29,17 +29,19 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// DefaultOptions is the reference point for default values.
-var DefaultOptions = Options{
-	Listeners: make(map[string]net.Listener),
-}
-
 // Options stores all the configuration values for the hubble server.
 type Options struct {
 	Listeners       map[string]net.Listener
 	HealthService   *health.Server
 	ObserverService *server.GRPCServer
 	PeerService     *peer.PeerServer
+}
+
+// newOptions creates new Options with default values.
+func newOptions() Options {
+	return Options{
+		Listeners: make(map[string]net.Listener),
+	}
 }
 
 // Option customizes then configuration of the hubble server.
