@@ -240,6 +240,7 @@ func (s *LocalObserverServer) GetFlows(
 }
 
 func getFlows(
+	ctx context.Context,
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 	obs GRPCServer,
@@ -273,7 +274,7 @@ func getFlows(
 	}
 
 	for ; ; i++ {
-		flow, err := flowsReader.Next(server.Context())
+		flow, err := flowsReader.Next(ctx)
 		if err != nil {
 			if err == io.EOF {
 				return nil
