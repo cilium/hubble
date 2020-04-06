@@ -220,20 +220,27 @@ func (s *LocalObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
+	// This context is used for goroutines spawned specifically to serve this
+	// request, meaning it must be cancelled once the request is done and this
+	// function returns.
+	ctx, cancel := context.WithCancel(server.Context())
+	defer cancel()
+
 	filterList := append(filters.DefaultFilters, s.opts.OnBuildFilter...)
-	whitelist, err := filters.BuildFilterList(server.Context(), req.Whitelist, filterList)
+	whitelist, err := filters.BuildFilterList(ctx, req.Whitelist, filterList)
 	if err != nil {
 		return err
 	}
-	blacklist, err := filters.BuildFilterList(server.Context(), req.Blacklist, filterList)
+	blacklist, err := filters.BuildFilterList(ctx, req.Blacklist, filterList)
 	if err != nil {
 		return err
 	}
 
-	return getFlows(req, server, s, whitelist, blacklist)
+	return getFlows(ctx, req, server, s, whitelist, blacklist)
 }
 
 func getFlows(
+	ctx context.Context,
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 	obs GRPCServer,
@@ -267,7 +274,7 @@ func getFlows(
 	}
 
 	for ; ; i++ {
-		flow, err := flowsReader.Next(server.Context())
+		flow, err := flowsReader.Next(ctx)
 		if err != nil {
 			if err == io.EOF {
 				return nil
