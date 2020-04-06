@@ -220,12 +220,18 @@ func (s *LocalObserverServer) GetFlows(
 	req *observer.GetFlowsRequest,
 	server observer.Observer_GetFlowsServer,
 ) (err error) {
+	// This context is used for goroutines spawned specifically to serve this
+	// request, meaning it must be cancelled once the request is done and this
+	// function returns.
+	ctx, cancel := context.WithCancel(server.Context())
+	defer cancel()
+
 	filterList := append(filters.DefaultFilters, s.opts.OnBuildFilter...)
-	whitelist, err := filters.BuildFilterList(server.Context(), req.Whitelist, filterList)
+	whitelist, err := filters.BuildFilterList(ctx, req.Whitelist, filterList)
 	if err != nil {
 		return err
 	}
-	blacklist, err := filters.BuildFilterList(server.Context(), req.Blacklist, filterList)
+	blacklist, err := filters.BuildFilterList(ctx, req.Blacklist, filterList)
 	if err != nil {
 		return err
 	}
