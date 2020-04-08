@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872
+# github.com/cilium/cilium v1.7.0-rc2.0.20200408163809-450c79ce5e2f
 ## explicit
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
@@ -26,9 +26,7 @@ github.com/cilium/cilium/api/v1/health/models
 github.com/cilium/cilium/api/v1/models
 github.com/cilium/cilium/api/v1/observer
 github.com/cilium/cilium/common
-github.com/cilium/cilium/common/types
 github.com/cilium/cilium/pkg/api
-github.com/cilium/cilium/pkg/byteorder
 github.com/cilium/cilium/pkg/cidr
 github.com/cilium/cilium/pkg/client
 github.com/cilium/cilium/pkg/components
@@ -47,11 +45,9 @@ github.com/cilium/cilium/pkg/lock
 github.com/cilium/cilium/pkg/logging
 github.com/cilium/cilium/pkg/logging/logfields
 github.com/cilium/cilium/pkg/metrics
-github.com/cilium/cilium/pkg/monitor
 github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
 github.com/cilium/cilium/pkg/option
-github.com/cilium/cilium/pkg/proxy/accesslog
 github.com/cilium/cilium/pkg/safetime
 github.com/cilium/cilium/pkg/spanstat
 github.com/cilium/cilium/pkg/version
@@ -125,8 +121,6 @@ github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/miekg/dns v1.0.14 => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
-github.com/miekg/dns
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/pelletier/go-toml v1.4.0
@@ -189,21 +183,13 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
-golang.org/x/crypto/ed25519
-golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/internal/iana
-golang.org/x/net/internal/socket
 golang.org/x/net/internal/timeseries
-golang.org/x/net/ipv4
-golang.org/x/net/ipv6
 golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/semaphore

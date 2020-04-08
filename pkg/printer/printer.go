@@ -27,7 +27,6 @@ import (
 
 	pb "github.com/cilium/cilium/api/v1/flow"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
-	"github.com/cilium/cilium/pkg/monitor"
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/gopacket/layers"
@@ -176,7 +175,7 @@ func GetFlowType(f v1.Flow) string {
 	case api.MessageTypePolicyVerdict:
 		switch f.GetVerdict() {
 		case pb.Verdict_FORWARDED:
-			return monitor.PolicyMatchType(f.GetPolicyMatchType()).String()
+			return api.PolicyMatchType(f.GetPolicyMatchType()).String()
 		case pb.Verdict_DROPPED:
 			return api.DropReason(uint8(f.GetDropReason()))
 		}

@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/gopacket/layers"
@@ -476,7 +475,7 @@ func Test_getFlowType(t *testing.T) {
 					EventType: &pb.CiliumEventType{
 						Type: monitorAPI.MessageTypePolicyVerdict,
 					},
-					PolicyMatchType: monitor.PolicyMatchL3L4,
+					PolicyMatchType: monitorAPI.PolicyMatchL3L4,
 				},
 			},
 			want: "L3-L4",
