@@ -64,8 +64,8 @@ github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghf
 github.com/cespare/xxhash/v2 v2.1.0 h1:yTUvW7Vhb89inJ+8irsUqiWjh8iT6sQPZiQzI6ReGkA=
 github.com/cespare/xxhash/v2 v2.1.0/go.mod h1:dgIUBU3pDso/gPgZ1osOZ0iQf77oPR28Tjxl5dIMyVM=
 github.com/cilium/arping v1.0.1-0.20190728065459-c5eaf8d7a710/go.mod h1:ohfPr9hSb4vRsw5UEjCs3OoWD38U0z8EfSgZPbIe/+M=
-github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872 h1:2W6nRjCet43caelOg6kTZOmctMEXj2RMI+MDwoMmoxA=
-github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872/go.mod h1:X9p5u4HTKwqppqecPhFCm9WSgk5iZJ4oCdZTfj6ALPs=
+github.com/cilium/cilium v1.7.0-rc2.0.20200408163809-450c79ce5e2f h1:ZWOXCqcOh2tR/3/3zCxS+vFoLVN0FU5JTS1i7j2eMvc=
+github.com/cilium/cilium v1.7.0-rc2.0.20200408163809-450c79ce5e2f/go.mod h1:X9p5u4HTKwqppqecPhFCm9WSgk5iZJ4oCdZTfj6ALPs=
 github.com/cilium/client-go v0.0.0-20200326103132-fe7bd31c2794/go.mod h1:uQSYDYs4WhVZ9i6AIoEZuwUggLVEF64HOD37boKAtF8=
 github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3 h1:wenYMyWJ08dgEUUj0Ija8qdK/V9vL3ThAD5sjOYlFlg=
 github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3/go.mod h1:cXN7jgo+gsGlNvQ7Vqu2ELdc3f7i7PPgupHqSkLzzBo=
