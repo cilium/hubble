@@ -6,7 +6,6 @@ require (
 	github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872
 	github.com/golang/protobuf v1.3.2
 	github.com/google/gopacket v1.1.17
-	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1

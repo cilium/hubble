@@ -19,13 +19,15 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/cilium/hubble/cmd"
-	"github.com/cilium/hubble/pkg/logger"
 )
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		log := logger.GetLogger()
-		log.WithError(err).Fatal("main program execution encountered a fatal error")
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
 	}
 }
