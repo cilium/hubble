@@ -3,25 +3,16 @@ module github.com/cilium/hubble
 go 1.14
 
 require (
-	github.com/cilium/cilium v1.7.0-rc2.0.20200327082155-88f11f48d940
-	github.com/envoyproxy/protoc-gen-validate v0.3.0-java
-	github.com/go-openapi/strfmt v0.19.4
-	github.com/gogo/protobuf v1.3.1
+	github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872
 	github.com/golang/protobuf v1.3.2
 	github.com/google/gopacket v1.1.17
-	github.com/google/gops v0.3.6
-	github.com/hashicorp/golang-lru v0.5.1
-	github.com/mitchellh/protoc-gen-go-json v0.0.0-20200113165135-fd297ce346f1
-	github.com/prometheus/client_golang v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
-	go.uber.org/goleak v1.0.0
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 	google.golang.org/grpc v1.26.0
-	k8s.io/apimachinery v0.18.0
 )
 
 replace (
