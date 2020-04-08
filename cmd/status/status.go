@@ -19,9 +19,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/cilium/hubble/api/v1/observer"
-	"github.com/cilium/hubble/pkg/api"
-	v1 "github.com/cilium/hubble/pkg/api/v1"
+	"github.com/cilium/cilium/api/v1/observer"
+	"github.com/cilium/cilium/pkg/hubble/api"
+	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"

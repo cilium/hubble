@@ -25,11 +25,11 @@ import (
 	"text/tabwriter"
 	"time"
 
+	pb "github.com/cilium/cilium/api/v1/flow"
+	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/monitor"
 	"github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/flow"
-	v1 "github.com/cilium/hubble/pkg/api/v1"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/gopacket/layers"
 )
 
@@ -144,7 +144,8 @@ func getTimestamp(f v1.Flow) string {
 	if f == nil {
 		return "N/A"
 	}
-	ts, err := types.TimestampFromProto(f.GetTime())
+	ts, err := ptypes.Timestamp(f.GetTime())
+
 	if err != nil {
 		return "N/A"
 	}

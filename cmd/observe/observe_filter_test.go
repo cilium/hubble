@@ -17,7 +17,7 @@ package observe
 import (
 	"testing"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
+	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

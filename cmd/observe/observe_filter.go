@@ -21,9 +21,9 @@ import (
 	"strconv"
 	"strings"
 
+	pb "github.com/cilium/cilium/api/v1/flow"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	pb "github.com/cilium/hubble/api/v1/flow"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"github.com/spf13/pflag"
 )
 

@@ -22,11 +22,9 @@ import (
 	"runtime/pprof"
 
 	"github.com/cilium/hubble/cmd/observe"
-	"github.com/cilium/hubble/cmd/serve"
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
 	"github.com/cilium/hubble/pkg"
-	"github.com/cilium/hubble/pkg/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -114,13 +112,10 @@ func init() {
 
 	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
-	l := logger.GetLogger()
-
 	// initialize all subcommands
 	rootCmd.AddCommand(observe.New())
-	rootCmd.AddCommand(serve.New(l))
-	rootCmd.AddCommand(status.New())
 	rootCmd.AddCommand(version.New())
+	rootCmd.AddCommand(status.New())
 }
 
 // initConfig reads in config file and ENV variables if set.

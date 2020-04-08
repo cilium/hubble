@@ -8,7 +8,7 @@ github.com/asaskevich/govalidator
 github.com/beorn7/perks/quantile
 # github.com/cespare/xxhash/v2 v2.1.0
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2.0.20200327082155-88f11f48d940
+# github.com/cilium/cilium v1.7.0-rc2.0.20200408101704-418500bad872
 ## explicit
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
@@ -18,11 +18,13 @@ github.com/cilium/cilium/api/v1/client/metrics
 github.com/cilium/cilium/api/v1/client/policy
 github.com/cilium/cilium/api/v1/client/prefilter
 github.com/cilium/cilium/api/v1/client/service
+github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/health/client
 github.com/cilium/cilium/api/v1/health/client/connectivity
 github.com/cilium/cilium/api/v1/health/client/restapi
 github.com/cilium/cilium/api/v1/health/models
 github.com/cilium/cilium/api/v1/models
+github.com/cilium/cilium/api/v1/observer
 github.com/cilium/cilium/common
 github.com/cilium/cilium/common/types
 github.com/cilium/cilium/pkg/api
@@ -34,6 +36,8 @@ github.com/cilium/cilium/pkg/defaults
 github.com/cilium/cilium/pkg/endpoint/id
 github.com/cilium/cilium/pkg/health/client
 github.com/cilium/cilium/pkg/health/defaults
+github.com/cilium/cilium/pkg/hubble/api
+github.com/cilium/cilium/pkg/hubble/api/v1
 github.com/cilium/cilium/pkg/identity
 github.com/cilium/cilium/pkg/idpool
 github.com/cilium/cilium/pkg/ip
@@ -44,36 +48,17 @@ github.com/cilium/cilium/pkg/logging
 github.com/cilium/cilium/pkg/logging/logfields
 github.com/cilium/cilium/pkg/metrics
 github.com/cilium/cilium/pkg/monitor
-github.com/cilium/cilium/pkg/monitor/agent/listener
 github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
-github.com/cilium/cilium/pkg/monitor/payload
 github.com/cilium/cilium/pkg/option
 github.com/cilium/cilium/pkg/proxy/accesslog
 github.com/cilium/cilium/pkg/safetime
-github.com/cilium/cilium/pkg/source
 github.com/cilium/cilium/pkg/spanstat
-github.com/cilium/cilium/pkg/u8proto
 github.com/cilium/cilium/pkg/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/envoyproxy/protoc-gen-validate v0.3.0-java
-## explicit
-github.com/envoyproxy/protoc-gen-validate
-github.com/envoyproxy/protoc-gen-validate/gogoproto
-github.com/envoyproxy/protoc-gen-validate/module
-github.com/envoyproxy/protoc-gen-validate/templates
-github.com/envoyproxy/protoc-gen-validate/templates/cc
-github.com/envoyproxy/protoc-gen-validate/templates/go
-github.com/envoyproxy/protoc-gen-validate/templates/gogo
-github.com/envoyproxy/protoc-gen-validate/templates/goshared
-github.com/envoyproxy/protoc-gen-validate/templates/java
-github.com/envoyproxy/protoc-gen-validate/templates/shared
-github.com/envoyproxy/protoc-gen-validate/validate
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/ghodss/yaml v1.0.0
-github.com/ghodss/yaml
 # github.com/go-openapi/analysis v0.19.10
 github.com/go-openapi/analysis
 github.com/go-openapi/analysis/internal
@@ -97,7 +82,6 @@ github.com/go-openapi/runtime/security
 # github.com/go-openapi/spec v0.19.6
 github.com/go-openapi/spec
 # github.com/go-openapi/strfmt v0.19.4
-## explicit
 github.com/go-openapi/strfmt
 # github.com/go-openapi/swag v0.19.7
 github.com/go-openapi/swag
@@ -105,23 +89,10 @@ github.com/go-openapi/swag
 github.com/go-openapi/validate
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/gogo/protobuf v1.3.1
-## explicit
-github.com/gogo/protobuf/proto
-github.com/gogo/protobuf/sortkeys
-github.com/gogo/protobuf/types
-# github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-github.com/golang/glog
 # github.com/golang/protobuf v1.3.2
 ## explicit
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
-github.com/golang/protobuf/protoc-gen-go
-github.com/golang/protobuf/protoc-gen-go/descriptor
-github.com/golang/protobuf/protoc-gen-go/generator
-github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
-github.com/golang/protobuf/protoc-gen-go/grpc
-github.com/golang/protobuf/protoc-gen-go/plugin
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
@@ -131,20 +102,6 @@ github.com/golang/protobuf/ptypes/timestamp
 ## explicit
 github.com/google/gopacket
 github.com/google/gopacket/layers
-# github.com/google/gops v0.3.6
-## explicit
-github.com/google/gops/agent
-github.com/google/gops/internal
-github.com/google/gops/signal
-# github.com/grpc-ecosystem/grpc-gateway v1.9.5
-github.com/grpc-ecosystem/grpc-gateway/codegenerator
-github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor
-github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/httprule
-github.com/grpc-ecosystem/grpc-gateway/utilities
-# github.com/hashicorp/golang-lru v0.5.1
-## explicit
-github.com/hashicorp/golang-lru
-github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
 github.com/hashicorp/hcl/hcl/ast
@@ -156,17 +113,10 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/iancoleman/strcase v0.0.0-20191112232945-16388991a334
-github.com/iancoleman/strcase
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
-github.com/kardianos/osext
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/lyft/protoc-gen-star v0.4.14
-github.com/lyft/protoc-gen-star
-github.com/lyft/protoc-gen-star/lang/go
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/mailru/easyjson v0.7.1
@@ -179,10 +129,6 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/miekg/dns
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
-# github.com/mitchellh/protoc-gen-go-json v0.0.0-20200113165135-fd297ce346f1
-## explicit
-github.com/mitchellh/protoc-gen-go-json
-github.com/mitchellh/protoc-gen-go-json/gen
 # github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
 # github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5
@@ -190,11 +136,9 @@ github.com/petermattis/goid
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
 # github.com/prometheus/client_golang v1.2.0
-## explicit
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
-github.com/prometheus/client_golang/prometheus/testutil
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.7.0
@@ -246,16 +190,9 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.uber.org/goleak v1.0.0
-## explicit
-go.uber.org/goleak
-go.uber.org/goleak/internal/stack
 # golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
-# golang.org/x/lint v0.0.0-20190930215403-16217165b5de
-golang.org/x/lint
-golang.org/x/lint/golint
 # golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -281,12 +218,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.0.0-20191108193012-7d206e10da11
-golang.org/x/tools/go/ast/astutil
-golang.org/x/tools/go/gcexportdata
-golang.org/x/tools/go/internal/gcimporter
 # google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
-google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.26.0
 ## explicit
@@ -304,7 +236,6 @@ google.golang.org/grpc/credentials/internal
 google.golang.org/grpc/encoding
 google.golang.org/grpc/encoding/proto
 google.golang.org/grpc/grpclog
-google.golang.org/grpc/health
 google.golang.org/grpc/health/grpc_health_v1
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
@@ -332,16 +263,6 @@ google.golang.org/grpc/tap
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# k8s.io/apimachinery v0.18.0
-## explicit
-k8s.io/apimachinery/pkg/labels
-k8s.io/apimachinery/pkg/selection
-k8s.io/apimachinery/pkg/util/errors
-k8s.io/apimachinery/pkg/util/sets
-k8s.io/apimachinery/pkg/util/validation
-k8s.io/apimachinery/pkg/util/validation/field
-# k8s.io/klog v1.0.0
-k8s.io/klog
 # github.com/miekg/dns => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
 # github.com/optiopay/kafka => github.com/cilium/kafka v0.0.0-20180809090225-01ce283b732b
 # k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200326103132-fe7bd31c2794

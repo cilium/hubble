@@ -24,16 +24,17 @@ import (
 	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
-	"github.com/cilium/hubble/api/v1/observer"
-	"github.com/cilium/hubble/pkg/api"
+	pb "github.com/cilium/cilium/api/v1/flow"
+	"github.com/cilium/cilium/api/v1/observer"
+	"github.com/cilium/cilium/pkg/hubble/api"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 )
@@ -329,14 +330,14 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 	defer conn.Close()
 
 	// convert sinceVar into a param for GetFlows
-	var since, until *types.Timestamp
+	var since, until *timestamp.Timestamp
 	if sinceVar != "" {
 		st, err := hubtime.FromString(sinceVar)
 		if err != nil {
 			return fmt.Errorf("failed to parse the since time: %v", err)
 		}
 
-		since, err = types.TimestampProto(st)
+		since, err = ptypes.TimestampProto(st)
 		if err != nil {
 			return fmt.Errorf("failed to convert `since` timestamp to proto: %v", err)
 		}
@@ -348,7 +349,7 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 			if err != nil {
 				return fmt.Errorf("failed to parse the until time: %v", err)
 			}
-			until, err = types.TimestampProto(ut)
+			until, err = ptypes.TimestampProto(ut)
 			if err != nil {
 				return fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
 			}

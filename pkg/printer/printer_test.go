@@ -22,18 +22,18 @@ import (
 
 	"github.com/cilium/cilium/pkg/monitor"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/gogo/protobuf/types"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pb "github.com/cilium/hubble/api/v1/flow"
+	pb "github.com/cilium/cilium/api/v1/flow"
 )
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
 	buf := bytes.Buffer{}
 	f := pb.Flow{
-		Time: &types.Timestamp{
+		Time: &timestamp.Timestamp{
 			Seconds: 1234,
 			Nanos:   567800000,
 		},
@@ -360,7 +360,7 @@ func Test_getTimestamp(t *testing.T) {
 			name: "valid",
 			args: args{
 				f: &pb.Flow{
-					Time: &types.Timestamp{
+					Time: &timestamp.Timestamp{
 						Seconds: 0,
 						Nanos:   0,
 					},
