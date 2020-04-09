@@ -20,8 +20,8 @@ import (
 	"fmt"
 
 	"github.com/cilium/cilium/api/v1/observer"
-	"github.com/cilium/cilium/pkg/hubble/api"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
+	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -45,7 +45,7 @@ func New() *cobra.Command {
 	}
 
 	statusCmd.Flags().StringVarP(&serverURL,
-		"server", "", api.GetDefaultSocketPath(), "URL to connect to server")
+		"server", "", defaults.DefaultSocketPath, "URL to connect to server")
 	viper.BindEnv("server", "HUBBLE_SOCK")
 	return statusCmd
 }
@@ -82,7 +82,7 @@ func getHC(s string) (healthy bool, status string, err error) {
 	}
 	defer conn.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), api.ConnectionTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
 	defer cancel()
 
 	req := &healthpb.HealthCheckRequest{Service: v1.ObserverServiceName}
@@ -103,7 +103,7 @@ func getStatus(s string) (*observer.ServerStatusResponse, error) {
 	}
 	defer conn.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), api.ConnectionTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
 	defer cancel()
 
 	req := &observer.ServerStatusRequest{}
