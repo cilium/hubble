@@ -23,7 +23,12 @@ import (
 	"os/signal"
 	"time"
 
+	pb "github.com/cilium/cilium/api/v1/flow"
+	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/hubble/pkg/defaults"
+	hubprinter "github.com/cilium/hubble/pkg/printer"
+	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
@@ -31,12 +36,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	pb "github.com/cilium/cilium/api/v1/flow"
-	"github.com/cilium/cilium/api/v1/observer"
-	"github.com/cilium/cilium/pkg/hubble/api"
-	hubprinter "github.com/cilium/hubble/pkg/printer"
-	hubtime "github.com/cilium/hubble/pkg/time"
 )
 
 var (
@@ -109,10 +108,10 @@ programs attached to endpoints and devices. This includes:
 		},
 	}
 	observerCmd.Flags().StringVarP(&serverURL,
-		"server", "", api.GetDefaultSocketPath(),
+		"server", "", defaults.DefaultSocketPath,
 		"URL to connect to server")
 	observerCmd.Flags().DurationVar(&serverTimeout,
-		"timeout", 5*time.Second,
+		"timeout", defaults.DefaultDialTimeout,
 		"How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, allTypes,
