@@ -236,10 +236,10 @@ const (
 	IPv6ServiceRange = "ipv6-service-range"
 
 	// ModePreFilterNative for loading progs with xdpdrv
-	ModePreFilterNative = "native"
+	ModePreFilterNative = XDPModeNative
 
 	// ModePreFilterGeneric for loading progs with xdpgeneric
-	ModePreFilterGeneric = "generic"
+	ModePreFilterGeneric = XDPModeGeneric
 
 	// NodesGCInterval is the duration for which the nodes are GC in the KVStore.
 	NodesGCInterval = "nodes-gc-interval"
@@ -303,6 +303,13 @@ const (
 	// ("snat", "dsr" or "hybrid")
 	NodePortMode = "node-port-mode"
 
+	// NodePortAcceleration indicates whether NodePort should be accelerated
+	// via XDP ("none", "generic" or "native")
+	NodePortAcceleration = "node-port-acceleration"
+
+	// NodePortRange defines a custom range where to look up NodePort services
+	NodePortRange = "node-port-range"
+
 	// EnableAutoProtectNodePortRange enables appending NodePort range to
 	// net.ipv4.ip_local_reserved_ports if it overlaps with ephemeral port
 	// range (net.ipv4.ip_local_port_range)
@@ -311,9 +318,6 @@ const (
 	// KubeProxyReplacement controls how to enable kube-proxy replacement
 	// features in BPF datapath
 	KubeProxyReplacement = "kube-proxy-replacement"
-
-	// NodePortRange defines a custom range where to look up NodePort services
-	NodePortRange = "node-port-range"
 
 	// LibDir enables the directory path to store runtime build environment
 	LibDir = "lib-dir"
@@ -715,6 +719,12 @@ const (
 	// IPAMAPIBurst is the burst value allowed when accessing external IPAM APIs
 	IPAMAPIBurst = "limit-ipam-api-burst"
 
+	// IPAMSubnetsIDs are optional subnets IDs used to filter subnets and interfaces listing
+	IPAMSubnetsIDs = "subnet-ids-filter"
+
+	// IAPMSubnetsTags are optional tags used to filter subnets, and interfaces within those subnets
+	IPAMSubnetsTags = "subnet-tags-filter"
+
 	// AWSClientBurstDeprecated is the deprecated version of IPAMAPIBurst and will be rewmoved in v1.9
 	AWSClientBurstDeprecated = "aws-client-burst"
 
@@ -727,6 +737,24 @@ const (
 
 	// UpdateEC2AdapterLimitViaAPI configures the operator to use the EC2 API to fill out the instnacetype to adapter limit mapping
 	UpdateEC2AdapterLimitViaAPI = "update-ec2-apdater-limit-via-api"
+
+	// XDPModeNative for loading progs with XDPModeLinkDriver
+	XDPModeNative = "native"
+
+	// XDPModeGeneric for loading progs with XDPModeLinkGeneric
+	XDPModeGeneric = "generic"
+
+	// XDPModeNone for not having XDP enabled
+	XDPModeNone = "none"
+
+	// XDPModeLinkDriver is the tc selector for native XDP
+	XDPModeLinkDriver = "xdpdrv"
+
+	// XDPModeLinkGeneric is the tc selector for generic XDP
+	XDPModeLinkGeneric = "xdpgeneric"
+
+	// XDPModeLinkNone for not having XDP enabled
+	XDPModeLinkNone = XDPModeNone
 
 	// K8sClientQPSLimit is the queries per second limit for the K8s client. Defaults to k8s client defaults.
 	K8sClientQPSLimit = "k8s-client-qps"
@@ -1165,6 +1193,15 @@ const (
 	// NodePortModeHybrid is a dual mode of the above, that is, DSR for TCP and SNAT for UDP
 	NodePortModeHybrid = "hybrid"
 
+	// NodePortAccelerationNone means we do not accelerate NodePort via XDP
+	NodePortAccelerationNone = XDPModeNone
+
+	// NodePortAccelerationGeneric means we accelerate NodePort via generic XDP
+	NodePortAccelerationGeneric = XDPModeGeneric
+
+	// NodePortAccelerationNative means we accelerate NodePort via native XDP in the driver (preferred)
+	NodePortAccelerationNative = XDPModeNative
+
 	// KubeProxyReplacementProbe specifies to auto-enable available features for
 	// kube-proxy replacement
 	KubeProxyReplacementProbe = "probe"
@@ -1255,8 +1292,10 @@ type DaemonConfig struct {
 	RunDir           string     // Cilium runtime directory
 	NAT46Prefix      *net.IPNet // NAT46 IPv6 Prefix
 	Device           string     // Receive device
-	DevicePreFilter  string     // XDP device
-	ModePreFilter    string     // XDP mode, values: { native | generic }
+	DevicePreFilter  string     // Prefilter device
+	ModePreFilter    string     // Prefilter mode
+	XDPDevice        string     // XDP device
+	XDPMode          string     // XDP mode, values: { xdpdrv | xdpgeneric | none }
 	HostV4Addr       net.IP     // Host v4 address of the snooping device
 	HostV6Addr       net.IP     // Host v6 address of the snooping device
 	EncryptInterface string     // Set with name of network facing interface to encrypt
@@ -1681,6 +1720,10 @@ type DaemonConfig struct {
 	// ("snat", "dsr" or "hybrid")
 	NodePortMode string
 
+	// NodePortAcceleration indicates whether NodePort should be accelerated
+	// via XDP ("none", "generic" or "native")
+	NodePortAcceleration string
+
 	// EnableAutoProtectNodePortRange enables appending NodePort range to
 	// net.ipv4.ip_local_reserved_ports if it overlaps with ephemeral port
 	// range (net.ipv4.ip_local_port_range)
@@ -1814,6 +1857,12 @@ type DaemonConfig struct {
 	// IPAMAPIBurst is the burst value allowed when accessing external IPAM APIs
 	IPAMAPIBurst int
 
+	// IPAMSubnetsIDs are optional subnets IDs used to filter subnets and interfaces listing
+	IPAMSubnetsIDs []string
+
+	// IPAMSubnetsTags are optional tags used to filter subnets, and interfaces within those subnets
+	IPAMSubnetsTags map[string]string
+
 	// AWS options
 
 	// ENITags are the tags that will be added to every ENI created by the AWS ENI IPAM
@@ -1895,6 +1944,8 @@ var (
 		EnableL7Proxy:                defaults.EnableL7Proxy,
 		EndpointStatus:               make(map[string]struct{}),
 		ENITags:                      make(map[string]string),
+		IPAMSubnetsIDs:               make([]string, 0),
+		IPAMSubnetsTags:              make(map[string]string),
 		ToFQDNsMaxIPsPerHost:         defaults.ToFQDNsMaxIPsPerHost,
 		KVstorePeriodicSync:          defaults.KVstorePeriodicSync,
 		KVstoreConnectivityTimeout:   defaults.KVstoreConnectivityTimeout,
@@ -2278,6 +2329,7 @@ func (c *DaemonConfig) Populate() {
 	c.EnableTracing = viper.GetBool(EnableTracing)
 	c.EnableNodePort = viper.GetBool(EnableNodePort)
 	c.NodePortMode = viper.GetString(NodePortMode)
+	c.NodePortAcceleration = viper.GetString(NodePortAcceleration)
 	c.EnableAutoProtectNodePortRange = viper.GetBool(EnableAutoProtectNodePortRange)
 	c.KubeProxyReplacement = viper.GetString(KubeProxyReplacement)
 	c.EnableCEPGC = viper.GetBool(EnableCEPGC)
@@ -2427,6 +2479,9 @@ func (c *DaemonConfig) Populate() {
 	}
 	c.IPv6PodSubnets = subnets
 
+	c.XDPDevice = "undefined"
+	c.XDPMode = XDPModeLinkNone
+
 	err = c.populateNodePortRange()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to populate NodePortRange")
@@ -2465,6 +2520,14 @@ func (c *DaemonConfig) Populate() {
 
 	if m := viper.GetStringMapString(ENITags); len(m) != 0 {
 		c.ENITags = m
+	}
+
+	if m := viper.GetStringMapString(IPAMSubnetsTags); len(m) != 0 {
+		c.IPAMSubnetsTags = m
+	}
+
+	if m := viper.GetStringSlice(IPAMSubnetsIDs); len(m) != 0 {
+		c.IPAMSubnetsIDs = m
 	}
 
 	if m := viper.GetStringMapString(LogOpt); len(m) != 0 {
