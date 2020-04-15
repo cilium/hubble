@@ -1,89 +1,20 @@
-# github.com/PuerkitoBio/purell v1.1.1
-github.com/PuerkitoBio/purell
-# github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
-github.com/PuerkitoBio/urlesc
-# github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
-github.com/asaskevich/govalidator
-# github.com/beorn7/perks v1.0.1
-github.com/beorn7/perks/quantile
-# github.com/cespare/xxhash/v2 v2.1.0
-github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.7.0-rc2.0.20200409062440-f5425fec71bf
+# github.com/cilium/cilium v1.7.0-rc2.0.20200415090646-5c18df5af35f
 ## explicit
-github.com/cilium/cilium/api/v1/client
-github.com/cilium/cilium/api/v1/client/daemon
-github.com/cilium/cilium/api/v1/client/endpoint
-github.com/cilium/cilium/api/v1/client/ipam
-github.com/cilium/cilium/api/v1/client/metrics
-github.com/cilium/cilium/api/v1/client/policy
-github.com/cilium/cilium/api/v1/client/prefilter
-github.com/cilium/cilium/api/v1/client/service
 github.com/cilium/cilium/api/v1/flow
-github.com/cilium/cilium/api/v1/health/client
-github.com/cilium/cilium/api/v1/health/client/connectivity
-github.com/cilium/cilium/api/v1/health/client/restapi
-github.com/cilium/cilium/api/v1/health/models
-github.com/cilium/cilium/api/v1/models
 github.com/cilium/cilium/api/v1/observer
-github.com/cilium/cilium/common
-github.com/cilium/cilium/pkg/api
-github.com/cilium/cilium/pkg/cidr
-github.com/cilium/cilium/pkg/client
-github.com/cilium/cilium/pkg/components
-github.com/cilium/cilium/pkg/defaults
-github.com/cilium/cilium/pkg/endpoint/id
-github.com/cilium/cilium/pkg/health/client
-github.com/cilium/cilium/pkg/health/defaults
 github.com/cilium/cilium/pkg/hubble/api/v1
 github.com/cilium/cilium/pkg/identity
-github.com/cilium/cilium/pkg/idpool
-github.com/cilium/cilium/pkg/ip
 github.com/cilium/cilium/pkg/k8s/apis/cilium.io
 github.com/cilium/cilium/pkg/labels
 github.com/cilium/cilium/pkg/lock
 github.com/cilium/cilium/pkg/logging
 github.com/cilium/cilium/pkg/logging/logfields
-github.com/cilium/cilium/pkg/metrics
 github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
-github.com/cilium/cilium/pkg/option
-github.com/cilium/cilium/pkg/safetime
-github.com/cilium/cilium/pkg/spanstat
-github.com/cilium/cilium/pkg/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
-# github.com/go-openapi/analysis v0.19.10
-github.com/go-openapi/analysis
-github.com/go-openapi/analysis/internal
-# github.com/go-openapi/errors v0.19.3
-github.com/go-openapi/errors
-# github.com/go-openapi/jsonpointer v0.19.3
-github.com/go-openapi/jsonpointer
-# github.com/go-openapi/jsonreference v0.19.3
-github.com/go-openapi/jsonreference
-# github.com/go-openapi/loads v0.19.5
-github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.19.4
-github.com/go-openapi/runtime
-github.com/go-openapi/runtime/client
-github.com/go-openapi/runtime/logger
-github.com/go-openapi/runtime/middleware
-github.com/go-openapi/runtime/middleware/denco
-github.com/go-openapi/runtime/middleware/header
-github.com/go-openapi/runtime/middleware/untyped
-github.com/go-openapi/runtime/security
-# github.com/go-openapi/spec v0.19.6
-github.com/go-openapi/spec
-# github.com/go-openapi/strfmt v0.19.4
-github.com/go-openapi/strfmt
-# github.com/go-openapi/swag v0.19.7
-github.com/go-openapi/swag
-# github.com/go-openapi/validate v0.19.5
-github.com/go-openapi/validate
-# github.com/go-stack/stack v1.8.0
-github.com/go-stack/stack
 # github.com/golang/protobuf v1.3.2
 ## explicit
 github.com/golang/protobuf/jsonpb
@@ -114,12 +45,6 @@ github.com/inconshreveable/mousetrap
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
-# github.com/mailru/easyjson v0.7.1
-github.com/mailru/easyjson/buffer
-github.com/mailru/easyjson/jlexer
-github.com/mailru/easyjson/jwriter
-# github.com/matttproud/golang_protobuf_extensions v1.0.1
-github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
 # github.com/pelletier/go-toml v1.4.0
@@ -128,20 +53,6 @@ github.com/pelletier/go-toml
 github.com/petermattis/goid
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.2.0
-github.com/prometheus/client_golang/prometheus
-github.com/prometheus/client_golang/prometheus/internal
-github.com/prometheus/client_golang/prometheus/promhttp
-# github.com/prometheus/client_model v0.2.0
-github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.7.0
-github.com/prometheus/common/expfmt
-github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
-github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.0.5
-github.com/prometheus/procfs
-github.com/prometheus/procfs/internal/fs
-github.com/prometheus/procfs/internal/util
 # github.com/sasha-s/go-deadlock v0.2.1-0.20190427202633-1595213edefa
 github.com/sasha-s/go-deadlock
 # github.com/sirupsen/logrus v1.4.2
@@ -169,16 +80,7 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# go.mongodb.org/mongo-driver v1.3.0
-go.mongodb.org/mongo-driver/bson
-go.mongodb.org/mongo-driver/bson/bsoncodec
-go.mongodb.org/mongo-driver/bson/bsonoptions
-go.mongodb.org/mongo-driver/bson/bsonrw
-go.mongodb.org/mongo-driver/bson/bsontype
-go.mongodb.org/mongo-driver/bson/primitive
-go.mongodb.org/mongo-driver/x/bsonx/bsoncore
 # golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -190,13 +92,11 @@ golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 ## explicit
 golang.org/x/sys/unix
-golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-golang.org/x/text/width
 # google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.26.0
@@ -242,6 +142,8 @@ google.golang.org/grpc/tap
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
+# k8s.io/klog v1.0.0
+k8s.io/klog
 # github.com/miekg/dns => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
 # github.com/optiopay/kafka => github.com/cilium/kafka v0.0.0-20180809090225-01ce283b732b
 # k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200326103132-fe7bd31c2794
