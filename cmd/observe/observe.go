@@ -245,7 +245,7 @@ programs attached to endpoints and devices. This includes:
 	observerCmd.Flags().BoolVar(
 		&enablePortTranslation,
 		"port-translation",
-		true,
+		false,
 		"Translate port numbers to names",
 	)
 
