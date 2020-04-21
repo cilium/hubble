@@ -36,8 +36,8 @@ var (
 	cpuprofileFile, memprofileFile *os.File
 )
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
+// RootCmd represents the base command when called without any subcommands
+var RootCmd = &cobra.Command{
 	Use:           "hubble",
 	Short:         "CLI",
 	Long:          `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
@@ -87,35 +87,35 @@ func pprofTearDown() error {
 
 // Execute adds all child commands to the root command sets flags
 // appropriately. This is called by main.main(). It only needs to happen once
-// to the rootCmd.
+// to the RootCmd.
 func Execute() error {
-	return rootCmd.Execute()
+	return RootCmd.Execute()
 }
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	flags := rootCmd.PersistentFlags()
+	flags := RootCmd.PersistentFlags()
 	flags.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hubble.yaml)")
 	flags.BoolP("debug", "D", false, "Enable debug messages")
 	viper.BindPFlags(flags)
-	rootCmd.AddCommand(newCmdCompletion(os.Stdout))
-	rootCmd.SetErr(os.Stderr)
+	RootCmd.AddCommand(newCmdCompletion(os.Stdout))
+	RootCmd.SetErr(os.Stderr)
 
-	rootCmd.PersistentFlags().StringVar(&cpuprofile,
+	RootCmd.PersistentFlags().StringVar(&cpuprofile,
 		"cpuprofile", "", "Enable CPU profiling",
 	)
-	rootCmd.PersistentFlags().StringVar(&memprofile,
+	RootCmd.PersistentFlags().StringVar(&memprofile,
 		"memprofile", "", "Enable memory profiling",
 	)
-	rootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
-	rootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
+	RootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
+	RootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
 
-	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
+	RootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
 	// initialize all subcommands
-	rootCmd.AddCommand(observe.New())
-	rootCmd.AddCommand(version.New())
-	rootCmd.AddCommand(status.New())
+	RootCmd.AddCommand(observe.New())
+	RootCmd.AddCommand(version.New())
+	RootCmd.AddCommand(status.New())
 }
 
 // initConfig reads in config file and ENV variables if set.
