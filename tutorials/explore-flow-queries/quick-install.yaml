@@ -1,0 +1,48 @@
+---
+# Source: hubble/templates/hubble.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hubble
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: hubble
+  template:
+    metadata:
+      labels:
+        k8s-app: hubble
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: "k8s-app"
+                operator: In
+                values:
+                - cilium
+            topologyKey: "kubernetes.io/hostname"
+            namespaces:
+            - kube-system
+      containers:
+      - name: hubble
+        image: "quay.io/cilium/hubble:latest"
+        imagePullPolicy: Always
+        command:
+        - "/bin/bash"
+        args:
+        - -c
+        - "while true; do sleep 60; done;"
+        volumeMounts:
+        - name: cilium-run
+          mountPath: /var/run/cilium
+          readOnly: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      volumes:
+      - name: cilium-run
+        hostPath:
+          path: /var/run/cilium
+          type: Directory

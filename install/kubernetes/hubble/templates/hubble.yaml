@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: hubble
+  namespace: {{ required "ciliumNamespace must be specified" .Values.cilium.namespace }}
+spec:
+  selector:
+    matchLabels:
+      k8s-app: hubble
+  template:
+    metadata:
+      labels:
+        k8s-app: hubble
+    spec:
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: "k8s-app"
+                operator: In
+                values:
+                - cilium
+            topologyKey: "kubernetes.io/hostname"
+            namespaces:
+            - {{ .Values.cilium.namespace }}
+      containers:
+      - name: hubble
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        command:
+        - "/bin/bash"
+        args:
+        - -c
+        - "while true; do sleep 60; done;"
+        volumeMounts:
+        - name: cilium-run
+          mountPath: {{ .Values.cilium.runtimeDirectory }}
+          readOnly: true
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 0
+      volumes:
+      - name: cilium-run
+        hostPath:
+          path: {{ .Values.cilium.runtimeDirectory }}
+          type: Directory

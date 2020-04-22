@@ -3,7 +3,7 @@ name: hubble
 version: 0.0.3
 appVersion: 0.0.1
 tillerVersion: ">=2.7.2"
-description: Helm chart for the Hubble server
+description: Helm chart for the Hubble CLI
 keywords:
 sources:
   - https://github.com/cilium/hubble
