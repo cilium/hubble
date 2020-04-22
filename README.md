@@ -76,6 +76,7 @@ this means:
 
 # Getting Started
 
+* [Quickstart](Documentation/quickstart.md)
 * [Installation](Documentation/installation.md)
 * [Documentation](Documentation/README.md)
 * [Tutorials](tutorials/README.md)
