@@ -23,7 +23,6 @@ import (
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -46,7 +45,6 @@ func New() *cobra.Command {
 
 	statusCmd.Flags().StringVarP(&serverURL,
 		"server", "", defaults.DefaultSocketPath, "URL to connect to server")
-	viper.BindEnv("server", "HUBBLE_SOCK")
 	return statusCmd
 }
 
