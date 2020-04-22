@@ -14,15 +14,31 @@
 
 package defaults
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 const (
-	// DefaultSocketPath on which to connect to the local hubble observer
-	DefaultSocketPath = "unix:///var/run/cilium/hubble.sock"
+	// DefaultSocketPathKey is the environment variable name to override the
+	// default socket path for observe and status commands.
+	DefaultSocketPathKey = "HUBBLE_DEFAULT_SOCKET_PATH"
 
 	// DefaultDialTimeout is the timeout for dialing the server
 	DefaultDialTimeout = 5 * time.Second
 
 	// DefaultRequestTimeout is the timeout for client requests
 	DefaultRequestTimeout = 12 * time.Second
+
+	// defaultSocketPath on which to connect to the local hubble observer. Use
+	// GetDefaultSocketPath to access it.
+	defaultSocketPath = "unix:///var/run/cilium/hubble.sock"
 )
+
+// GetDefaultSocketPath returns the default server for status and observe command.
+func GetDefaultSocketPath() string {
+	if path, ok := os.LookupEnv(DefaultSocketPathKey); ok {
+		return path
+	}
+	return defaultSocketPath
+}
