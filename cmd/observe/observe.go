@@ -108,7 +108,7 @@ programs attached to endpoints and devices. This includes:
 		},
 	}
 	observerCmd.Flags().StringVarP(&serverURL,
-		"server", "", defaults.DefaultSocketPath,
+		"server", "", defaults.GetDefaultSocketPath(),
 		"URL to connect to server")
 	observerCmd.Flags().DurationVar(&serverTimeout,
 		"timeout", defaults.DefaultDialTimeout,

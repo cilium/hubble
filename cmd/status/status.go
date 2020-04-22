@@ -44,7 +44,7 @@ func New() *cobra.Command {
 	}
 
 	statusCmd.Flags().StringVarP(&serverURL,
-		"server", "", defaults.DefaultSocketPath, "URL to connect to server")
+		"server", "", defaults.GetDefaultSocketPath(), "URL to connect to server")
 	return statusCmd
 }
 
