@@ -2,6 +2,7 @@
 
 ## Getting Started
 
+ * [Quickstart](quickstart.md)
  * [Concepts](concepts.md)
 
 ## Installation
