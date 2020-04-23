@@ -32,16 +32,12 @@ func TestNoBlacklist(t *testing.T) {
 	assert.Nil(t, f.blacklist, "blacklist should be nil")
 }
 
-func TestDefaultTypes(t *testing.T) {
+// The default filter should be empty.
+func TestDefaultFilter(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
-
 	require.NoError(t, cmd.Flags().Parse([]string{}))
-	assert.Equal(t, []*pb.FlowFilter{{
-		EventType: []*pb.EventTypeFilter{
-			{Type: 129}, {Type: 1}, {Type: 4},
-		},
-	}}, f.whitelist.flowFilters())
+	assert.Nil(t, f.whitelist)
 	assert.Nil(t, f.blacklist)
 }
 
@@ -124,14 +120,12 @@ func TestFilterLeftRight(t *testing.T) {
 
 	assert.Equal(t, []*pb.FlowFilter{
 		{
-			SourceIp:  []string{"1.2.3.4", "5.6.7.8"},
-			Verdict:   []pb.Verdict{pb.Verdict_DROPPED},
-			EventType: []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
+			SourceIp: []string{"1.2.3.4", "5.6.7.8"},
+			Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
 		},
 		{
 			DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
 			Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
-			EventType:     []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
 		},
 	}, f.whitelist.flowFilters(), "whitelist filter is incorrect")
 
@@ -157,18 +151,8 @@ func TestLabels(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourceLabel: []string{"k1=v1,k2=v2", "k3"},
-			EventType: []*pb.EventTypeFilter{
-				{Type: 129}, {Type: 1}, {Type: 4},
-			},
-		},
-		{
-			DestinationLabel: []string{"k1=v1,k2=v2", "k3"},
-			EventType: []*pb.EventTypeFilter{
-				{Type: 129}, {Type: 1}, {Type: 4},
-			},
-		},
+		{SourceLabel: []string{"k1=v1,k2=v2", "k3"}},
+		{DestinationLabel: []string{"k1=v1,k2=v2", "k3"}},
 	}, f.whitelist.flowFilters())
 	assert.Nil(t, f.blacklist)
 }
@@ -178,14 +162,8 @@ func TestIdentity(t *testing.T) {
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
 	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourceIdentity: []uint64{1, 2},
-			EventType:      []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
-		},
-		{
-			DestinationIdentity: []uint64{1, 2},
-			EventType:           []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
-		},
+		{SourceIdentity: []uint64{1, 2}},
+		{DestinationIdentity: []uint64{1, 2}},
 	}, f.whitelist.flowFilters())
 	assert.Nil(t, f.blacklist)
 }
@@ -194,12 +172,7 @@ func TestFromIdentity(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourceIdentity: []uint64{1, 2},
-			EventType:      []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
-		},
-	}, f.whitelist.flowFilters())
+	assert.Equal(t, []*pb.FlowFilter{{SourceIdentity: []uint64{1, 2}}}, f.whitelist.flowFilters())
 	assert.Nil(t, f.blacklist)
 }
 
@@ -207,12 +180,7 @@ func TestToIdentity(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			DestinationIdentity: []uint64{1, 2},
-			EventType:           []*pb.EventTypeFilter{{Type: 129}, {Type: 1}, {Type: 4}},
-		},
-	}, f.whitelist.flowFilters())
+	assert.Equal(t, []*pb.FlowFilter{{DestinationIdentity: []uint64{1, 2}}}, f.whitelist.flowFilters())
 	assert.Nil(t, f.blacklist)
 }
 

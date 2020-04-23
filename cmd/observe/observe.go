@@ -53,17 +53,6 @@ var (
 
 	printer *hubprinter.Printer
 
-	allTypes = []string{
-		monitorAPI.MessageTypeNameL7,
-		monitorAPI.MessageTypeNameDrop,
-		monitorAPI.MessageTypeNameTrace,
-		// Currently we don't parse the following three as they are deemed too
-		// noisy:
-		// monitorAPI.MessageTypeDebug,
-		// monitorAPI.MessageTypeCapture,
-		// monitorAPI.MessageTypeAgent,
-	}
-
 	serverURL     string
 	serverTimeout time.Duration
 
@@ -114,7 +103,7 @@ programs attached to endpoints and devices. This includes:
 		"timeout", defaults.DefaultDialTimeout,
 		"How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
-		"type", "t", ofilter, allTypes,
+		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
 
 	observerCmd.Flags().Uint64Var(&last, "last", 0, "Get last N flows stored in the hubble")
