@@ -23,8 +23,8 @@ cd cilium-master
 helm install cilium ./install/kubernetes/cilium \
   --namespace kube-system \
   --set global.hubble.enabled=true \
-  --set hubble-cli.enabled=true \
-  --set hubble-cli.image.tag=latest
+  --set global.hubble.cli.enabled=true \
+  --set global.hubble.cli.image.tag=latest
 ```
 
 Make sure `cilium` and `hubble-cli` pods are in ready state before proceeding:
