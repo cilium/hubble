@@ -16,10 +16,7 @@ package cmd
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"runtime"
-	"runtime/pprof"
 
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/status"
@@ -31,9 +28,7 @@ import (
 )
 
 var (
-	cfgFile                        string
-	cpuprofile, memprofile         string
-	cpuprofileFile, memprofileFile *os.File
+	cfgFile string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -50,39 +45,6 @@ var RootCmd = &cobra.Command{
 	PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
 		return pprofTearDown()
 	},
-}
-
-func pprofInit() error {
-	var err error
-	if cpuprofile != "" {
-		cpuprofileFile, err = os.Create(cpuprofile)
-		if err != nil {
-			return fmt.Errorf("failed to create cpu profile: %v", err)
-		}
-		pprof.StartCPUProfile(cpuprofileFile)
-	}
-	if memprofile != "" {
-		memprofileFile, err = os.Create(memprofile)
-		if err != nil {
-			return fmt.Errorf("failed to create memory profile: %v", err)
-		}
-	}
-	return nil
-}
-
-func pprofTearDown() error {
-	if cpuprofileFile != nil {
-		pprof.StopCPUProfile()
-		cpuprofileFile.Close()
-	}
-	if memprofileFile != nil {
-		runtime.GC() // get up-to-date statistics
-		if err := pprof.WriteHeapProfile(memprofileFile); err != nil {
-			return fmt.Errorf("failed to write memory profile: %v", err)
-		}
-		memprofileFile.Close()
-	}
-	return nil
 }
 
 // Execute adds all child commands to the root command sets flags
@@ -133,91 +95,4 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
-}
-
-const copyRightHeader = `
-# Copyright 2019 Authors of Hubble
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-`
-
-var (
-	completionExample = `
-# Installing bash completion on macOS using homebrew
-## If running Bash 3.2 included with macOS
-	brew install bash-completion
-## or, if running Bash 4.1+
-	brew install bash-completion@2
-## afterwards you only need to run
-	hubble completion bash > $(brew --prefix)/etc/bash_completion.d/hubble
-
-
-# Installing bash completion on Linux
-## Load the hubble completion code for bash into the current shell
-	source <(hubble completion bash)
-## Write bash completion code to a file and source if from .bash_profile
-	hubble completion bash > ~/.hubble/completion.bash.inc
-	printf "
-	  # Hubble shell completion
-	  source '$HOME/.hubble/completion.bash.inc'
-	  " >> $HOME/.bash_profile
-	source $HOME/.bash_profile
-
-# Installing zsh completion on Linux/macOS
-## Load the hubble completion code for zsh into the current shell
-        source <(hubble completion zsh)
-## Write zsh completion code to a file and source if from .zshrc
-        hubble completion zsh > ~/.hubble/completion.zsh.inc
-        printf "
-          # Hubble shell completion
-          source '$HOME/.hubble/completion.zsh.inc'
-          " >> $HOME/.zshrc
-        source $HOME/.zshrc`
-)
-
-func newCmdCompletion(out io.Writer) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "completion [shell]",
-		Short:   "Output shell completion code",
-		Long:    ``,
-		Example: completionExample,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCompletion(out, cmd, args)
-		},
-		ValidArgs: []string{"bash", "zsh"},
-	}
-
-	return cmd
-}
-
-func runCompletion(out io.Writer, cmd *cobra.Command, args []string) error {
-	if len(args) > 1 {
-		return fmt.Errorf("too many arguments; expected only the shell type")
-	}
-	if _, err := out.Write([]byte(copyRightHeader)); err != nil {
-		return err
-	}
-
-	if len(args) == 0 {
-		return cmd.Parent().GenBashCompletion(out)
-	}
-
-	switch args[0] {
-	case "bash":
-		return cmd.Parent().GenBashCompletion(out)
-	case "zsh":
-		return cmd.Parent().GenZshCompletion(out)
-	}
-
-	return fmt.Errorf("unsupported shell type: %s", args[0])
 }
