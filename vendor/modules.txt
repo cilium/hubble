@@ -1,4 +1,4 @@
-# github.com/cilium/cilium v1.7.0-rc2.0.20200415090646-5c18df5af35f
+# github.com/cilium/cilium v1.7.0-rc2.0.20200427204602-e7d4f5c6af7d
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
@@ -13,7 +13,7 @@ github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/fsnotify/fsnotify v1.4.7
+# github.com/fsnotify/fsnotify v1.4.10-0.20200417215612-7f4cf4dd2b52
 github.com/fsnotify/fsnotify
 # github.com/golang/protobuf v1.3.2
 ## explicit
@@ -89,7 +89,7 @@ golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
+# golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
 ## explicit
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
@@ -146,4 +146,4 @@ gopkg.in/yaml.v2
 k8s.io/klog
 # github.com/miekg/dns => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
 # github.com/optiopay/kafka => github.com/cilium/kafka v0.0.0-20180809090225-01ce283b732b
-# k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200326103132-fe7bd31c2794
+# k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200417200322-b77c886899ef
