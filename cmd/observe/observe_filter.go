@@ -396,10 +396,11 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 
 	// identity filters
 	case "identity":
-		identity, err := strconv.ParseUint(val, 10, 64)
+		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
+		identity := uint32(i)
 		f.applyLeft(func(f *pb.FlowFilter) {
 			f.SourceIdentity = append(f.SourceIdentity, identity)
 		})
@@ -407,18 +408,20 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 			f.DestinationIdentity = append(f.DestinationIdentity, identity)
 		})
 	case "from-identity":
-		identity, err := strconv.ParseUint(val, 10, 64)
+		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
+		identity := uint32(i)
 		f.apply(func(f *pb.FlowFilter) {
 			f.SourceIdentity = append(f.SourceIdentity, identity)
 		})
 	case "to-identity":
-		identity, err := strconv.ParseUint(val, 10, 64)
+		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
+		identity := uint32(i)
 		f.apply(func(f *pb.FlowFilter) {
 			f.DestinationIdentity = append(f.DestinationIdentity, identity)
 		})
