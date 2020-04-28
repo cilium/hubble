@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/cilium/hubble/cmd/observe"
+	"github.com/cilium/hubble/cmd/peer"
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
 	"github.com/cilium/hubble/pkg"
@@ -76,8 +77,9 @@ func init() {
 
 	// initialize all subcommands
 	RootCmd.AddCommand(observe.New())
-	RootCmd.AddCommand(version.New())
+	RootCmd.AddCommand(peer.New())
 	RootCmd.AddCommand(status.New())
+	RootCmd.AddCommand(version.New())
 }
 
 // initConfig reads in config file and ENV variables if set.
