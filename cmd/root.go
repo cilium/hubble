@@ -24,6 +24,7 @@ import (
 	"github.com/cilium/hubble/cmd/completion"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/peer"
+	"github.com/cilium/hubble/cmd/reflect"
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
 	"github.com/cilium/hubble/pkg"
@@ -141,6 +142,7 @@ func New() *cobra.Command {
 		completion.New(),
 		observe.New(vp),
 		peer.New(vp),
+		reflect.New(vp),
 		status.New(vp),
 		version.New(),
 	)

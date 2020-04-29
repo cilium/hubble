@@ -1,0 +1,149 @@
+// Copyright 2020 Authors of Hubble
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package reflect
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
+	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+)
+
+// New returns the reflect command.
+func New(vp *viper.Viper) *cobra.Command {
+	reflectCmd := &cobra.Command{
+		Use:   "reflect",
+		Short: "Use gRPC reflection to explore Hubble's API",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
+			if err != nil {
+				return err
+			}
+			defer hubbleConn.Close()
+			return runReflect(ctx, cmd, hubbleConn)
+		},
+		Hidden: true,
+	}
+	return reflectCmd
+}
+
+func runReflect(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) (err error) {
+	client, err := rpb.NewServerReflectionClient(conn).ServerReflectionInfo(ctx)
+	if err != nil {
+		return err
+	}
+	req := rpb.ServerReflectionRequest{
+		MessageRequest: &rpb.ServerReflectionRequest_ListServices{},
+	}
+	if err := client.Send(&req); err != nil {
+		return err
+	}
+	res, err := client.Recv()
+	if err != nil {
+		return err
+	}
+	services, ok := res.GetMessageResponse().(*rpb.ServerReflectionResponse_ListServicesResponse)
+	if !ok {
+		return fmt.Errorf("unexpected response: %v", res)
+	}
+	// same proto file can be imported multiple times from different places. keep track of proto filenames
+	// so that we don't print them multiple times.
+	visited := make(map[string]struct{})
+	encoder := json.NewEncoder(cmd.OutOrStdout())
+	for _, svc := range services.ListServicesResponse.Service {
+		if svc.Name == "grpc.reflection.v1alpha.ServerReflection" || svc.Name == "grpc.health.v1.Health" {
+			continue
+		}
+		err = client.Send(&rpb.ServerReflectionRequest{
+			MessageRequest: &rpb.ServerReflectionRequest_FileContainingSymbol{
+				FileContainingSymbol: svc.Name,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		res, err := client.Recv()
+		if err != nil {
+			return err
+		}
+		files, ok := res.GetMessageResponse().(*rpb.ServerReflectionResponse_FileDescriptorResponse)
+		if !ok {
+			return fmt.Errorf("unexpected response: %v", res)
+		}
+		if err := handleDescriptorResponse(visited, client, files, encoder); err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
+func handleDescriptorResponse(
+	visited map[string]struct{},
+	client rpb.ServerReflection_ServerReflectionInfoClient,
+	resp *rpb.ServerReflectionResponse_FileDescriptorResponse,
+	encoder *json.Encoder,
+) error {
+	for _, r := range resp.FileDescriptorResponse.FileDescriptorProto {
+		desc := descriptor.FileDescriptorProto{}
+		if err := proto.Unmarshal(r, &desc); err != nil {
+			return err
+		}
+		if _, ok := visited[desc.GetName()]; !ok {
+			visited[desc.GetName()] = struct{}{}
+			if err := encoder.Encode(&desc); err != nil {
+				return err
+			}
+		}
+		for _, dep := range desc.Dependency {
+			if err := resolveDependency(visited, client, dep, encoder); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func resolveDependency(
+	visited map[string]struct{},
+	client rpb.ServerReflection_ServerReflectionInfoClient,
+	filename string,
+	encoder *json.Encoder,
+) error {
+	req := rpb.ServerReflectionRequest{
+		MessageRequest: &rpb.ServerReflectionRequest_FileByFilename{FileByFilename: filename},
+	}
+	if err := client.Send(&req); err != nil {
+		return err
+	}
+	res, err := client.Recv()
+	if err != nil {
+		return err
+	}
+	files, ok := res.GetMessageResponse().(*rpb.ServerReflectionResponse_FileDescriptorResponse)
+	if !ok {
+		return fmt.Errorf("unexpected response: %v", res.GetMessageResponse())
+	}
+	return handleDescriptorResponse(visited, client, files, encoder)
+}
