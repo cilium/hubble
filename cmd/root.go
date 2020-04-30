@@ -48,6 +48,13 @@ var RootCmd = &cobra.Command{
 	},
 }
 
+func addSubcommands() {
+	RootCmd.AddCommand(observe.New())
+	RootCmd.AddCommand(peer.New())
+	RootCmd.AddCommand(status.New())
+	RootCmd.AddCommand(version.New())
+}
+
 // Execute adds all child commands to the root command sets flags
 // appropriately. This is called by main.main(). It only needs to happen once
 // to the RootCmd.
@@ -75,11 +82,7 @@ func init() {
 
 	RootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
-	// initialize all subcommands
-	RootCmd.AddCommand(observe.New())
-	RootCmd.AddCommand(peer.New())
-	RootCmd.AddCommand(status.New())
-	RootCmd.AddCommand(version.New())
+	addSubcommands()
 }
 
 // initConfig reads in config file and ENV variables if set.
