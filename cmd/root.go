@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/cilium/hubble/cmd/observe"
@@ -26,10 +25,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-)
-
-var (
-	cfgFile string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -80,21 +75,4 @@ func init() {
 	RootCmd.AddCommand(peer.New())
 	RootCmd.AddCommand(status.New())
 	RootCmd.AddCommand(version.New())
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" { // enable ability to specify config file via flag
-		viper.SetConfigFile(cfgFile)
-	}
-
-	viper.SetEnvPrefix("hubble")
-	viper.SetConfigName(".hubble") // name of config file (without extension)
-	viper.AddConfigPath("$HOME")   // adding home directory as first search path
-	viper.AutomaticEnv()           // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
 }
