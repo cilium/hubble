@@ -18,6 +18,8 @@ spec:
       {{- if and .Values.priorityClassName (eq .Release.Namespace "kube-system") }}
       priorityClassName: {{ .Values.ui.priorityClassName }}
       {{- end }}
+      securityContext:
+        runAsUser: 1001
       serviceAccountName: hubble-ui
       containers:
         - name: hubble-ui
