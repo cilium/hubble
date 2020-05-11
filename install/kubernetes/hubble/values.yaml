@@ -67,9 +67,10 @@ ui:
   #         cpu: 100m
   #         memory: 64Mi
   resources: {}
+  
   # The priority class system-node-critical marks add-on pods as critical to the node itself.
   # This priority class is only valid under the kube-system namespace.
-  priorityClassName: ""
+  priorityClassName: system-node-critical
 
 ingress:
   enabled: false
@@ -94,6 +95,7 @@ ingress:
 #         cpu: 100m
 #         memory: 64Mi
 resources: {}
+
 # The priority class system-node-critical marks add-on pods as critical to the node itself.
 # This priority class is only valid under the kube-system namespace.
 priorityClassName: system-node-critical
