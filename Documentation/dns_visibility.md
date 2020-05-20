@@ -28,7 +28,7 @@ policy accordingly if you are using other network policies.
             protocol: ANY
           rules:
             dns:
-            - matchPattern: '*'
+            - {}
       - toFQDNs:
         - matchPattern: '*'
       - toEntities:
