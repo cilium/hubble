@@ -15,7 +15,7 @@ spec:
         protocol: ANY
       rules:
         dns:
-        - matchPattern: '*'
+        - {}
   - toFQDNs:
     - matchPattern: '*'
   endpointSelector:

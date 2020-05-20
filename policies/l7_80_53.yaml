@@ -25,4 +25,4 @@ spec:
         protocol: UDP
       rules:
         dns:
-        - matchPattern: '*'
+        - {}
