@@ -16,6 +16,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 import public "flow/flow.proto";
+import "relay/relay.proto";
 
 package observer;
 
@@ -33,15 +34,23 @@ message ServerStatusRequest {}
 
 message ServerStatusResponse {
     // number of currently captured flows
+    // In a multi-node context, this is the cumulative count of all captured
+    // flows.
     uint64 num_flows = 1;
 
     // maximum capacity of the ring buffer
+    // In a multi-node context, this is the aggregation of all ring buffers
+    // capacities.
     uint64 max_flows = 2;
 
     // total amount of flows observed since the observer was started
+    // In a multi-node context, this is the aggregation of all flows that have
+    // been seen.
     uint64 seen_flows = 3;
 
     // uptime of this observer instance in nanoseconds
+    // In a multi-node context, this field corresponds to the uptime of the
+    // longest living instance.
     uint64 uptime_ns = 4;
 }
 
@@ -82,6 +91,9 @@ message GetFlowsRequest {
 message GetFlowsResponse {
     oneof response_types{
         flow.Flow flow = 1;
+        // node_status informs clients about the state of the nodes
+        // participating in this particular GetFlows request.
+        relay.NodeStatusEvent node_status = 2;
     }
     // Name of the node where this event was observed.
     string node_name = 1000;

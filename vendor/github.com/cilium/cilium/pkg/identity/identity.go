@@ -67,6 +67,18 @@ type IPIdentityPair struct {
 	Metadata     string          `json:"Metadata"`
 	K8sNamespace string          `json:"K8sNamespace,omitempty"`
 	K8sPodName   string          `json:"K8sPodName,omitempty"`
+	NamedPorts   []NamedPort     `json:"NamedPorts,omitempty"`
+}
+
+// NamedPort is a mapping from a port name to a port number and protocol.
+//
+// WARNING - STABLE API
+// This structure is written as JSON to the key-value store. Do NOT modify this
+// structure in ways which are not JSON forward compatible.
+type NamedPort struct {
+	Name     string `json:"Name"`
+	Port     uint16 `json:"Port"`
+	Protocol string `json:"Protocol"`
 }
 
 // Sanitize takes a partially initialized Identity (for example, deserialized
@@ -106,7 +118,9 @@ func (id *Identity) IsReserved() bool {
 // IsFixed returns whether the identity represents a fixed identity
 // (true), or not (false).
 func (id *Identity) IsFixed() bool {
-	return LookupReservedIdentity(id.ID) != nil && IsUserReservedIdentity(id.ID)
+	return LookupReservedIdentity(id.ID) != nil &&
+		(id.ID == ReservedIdentityHost || id.ID == ReservedIdentityHealth ||
+			IsUserReservedIdentity(id.ID))
 }
 
 // IsWellKnown returns whether the identity represents a well known identity
@@ -221,15 +235,26 @@ func LookupReservedIdentityByLabels(lbls labels.Labels) *Identity {
 			// If a fixed identity was not found then we return nil to avoid
 			// falling to a reserved identity.
 			return nil
-		// If it doesn't contain a fixed-identity then make sure the set of
-		// labels only contains a single label and that label is of the reserved
-		// type. This is to prevent users from adding cilium-reserved labels
-		// into the workloads.
+
 		case lbl.Source == labels.LabelSourceReserved:
+			// If it contains the reserved, local host identity, return it with
+			// the new list of labels. This is to ensure the local node retains
+			// this identity regardless of label changes.
+			id := GetReservedID(lbl.Key)
+			if id == ReservedIdentityHost {
+				identity := NewIdentity(ReservedIdentityHost, lbls)
+				// Pre-calculate the SHA256 hash.
+				identity.GetLabelsSHA256()
+				return identity
+			}
+
+			// If it doesn't contain a fixed-identity then make sure the set of
+			// labels only contains a single label and that label is of the
+			// reserved type. This is to prevent users from adding
+			// cilium-reserved labels into the workloads.
 			if len(lbls) != 1 {
 				return nil
 			}
-			id := GetReservedID(lbl.Key)
 			if id != IdentityUnknown && !IsUserReservedIdentity(id) {
 				return LookupReservedIdentity(id)
 			}

@@ -1,14 +1,13 @@
-# github.com/cilium/cilium v1.7.0-rc2.0.20200427204602-e7d4f5c6af7d
+# github.com/cilium/cilium v1.8.0-rc1.0.20200525154943-1ea19605ae0c
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
 github.com/cilium/cilium/api/v1/peer
+github.com/cilium/cilium/api/v1/relay
 github.com/cilium/cilium/pkg/hubble/api/v1
 github.com/cilium/cilium/pkg/identity
 github.com/cilium/cilium/pkg/k8s/apis/cilium.io
 github.com/cilium/cilium/pkg/labels
-github.com/cilium/cilium/pkg/lock
-github.com/cilium/cilium/pkg/logging
 github.com/cilium/cilium/pkg/logging/logfields
 github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
@@ -50,21 +49,16 @@ github.com/magiconair/properties
 github.com/mitchellh/mapstructure
 # github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
-# github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5
-github.com/petermattis/goid
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/sasha-s/go-deadlock v0.2.1-0.20190427202633-1595213edefa
-github.com/sasha-s/go-deadlock
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
-github.com/sirupsen/logrus/hooks/syslog
 # github.com/spf13/afero v1.2.2
 github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
-# github.com/spf13/cobra v0.0.5
+# github.com/spf13/cobra v1.0.0
 ## explicit
 github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.0.0
@@ -88,8 +82,6 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
 ## explicit
 golang.org/x/sys/unix
@@ -143,8 +135,6 @@ google.golang.org/grpc/tap
 gopkg.in/ini.v1
 # gopkg.in/yaml.v2 v2.2.8
 gopkg.in/yaml.v2
-# k8s.io/klog v1.0.0
-k8s.io/klog
 # github.com/miekg/dns => github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3
 # github.com/optiopay/kafka => github.com/cilium/kafka v0.0.0-20180809090225-01ce283b732b
 # k8s.io/client-go => github.com/cilium/client-go v0.0.0-20200417200322-b77c886899ef
