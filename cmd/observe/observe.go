@@ -32,6 +32,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -56,6 +57,7 @@ var (
 	serverURL     string
 	serverTimeout time.Duration
 
+	debug   bool
 	numeric bool
 )
 
@@ -251,6 +253,8 @@ programs attached to endpoints and devices. This includes:
 }
 
 func handleArgs(ofilter *observeFilter) (err error) {
+	debug = viper.GetBool("debug")
+
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}
@@ -303,6 +307,9 @@ func handleArgs(ofilter *observeFilter) (err error) {
 	}
 	if enablePortTranslation {
 		opts = append(opts, hubprinter.WithPortTranslation())
+	}
+	if debug {
+		opts = append(opts, hubprinter.WithDebug())
 	}
 	printer = hubprinter.New(opts...)
 	return nil
@@ -408,12 +415,20 @@ func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) err
 			return err
 		}
 
-		flow := getFlowResponse.GetFlow()
-		if flow == nil {
+		switch r := getFlowResponse.GetResponseTypes().(type) {
+		case *observer.GetFlowsResponse_Flow:
+			err = printer.WriteProtoFlow(r.Flow)
+		case *observer.GetFlowsResponse_NodeStatus:
+			err = printer.WriteProtoNodeStatusEvent(getFlowResponse)
+		case nil:
 			continue
+		default:
+			if debug {
+				msg := fmt.Sprintf("unknown response type: %+v", getFlowResponse)
+				err = printer.WriteErr(msg)
+			}
 		}
 
-		err = printer.WriteProtoFlow(flow)
 		if err != nil {
 			return err
 		}

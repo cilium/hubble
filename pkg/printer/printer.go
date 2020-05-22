@@ -16,6 +16,7 @@ package printer
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -26,9 +27,12 @@ import (
 	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
+	relaypb "github.com/cilium/cilium/api/v1/relay"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/gopacket/layers"
 )
 
@@ -78,6 +82,10 @@ func New(fopts ...Option) *Printer {
 const (
 	tab     = "\t"
 	newline = "\n"
+
+	dictSeparator = "------------"
+
+	nodeNamesCutOff = 50
 )
 
 // Close any outstanding operations going on in the printer.
@@ -147,16 +155,12 @@ func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
 	return src, dst
 }
 
-func getTimestamp(f v1.Flow) string {
-	if f == nil {
+func fmtTimestamp(ts *timestamp.Timestamp) string {
+	t, err := ptypes.Timestamp(ts)
+	if err != nil || t.IsZero() {
 		return "N/A"
 	}
-	ts, err := ptypes.Timestamp(f.GetTime())
-
-	if err != nil {
-		return "N/A"
-	}
-	return MaybeTime(&ts)
+	return MaybeTime(&t)
 }
 
 // GetFlowType returns the type of a flow as a string.
@@ -211,7 +215,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 		}
 		src, dst := p.GetHostNames(f)
 		_, err := fmt.Fprint(p.tw,
-			getTimestamp(f), tab,
+			fmtTimestamp(f.GetTime()), tab,
 			src, tab,
 			dst, tab,
 			GetFlowType(f), tab,
@@ -224,7 +228,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 	case DictOutput:
 		if p.line != 0 {
 			// TODO: line length?
-			_, err := fmt.Fprintln(p.opts.w, "------------")
+			_, err := fmt.Fprintln(p.opts.w, dictSeparator)
 			if err != nil {
 				return err
 			}
@@ -233,7 +237,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 		// this is a little crude, but will do for now. should probably find the
 		// longest header and auto-format the keys
 		_, err := fmt.Fprint(p.opts.w,
-			"  TIMESTAMP: ", getTimestamp(f), newline,
+			"  TIMESTAMP: ", fmtTimestamp(f.GetTime()), newline,
 			"     SOURCE: ", src, newline,
 			"DESTINATION: ", dst, newline,
 			"       TYPE: ", GetFlowType(f), newline,
@@ -247,7 +251,7 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 		src, dst := p.GetHostNames(f)
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s [%s]: %s -> %s %s %s (%s)\n",
-			getTimestamp(f),
+			fmtTimestamp(f.GetTime()),
 			f.GetNodeName(),
 			src,
 			dst,
@@ -262,6 +266,99 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 		return p.jsonEncoder.Encode(f)
 	}
 	p.line++
+	return nil
+}
+
+// joinWithCutOff performs a strings.Join, but will omit elements if the
+// resulting string is longer than targetLen. The resulting string may be
+// longer than targetLen, as it will always print at least one element.
+// The number of omitted elements is appended to the resulting string as
+// " (and N more)".
+func joinWithCutOff(elems []string, sep string, targetLen int) string {
+	strLen := 0
+	end := len(elems)
+	for i, elem := range elems {
+		strLen += len(elem) + len(sep)
+		if strLen > targetLen && i > 0 {
+			end = i
+			break
+		}
+	}
+
+	joined := strings.Join(elems[:end], sep)
+	omitted := len(elems) - end
+	if omitted == 0 {
+		return joined
+	}
+
+	return fmt.Sprintf("%s (and %d more)", joined, omitted)
+}
+
+// WriteProtoNodeStatusEvent writes a node status event into the error stream
+func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) error {
+	s := r.GetNodeStatus()
+	if s == nil {
+		return errors.New("not a node status event")
+	}
+
+	if !p.opts.enableDebug {
+		switch s.GetStateChange() {
+		case relaypb.NodeState_NODE_ERROR, relaypb.NodeState_NODE_UNAVAILABLE:
+			break
+		default:
+			// skips informal messages in non-debug mode
+			return nil
+		}
+	}
+
+	switch p.opts.output {
+	case JSONOutput:
+		return json.NewEncoder(p.opts.werr).Encode(r)
+	case DictOutput:
+		// this is a bit crude, but in case stdout and stderr are interleaved,
+		// we want to make sure the separators are still printed to clearly
+		// separate flows from node events.
+		if p.line != 0 {
+			_, err := fmt.Fprintln(p.opts.w, dictSeparator)
+			if err != nil {
+				return err
+			}
+		} else {
+			p.line++
+		}
+		nodeNames := joinWithCutOff(s.NodeNames, ", ", nodeNamesCutOff)
+		message := "N/A"
+		if m := s.GetMessage(); len(m) != 0 {
+			message = strconv.Quote(m)
+		}
+		_, err := fmt.Fprint(p.opts.werr,
+			"  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline,
+			"      STATE: ", s.StateChange.String(), newline,
+			"      NODES: ", nodeNames, newline,
+			"    MESSAGE: ", message, newline,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to write out node status: %v", err)
+		}
+	case TabOutput, CompactOutput:
+		numNodes := len(s.NodeNames)
+		nodeNames := joinWithCutOff(s.NodeNames, ", ", nodeNamesCutOff)
+		prefix := fmt.Sprintf("%s [%s]", fmtTimestamp(r.GetTime()), r.GetNodeName())
+		msg := fmt.Sprintf("%s: unknown node status event: %+v", prefix, s)
+		switch s.StateChange {
+		case relaypb.NodeState_NODE_CONNECTED:
+			msg = fmt.Sprintf("%s: Receiving flows from %d nodes: %s", prefix, numNodes, nodeNames)
+		case relaypb.NodeState_NODE_UNAVAILABLE:
+			msg = fmt.Sprintf("%s: %d nodes are unavailable: %s", prefix, numNodes, nodeNames)
+		case relaypb.NodeState_NODE_GONE:
+			msg = fmt.Sprintf("%s: %d nodes removed from cluster: %s", prefix, numNodes, nodeNames)
+		case relaypb.NodeState_NODE_ERROR:
+			msg = fmt.Sprintf("%s: Error %q on %d nodes: %s", prefix, s.Message, numNodes, nodeNames)
+		}
+
+		return p.WriteErr(msg)
+	}
+
 	return nil
 }
 
