@@ -39,6 +39,7 @@ type Options struct {
 	output                Output
 	w                     io.Writer
 	werr                  io.Writer
+	enableDebug           bool
 	enablePortTranslation bool
 	enableIPTranslation   bool
 }
@@ -85,6 +86,13 @@ func Writer(w io.Writer) Option {
 func IgnoreStderr() Option {
 	return func(opts *Options) {
 		opts.werr = ioutil.Discard
+	}
+}
+
+// WithDebug enables debug messages
+func WithDebug() Option {
+	return func(opts *Options) {
+		opts.enableDebug = true
 	}
 }
 

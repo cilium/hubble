@@ -361,9 +361,9 @@ func Test_getHostNames(t *testing.T) {
 	}
 }
 
-func Test_getTimestamp(t *testing.T) {
+func Test_fmtTimestamp(t *testing.T) {
 	type args struct {
-		f *pb.Flow
+		t *timestamp.Timestamp
 	}
 	tests := []struct {
 		name string
@@ -373,29 +373,32 @@ func Test_getTimestamp(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
-				f: &pb.Flow{
-					Time: &timestamp.Timestamp{
-						Seconds: 0,
-						Nanos:   0,
-					},
+				t: &timestamp.Timestamp{
+					Seconds: 0,
+					Nanos:   0,
 				},
 			},
 			want: "Jan  1 00:00:00.000",
 		},
 		{
 			name: "invalid",
-			args: args{},
+			args: args{
+				t: &timestamp.Timestamp{
+					Seconds: -1,
+					Nanos:   -1,
+				},
+			},
 			want: "N/A",
 		},
 		{
-			name: "nil flow",
+			name: "nil timestamp",
 			args: args{},
 			want: "N/A",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getTimestamp(tt.args.f); got != tt.want {
+			if got := fmtTimestamp(tt.args.t); got != tt.want {
 				t.Errorf("getTimestamp() = %v, want %v", got, tt.want)
 			}
 		})
