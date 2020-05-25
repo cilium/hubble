@@ -330,6 +330,21 @@ func Test_getHostNames(t *testing.T) {
 				dst: "b:65432",
 			},
 		},
+		{
+			name: "ethernet",
+			args: args{
+				f: &pb.Flow{
+					Ethernet: &pb.Ethernet{
+						Source:      "00:01:02:03:04:05",
+						Destination: "06:07:08:09:0a:0b",
+					},
+				},
+			},
+			want: want{
+				src: "00:01:02:03:04:05",
+				dst: "06:07:08:09:0a:0b",
+			},
+		},
 	}
 	p := New(WithPortTranslation(), WithIPTranslation())
 	for _, tt := range tests {
