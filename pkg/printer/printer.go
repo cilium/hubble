@@ -114,9 +114,17 @@ func (p *Printer) GetPorts(f v1.Flow) (string, string) {
 // GetHostNames returns source and destination hostnames of a flow.
 func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
 	var srcNamespace, dstNamespace, srcPodName, dstPodName, srcSvcName, dstSvcName string
-	if f == nil || f.GetIP() == nil {
+	if f == nil {
 		return "", ""
 	}
+
+	if f.GetIP() == nil {
+		if eth := f.GetEthernet(); eth != nil {
+			return eth.GetSource(), eth.GetDestination()
+		}
+		return "", ""
+	}
+
 	if src := f.GetSource(); src != nil {
 		srcNamespace = src.Namespace
 		srcPodName = src.PodName
