@@ -15,7 +15,6 @@ hubble:
 	$(GO) build -ldflags "-X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
 
 install:
-	groupadd -f hubble
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 ./hubble $(DESTDIR)$(BINDIR)
 

@@ -10,8 +10,7 @@ COPY . .
 RUN make clean && make hubble
 
 FROM docker.io/library/alpine:3.11
-RUN addgroup -S hubble \
- && apk add --no-cache bash curl jq
+RUN apk add --no-cache bash curl jq
 COPY --from=builder /go/src/github.com/cilium/hubble/hubble /usr/bin
 # cilium-sysdump expects gops to be installed in /bin
 COPY --from=builder /go/bin/gops /bin
