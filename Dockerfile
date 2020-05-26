@@ -7,4 +7,5 @@ RUN make clean && make hubble
 FROM docker.io/library/alpine:3.11
 RUN apk add --no-cache bash curl jq
 COPY --from=builder /go/src/github.com/cilium/hubble/hubble /usr/bin
-CMD ["/usr/bin/hubble", "serve"]
+ENTRYPOINT ["/usr/bin/hubble"]
+CMD ["help"]
