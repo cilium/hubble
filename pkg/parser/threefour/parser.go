@@ -33,6 +33,7 @@ import (
 	"github.com/cilium/hubble/pkg/parser/getters"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/sirupsen/logrus"
 )
 
 // Parser is a parser for L3/L4 payloads
@@ -42,6 +43,8 @@ type Parser struct {
 	dnsGetter      getters.DNSGetter
 	ipGetter       getters.IPGetter
 	serviceGetter  getters.ServiceGetter
+
+	ib *identityBackoff
 
 	// TODO: consider using a pool of these
 	packet *packet
@@ -79,6 +82,7 @@ func New(
 		dnsGetter:      dnsGetter,
 		endpointGetter: endpointGetter,
 		identityGetter: identityGetter,
+		ib:             newBackoff(),
 		ipGetter:       ipGetter,
 		serviceGetter:  serviceGetter,
 		packet:         packet,
@@ -247,14 +251,28 @@ func (p *Parser) resolveEndpoint(ip net.IP, securityIdentity uint64) *pb.Endpoin
 			namespace, podName = ipIdentity.Namespace, ipIdentity.PodName
 		}
 	}
+
 	var labels []string
 	if p.identityGetter != nil {
-		if id, err := p.identityGetter.GetIdentity(securityIdentity); err != nil {
-			logger.GetLogger().
-				WithError(err).WithField("identity", securityIdentity).
-				Warn("failed to resolve identity")
+		if p.ib.allowed(securityIdentity) {
+			if id, err := p.identityGetter.GetIdentity(securityIdentity); err != nil {
+				// record the failure for the backoff mechanism
+				p.ib.failed(securityIdentity)
+
+				logger.GetLogger().
+					WithError(err).WithField("identity", securityIdentity).
+					Warn("failed to resolve identity")
+			} else {
+				// clear successful fetch from the backoff table
+				p.ib.clear(securityIdentity)
+
+				labels = sortAndFilterLabels(id.Labels, securityIdentity)
+			}
 		} else {
-			labels = sortAndFilterLabels(id.Labels, securityIdentity)
+			logger.GetLogger().
+				WithFields(logrus.Fields{
+					"identity": securityIdentity,
+				}).Debug("backing off identity fetch")
 		}
 	}
 
