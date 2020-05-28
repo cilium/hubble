@@ -26,6 +26,7 @@ github.com/cilium/cilium/api/v1/models
 github.com/cilium/cilium/common
 github.com/cilium/cilium/common/types
 github.com/cilium/cilium/pkg/api
+github.com/cilium/cilium/pkg/backoff
 github.com/cilium/cilium/pkg/byteorder
 github.com/cilium/cilium/pkg/cidr
 github.com/cilium/cilium/pkg/client
@@ -54,6 +55,7 @@ github.com/cilium/cilium/pkg/safetime
 github.com/cilium/cilium/pkg/source
 github.com/cilium/cilium/pkg/spanstat
 github.com/cilium/cilium/pkg/u8proto
+github.com/cilium/cilium/pkg/uuid
 github.com/cilium/cilium/pkg/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
@@ -123,6 +125,8 @@ github.com/google/gopacket/layers
 github.com/google/gops/agent
 github.com/google/gops/internal
 github.com/google/gops/signal
+# github.com/google/uuid v1.1.1
+github.com/google/uuid
 # github.com/grpc-ecosystem/grpc-gateway v1.9.5
 github.com/grpc-ecosystem/grpc-gateway/codegenerator
 github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway/descriptor
@@ -165,6 +169,8 @@ github.com/mitchellh/mapstructure
 ## explicit
 github.com/mitchellh/protoc-gen-go-json
 github.com/mitchellh/protoc-gen-go-json/gen
+# github.com/pborman/uuid v1.2.0
+github.com/pborman/uuid
 # github.com/pelletier/go-toml v1.4.0
 github.com/pelletier/go-toml
 # github.com/petermattis/goid v0.0.0-20180202154549-b0b1615b78e5
