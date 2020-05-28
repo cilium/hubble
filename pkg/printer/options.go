@@ -36,12 +36,11 @@ const (
 
 // Options for the printer.
 type Options struct {
-	output                Output
-	w                     io.Writer
-	werr                  io.Writer
-	enableDebug           bool
-	enablePortTranslation bool
-	enableIPTranslation   bool
+	output              Output
+	w                   io.Writer
+	werr                io.Writer
+	enableDebug         bool
+	enableIPTranslation bool
 }
 
 // Option ...
@@ -93,13 +92,6 @@ func IgnoreStderr() Option {
 func WithDebug() Option {
 	return func(opts *Options) {
 		opts.enableDebug = true
-	}
-}
-
-// WithPortTranslation enables translation from port numbers to port names, i.e. `80` becomes `80(http)`.
-func WithPortTranslation() Option {
-	return func(opts *Options) {
-		opts.enablePortTranslation = true
 	}
 }
 

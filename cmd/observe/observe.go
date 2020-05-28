@@ -43,14 +43,13 @@ var (
 	last               uint64
 	sinceVar, untilVar string
 
-	jsonOutput            bool
-	compactOutput         bool
-	dictOutput            bool
-	output                string
-	follow                bool
-	ignoreStderr          bool
-	enableIPTranslation   bool
-	enablePortTranslation bool
+	jsonOutput          bool
+	compactOutput       bool
+	dictOutput          bool
+	output              string
+	follow              bool
+	ignoreStderr        bool
+	enableIPTranslation bool
 
 	printer *hubprinter.Printer
 
@@ -234,13 +233,6 @@ programs attached to endpoints and devices. This includes:
 	)
 
 	observerCmd.Flags().BoolVar(
-		&enablePortTranslation,
-		"port-translation",
-		false,
-		"Translate port numbers to names",
-	)
-
-	observerCmd.Flags().BoolVar(
 		&enableIPTranslation,
 		"ip-translation",
 		true,
@@ -300,13 +292,9 @@ func handleArgs(ofilter *observeFilter) (err error) {
 	}
 	if numeric {
 		enableIPTranslation = false
-		enablePortTranslation = false
 	}
 	if enableIPTranslation {
 		opts = append(opts, hubprinter.WithIPTranslation())
-	}
-	if enablePortTranslation {
-		opts = append(opts, hubprinter.WithPortTranslation())
 	}
 	if debug {
 		opts = append(opts, hubprinter.WithDebug())

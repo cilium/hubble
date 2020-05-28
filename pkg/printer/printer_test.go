@@ -22,7 +22,6 @@ import (
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/google/gopacket/layers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,21 +69,19 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 		{
 			name: "tabular",
 			options: []Option{
-				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
 				f: &f,
 			},
 			wantErr: false,
-			expected: `TIMESTAMP             SOURCE          DESTINATION              TYPE            VERDICT   SUMMARY
-Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   DROPPED   TCP Flags: SYN`,
+			expected: `TIMESTAMP             SOURCE          DESTINATION    TYPE            VERDICT   SUMMARY
+Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   TCP Flags: SYN`,
 		},
 		{
 			name: "compact",
 			options: []Option{
 				Compact(),
-				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
@@ -92,7 +89,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   D
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 " +
-				"[k8s1]: 1.1.1.1:31793 -> 2.2.2.2:8080(http-alt) " +
+				"[k8s1]: 1.1.1.1:31793 -> 2.2.2.2:8080 " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -116,7 +113,6 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   D
 			name: "dict",
 			options: []Option{
 				Dict(),
-				WithPortTranslation(),
 				Writer(&buf),
 			},
 			args: args{
@@ -125,7 +121,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080(http-alt)   Policy denied   D
 			wantErr: false,
 			expected: `  TIMESTAMP: Jan  1 00:20:34.567
      SOURCE: 1.1.1.1:31793
-DESTINATION: 2.2.2.2:8080(http-alt)
+DESTINATION: 2.2.2.2:8080
        TYPE: Policy denied
     VERDICT: DROPPED
     SUMMARY: TCP Flags: SYN`,
@@ -222,7 +218,7 @@ func Test_getHostNames(t *testing.T) {
 			},
 			want: want{
 				src: "1.1.1.1:55555",
-				dst: "2.2.2.2:80(http)",
+				dst: "2.2.2.2:80",
 			},
 		}, {
 			name: "valid udp",
@@ -244,7 +240,7 @@ func Test_getHostNames(t *testing.T) {
 			},
 			want: want{
 				src: "1.1.1.1:55555",
-				dst: "2.2.2.2:53(domain)",
+				dst: "2.2.2.2:53",
 			},
 		}, {
 			name: "valid tcp service",
@@ -274,7 +270,7 @@ func Test_getHostNames(t *testing.T) {
 			},
 			want: want{
 				src: "default/xwing:55555",
-				dst: "deathstar/tiefighter:80(http)",
+				dst: "deathstar/tiefighter:80",
 			},
 		}, {
 			name: "valid udp service",
@@ -304,7 +300,7 @@ func Test_getHostNames(t *testing.T) {
 			},
 			want: want{
 				src: "default/xwing:55555",
-				dst: "deathstar/tiefighter:53(domain)",
+				dst: "deathstar/tiefighter:53",
 			},
 		}, {
 			name: "dns",
@@ -347,7 +343,7 @@ func Test_getHostNames(t *testing.T) {
 			},
 		},
 	}
-	p := New(WithPortTranslation(), WithIPTranslation())
+	p := New(WithIPTranslation())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotSrc, gotDst := p.GetHostNames(tt.args.f)
@@ -551,16 +547,6 @@ func TestMaybeTime(t *testing.T) {
 
 	mt := time.Date(2018, time.July, 07, 17, 30, 0, 123000000, time.UTC)
 	assert.Equal(t, "Jul  7 17:30:00.123", MaybeTime(&mt))
-}
-
-func TestPorts(t *testing.T) {
-	p := New(WithPortTranslation())
-	assert.Equal(t, "80(http)", p.UDPPort(layers.UDPPort(80)))
-	assert.Equal(t, "443(https)", p.TCPPort(layers.TCPPort(443)))
-	assert.Equal(t, "4240(cilium-health)", p.TCPPort(layers.TCPPort(4240)))
-	p = New()
-	assert.Equal(t, "80", p.UDPPort(layers.UDPPort(80)))
-	assert.Equal(t, "443", p.TCPPort(layers.TCPPort(443)))
 }
 
 func TestHostname(t *testing.T) {
