@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// +build pprof
+
 package cmd
 
 import (
@@ -19,12 +21,44 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+
+	"github.com/spf13/cobra"
 )
 
 var (
 	cpuprofile, memprofile         string
 	cpuprofileFile, memprofileFile *os.File
 )
+
+func init() {
+	persistentPreRunE := RootCmd.PersistentPreRunE
+	RootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if persistentPreRunE != nil {
+			if err := persistentPreRunE(cmd, args); err != nil {
+				return err
+			}
+		}
+		return pprofInit()
+	}
+	prersistentPostRunE := RootCmd.PersistentPostRunE
+	RootCmd.PersistentPostRunE = func(cmd *cobra.Command, args []string) error {
+		if prersistentPostRunE != nil {
+			if err := prersistentPostRunE(cmd, args); err != nil {
+				return err
+			}
+		}
+		return pprofTearDown()
+	}
+
+	RootCmd.PersistentFlags().StringVar(&cpuprofile,
+		"cpuprofile", "", "Enable CPU profiling",
+	)
+	RootCmd.PersistentFlags().StringVar(&memprofile,
+		"memprofile", "", "Enable memory profiling",
+	)
+	RootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
+	RootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
+}
 
 func pprofInit() error {
 	var err error

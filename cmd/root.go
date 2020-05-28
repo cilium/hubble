@@ -35,12 +35,6 @@ var RootCmd = &cobra.Command{
 	SilenceErrors: true, // this is being handled in main, no need to duplicate error messages
 	SilenceUsage:  true,
 	Version:       pkg.Version,
-	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-		return pprofInit()
-	},
-	PersistentPostRunE: func(_ *cobra.Command, _ []string) error {
-		return pprofTearDown()
-	},
 }
 
 func addSubcommands() {
@@ -65,15 +59,6 @@ func init() {
 	viper.BindPFlags(flags)
 	RootCmd.AddCommand(newCmdCompletion(os.Stdout))
 	RootCmd.SetErr(os.Stderr)
-
-	RootCmd.PersistentFlags().StringVar(&cpuprofile,
-		"cpuprofile", "", "Enable CPU profiling",
-	)
-	RootCmd.PersistentFlags().StringVar(&memprofile,
-		"memprofile", "", "Enable memory profiling",
-	)
-	RootCmd.PersistentFlags().Lookup("cpuprofile").Hidden = true
-	RootCmd.PersistentFlags().Lookup("memprofile").Hidden = true
 
 	RootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
