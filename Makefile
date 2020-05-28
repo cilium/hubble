@@ -12,7 +12,7 @@ TEST_TIMEOUT ?= 5s
 all: hubble
 
 hubble:
-	$(GO) build -ldflags "-X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
+	$(GO) build -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
 
 install:
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(BINDIR)
