@@ -33,14 +33,7 @@ import (
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/google/gopacket/layers"
 )
-
-// additional named ports that are related to hubble and cilium, which do
-// not appear in the "well known" list of Golang ports... yet.
-var namedPorts = map[int]string{
-	4240: "cilium-health",
-}
 
 // Printer for flows.
 type Printer struct {
@@ -111,9 +104,9 @@ func (p *Printer) GetPorts(f v1.Flow) (string, string) {
 	}
 	switch l4.Protocol.(type) {
 	case *pb.Layer4_TCP:
-		return p.TCPPort(layers.TCPPort(l4.GetTCP().SourcePort)), p.TCPPort(layers.TCPPort(l4.GetTCP().DestinationPort))
+		return strconv.Itoa(int(l4.GetTCP().SourcePort)), strconv.Itoa(int(l4.GetTCP().DestinationPort))
 	case *pb.Layer4_UDP:
-		return p.UDPPort(layers.UDPPort(l4.GetUDP().SourcePort)), p.UDPPort(layers.UDPPort(l4.GetUDP().DestinationPort))
+		return strconv.Itoa(int(l4.GetUDP().SourcePort)), strconv.Itoa(int(l4.GetUDP().DestinationPort))
 	default:
 		return "", ""
 	}
@@ -369,30 +362,6 @@ func MaybeTime(t *time.Time) string {
 		return t.Format(time.StampMilli)
 	}
 	return "N/A"
-}
-
-// UDPPort ...
-func (p *Printer) UDPPort(port layers.UDPPort) string {
-	i := int(port)
-	if !p.opts.enablePortTranslation {
-		return strconv.Itoa(i)
-	}
-	if name, ok := namedPorts[i]; ok {
-		return fmt.Sprintf("%v(%v)", i, name)
-	}
-	return port.String()
-}
-
-// TCPPort ...
-func (p *Printer) TCPPort(port layers.TCPPort) string {
-	i := int(port)
-	if !p.opts.enablePortTranslation {
-		return strconv.Itoa(i)
-	}
-	if name, ok := namedPorts[i]; ok {
-		return fmt.Sprintf("%v(%v)", i, name)
-	}
-	return port.String()
 }
 
 // Hostname returns a "host:ip" formatted pair for the given ip and port. If
