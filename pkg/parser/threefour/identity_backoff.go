@@ -23,9 +23,9 @@ import (
 )
 
 const (
-	defaultBurst      = 25
+	defaultBurst      = 5
 	defaultMinBackoff = 100 * time.Millisecond
-	defaultMaxBackoff = 5 * time.Second
+	defaultMaxBackoff = 1 * time.Minute
 )
 
 func newBackoff() *identityBackoff {
