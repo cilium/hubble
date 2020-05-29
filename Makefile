@@ -1,7 +1,7 @@
 GO := go
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
-IMAGE_REPOSITORY ?= quay.io/covalent/hubble
+IMAGE_REPOSITORY ?= quay.io/cilium/hubble
 CONTAINER_ENGINE ?= docker
 TARGET=hubble
 GIT_BRANCH != which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD
