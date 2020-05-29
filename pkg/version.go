@@ -15,7 +15,7 @@
 package pkg
 
 // Version is the software version.
-const Version = "0.6.0-dev"
+const Version = "0.6.0"
 
 // The following variables are set at compile time via LDFLAGS.
 var (
