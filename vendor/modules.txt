@@ -1,4 +1,4 @@
-# github.com/cilium/cilium v1.8.0-rc1.0.20200525154943-1ea19605ae0c
+# github.com/cilium/cilium v1.8.0-rc2
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
