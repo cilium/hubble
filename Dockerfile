@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.14.3-alpine3.11 as builder
+FROM docker.io/library/golang:1.14.4-alpine3.12 as builder
 WORKDIR /go/src/github.com/cilium/hubble
 RUN apk add --no-cache binutils git make \
  && go get -d github.com/google/gops \
@@ -9,7 +9,7 @@ RUN apk add --no-cache binutils git make \
 COPY . .
 RUN make clean && make hubble
 
-FROM docker.io/library/alpine:3.11
+FROM docker.io/library/alpine:3.12
 RUN addgroup -S hubble \
  && apk add --no-cache bash curl jq
 COPY --from=builder /go/src/github.com/cilium/hubble/hubble /usr/bin
