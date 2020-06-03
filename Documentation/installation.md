@@ -2,7 +2,7 @@
 
 ## Requirements
 
- * [Cilium] Recommended: >= 1.7.0, Minimal: >= 1.6.3
+ * [Cilium] >= 1.7.0
  * [Kubernetes]
 
 ## Install Cilium
