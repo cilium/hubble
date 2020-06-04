@@ -9,7 +9,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/sys v0.0.0-20200420163511-1957bb5e6d1f
 	google.golang.org/grpc v1.26.0
 )
 
