@@ -93,7 +93,7 @@ The pull request has to be `v$MAJOR.$MINOR.$PATCH-prep -> v$MAJOR.$MINOR`
 
 Once the pull request is approved and merged, a tag can be created.
 
-## Finally, create a GitHub release
+## Create a GitHub release
 
 It is better to have github create the final release tag, rather than pushing
 it through git. Pushing through git will auto-create an empty release and
@@ -108,3 +108,13 @@ https://github.com/cilium/hubble/releases/new
     Describe this release:  Paste the earlier generated release notes
 
     Check the "This is a pre-release" box if `-rc*` or `0.x.x` release
+
+## Finally, upload release tarballs to the GitHub release
+
+Generate the release tarballs using the `release` make target:
+
+    make release
+
+This will generate tarballs and associated checksum files in the `release`
+directory. Make sure to upload these tarball and checksum to the GitHub release
+page.
