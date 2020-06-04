@@ -4,6 +4,7 @@ BINDIR ?= /usr/local/bin
 IMAGE_REPOSITORY ?= quay.io/cilium/hubble
 CONTAINER_ENGINE ?= docker
 TARGET=hubble
+VERSION=0.6.1-dev
 GIT_BRANCH != which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD
 GIT_HASH != which git >/dev/null 2>&1 && git rev-parse --short HEAD
 GO_TAGS ?=
@@ -13,7 +14,7 @@ TEST_TIMEOUT ?= 5s
 all: hubble
 
 hubble:
-	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
+	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
 install: hubble
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(BINDIR)
