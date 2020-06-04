@@ -15,7 +15,7 @@ all: hubble
 hubble:
 	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)'" -o $(TARGET)
 
-install:
+install: hubble
 	$(INSTALL) -m 0755 -d $(DESTDIR)$(BINDIR)
 	$(INSTALL) -m 0755 ./hubble $(DESTDIR)$(BINDIR)
 
