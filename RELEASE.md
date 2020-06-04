@@ -45,15 +45,15 @@ release.
 
     git checkout -b v$MAJOR.$MINOR.$PATCH-prep
 
-## Modify the version constant in pkg/version.go to match the new release
+## Modify the version constant in the Makefile to match the new release
 
 Usually this only consists of dropping the `-dev` suffix from the string.
 
-    const Version = "$MAJOR.$MINOR.$PATCH"
+    VERSION="$MAJOR.$MINOR.$PATCH"
 
 Commit and push the changes to the prep branch
 
-    git add pkg/version.go
+    git add Makefile
     git commit -s -m "Modify version to $MAJOR.$MINOR.$PATCH"
 
 ## Modify the version constant on the master branch, if needed
@@ -61,7 +61,7 @@ Commit and push the changes to the prep branch
 After branching out from the tree for release, the version need to be updated
 to reflect the next planned release, i.e.
 
-    const Version = "$MAJOR.<$MINOR+1>.0-dev"
+    VERSION="$MAJOR.<$MINOR+1>.0-dev"
 
 ## Prepare the release notes
 
