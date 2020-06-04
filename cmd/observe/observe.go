@@ -33,7 +33,6 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -379,7 +378,7 @@ func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) err
 
 	go func() {
 		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, unix.SIGINT, unix.SIGTERM)
+		signal.Notify(sigs, os.Interrupt)
 		select {
 		case <-sigs:
 		case <-ctx.Done():
