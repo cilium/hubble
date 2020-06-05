@@ -5,8 +5,8 @@ IMAGE_REPOSITORY ?= quay.io/cilium/hubble
 CONTAINER_ENGINE ?= docker
 TARGET=hubble
 VERSION=0.6.1-dev
-GIT_BRANCH != which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD
-GIT_HASH != which git >/dev/null 2>&1 && git rev-parse --short HEAD
+GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
+GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD)
 GO_TAGS ?=
 
 TEST_TIMEOUT ?= 5s
