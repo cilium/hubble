@@ -17,6 +17,7 @@ hubble:
 	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
 release:
+	rm -rf release
 	for OS in darwin linux windows; do \
 		EXT=; \
 		if test $$OS = "windows"; then \
@@ -25,9 +26,10 @@ release:
 		for ARCH in 386 amd64; do \
 			test -d release/$$OS/$$ARCH|| mkdir -p release/$$OS/$$ARCH; \
 			env GOOS=$$OS GOARCH=$$ARCH $(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o release/$$OS/$$ARCH/$(TARGET)$$EXT; \
-			tar -czf release/$(TARGET)-v$(VERSION)-$$OS-$$ARCH.tar.gz -C release/$$OS/$$ARCH $(TARGET)$$EXT; \
-			cd release && sha256sum $(TARGET)-v$(VERSION)-$$OS-$$ARCH.tar.gz > $(TARGET)-v$(VERSION)-$$OS-$$ARCH.tar.gz.sha256sum && cd $(CURDIR); \
+			tar -czf release/$(TARGET)-$$OS-$$ARCH.tar.gz -C release/$$OS/$$ARCH $(TARGET)$$EXT; \
+			cd release && sha256sum $(TARGET)-$$OS-$$ARCH.tar.gz > $(TARGET)-$$OS-$$ARCH.tar.gz.sha256sum && cd $(CURDIR); \
 		done; \
+		rm -r release/$$OS; \
 	done
 
 install: hubble
