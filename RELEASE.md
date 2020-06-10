@@ -111,9 +111,9 @@ https://github.com/cilium/hubble/releases/new
 
 ## Finally, upload release tarballs to the GitHub release
 
-Generate the release tarballs using the `release` make target:
+Generate the release tarballs using `contrib/scripts/release.sh` script:
 
-    make release
+    ./contrib/scripts/release.sh
 
 This will generate tarballs and associated checksum files in the `release`
 directory. Make sure to upload these tarball and checksum to the GitHub release

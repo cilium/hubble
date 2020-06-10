@@ -16,8 +16,7 @@ all: hubble
 hubble:
 	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
-release:
-	rm -rf release
+release: clean
 	for OS in darwin linux windows; do \
 		EXT=; \
 		if test $$OS = "windows"; then \
