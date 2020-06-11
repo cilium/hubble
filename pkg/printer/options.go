@@ -32,6 +32,8 @@ const (
 	// DictOutput presents the same information as TabOutput, but each flow is
 	// presented as a key:value dictionary, similar to \G output of mysql.
 	DictOutput
+	// JSONPBOutput prints GetFlowsResponse as JSON according to proto3's JSON mapping.
+	JSONPBOutput
 )
 
 // Options for the printer.
@@ -50,6 +52,13 @@ type Option func(*Options)
 func JSON() Option {
 	return func(opts *Options) {
 		opts.output = JSONOutput
+	}
+}
+
+// JSONPB encodes GetFlowsResponse as JSON according to proto3's JSON mapping.
+func JSONPB() Option {
+	return func(opts *Options) {
+		opts.output = JSONPBOutput
 	}
 }
 

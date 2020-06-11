@@ -43,6 +43,7 @@ var (
 	sinceVar, untilVar string
 
 	jsonOutput          bool
+	jsonPBOutput        bool
 	compactOutput       bool
 	dictOutput          bool
 	output              string
@@ -219,8 +220,12 @@ programs attached to endpoints and devices. This includes:
 	)
 	observerCmd.Flags().StringVarP(
 		&output, "output", "o", "",
-		"Specify the output format, one of:\n -compact:\tcompact output\n -dict:\teach flow is shown as KEY:VALUE pair\n -json:\tJSON encoding\n -table:\ttab-aligned columns",
-	)
+		`Specify the output format, one of:
+ compact:  Compact output
+ dict:     Each flow is shown as KEY:VALUE pair
+ json:     JSON encoding
+ jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
+ table:    Tab-aligned columns`)
 	observerCmd.Flags().BoolVarP(
 		&ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
 
@@ -270,6 +275,8 @@ func handleArgs(ofilter *observeFilter) (err error) {
 		opts = append(opts, hubprinter.Dict())
 	case "json", "JSON":
 		opts = append(opts, hubprinter.JSON())
+	case "jsonpb":
+		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
 		if follow {
 			return fmt.Errorf("table output format is not compatible with follow mode")
@@ -402,21 +409,7 @@ func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) err
 			return err
 		}
 
-		switch r := getFlowResponse.GetResponseTypes().(type) {
-		case *observer.GetFlowsResponse_Flow:
-			err = printer.WriteProtoFlow(r.Flow)
-		case *observer.GetFlowsResponse_NodeStatus:
-			err = printer.WriteProtoNodeStatusEvent(getFlowResponse)
-		case nil:
-			continue
-		default:
-			if debug {
-				msg := fmt.Sprintf("unknown response type: %+v", getFlowResponse)
-				err = printer.WriteErr(msg)
-			}
-		}
-
-		if err != nil {
+		if err = printer.WriteGetFlowsResponse(getFlowResponse); err != nil {
 			return err
 		}
 	}
