@@ -29,7 +29,7 @@ jobs:
     - name: Run unit tests
       run: make test
     - name: Generate artifacts
-      run: ./contrib/scripts/release.sh
+      run: make release
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       if: success()
