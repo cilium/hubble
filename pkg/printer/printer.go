@@ -27,6 +27,7 @@ import (
 	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
+	"github.com/cilium/cilium/api/v1/observer"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	relaypb "github.com/cilium/cilium/api/v1/relay"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -65,7 +66,7 @@ func New(fopts ...Option) *Printer {
 	case TabOutput:
 		// initialize tabwriter since it's going to be needed
 		p.tw = tabwriter.NewWriter(opts.w, 2, 0, 3, ' ', 0)
-	case JSONOutput:
+	case JSONOutput, JSONPBOutput:
 		p.jsonEncoder = json.NewEncoder(p.opts.w)
 	}
 
@@ -190,7 +191,8 @@ func GetFlowType(f v1.Flow) string {
 }
 
 // WriteProtoFlow writes v1.Flow into the output writer.
-func (p *Printer) WriteProtoFlow(f v1.Flow) error {
+func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
+	f := res.GetFlow()
 	switch p.opts.output {
 	case TabOutput:
 		if p.line == 0 {
@@ -257,6 +259,8 @@ func (p *Printer) WriteProtoFlow(f v1.Flow) error {
 		}
 	case JSONOutput:
 		return p.jsonEncoder.Encode(f)
+	case JSONPBOutput:
+		return p.jsonEncoder.Encode(res)
 	}
 	p.line++
 	return nil
@@ -305,7 +309,7 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 	}
 
 	switch p.opts.output {
-	case JSONOutput:
+	case JSONOutput, JSONPBOutput:
 		return json.NewEncoder(p.opts.werr).Encode(r)
 	case DictOutput:
 		// this is a bit crude, but in case stdout and stderr are interleaved,
@@ -387,4 +391,22 @@ func (p *Printer) Hostname(ip, port string, ns, pod, svc string, names []string)
 	}
 
 	return host
+}
+
+// WriteGetFlowsResponse prints GetFlowsResponse according to the printer configuration.
+func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error {
+	switch r := res.GetResponseTypes().(type) {
+	case *observerpb.GetFlowsResponse_Flow:
+		return p.WriteProtoFlow(res)
+	case *observer.GetFlowsResponse_NodeStatus:
+		return p.WriteProtoNodeStatusEvent(res)
+	case nil:
+		return nil
+	default:
+		if p.opts.enableDebug {
+			msg := fmt.Sprintf("unknown response type: %+v", r)
+			return p.WriteErr(msg)
+		}
+		return nil
+	}
 }

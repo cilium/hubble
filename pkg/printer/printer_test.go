@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 )
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
@@ -110,6 +111,23 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   T
 				`"event_type":{"type":1,"sub_type":133},"Summary":"TCP Flags: SYN"}`,
 		},
 		{
+			name: "jsonpb",
+			options: []Option{
+				JSONPB(),
+				Writer(&buf),
+			},
+			args: args{
+				f: &f,
+			},
+			wantErr: false,
+			expected: `{"flow":{"time":"1970-01-01T00:20:34.567800Z",` +
+				`"verdict":"DROPPED",` +
+				`"IP":{"source":"1.1.1.1","destination":"2.2.2.2"},` +
+				`"l4":{"TCP":{"source_port":31793,"destination_port":8080}},` +
+				`"Type":"L3_L4","node_name":"k8s1",` +
+				`"event_type":{"type":1,"sub_type":133},"Summary":"TCP Flags: SYN"}}`,
+		},
+		{
 			name: "dict",
 			options: []Option{
 				Dict(),
@@ -131,7 +149,11 @@ DESTINATION: 2.2.2.2:8080
 		buf.Reset()
 		t.Run(tt.name, func(t *testing.T) {
 			p := New(tt.options...)
-			if err := p.WriteProtoFlow(tt.args.f); (err != nil) != tt.wantErr {
+			res := &observerpb.GetFlowsResponse{
+				ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: tt.args.f},
+			}
+			//writes a node status event into the error stream
+			if err := p.WriteProtoFlow(res); (err != nil) != tt.wantErr {
 				t.Errorf("WriteProtoFlow() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			require.NoError(t, p.Close())
