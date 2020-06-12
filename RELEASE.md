@@ -118,3 +118,29 @@ Generate the release tarballs using `contrib/scripts/release.sh` script:
 This will generate tarballs and associated checksum files in the `release`
 directory. Make sure to upload these tarball and checksum to the GitHub release
 page.
+
+## (OPTIONAL) Update `stable.txt` in the master branch
+
+Hubble's installation instruction in the Cilium documentation uses the version specified in
+`stable.txt` in the master branch. There are a couple of things to consider when deciding
+whether to update `stable.txt`. Let's say `stable.txt` is currently pointing to `v0.6.1`:
+
+- If this is a minor or patch release relative to the current stable version (i.e. `v0.7.0`
+  or `v0.6.2`), update `stable.txt` so that people start picking up the new features / bug
+  fixes included in this release.
+- If this is a patch release of a previous version (e.g. `v0.5.2`), don't update
+  `stable.txt`.
+- If this is a major release (e.g. `v1.0.0`), the installation instructions in older Cilium
+  documentation versions need to be updated to point to a compatible version of Hubble. Then,
+  ensure the version specified in `stable.txt` is compatible with the current stable Cilium
+  version.
+
+To update `stable.txt`, do:
+
+    git checkout -b update-stable-txt master
+    echo v$MAJOR.$MINOR.$PATCH > stable.txt
+    git add stable.txt
+    git commit -as -m "Point stable.txt to $MAJOR.$MINOR.$PATCH"
+    git push
+
+and then open a pull request against the master branch.
