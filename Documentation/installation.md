@@ -7,9 +7,9 @@
 
 ## Install Cilium
 
-Install Cilium using the [Install instructions]. To deploy Cilium 1.7.0 using quick-install.yaml:
+Install Cilium using the [Install instructions]. To deploy Cilium 1.7 using quick-install.yaml:
 
-    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7.0/install/kubernetes/quick-install.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7/install/kubernetes/quick-install.yaml
 
 If you need help to troubleshoot installation issues, ping us on the
 [Cilium Slack].
@@ -28,7 +28,7 @@ This is the default setting for new installs of Cilium 1.6 or later.
 
 Deploy Hubble using hubble-all-minikube.yaml:
 
-    kubectl apply -f https://raw.githubusercontent.com/cilium/hubble/master/tutorials/deploy-hubble-servicemap/hubble-all-minikube.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/hubble/v0.5/tutorials/deploy-hubble-servicemap/hubble-all-minikube.yaml
 
 ### Optional: Configure Metrics
 
