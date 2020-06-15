@@ -2,7 +2,7 @@
 
 ## Requirements
 
- * [Cilium] >= 1.7.0
+ * [Cilium] >= 1.7.0, < 1.8.0 (for Hubble v0.5)
  * [Kubernetes]
 
 ## Install Cilium
@@ -13,6 +13,9 @@ Install Cilium using the [Install instructions]. To deploy Cilium 1.7 using quic
 
 If you need help to troubleshoot installation issues, ping us on the
 [Cilium Slack].
+
+> Please note: If you are using Cilium 1.8 or newer, please check the Cilium
+> documentation on how to enable the embedded Hubble server in Cilium >= 1.8.0.
 
 ### Enable Datapath Aggregation
 
