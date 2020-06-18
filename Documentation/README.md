@@ -10,7 +10,7 @@ branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
 
  * [Quickstart](https://docs.cilium.io/en/latest/gettingstarted/hubble)
  * [What is Hubble?](https://docs.cilium.io/en/latest/intro/#what-is-hubble)
- * [Installation](https://docs.cilium.io/en/latest/gettingstarted/hubble-enable/)
+ * [Installation with Cilium](https://docs.cilium.io/en/latest/gettingstarted/#installation)
  * [Running Prometheus and Grafana](https://docs.cilium.io/en/latest/gettingstarted/grafana/)
 
 ## Troubleshooting
