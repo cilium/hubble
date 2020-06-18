@@ -119,6 +119,11 @@ This will generate tarballs and associated checksum files in the `release`
 directory. Make sure to upload these tarball and checksum to the GitHub release
 page.
 
+## Update the README.md
+
+Update the *Releases* section of the `README.md` to point to the latest
+GitHub release.
+
 ## (OPTIONAL) Update `stable.txt` in the master branch
 
 Hubble's installation instruction in the Cilium documentation uses the version specified in
