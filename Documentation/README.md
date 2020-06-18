@@ -1,17 +1,26 @@
 # Hubble Documentation
 
+> The Hubble documentation has moved to [docs.cilium.io](https://docs.cilium.io/)
+
+This documentation is intended for users with **Cilium >=1.8**. If
+you are running Cilium 1.7, please follow [the documentation in the Hubble v0.5
+branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
+
 ## Getting Started
 
- * [Quickstart](quickstart.md)
- * [Concepts](concepts.md)
+ * [Quickstart](https://docs.cilium.io/en/latest/gettingstarted/hubble)
+ * [What is Hubble?](https://docs.cilium.io/en/latest/intro/#what-is-hubble)
+ * [Installation](https://docs.cilium.io/en/latest/gettingstarted/hubble-enable/)
+ * [Running Prometheus and Grafana](https://docs.cilium.io/en/latest/gettingstarted/grafana/)
 
-## Installation
+## Troubleshooting
 
- * [Installation Instructions](installation.md)
- * [Setting up Hubble Metrics with Grafana](../tutorials/deploy-hubble-and-grafana/)
- * [Setting up Hubble with the service map](../tutorials/deploy-hubble-servicemap/)
- * [Enabling DNS Visibility](dns_visibility.md)
- * [Enabling HTTP Visibility](http_visibility.md)
+  * [Observing Flows with Hubble](https://docs.cilium.io/en/latest/troubleshooting/#observing-flows-with-hubble)
+  * [Observing Flows with Hubble Relay](https://docs.cilium.io/en/latest/troubleshooting/#observing-flows-with-hubble-relay)
 
-## Tutorials
- * [Troubleshooting DNS resolution](../tutorials/troubleshooting-dns-resoluton/)
+## Internals
+
+ * [Components](https://docs.cilium.io/en/latest/concepts/overview/#hubble)
+ * [Architecture](https://docs.cilium.io/en/latest/hubble/)
+ * [Code Overview](https://docs.cilium.io/en/latest/contributing/development/codeoverview/#hubble)
+ * [Metrics Reference](https://docs.cilium.io/en/latest/configuration/metrics/#hubble)
