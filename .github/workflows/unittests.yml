@@ -30,9 +30,3 @@ jobs:
       run: make test
     - name: Generate artifacts
       run: make release
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      if: success()
-      with:
-        name: release
-        path: release
