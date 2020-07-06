@@ -168,6 +168,9 @@ const (
 	// CIDR is a IPv4/IPv4 subnet/CIDR
 	CIDR = "cidr"
 
+	// MTU is the maximum transmission unit of one interface
+	MTU = "mtu"
+
 	// Interface is an interface id/name on the system
 	Interface = "interface"
 
@@ -259,6 +262,9 @@ const (
 	// Devices is the devices name
 	Devices = "devices"
 
+	//DirectRoutingDevice is the name of the direct routing device
+	DirectRoutingDevice = "directRoutingDevice"
+
 	// IpvlanMasterDevice is the ipvlan master device name
 	IpvlanMasterDevice = "ipvlanMasterDevice"
 
@@ -335,6 +341,9 @@ const (
 	// XDSResource is an xDS resource message.
 	XDSResource = "xdsResource"
 
+	// XDSDetail is detail string included in XDS NACKs.
+	XDSDetail = "xdsDetail"
+
 	// K8s-specific
 
 	// K8sNodeID is the k8s ID of a K8sNode
@@ -372,6 +381,9 @@ const (
 
 	// K8sAPIVersion is the version of the k8s API an object has
 	K8sAPIVersion = "k8sApiVersion"
+
+	// K8sNodeIP is the k8s Node IP (either InternalIP or ExternalIP)
+	K8sNodeIP = "k8sNodeIP"
 
 	// Attempt is the attempt number if an operation is attempted multiple times
 	Attempt = "attempt"
