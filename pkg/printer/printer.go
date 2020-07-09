@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path"
@@ -38,10 +39,10 @@ import (
 
 // Printer for flows.
 type Printer struct {
-	opts        Options
-	line        int
-	tw          *tabwriter.Writer
-	jsonEncoder *json.Encoder
+	opts          Options
+	headerPrinted bool
+	tw            *tabwriter.Writer
+	jsonEncoder   *json.Encoder
 }
 
 // New Printer.
@@ -190,12 +191,24 @@ func GetFlowType(f v1.Flow) string {
 	return "UNKNOWN"
 }
 
+func (p *Printer) dictOutputSeparator(out io.Writer) error {
+	if !p.headerPrinted {
+		// TODO: Line length?
+		_, err := fmt.Fprintln(out, dictSeparator)
+		if err != nil {
+			return err
+		}
+		p.headerPrinted = true
+	}
+	return nil
+}
+
 // WriteProtoFlow writes v1.Flow into the output writer.
 func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 	f := res.GetFlow()
 	switch p.opts.output {
 	case TabOutput:
-		if p.line == 0 {
+		if !p.headerPrinted {
 			_, err := fmt.Fprint(p.tw,
 				"TIMESTAMP", tab,
 				"SOURCE", tab,
@@ -207,6 +220,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			if err != nil {
 				return err
 			}
+			p.headerPrinted = true
 		}
 		src, dst := p.GetHostNames(f)
 		_, err := fmt.Fprint(p.tw,
@@ -221,12 +235,8 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
 	case DictOutput:
-		if p.line != 0 {
-			// TODO: line length?
-			_, err := fmt.Fprintln(p.opts.w, dictSeparator)
-			if err != nil {
-				return err
-			}
+		if err := p.dictOutputSeparator(p.opts.w); err != nil {
+			return err
 		}
 		src, dst := p.GetHostNames(f)
 		// this is a little crude, but will do for now. should probably find the
@@ -262,7 +272,6 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(res)
 	}
-	p.line++
 	return nil
 }
 
@@ -312,16 +321,8 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 	case JSONOutput, JSONPBOutput:
 		return json.NewEncoder(p.opts.werr).Encode(r)
 	case DictOutput:
-		// this is a bit crude, but in case stdout and stderr are interleaved,
-		// we want to make sure the separators are still printed to clearly
-		// separate flows from node events.
-		if p.line != 0 {
-			_, err := fmt.Fprintln(p.opts.w, dictSeparator)
-			if err != nil {
-				return err
-			}
-		} else {
-			p.line++
+		if err := p.dictOutputSeparator(p.opts.w); err != nil {
+			return err
 		}
 		nodeNames := joinWithCutOff(s.NodeNames, ", ", nodeNamesCutOff)
 		message := "N/A"
@@ -353,6 +354,43 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 			msg = fmt.Sprintf("%s: Error %q on %d nodes: %s", prefix, s.Message, numNodes, nodeNames)
 		}
 
+		return p.WriteErr(msg)
+	}
+
+	return nil
+}
+
+// WriteProtoNodeStatusEvent writes a node status event into the error stream
+func (p *Printer) WriteProtoLostEvents(r *observerpb.GetFlowsResponse) error {
+	l := r.GetLostEvents()
+	if l == nil {
+		return errors.New("not a lost event response")
+	}
+
+	cpu := "N/A"
+	if c := l.GetCpu(); c != nil {
+		cpu = fmt.Sprintf("%02d", c.Value)
+	}
+
+	switch p.opts.output {
+	case JSONOutput, JSONPBOutput:
+		return json.NewEncoder(p.opts.werr).Encode(r)
+	case DictOutput:
+		if err := p.dictOutputSeparator(p.opts.w); err != nil {
+			return err
+		}
+		_, err := fmt.Fprint(p.opts.werr,
+			"  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline,
+			"     SOURCE: ", l.GetSource().String(), newline,
+			"LOST_EVENTS: ", l.GetNumEventsLost(), newline,
+			"        CPU: ", cpu, newline,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to write out lost event response: %v", err)
+		}
+	case TabOutput, CompactOutput:
+		prefix := fmt.Sprintf("%s [%s]", fmtTimestamp(r.GetTime()), r.GetNodeName())
+		msg := fmt.Sprintf("%s: lost %d events at %s (CPU %s)", prefix, l.NumEventsLost, l.GetSource(), cpu)
 		return p.WriteErr(msg)
 	}
 
@@ -400,6 +438,8 @@ func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error 
 		return p.WriteProtoFlow(res)
 	case *observer.GetFlowsResponse_NodeStatus:
 		return p.WriteProtoNodeStatusEvent(res)
+	case *observer.GetFlowsResponse_LostEvents:
+		return p.WriteProtoLostEvents(res)
 	case nil:
 		return nil
 	default:
