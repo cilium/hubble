@@ -68,7 +68,13 @@ var (
           # Hubble shell completion
           source '$HOME/.hubble/completion.zsh.inc'
           " >> $HOME/.zshrc
-        source $HOME/.zshrc`
+        source $HOME/.zshrc
+
+# Installing fish completion on Linux/macOS
+## Load the hubble completion code for fish into the current shell
+        hubble completion fish | source
+## Write fish completion code to a file
+        hubble completion fish > ~/.config/fish/completions/hubble.fish`
 )
 
 func newCmdCompletion(out io.Writer) *cobra.Command {
@@ -80,7 +86,7 @@ func newCmdCompletion(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runCompletion(out, cmd, args)
 		},
-		ValidArgs: []string{"bash", "zsh"},
+		ValidArgs: []string{"bash", "fish", "powershell", "ps1", "zsh"},
 	}
 
 	return cmd
@@ -95,15 +101,18 @@ func runCompletion(out io.Writer, cmd *cobra.Command, args []string) error {
 	}
 
 	if len(args) == 0 {
-		return cmd.Parent().GenBashCompletion(out)
+		return cmd.Root().GenBashCompletion(out)
 	}
 
 	switch args[0] {
 	case "bash":
-		return cmd.Parent().GenBashCompletion(out)
+		return cmd.Root().GenBashCompletion(out)
 	case "zsh":
-		return cmd.Parent().GenZshCompletion(out)
+		return cmd.Root().GenZshCompletion(out)
+	case "fish":
+		return cmd.Root().GenFishCompletion(out, true)
+	case "powershell", "ps1":
+		return cmd.Root().GenPowerShellCompletion(out)
 	}
-
 	return fmt.Errorf("unsupported shell type: %s", args[0])
 }
