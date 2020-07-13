@@ -33,6 +33,10 @@ const (
 	// defaultSocketPath on which to connect to the local hubble observer. Use
 	// GetDefaultSocketPath to access it.
 	defaultSocketPath = "unix:///var/run/cilium/hubble.sock"
+
+	// FlowPrintCount is the default number of flows to print on the hubble
+	// observe CLI.
+	FlowPrintCount = 20
 )
 
 // GetDefaultSocketPath returns the default server for status and observe command.
