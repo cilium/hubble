@@ -107,7 +107,7 @@ programs attached to endpoints and devices. This includes:
 		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
 
-	observerCmd.Flags().Uint64Var(&last, "last", 0, "Get last N flows stored in the hubble")
+	observerCmd.Flags().Uint64Var(&last, "last", 0, fmt.Sprintf("Get last N flows stored in the hubble (default %d)", defaults.FlowPrintCount))
 	observerCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow flows output")
 	observerCmd.Flags().StringVar(&sinceVar, "since", "", "Filter flows since a specific date (relative or RFC3339)")
 	observerCmd.Flags().StringVar(&untilVar, "until", "", "Filter flows until a specific date (relative or RFC3339)")
@@ -347,8 +347,7 @@ func runObserve(serverURL string, ofilter *observeFilter) error {
 
 	// no specific parameters were provided, just a vanilla `hubble observe`
 	if last == 0 && since == nil && until == nil {
-		// assume --last 20
-		last = 20
+		last = defaults.FlowPrintCount
 	}
 
 	var (
