@@ -17,7 +17,7 @@ hubble:
 	$(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
 release:
-	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.14.5-alpine3.12 \
+	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.14.6-alpine3.12 \
 		sh -c "apk add --no-cache make && make local-release"
 
 local-release: clean
