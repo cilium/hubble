@@ -65,17 +65,24 @@ powers.
 | [v0.6](https://github.com/cilium/hubble/tree/v0.6) | 2020-05-29   | Cilium 1.8               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.6.1) |
 | [v0.5](https://github.com/cilium/hubble/tree/v0.5) | 2020-03-23   | Cilium 1.7               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.5.1) |
 
-## Feature Stability State
+## Component Stability
 
-Hubble is currently in beta stage. We encourage contributions and feedback to
-mature it to a stable, production stage as quickly as possible. In particular
-this means:
+Hubble project consists of several components (see Architecture section).
 
- * Not all components of Hubble are covered by automated testing yet
- * Even though the architecture is very scalable by nature, not all codepaths
-   have been optimized for efficiency and scalability yet.
- * There are known limitations which are on the roadmap to be optimized before
-   declaring Hubble stable.
+While the core Hubble components have been running in production in multiple
+environments, new components continue to emerge as the project grows and
+expands in scope.
+
+Some components, due to their relatively young age, are still considered beta
+and have to be used with caution in critical production workloads.
+
+| Component      | Area      | State  |
+|----------------|-----------|--------|
+| Hubble CLI     | Core      | Stable |
+| Hubble Server  | Core      | Stable |
+| Hubble Metrics | Core      | Stable |
+| Hubble Relay   | Multinode | Beta   |
+| Hubble UI      | UI        | Beta   |
 
 ## Architecture
 
