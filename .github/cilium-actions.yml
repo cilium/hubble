@@ -1,0 +1,9 @@
+# Require msg to be presented in all commits from the given PR
+require-msgs-in-commit:
+  - msg: "Signed-off-by"
+    # Helper message that will be set as a comment if the PR does not contain
+    # a the required msg in the commit message.
+    helper: "https://docs.cilium.io/en/stable/contributing/contributing/#developer-s-certificate-of-origin"
+    # Labels that are set in the PR in case the msg does not exist in the commit.
+    set-labels:
+      - "dont-merge/needs-sign-off"
