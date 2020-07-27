@@ -108,8 +108,8 @@ for more examples.
 The metrics and monitoring functionality provides an overview of the state of
 systems and allow to recognize patterns indicating failure and other scenarios
 that require action. The following is a short list of example metrics, for a
-more detailed list of examples, see the [Metrics
-Documentation](Documentation/metrics.md).
+more detailed list of examples, see the
+[Metrics Documentation](https://docs.cilium.io/en/stable/configuration/metrics/#hubble-metrics).
 
 ### Networking Behavior
 
