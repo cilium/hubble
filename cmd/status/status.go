@@ -18,6 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -70,6 +72,29 @@ func runStatus() error {
 		ss.NumFlows,
 		(float64(ss.NumFlows)/float64(ss.MaxFlows))*100,
 	)
+	numConnected := ss.GetNumConnectedNodes()
+	numUnavailable := ss.GetNumUnavailableNodes()
+	if numConnected != nil {
+		total := ""
+		if numUnavailable != nil {
+			total = fmt.Sprintf("/%d", numUnavailable.Value+numConnected.Value)
+		}
+		fmt.Printf("Connected Nodes: %d%s\n", numConnected.Value, total)
+	}
+	if numUnavailable != nil && numUnavailable.Value > 0 {
+		if unavailable := ss.GetUnavailableNodes(); unavailable != nil {
+			sort.Strings(unavailable) // it's nicer when displaying unavailable nodes list
+			if numUnavailable.Value > uint32(len(unavailable)) {
+				unavailable = append(unavailable, fmt.Sprintf("and %d more...", numUnavailable.Value-uint32(len(unavailable))))
+			}
+			fmt.Printf("Unavailable Nodes: %d\n  - %s\n",
+				numUnavailable.Value,
+				strings.Join(unavailable, "\n  - "),
+			)
+		} else {
+			fmt.Printf("Unavailable Nodes: %d\n", numUnavailable.Value)
+		}
+	}
 	return nil
 }
 
