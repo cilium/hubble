@@ -119,6 +119,26 @@ func (m *ServerStatusResponse) Validate() error {
 
 	// no validation rules for UptimeNs
 
+	if v, ok := interface{}(m.GetNumConnectedNodes()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerStatusResponseValidationError{
+				field:  "NumConnectedNodes",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if v, ok := interface{}(m.GetNumUnavailableNodes()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return ServerStatusResponseValidationError{
+				field:  "NumUnavailableNodes",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -337,6 +357,18 @@ func (m *GetFlowsResponse) Validate() error {
 			if err := v.Validate(); err != nil {
 				return GetFlowsResponseValidationError{
 					field:  "NodeStatus",
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	case *GetFlowsResponse_LostEvents:
+
+		if v, ok := interface{}(m.GetLostEvents()).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return GetFlowsResponseValidationError{
+					field:  "LostEvents",
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
