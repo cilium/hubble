@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -72,6 +73,13 @@ func runStatus() error {
 		ss.NumFlows,
 		(float64(ss.NumFlows)/float64(ss.MaxFlows))*100,
 	)
+
+	flowsPerSec := "N/A"
+	if uptime := time.Duration(ss.UptimeNs).Seconds(); uptime > 0 {
+		flowsPerSec = fmt.Sprintf("%.2f", float64(ss.SeenFlows)/uptime)
+	}
+	fmt.Printf("Flows/s: %s\n", flowsPerSec)
+
 	numConnected := ss.GetNumConnectedNodes()
 	numUnavailable := ss.GetNumUnavailableNodes()
 	if numConnected != nil {
