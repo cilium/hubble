@@ -3,13 +3,13 @@ module github.com/cilium/hubble
 go 1.14
 
 require (
-	github.com/cilium/cilium v1.8.0-rc1.0.20200706163532-1a5cc4a05511
-	github.com/golang/protobuf v1.3.2
+	github.com/cilium/cilium v1.8.0-rc1.0.20200727154533-977e6fe3dc8f
+	github.com/golang/protobuf v1.4.2
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
-	github.com/stretchr/testify v1.4.0
-	google.golang.org/grpc v1.26.0
+	github.com/stretchr/testify v1.6.1
+	google.golang.org/grpc v1.27.0
 )
 
 replace (
