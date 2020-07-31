@@ -1,4 +1,4 @@
-{{- if .Values.ui.enabled }}
+{{- if or .Values.grpc.enabled .Values.ui.enabled }}
 ---
 kind: Service
 apiVersion: v1
@@ -16,6 +16,8 @@ spec:
   - targetPort: 50051
     protocol: TCP
     port: 50051
+{{- end }}
+{{- if .Values.ui.enabled }}
 ---
 kind: Service
 apiVersion: v1

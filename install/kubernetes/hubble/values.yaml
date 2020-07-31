@@ -45,6 +45,10 @@ metrics:
   serviceMonitor:
     enabled: false
 
+# Configuration for the hubble-grpc Service
+grpc:
+  enabled: false
+
 # Configuration for hubble ui
 ui:
   enabled: false
