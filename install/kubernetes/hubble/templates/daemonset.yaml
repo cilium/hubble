@@ -50,7 +50,7 @@ spec:
 {{- range .Values.listenClientUrls }}
         - --listen-client-urls={{ . }}
 {{- end }}
-{{- if and .Values.ui.enabled (not (has "0.0.0.0:50051" .Values.listenClientUrls)) }}
+{{- if and (or .Values.grpc.enabled .Values.ui.enabled) (not (has "0.0.0.0:50051" .Values.listenClientUrls)) }}
         - --listen-client-urls=0.0.0.0:50051
 {{- if not .Values.listenClientUrls }}
         - --listen-client-urls=unix:///var/run/hubble.sock
