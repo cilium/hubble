@@ -18,6 +18,8 @@ import (
 	"testing"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -86,20 +88,31 @@ func TestFilterDispatch(t *testing.T) {
 	}))
 
 	require.NoError(t, handleArgs(f))
-
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourceIp:  []string{"1.2.3.4", "5.6.7.8"},
-			Verdict:   []pb.Verdict{pb.Verdict_DROPPED},
-			EventType: []*pb.EventTypeFilter{{Type: 129}},
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{
+				SourceIp:  []string{"1.2.3.4", "5.6.7.8"},
+				Verdict:   []pb.Verdict{pb.Verdict_DROPPED},
+				EventType: []*pb.EventTypeFilter{{Type: 129}},
+			},
 		},
-	}, f.whitelist.flowFilters(), "whitelist filter is incorrect")
-
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			DestinationIp: []string{"5.5.5.5"},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(pb.EventTypeFilter{}),
+	); diff != "" {
+		t.Errorf("whitelist filter mismatch (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{
+				DestinationIp: []string{"5.5.5.5"},
+			},
 		},
-	}, f.blacklist.flowFilters(), "blacklist filter is incorrect")
+		f.blacklist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("blacklist filter mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestFilterLeftRight(t *testing.T) {
@@ -118,27 +131,39 @@ func TestFilterLeftRight(t *testing.T) {
 
 	require.NoError(t, handleArgs(f))
 
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourceIp: []string{"1.2.3.4", "5.6.7.8"},
-			Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{
+				SourceIp: []string{"1.2.3.4", "5.6.7.8"},
+				Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
+			},
+			{
+				DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
+				Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
+			},
 		},
-		{
-			DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
-			Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
-		},
-	}, f.whitelist.flowFilters(), "whitelist filter is incorrect")
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("whitelist filter mismatch (-want +got):\n%s", diff)
+	}
 
-	assert.Equal(t, []*pb.FlowFilter{
-		{
-			SourcePod:      []string{"deathstar"},
-			HttpStatusCode: []string{"200"},
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{
+				SourcePod:      []string{"deathstar"},
+				HttpStatusCode: []string{"200"},
+			},
+			{
+				DestinationPod: []string{"deathstar"},
+				HttpStatusCode: []string{"200"},
+			},
 		},
-		{
-			DestinationPod: []string{"deathstar"},
-			HttpStatusCode: []string{"200"},
-		},
-	}, f.blacklist.flowFilters(), "blacklist filter is incorrect")
+		f.blacklist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("blacklist filter mismatch (-want +got):\n%s", diff)
+	}
 }
 
 func TestLabels(t *testing.T) {
@@ -150,10 +175,16 @@ func TestLabels(t *testing.T) {
 		"-l", "k3",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []*pb.FlowFilter{
-		{SourceLabel: []string{"k1=v1,k2=v2", "k3"}},
-		{DestinationLabel: []string{"k1=v1,k2=v2", "k3"}},
-	}, f.whitelist.flowFilters())
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{SourceLabel: []string{"k1=v1,k2=v2", "k3"}},
+			{DestinationLabel: []string{"k1=v1,k2=v2", "k3"}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
 	assert.Nil(t, f.blacklist)
 }
 
@@ -161,10 +192,16 @@ func TestIdentity(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
-	assert.Equal(t, []*pb.FlowFilter{
-		{SourceIdentity: []uint32{1, 2}},
-		{DestinationIdentity: []uint32{1, 2}},
-	}, f.whitelist.flowFilters())
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{SourceIdentity: []uint32{1, 2}},
+			{DestinationIdentity: []uint32{1, 2}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
 	assert.Nil(t, f.blacklist)
 }
 
@@ -172,7 +209,15 @@ func TestFromIdentity(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
-	assert.Equal(t, []*pb.FlowFilter{{SourceIdentity: []uint32{1, 2}}}, f.whitelist.flowFilters())
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{SourceIdentity: []uint32{1, 2}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
 	assert.Nil(t, f.blacklist)
 }
 
@@ -180,7 +225,15 @@ func TestToIdentity(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(f)
 	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
-	assert.Equal(t, []*pb.FlowFilter{{DestinationIdentity: []uint32{1, 2}}}, f.whitelist.flowFilters())
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{DestinationIdentity: []uint32{1, 2}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
 	assert.Nil(t, f.blacklist)
 }
 
