@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.14
 
 require (
-	github.com/cilium/cilium v1.8.0-rc1.0.20200727154533-977e6fe3dc8f
+	github.com/cilium/cilium v1.8.0-rc1.0.20200805113126-d80e66fd95fe
 	github.com/golang/protobuf v1.4.2
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5

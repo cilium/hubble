@@ -1,4 +1,4 @@
-# github.com/cilium/cilium v1.8.0-rc1.0.20200727154533-977e6fe3dc8f
+# github.com/cilium/cilium v1.8.0-rc1.0.20200805113126-d80e66fd95fe
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
@@ -71,7 +71,7 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
-# golang.org/x/net v0.0.0-20200602114024-627f9648deb9
+# golang.org/x/net v0.0.0-20200707034311-ab3426394381
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
