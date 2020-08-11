@@ -52,9 +52,9 @@ The Linux kernel technology [eBPF] is enabling visibility into systems and
 applications at a granularity and efficiency that was not possible before. It
 does so in a completely transparent way, without requiring the application to
 change or for the application to hide information. By building on top of
-[Cilium], Hubble can leverage [eBPF] for visibility. By relying on [eBPF], all
+[Cilium], Hubble can leverage [eBPF] for visibility. By leveraging on [eBPF], all
 visibility is programmable and allows for a dynamic approach that minimizes
-overhead while providing deep and detailed visibility where required. Hubble
+overhead while providing deep and detailed insight where required. Hubble
 has been created and specifically designed to make best use of these new [eBPF]
 powers.
 
