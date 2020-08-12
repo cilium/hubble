@@ -43,7 +43,6 @@ var (
 	sinceVar, untilVar string
 
 	jsonOutput          bool
-	jsonPBOutput        bool
 	compactOutput       bool
 	dictOutput          bool
 	output              string
