@@ -54,7 +54,7 @@ test:
 bench:
 	go test -timeout=30s -bench=. $$(go list ./...)
 
-check: check-fmt ineffassign lint vet
+check: check-fmt ineffassign lint staticcheck vet
 
 check-fmt:
 	./contrib/scripts/check-fmt.sh
@@ -70,6 +70,15 @@ ifeq (, $(shell which golint))
 	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
 endif
 	golint -set_exit_status $$(go list ./...)
+
+# Ignored staticcheck warnings:
+# - SA1019 deprecation warnings: https://staticcheck.io/docs/checks#SA1019
+# - ST1000 missing package comment: https://staticcheck.io/docs/checks#ST1000
+staticcheck:
+ifeq (, $(shell which staticcheck))
+	$(error "staticcheck not installed; you can install it with `go get -u honnef.co/go/tools/cmd/staticcheck`")
+endif
+	staticcheck -checks="all,-SA1019,-ST1000" ./...
 
 vet:
 	go vet $$(go list ./...)

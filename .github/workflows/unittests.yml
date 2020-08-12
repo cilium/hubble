@@ -25,6 +25,7 @@ jobs:
         export PATH=${PATH}:${GOPATH}/bin
         GO111MODULE=off go get -u github.com/gordonklaus/ineffassign
         GO111MODULE=off go get -u golang.org/x/lint/golint
+        GO111MODULE=off go get -u honnef.co/go/tools/cmd/staticcheck
         make check
     - name: Run unit tests
       run: make test
