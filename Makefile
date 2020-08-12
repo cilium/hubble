@@ -25,10 +25,21 @@ release:
 local-release: clean
 	for OS in darwin linux windows; do \
 		EXT=; \
-		if test $$OS = "windows"; then \
-			EXT=".exe"; \
-		fi; \
-		for ARCH in 386 amd64; do \
+		ARCHS=; \
+		case $$OS in \
+			darwin) \
+				ARCHS='amd64'; \
+				;; \
+			linux) \
+				ARCHS='386 amd64 arm arm64'; \
+				;; \
+			windows) \
+				ARCHS='386 amd64'; \
+				EXT=".exe"; \
+				;; \
+		esac; \
+		for ARCH in $$ARCHS; do \
+			echo Building release binary for $$OS/$$ARCH...; \
 			test -d release/$$OS/$$ARCH|| mkdir -p release/$$OS/$$ARCH; \
 			env GOOS=$$OS GOARCH=$$ARCH $(GO) build $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o release/$$OS/$$ARCH/$(TARGET)$$EXT; \
 			tar -czf release/$(TARGET)-$$OS-$$ARCH.tar.gz -C release/$$OS/$$ARCH $(TARGET)$$EXT; \
