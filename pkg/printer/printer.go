@@ -27,7 +27,6 @@ import (
 	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
-	"github.com/cilium/cilium/api/v1/observer"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	relaypb "github.com/cilium/cilium/api/v1/relay"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -398,7 +397,7 @@ func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error 
 	switch r := res.GetResponseTypes().(type) {
 	case *observerpb.GetFlowsResponse_Flow:
 		return p.WriteProtoFlow(res)
-	case *observer.GetFlowsResponse_NodeStatus:
+	case *observerpb.GetFlowsResponse_NodeStatus:
 		return p.WriteProtoNodeStatusEvent(res)
 	case nil:
 		return nil
