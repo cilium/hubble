@@ -92,7 +92,7 @@ func (p *Printer) Close() error {
 
 // WriteErr returns the given msg into the err writer defined in the printer.
 func (p *Printer) WriteErr(msg string) error {
-	_, err := fmt.Fprint(p.opts.werr, fmt.Sprintf("%s\n", msg))
+	_, err := fmt.Fprintf(p.opts.werr, "%s\n", msg)
 	return err
 }
 
