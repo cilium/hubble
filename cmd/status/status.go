@@ -67,12 +67,11 @@ func runStatus() error {
 	if err != nil {
 		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
-	fmt.Println("Max Flows:", ss.MaxFlows)
 	flowsRatio := ""
 	if ss.MaxFlows > 0 {
 		flowsRatio = fmt.Sprintf(" (%.2f%%)", (float64(ss.NumFlows)/float64(ss.MaxFlows))*100)
 	}
-	fmt.Printf("Current Flows: %v%s\n", ss.NumFlows, flowsRatio)
+	fmt.Printf("Current/Max Flows: %v/%v%s\n", ss.NumFlows, ss.MaxFlows, flowsRatio)
 
 	flowsPerSec := "N/A"
 	if uptime := time.Duration(ss.UptimeNs).Seconds(); uptime > 0 {
