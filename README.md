@@ -195,7 +195,7 @@ Identifying pods which have received DNS response indicating failure:
 
 Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat with Cilium Hubble developers and other Cilium / Hubble users. This is a good place to learn about Hubble and Cilium, ask questions, and share your experiences.
 
-Learn more about [Cilium](http://cilium.io).
+Learn more about [Cilium].
 
 # Authors
 
@@ -205,7 +205,7 @@ the [Cilium] project. See [CONTRIBUTING] for instructions on how to contribute
 and details of the Code of Conduct.
 
 
-[Cilium]: http://github.com/cilium/cilium
+[Cilium]: https://github.com/cilium/cilium
 [eBPF]: https://ebpf.io
 [Apache License]: https://www.apache.org/licenses/LICENSE-2.0
 [Governance Rules]: https://docs.cilium.io/en/stable/contributing/contributing/#developer-contributor-guide
