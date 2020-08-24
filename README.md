@@ -206,7 +206,7 @@ and details of the Code of Conduct.
 
 
 [Cilium]: http://github.com/cilium/cilium
-[eBPF]: http://docs.cilium.io/en/stable/bpf/
+[eBPF]: https://ebpf.io
 [Apache License]: https://www.apache.org/licenses/LICENSE-2.0
 [Governance Rules]: https://docs.cilium.io/en/stable/contributing/contributing/#developer-contributor-guide
 [CONTRIBUTING]: CONTRIBUTING.md
