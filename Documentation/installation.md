@@ -50,7 +50,7 @@ instructions in [this page](metrics.md) if you need to customize metric plugins.
  * [Explore Flow Queries](../tutorials/explore-flow-queries/)
  * [More Tutorials](../tutorials/README.md)
 
-[Install instructions]: http://docs.cilium.io/en/stable/gettingstarted/#installation
+[Install instructions]: https://docs.cilium.io/en/v1.7/gettingstarted/#installation
 [Cilium Slack]: https://slack.cilium.io/
 [Helm]: https://helm.sh/
 [Kubernetes]: https://kubernetes.io/
