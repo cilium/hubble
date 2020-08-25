@@ -38,11 +38,12 @@ instead of unix domain socket. For example, to listen to port 8080 on localhost:
 
        kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7/examples/kubernetes/addons/prometheus/monitoring-example.yaml
 
-   Import the dashboard (`install/kubernetes/grafana.json`) via *Create* ->
-   *Import*
+   Import the dashboard ([grafana.json]) via `*Create* ->  *Import*`.
 
 ## Usage
 
 To query Hubble with the CLI on the first node:
 
     kubectl exec -n kube-system -t -c hubble ds/hubble -- hubble observe --since 1s
+
+[grafana.json]: ../../tutorials/deploy-hubble-and-grafana/grafana.json
