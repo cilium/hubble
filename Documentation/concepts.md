@@ -81,4 +81,4 @@ communication map based on the observed flows. The service map is able to show
 service dependencies and visualize network and API calls on layer 3-7.
 
 [Cilium]: https://github.com/cilium/cilium
-[eBPF]: http://docs.cilium.io/en/stable/bpf/
+[eBPF]: https://ebpf.io/
