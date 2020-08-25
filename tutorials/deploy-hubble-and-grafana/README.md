@@ -30,7 +30,7 @@ Set up Prometheus and Grafana. If you already have a stack running, you can
 reuse that stack. Otherwise you can deploy a Prometheus and Grafana stack into
 the `cilium-monitoring` namespace using the following command:
 
-    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.6/examples/kubernetes/addons/prometheus/monitoring-example.yaml
+    kubectl apply -f https://raw.githubusercontent.com/cilium/cilium/v1.7/examples/kubernetes/addons/prometheus/monitoring-example.yaml
 
 ## Deploy the Example Application (Optional)
 
