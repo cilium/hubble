@@ -56,7 +56,7 @@ ui:
     # repository of the docker image
     repository: quay.io/cilium/hubble-ui
     # tag is the container image tag to use
-    tag: latest
+    tag: v0.5.0
     # pullPolicy is the container image pull policy
     pullPolicy: Always
   clusterDomain: cluster.local
