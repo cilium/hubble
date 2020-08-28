@@ -5,8 +5,8 @@ IMAGE_REPOSITORY ?= quay.io/cilium/hubble
 CONTAINER_ENGINE ?= docker
 TARGET=hubble
 VERSION=0.7.0-dev
-GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
-GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD)
+GIT_BRANCH = $(shell command -v git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
+GIT_HASH = $(shell command -v git >/dev/null 2>&1 && git rev-parse --short HEAD)
 GO_TAGS ?=
 RELEASE_UID ?= $(shell id -u)
 RELEASE_GID ?= $(shell id -g)
@@ -71,13 +71,13 @@ check-fmt:
 	./contrib/scripts/check-fmt.sh
 
 ineffassign:
-ifeq (, $(shell which ineffassign))
+ifeq (, $(shell command -v ineffassign))
 	$(error "ineffassign not installed; you can install it with `go get -u github.com/gordonklaus/ineffassign`")
 endif
 	ineffassign .
 
 lint:
-ifeq (, $(shell which golint))
+ifeq (, $(shell command -v golint))
 	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
 endif
 	golint -set_exit_status $$(go list ./...)
@@ -86,7 +86,7 @@ endif
 # - SA1019 deprecation warnings: https://staticcheck.io/docs/checks#SA1019
 # - ST1000 missing package comment: https://staticcheck.io/docs/checks#ST1000
 staticcheck:
-ifeq (, $(shell which staticcheck))
+ifeq (, $(shell command -v staticcheck))
 	$(error "staticcheck not installed; you can install it with `go get -u honnef.co/go/tools/cmd/staticcheck`")
 endif
 	staticcheck -checks="all,-SA1019,-ST1000" ./...
