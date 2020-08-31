@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+
+GO111MODULE=off go run ${SCRIPTPATH}/../vendor/golang.org/x/lint/golint $@

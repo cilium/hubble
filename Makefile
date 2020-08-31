@@ -71,25 +71,16 @@ check-fmt:
 	./contrib/scripts/check-fmt.sh
 
 ineffassign:
-ifeq (, $(shell which ineffassign))
-	$(error "ineffassign not installed; you can install it with `go get -u github.com/gordonklaus/ineffassign`")
-endif
-	ineffassign .
+	./tools/ineffassign .
 
 lint:
-ifeq (, $(shell which golint))
-	$(error "golint not installed; you can install it with `go get -u golang.org/x/lint/golint`")
-endif
-	golint -set_exit_status $$(go list ./...)
+	./tools/golint -set_exit_status $$(go list ./...)
 
 # Ignored staticcheck warnings:
 # - SA1019 deprecation warnings: https://staticcheck.io/docs/checks#SA1019
 # - ST1000 missing package comment: https://staticcheck.io/docs/checks#ST1000
 staticcheck:
-ifeq (, $(shell which staticcheck))
-	$(error "staticcheck not installed; you can install it with `go get -u honnef.co/go/tools/cmd/staticcheck`")
-endif
-	staticcheck -checks="all,-SA1019,-ST1000" ./...
+	./tools/staticcheck -checks="all,-SA1019,-ST1000" ./...
 
 vet:
 	go vet $$(go list ./...)
