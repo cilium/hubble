@@ -80,6 +80,19 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   TCP Flags: SYN`,
 		},
 		{
+			name: "tabular-with-node",
+			options: []Option{
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				f: &f,
+			},
+			wantErr: false,
+			expected: `TIMESTAMP             NODE   SOURCE          DESTINATION    TYPE            VERDICT   SUMMARY
+Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   TCP Flags: SYN`,
+		},
+		{
 			name: "compact",
 			options: []Option{
 				Compact(),
@@ -89,8 +102,23 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   T
 				f: &f,
 			},
 			wantErr: false,
-			expected: "Jan  1 00:20:34.567 " +
-				"[k8s1]: 1.1.1.1:31793 -> 2.2.2.2:8080 " +
+			expected: "Jan  1 00:20:34.567: " +
+				"1.1.1.1:31793 -> 2.2.2.2:8080 " +
+				"Policy denied DROPPED (TCP Flags: SYN)\n",
+		},
+		{
+			name: "compact-with-node",
+			options: []Option{
+				Compact(),
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				f: &f,
+			},
+			wantErr: false,
+			expected: "Jan  1 00:20:34.567 [k8s1]: " +
+				"1.1.1.1:31793 -> 2.2.2.2:8080 " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -138,6 +166,25 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   T
 			},
 			wantErr: false,
 			expected: `  TIMESTAMP: Jan  1 00:20:34.567
+     SOURCE: 1.1.1.1:31793
+DESTINATION: 2.2.2.2:8080
+       TYPE: Policy denied
+    VERDICT: DROPPED
+    SUMMARY: TCP Flags: SYN`,
+		},
+		{
+			name: "dict-with-node",
+			options: []Option{
+				Dict(),
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				f: &f,
+			},
+			wantErr: false,
+			expected: `  TIMESTAMP: Jan  1 00:20:34.567
+       NODE: k8s1
      SOURCE: 1.1.1.1:31793
 DESTINATION: 2.2.2.2:8080
        TYPE: Policy denied

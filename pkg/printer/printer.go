@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path"
@@ -41,6 +42,18 @@ type Printer struct {
 	line        int
 	tw          *tabwriter.Writer
 	jsonEncoder *json.Encoder
+}
+
+type errWriter struct {
+	w   io.Writer
+	err error
+}
+
+func (ew *errWriter) write(a ...interface{}) {
+	if ew.err != nil {
+		return
+	}
+	_, ew.err = fmt.Fprint(ew.w, a...)
 }
 
 // New Printer.
@@ -192,67 +205,80 @@ func GetFlowType(f v1.Flow) string {
 // WriteProtoFlow writes v1.Flow into the output writer.
 func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 	f := res.GetFlow()
+
 	switch p.opts.output {
 	case TabOutput:
+		ew := &errWriter{w: p.tw}
+		src, dst := p.GetHostNames(f)
+
 		if p.line == 0 {
-			_, err := fmt.Fprint(p.tw,
-				"TIMESTAMP", tab,
+			ew.write("TIMESTAMP", tab)
+			if p.opts.nodeName {
+				ew.write("NODE", tab)
+			}
+			ew.write(
 				"SOURCE", tab,
 				"DESTINATION", tab,
 				"TYPE", tab,
 				"VERDICT", tab,
 				"SUMMARY", newline,
 			)
-			if err != nil {
-				return err
-			}
 		}
-		src, dst := p.GetHostNames(f)
-		_, err := fmt.Fprint(p.tw,
-			fmtTimestamp(f.GetTime()), tab,
+		ew.write(fmtTimestamp(f.GetTime()), tab)
+		if p.opts.nodeName {
+			ew.write(f.GetNodeName(), tab)
+		}
+		ew.write(
 			src, tab,
 			dst, tab,
 			GetFlowType(f), tab,
 			f.GetVerdict().String(), tab,
 			f.GetSummary(), newline,
 		)
-		if err != nil {
-			return fmt.Errorf("failed to write out packet: %v", err)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out packet: %v", ew.err)
 		}
 	case DictOutput:
+		ew := &errWriter{w: p.opts.w}
+		src, dst := p.GetHostNames(f)
+
 		if p.line != 0 {
 			// TODO: line length?
-			_, err := fmt.Fprintln(p.opts.w, dictSeparator)
-			if err != nil {
-				return err
-			}
+			ew.write(dictSeparator)
 		}
-		src, dst := p.GetHostNames(f)
+
 		// this is a little crude, but will do for now. should probably find the
 		// longest header and auto-format the keys
-		_, err := fmt.Fprint(p.opts.w,
-			"  TIMESTAMP: ", fmtTimestamp(f.GetTime()), newline,
+		ew.write("  TIMESTAMP: ", fmtTimestamp(f.GetTime()), newline)
+		if p.opts.nodeName {
+			ew.write("       NODE: ", f.GetNodeName(), newline)
+		}
+		ew.write(
 			"     SOURCE: ", src, newline,
 			"DESTINATION: ", dst, newline,
 			"       TYPE: ", GetFlowType(f), newline,
 			"    VERDICT: ", f.GetVerdict().String(), newline,
 			"    SUMMARY: ", f.GetSummary(), newline,
 		)
-		if err != nil {
-			return fmt.Errorf("failed to write out packet: %v", err)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out packet: %v", ew.err)
 		}
 	case CompactOutput:
+		var node string
 		src, dst := p.GetHostNames(f)
+
+		if p.opts.nodeName {
+			node = fmt.Sprintf(" [%s]", f.GetNodeName())
+		}
 		_, err := fmt.Fprintf(p.opts.w,
-			"%s [%s]: %s -> %s %s %s (%s)\n",
+			"%s%s: %s -> %s %s %s (%s)\n",
 			fmtTimestamp(f.GetTime()),
-			f.GetNodeName(),
+			node,
 			src,
 			dst,
 			GetFlowType(f),
 			f.GetVerdict().String(),
-			f.GetSummary(),
-		)
+			f.GetSummary())
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}

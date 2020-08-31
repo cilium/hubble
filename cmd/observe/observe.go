@@ -49,6 +49,7 @@ var (
 	follow              bool
 	ignoreStderr        bool
 	enableIPTranslation bool
+	nodeName            bool
 
 	printer *hubprinter.Printer
 
@@ -242,6 +243,8 @@ programs attached to endpoints and devices. This includes:
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
 	)
 
+	observerCmd.Flags().BoolVarP(&nodeName, "print-node-name", "", false, "Print node name in output")
+
 	customObserverHelp(observerCmd)
 
 	return observerCmd
@@ -303,6 +306,9 @@ func handleArgs(ofilter *observeFilter) (err error) {
 	}
 	if debug {
 		opts = append(opts, hubprinter.WithDebug())
+	}
+	if nodeName {
+		opts = append(opts, hubprinter.WithNodeName())
 	}
 	printer = hubprinter.New(opts...)
 	return nil
