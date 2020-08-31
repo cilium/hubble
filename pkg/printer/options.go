@@ -43,6 +43,7 @@ type Options struct {
 	werr                io.Writer
 	enableDebug         bool
 	enableIPTranslation bool
+	nodeName            bool
 }
 
 // Option ...
@@ -108,5 +109,12 @@ func WithDebug() Option {
 func WithIPTranslation() Option {
 	return func(opts *Options) {
 		opts.enableIPTranslation = true
+	}
+}
+
+// WithNodeName enables printing the node name.
+func WithNodeName() Option {
+	return func(opts *Options) {
+		opts.nodeName = true
 	}
 }
