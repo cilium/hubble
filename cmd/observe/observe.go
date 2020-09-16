@@ -57,6 +57,7 @@ var (
 
 	debug   bool
 	numeric bool
+	token   string
 )
 
 func eventTypes() (l []string) {
@@ -234,6 +235,12 @@ programs attached to endpoints and devices. This includes:
 		false,
 		"Display all information in numeric form",
 	)
+	observerCmd.Flags().StringVar(
+		&token,
+		"token",
+		"",
+		"Token for use in authenticating against 3rd party authentication providers",
+	)
 
 	observerCmd.Flags().BoolVar(
 		&enableIPTranslation,
@@ -308,10 +315,26 @@ func handleArgs(ofilter *observeFilter) (err error) {
 	return nil
 }
 
+type creds string
+
+func (c creds) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": string(c),
+	}, nil
+}
+
+func (c creds) RequireTransportSecurity() bool {
+	return true
+}
+
 func runObserve(serverURL string, ofilter *observeFilter) error {
 	ctx, cancel := context.WithTimeout(context.Background(), serverTimeout)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, serverURL, grpc.WithInsecure(), grpc.WithBlock())
+	opts := []grpc.DialOption{grpc.WithInsecure(), grpc.WithBlock()}
+	if len(token) > 0 {
+		opts = append(opts, grpc.WithPerRPCCredentials(creds(token)))
+	}
+	conn, err := grpc.DialContext(ctx, serverURL, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to dial grpc: %v", err)
 	}
