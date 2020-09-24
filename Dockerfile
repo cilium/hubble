@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.14.7-alpine3.12 as builder
+FROM docker.io/library/golang:1.14.9-alpine3.12 as builder
 WORKDIR /go/src/github.com/cilium/hubble
 RUN apk add --no-cache binutils git make \
  && go get -d github.com/google/gops \
