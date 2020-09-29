@@ -18,23 +18,17 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
 	peerpb "github.com/cilium/cilium/api/v1/peer"
-	"github.com/cilium/hubble/pkg/defaults"
+	"github.com/cilium/hubble/cmd/common"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-var (
-	serverURL     string
-	serverTimeout time.Duration
-)
-
 // New creates a new hidden peer command.
-func New() *cobra.Command {
+func New(vp *viper.Viper) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "peers",
 		Aliases: []string{"peer"},
@@ -42,42 +36,26 @@ func New() *cobra.Command {
 		Long:    `Get information about Hubble peers.`,
 		Hidden:  true, // this command is only useful for development/debugging purposes
 	}
-	cmd.PersistentFlags().StringVar(&serverURL,
-		"server", defaults.GetDefaultSocketPath(),
-		"URL to connect to server")
-	cmd.PersistentFlags().DurationVar(&serverTimeout,
-		"timeout", 5*time.Second,
-		"How long to wait before giving up on server dialing")
 	cmd.AddCommand(
-		newWatchCommand(),
+		newWatchCommand(vp),
 	)
 	return cmd
 }
 
-func newConn(target string, timeout time.Duration) (*grpc.ClientConn, error) {
-	dialCtx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	conn, err := grpc.DialContext(dialCtx, target, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial grpc: %v", err)
-	}
-	return conn, nil
-}
-
-func newWatchCommand() *cobra.Command {
+func newWatchCommand(vp *viper.Viper) *cobra.Command {
 	return &cobra.Command{
 		Use:     "watch",
 		Aliases: []string{"w"},
 		Short:   "Watch for Hubble peers updates",
 		Long:    `Watch for Hubble peers updates.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			conn, err := newConn(serverURL, serverTimeout)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			conn, err := common.NewHubbleConn(ctx, vp)
 			if err != nil {
 				return err
 			}
 			defer conn.Close()
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
 			return runWatch(ctx, peerpb.NewPeerClient(conn))
 		},
 	}

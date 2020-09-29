@@ -24,46 +24,46 @@ import (
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
+	"github.com/cilium/hubble/cmd/common"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-var (
-	serverURL string
-)
-
 // New status command.
-func New() *cobra.Command {
+func New(vp *viper.Viper) *cobra.Command {
 	statusCmd := &cobra.Command{
 		Use:   "status",
 		Short: "Display status of hubble server",
 		Long: `Displays the status of the hubble server. This is
 		intended as a basic connectivity health check`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runStatus()
+			conn, err := common.NewHubbleConn(context.Background(), vp)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
+			return runStatus(conn)
 		},
 	}
-
-	statusCmd.Flags().StringVarP(&serverURL,
-		"server", "", defaults.GetDefaultSocketPath(), "URL to connect to server")
 	return statusCmd
 }
 
-func runStatus() error {
+func runStatus(conn *grpc.ClientConn) error {
 	// get the standard GRPC health check to see if the server is up
-	healthy, status, err := getHC(serverURL)
+	healthy, status, err := getHC(conn)
 	if err != nil {
 		return fmt.Errorf("failed getting status: %v", err)
 	}
-	fmt.Printf("Healthcheck (via %s): %s\n", serverURL, status)
+	fmt.Printf("Healthcheck (via %s): %s\n", conn.Target(), status)
 	if !healthy {
 		return errors.New("not healthy")
 	}
 
 	// if the server is up, lets try to get hubble specific status
-	ss, err := getStatus(serverURL)
+	ss, err := getStatus(conn)
 	if err != nil {
 		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
@@ -105,13 +105,7 @@ func runStatus() error {
 	return nil
 }
 
-func getHC(s string) (healthy bool, status string, err error) {
-	conn, err := grpc.Dial(s, grpc.WithInsecure())
-	if err != nil {
-		return false, "", err
-	}
-	defer conn.Close()
-
+func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
 	defer cancel()
 
@@ -126,13 +120,7 @@ func getHC(s string) (healthy bool, status string, err error) {
 	return true, "Ok", nil
 }
 
-func getStatus(s string) (*observer.ServerStatusResponse, error) {
-	conn, err := grpc.Dial(s, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-
+func getStatus(conn *grpc.ClientConn) (*observer.ServerStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
 	defer cancel()
 

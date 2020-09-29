@@ -21,11 +21,11 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/hubble/cmd/common"
 	"github.com/cilium/hubble/pkg/defaults"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
@@ -53,9 +53,6 @@ var (
 
 	printer *hubprinter.Printer
 
-	serverURL     string
-	serverTimeout time.Duration
-
 	numeric bool
 )
 
@@ -68,10 +65,10 @@ func eventTypes() (l []string) {
 
 // New observer command.
 func New(vp *viper.Viper) *cobra.Command {
-	return newObserveCmd(newObserveFilter(), vp.GetBool("debug"))
+	return newObserveCmd(vp, newObserveFilter())
 }
 
-func newObserveCmd(ofilter *observeFilter, debug bool) *cobra.Command {
+func newObserveCmd(vp *viper.Viper, ofilter *observeFilter) *cobra.Command {
 	observerCmd := &cobra.Command{
 		Use:   "observe",
 		Short: "Display BPF program events running in the local node",
@@ -81,11 +78,16 @@ programs attached to endpoints and devices. This includes:
   * Captured packet traces
   * Debugging information`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(ofilter, debug); err != nil {
+			if err := handleArgs(ofilter, vp.GetBool("debug")); err != nil {
 				return err
 			}
+			conn, err := common.NewHubbleConn(context.Background(), vp)
+			if err != nil {
+				return err
+			}
+			defer conn.Close()
 
-			if err := runObserve(serverURL, ofilter); err != nil {
+			if err := runObserve(conn, ofilter); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unknown {
@@ -96,12 +98,6 @@ programs attached to endpoints and devices. This includes:
 			return nil
 		},
 	}
-	observerCmd.Flags().StringVarP(&serverURL,
-		"server", "", defaults.GetDefaultSocketPath(),
-		"URL to connect to server")
-	observerCmd.Flags().DurationVar(&serverTimeout,
-		"timeout", defaults.DefaultDialTimeout,
-		"How long to wait before giving up on server dialing")
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
@@ -311,15 +307,7 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	return nil
 }
 
-func runObserve(serverURL string, ofilter *observeFilter) error {
-	ctx, cancel := context.WithTimeout(context.Background(), serverTimeout)
-	defer cancel()
-	conn, err := grpc.DialContext(ctx, serverURL, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		return fmt.Errorf("failed to dial grpc: %v", err)
-	}
-	defer conn.Close()
-
+func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 	// convert sinceVar into a param for GetFlows
 	var since, until *timestamp.Timestamp
 	if sinceVar != "" {
