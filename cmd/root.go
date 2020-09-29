@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cilium/hubble/cmd/completion"
@@ -28,37 +29,56 @@ import (
 	"github.com/spf13/viper"
 )
 
-// RootCmd represents the base command when called without any subcommands
-var RootCmd = &cobra.Command{
-	Use:           "hubble",
-	Short:         "CLI",
-	Long:          `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
-	SilenceErrors: true, // this is being handled in main, no need to duplicate error messages
-	SilenceUsage:  true,
-	Version:       pkg.Version,
-}
+// New create a new root command.
+func New() *cobra.Command {
+	vp := newViper()
+	rootCmd := &cobra.Command{
+		Use:           "hubble",
+		Short:         "CLI",
+		Long:          `Hubble is a utility to observe and inspect recent Cilium routed traffic in a cluster.`,
+		SilenceErrors: true, // this is being handled in main, no need to duplicate error messages
+		SilenceUsage:  true,
+		Version:       pkg.Version,
+	}
 
-// Execute adds all child commands to the root command sets flags
-// appropriately. This is called by main.main(). It only needs to happen once
-// to the RootCmd.
-func Execute() error {
-	return RootCmd.Execute()
-}
+	cobra.OnInitialize(func() {
+		if cfg := vp.GetString("config"); cfg != "" { // enable ability to specify config file via flag
+			vp.SetConfigFile(cfg)
+		}
+		// if a config file is found, read it in.
+		if err := vp.ReadInConfig(); err == nil {
+			fmt.Println("Using config file:", vp.ConfigFileUsed())
+		}
+	})
 
-func init() {
-	cobra.OnInitialize(initConfig)
-	flags := RootCmd.PersistentFlags()
-	flags.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hubble.yaml)")
+	flags := rootCmd.PersistentFlags()
+	flags.String("config", "", "config file (default is $HOME/.hubble.yaml)")
 	flags.BoolP("debug", "D", false, "Enable debug messages")
-	viper.BindPFlags(flags)
-	RootCmd.SetErr(os.Stderr)
-	RootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
+	vp.BindPFlags(flags)
+	rootCmd.SetErr(os.Stderr)
+	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
-	RootCmd.AddCommand(
+	rootCmd.AddCommand(
 		completion.New(),
-		observe.New(),
+		observe.New(vp),
 		peer.New(),
 		status.New(),
 		version.New(),
 	)
+	return rootCmd
+}
+
+// Execute creates the root command and executes it.
+func Execute() error {
+	return New().Execute()
+}
+
+// newViper creates a new viper instance configured for Hubble.
+func newViper() *viper.Viper {
+	vp := viper.New()
+	vp.SetEnvPrefix("hubble")
+	vp.SetConfigName(".hubble") // name of config file (without extension)
+	vp.AddConfigPath("$HOME")   // adding home directory as first search path
+	vp.AutomaticEnv()           // read in environment variables that match
+	return vp
 }
