@@ -17,6 +17,7 @@ package cmd
 import (
 	"os"
 
+	"github.com/cilium/hubble/cmd/completion"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/peer"
 	"github.com/cilium/hubble/cmd/status"
@@ -37,13 +38,6 @@ var RootCmd = &cobra.Command{
 	Version:       pkg.Version,
 }
 
-func addSubcommands() {
-	RootCmd.AddCommand(observe.New())
-	RootCmd.AddCommand(peer.New())
-	RootCmd.AddCommand(status.New())
-	RootCmd.AddCommand(version.New())
-}
-
 // Execute adds all child commands to the root command sets flags
 // appropriately. This is called by main.main(). It only needs to happen once
 // to the RootCmd.
@@ -57,10 +51,14 @@ func init() {
 	flags.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.hubble.yaml)")
 	flags.BoolP("debug", "D", false, "Enable debug messages")
 	viper.BindPFlags(flags)
-	RootCmd.AddCommand(newCmdCompletion(os.Stdout))
 	RootCmd.SetErr(os.Stderr)
-
 	RootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
-	addSubcommands()
+	RootCmd.AddCommand(
+		completion.New(),
+		observe.New(),
+		peer.New(),
+		status.New(),
+		version.New(),
+	)
 }

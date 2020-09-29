@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cmd
+package completion
 
 import (
 	"fmt"
@@ -77,19 +77,18 @@ var (
         hubble completion fish > ~/.config/fish/completions/hubble.fish`
 )
 
-func newCmdCompletion(out io.Writer) *cobra.Command {
-	cmd := &cobra.Command{
+// New creates a new shell completion command.
+func New() *cobra.Command {
+	return &cobra.Command{
 		Use:     "completion [shell]",
 		Short:   "Output shell completion code",
 		Long:    ``,
 		Example: completionExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runCompletion(out, cmd, args)
+			return runCompletion(cmd.OutOrStdout(), cmd, args)
 		},
 		ValidArgs: []string{"bash", "fish", "powershell", "ps1", "zsh"},
 	}
-
-	return cmd
 }
 
 func runCompletion(out io.Writer, cmd *cobra.Command, args []string) error {
