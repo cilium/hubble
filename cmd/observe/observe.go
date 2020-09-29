@@ -56,7 +56,6 @@ var (
 	serverURL     string
 	serverTimeout time.Duration
 
-	debug   bool
 	numeric bool
 )
 
@@ -68,11 +67,11 @@ func eventTypes() (l []string) {
 }
 
 // New observer command.
-func New() *cobra.Command {
-	return newObserveCmd(newObserveFilter())
+func New(vp *viper.Viper) *cobra.Command {
+	return newObserveCmd(newObserveFilter(), vp.GetBool("debug"))
 }
 
-func newObserveCmd(ofilter *observeFilter) *cobra.Command {
+func newObserveCmd(ofilter *observeFilter, debug bool) *cobra.Command {
 	observerCmd := &cobra.Command{
 		Use:   "observe",
 		Short: "Display BPF program events running in the local node",
@@ -82,7 +81,7 @@ programs attached to endpoints and devices. This includes:
   * Captured packet traces
   * Debugging information`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(ofilter); err != nil {
+			if err := handleArgs(ofilter, debug); err != nil {
 				return err
 			}
 
@@ -250,9 +249,7 @@ programs attached to endpoints and devices. This includes:
 	return observerCmd
 }
 
-func handleArgs(ofilter *observeFilter) (err error) {
-	debug = viper.GetBool("debug")
-
+func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}

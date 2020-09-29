@@ -25,8 +25,9 @@ import (
 )
 
 func TestNoBlacklist(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -36,16 +37,19 @@ func TestNoBlacklist(t *testing.T) {
 
 // The default filter should be empty.
 func TestDefaultFilter(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
+
 	require.NoError(t, cmd.Flags().Parse([]string{}))
 	assert.Nil(t, f.whitelist)
 	assert.Nil(t, f.blacklist)
 }
 
 func TestConflicts(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	err := cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -60,8 +64,9 @@ func TestConflicts(t *testing.T) {
 }
 
 func TestTrailingNot(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	err := cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -69,14 +74,15 @@ func TestTrailingNot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = handleArgs(f)
+	err = handleArgs(f, debug)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "trailing --not")
 }
 
 func TestFilterDispatch(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -87,7 +93,7 @@ func TestFilterDispatch(t *testing.T) {
 		"-t", "l7", // int:129 in cilium-land
 	}))
 
-	require.NoError(t, handleArgs(f))
+	require.NoError(t, handleArgs(f, debug))
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
 			{
@@ -116,8 +122,9 @@ func TestFilterDispatch(t *testing.T) {
 }
 
 func TestFilterLeftRight(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--ip", "1.2.3.4",
@@ -129,7 +136,7 @@ func TestFilterLeftRight(t *testing.T) {
 		"--http-status", "200",
 	}))
 
-	require.NoError(t, handleArgs(f))
+	require.NoError(t, handleArgs(f, debug))
 
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
@@ -167,8 +174,9 @@ func TestFilterLeftRight(t *testing.T) {
 }
 
 func TestLabels(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
 
 	err := cmd.Flags().Parse([]string{
 		"--label", "k1=v1,k2=v2",
@@ -189,8 +197,10 @@ func TestLabels(t *testing.T) {
 }
 
 func TestIdentity(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
+
 	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
@@ -206,8 +216,10 @@ func TestIdentity(t *testing.T) {
 }
 
 func TestFromIdentity(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
+
 	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
@@ -222,8 +234,10 @@ func TestFromIdentity(t *testing.T) {
 }
 
 func TestToIdentity(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
+
 	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
@@ -238,8 +252,10 @@ func TestToIdentity(t *testing.T) {
 }
 
 func TestInvalidIdentity(t *testing.T) {
+	debug := false
 	f := newObserveFilter()
-	cmd := newObserveCmd(f)
+	cmd := newObserveCmd(f, debug)
+
 	require.Error(t, cmd.Flags().Parse([]string{"--from-identity", "bad"}))
 	require.Error(t, cmd.Flags().Parse([]string{"--to-identity", "bad"}))
 	require.Error(t, cmd.Flags().Parse([]string{"--identity", "bad"}))
