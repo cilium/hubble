@@ -24,6 +24,7 @@ import (
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
 	"github.com/cilium/hubble/pkg"
+	"github.com/cilium/hubble/pkg/defaults"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -52,17 +53,20 @@ func New() *cobra.Command {
 	})
 
 	flags := rootCmd.PersistentFlags()
-	flags.String("config", "", "config file (default is $HOME/.hubble.yaml)")
+	flags.String("config", "", "Config file (default is $HOME/.hubble.yaml)")
 	flags.BoolP("debug", "D", false, "Enable debug messages")
+	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server")
+	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout")
 	vp.BindPFlags(flags)
+
 	rootCmd.SetErr(os.Stderr)
 	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
 
 	rootCmd.AddCommand(
 		completion.New(),
 		observe.New(vp),
-		peer.New(),
-		status.New(),
+		peer.New(vp),
+		status.New(vp),
 		version.New(),
 	)
 	return rootCmd
@@ -76,7 +80,7 @@ func Execute() error {
 // newViper creates a new viper instance configured for Hubble.
 func newViper() *viper.Viper {
 	vp := viper.New()
-	vp.SetEnvPrefix("hubble")
+	vp.SetEnvPrefix("hubble")   // env var must start with HUBBLE_
 	vp.SetConfigName(".hubble") // name of config file (without extension)
 	vp.SetConfigType("yaml")    // useful if the given config file does not have the extension in the name
 	vp.AddConfigPath("$HOME")   // adding home directory as first search path
