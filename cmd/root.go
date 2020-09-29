@@ -80,6 +80,7 @@ func newViper() *viper.Viper {
 	vp.SetConfigName(".hubble") // name of config file (without extension)
 	vp.SetConfigType("yaml")    // useful if the given config file does not have the extension in the name
 	vp.AddConfigPath("$HOME")   // adding home directory as first search path
+	vp.AddConfigPath(".")       // optionally look for config in the working directory
 	vp.AutomaticEnv()           // read in environment variables that match
 	return vp
 }
