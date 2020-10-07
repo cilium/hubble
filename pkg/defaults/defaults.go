@@ -37,6 +37,10 @@ const (
 	// FlowPrintCount is the default number of flows to print on the hubble
 	// observe CLI.
 	FlowPrintCount = 20
+
+	// TargetTLSPrefix is a scheme that indicates that the target connection
+	// requires TLS.
+	TargetTLSPrefix = "tls://"
 )
 
 // GetDefaultSocketPath returns the default server for status and observe command.

@@ -12,25 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package common implements utilities that are meant to be used commonly by
+// all sub-commands to ensure consistency across them.
 package common
-
-import (
-	"context"
-	"fmt"
-
-	"github.com/spf13/viper"
-	"google.golang.org/grpc"
-)
-
-// NewHubbleConn creates a new gRPC client connection to the configured Hubble
-// target.
-func NewHubbleConn(ctx context.Context, vp *viper.Viper) (*grpc.ClientConn, error) {
-	target := vp.GetString("server")
-	dialCtx, cancel := context.WithTimeout(ctx, vp.GetDuration("timeout"))
-	defer cancel()
-	conn, err := grpc.DialContext(dialCtx, target, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to '%s': %w", target, err)
-	}
-	return conn, nil
-}

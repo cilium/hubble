@@ -25,7 +25,7 @@ import (
 	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/cilium/hubble/cmd/common"
+	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/pkg/defaults"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
@@ -81,13 +81,15 @@ programs attached to endpoints and devices. This includes:
 			if err := handleArgs(ofilter, vp.GetBool("debug")); err != nil {
 				return err
 			}
-			conn, err := common.NewHubbleConn(context.Background(), vp)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
+			defer hubbleConn.Close()
 
-			if err := runObserve(conn, ofilter); err != nil {
+			if err := runObserve(hubbleConn, ofilter); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unknown {
