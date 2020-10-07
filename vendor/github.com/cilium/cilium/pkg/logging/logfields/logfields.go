@@ -16,6 +16,8 @@
 package logfields
 
 const (
+	// Annotations are any annotations for Pods
+	Annotations = "annotations"
 
 	// LogSubsys is the field denoting the subsystem when logging
 	LogSubsys = "subsys"
@@ -81,6 +83,12 @@ const (
 	// DeletedPolicyID is the .NumericIdentity, or set or them
 	DeletedPolicyID = "policyID.Deleted"
 
+	// AddedPolicyDenyID is the .NumericIdentity, or set or them
+	AddedPolicyDenyID = "policyID.Deny.Added"
+
+	// DeletedPolicyDenyID is the .NumericIdentity, or set or them
+	DeletedPolicyDenyID = "policyID.Deny.Deleted"
+
 	// L3PolicyID is the identifier of a L3 Policy
 	L3PolicyID = "policyID.L3"
 
@@ -108,14 +116,8 @@ const (
 	// IPv6 is an IPv6 address
 	IPv6 = "ipv6"
 
-	// BuildDuration is the time elapsed to build a BPF program
-	BuildDuration = "buildDuration"
-
 	// BPFCompilationTime is the time elapsed to build a BPF endpoint program
 	BPFCompilationTime = "BPFCompilationTime"
-
-	// EndpointRegenerationTime is the time elapsed to generate an endpoint
-	EndpointRegenerationTime = "endpointRegenerationTime"
 
 	// StartTime is the start time of an event
 	StartTime = "startTime"
@@ -165,6 +167,12 @@ const (
 	// V6Prefix is a IPv6 subnet/CIDR prefix
 	V6Prefix = "v6Prefix"
 
+	// IPv4CIDRs is a list of IPv4 CIDRs
+	IPv4CIDRs = "ipv4CIDRs"
+
+	// IPv6CIDRs is a list of IPv6 CIDRs
+	IPv6CIDRs = "ipv6CIDRs"
+
 	// CIDR is a IPv4/IPv4 subnet/CIDR
 	CIDR = "cidr"
 
@@ -201,6 +209,9 @@ const (
 
 	// SessionAffinityTimeout is a timeout for the session affinity
 	SessionAffinityTimeout = "sessionAffinityTimeout"
+
+	// LoadBalancerSourceRanges is the LB SVC source ranges
+	LoadBalancerSourceRanges = "loadBalancerSourceRanges"
 
 	// ClusterName is the name of the cluster
 	ClusterName = "clusterName"
@@ -246,6 +257,18 @@ const (
 
 	// CiliumNetworkPolicyName is the name of a CiliumNetworkPolicy
 	CiliumNetworkPolicyName = "ciliumNetworkPolicyName"
+
+	// CiliumClusterwideNetworkPolicyName is the name of the CiliumClusterWideNetworkPolicy
+	CiliumClusterwideNetworkPolicyName = "ciliumClusterwideNetworkPolicyName"
+
+	// BPFClockSource denotes the internal clock source (ktime vs jiffies)
+	BPFClockSource = "bpfClockSource"
+
+	// BPFInsnSet denotes the instruction set version
+	BPFInsnSet = "bpfInsnSet"
+
+	// CiliumLocalRedirectPolicyName is the name of a CiliumLocalRedirectPolicy
+	CiliumLocalRedirectName = "ciliumLocalRedirectPolicyName"
 
 	// BPFMapKey is a key from a BPF map
 	BPFMapKey = "bpfMapKey"
@@ -355,6 +378,9 @@ const (
 	// K8sSvcName is the name of a K8s service
 	K8sSvcName = "k8sSvcName"
 
+	// K8sSvcID is the K8s service name and namespace
+	K8sSvcID = "k8sSvcID"
+
 	// K8sSvcType is the k8s service type (e.g. NodePort, Loadbalancer etc.)
 	K8sSvcType = "k8sSvcType"
 
@@ -384,6 +410,9 @@ const (
 
 	// K8sNodeIP is the k8s Node IP (either InternalIP or ExternalIP)
 	K8sNodeIP = "k8sNodeIP"
+
+	// K8sUID is the UID of a K8s object
+	K8sUID = "k8sUID"
 
 	// Attempt is the attempt number if an operation is attempted multiple times
 	Attempt = "attempt"
@@ -435,4 +464,26 @@ const (
 
 	// SysParamValue is the value of the kernel parameter (sysctl)
 	SysParamValue = "sysParamValue"
+
+	// HashSeed is the seed value for the hashing algorithm
+	HashSeed = "hashSeed"
+
+	// HelpMessage is the help message corresponding to a log message.
+	// This is to make sure we keep separate contexts for logs and help messages.
+	HelpMessage = "helpMessage"
+
+	// LRPName is the parsed name of the Local Redirect Policy.
+	LRPName = "lrpName"
+
+	// LRPFrontend is the parsed frontend mappings of the Local Redirect Policy.
+	LRPFrontends = "lrpFrontends"
+
+	// LRPLocalEndpointSelector is the local endpoint selector of the Local Redirect Policy.
+	LRPLocalEndpointSelector = "lrpLocalEndpointSelector"
+
+	// LRPBackendPorts are the parsed backend ports of the Local Redirect Policy.
+	LRPBackendPorts = "lrpBackendPorts"
+
+	// Mode describes an operations mode
+	Mode = "mode"
 )

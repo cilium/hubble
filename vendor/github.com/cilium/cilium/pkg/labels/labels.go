@@ -110,11 +110,13 @@ const (
 	LabelSourceCiliumGenerated = "cilium-generated"
 )
 
-// Label is the cilium's representation of a container label.
+// Label is the Cilium's representation of a container label.
 type Label struct {
 	Key   string `json:"key"`
 	Value string `json:"value,omitempty"`
-	// Source can be one of the values present in const.go (e.g.: LabelSourceContainer)
+	// Source can be one of the above values (e.g.: LabelSourceContainer).
+	//
+	// +kubebuilder:validation:Optional
 	Source string `json:"source"`
 }
 
@@ -362,6 +364,19 @@ func (l Labels) StringMap() map[string]string {
 	o := map[string]string{}
 	for _, v := range l {
 		o[v.Source+":"+v.Key] = v.Value
+	}
+	return o
+}
+
+// StringMap converts Labels into map[string]string
+func (l Labels) K8sStringMap() map[string]string {
+	o := map[string]string{}
+	for _, v := range l {
+		if v.Source == LabelSourceK8s || v.Source == LabelSourceAny || v.Source == LabelSourceUnspec {
+			o[v.Key] = v.Value
+		} else {
+			o[v.Source+"."+v.Key] = v.Value
+		}
 	}
 	return o
 }
