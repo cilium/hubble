@@ -19,6 +19,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/validate"
 	"github.com/cilium/hubble/cmd/completion"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/peer"
@@ -41,6 +43,12 @@ func New() *cobra.Command {
 		SilenceErrors: true, // this is being handled in main, no need to duplicate error messages
 		SilenceUsage:  true,
 		Version:       pkg.Version,
+		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			if err := validate.Flags(cmd, vp); err != nil {
+				return err
+			}
+			return conn.Init(vp)
+		},
 	}
 
 	cobra.OnInitialize(func() {
@@ -54,14 +62,50 @@ func New() *cobra.Command {
 	})
 
 	flags := rootCmd.PersistentFlags()
-	flags.String("config", "", "Config file (default is $HOME/.hubble.yaml)")
-	flags.BoolP("debug", "D", false, "Enable debug messages")
-	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server")
-	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout")
+	flags.String("config", "", "Config file (default is $HOME/.hubble.yaml).")
+	flags.BoolP("debug", "D", false, "Enable debug messages.")
+	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server.")
+	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout.")
+	flags.Bool(
+		"tls",
+		false,
+		"Specify that TLS must be used when establishing a connection to a Hubble server.\r\n"+
+			"By default, TLS is only enabled if the server address starts with 'tls://'.",
+	)
+	flags.Bool(
+		"tls-allow-insecure",
+		false,
+		"Allows the client to skip verifying the server's certificate chain and host name.\r\n"+
+			"This option is NOT recommended as, in this mode, TLS is susceptible to machine-in-the-middle attacks.\r\n"+
+			"See also the 'tls-server-name' option which allows setting the server name.",
+	)
+	flags.StringSlice(
+		"tls-ca-cert-files",
+		nil,
+		"Paths to custom Certificate Authority (CA) certificate files."+
+			"The files must contain PEM encoded data.",
+	)
+	flags.String(
+		"tls-client-cert-file",
+		"",
+		"Path to the public key file for the client certificate to connect to a Hubble server (implies TLS).\r\n"+
+			"The file must contain PEM encoded data.",
+	)
+	flags.String(
+		"tls-client-key-file",
+		"",
+		"Path to the private key file for the client certificate to connect a Hubble server (implies TLS).\r\n"+
+			"The file must contain PEM encoded data.",
+	)
+	flags.String(
+		"tls-server-name",
+		"",
+		"Specify a server name to verify the hostname on the returned certificate (eg: 'instance.hubble-relay.cilium.io').",
+	)
 	vp.BindPFlags(flags)
 
 	rootCmd.SetErr(os.Stderr)
-	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\n")
+	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\r\n")
 
 	rootCmd.AddCommand(
 		completion.New(),

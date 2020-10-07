@@ -24,7 +24,7 @@ import (
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
-	"github.com/cilium/hubble/cmd/common"
+	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,12 +40,14 @@ func New(vp *viper.Viper) *cobra.Command {
 		Long: `Displays the status of the hubble server. This is
 		intended as a basic connectivity health check`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conn, err := common.NewHubbleConn(context.Background(), vp)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
 			if err != nil {
 				return err
 			}
-			defer conn.Close()
-			return runStatus(conn)
+			defer hubbleConn.Close()
+			return runStatus(hubbleConn)
 		},
 	}
 	return statusCmd
