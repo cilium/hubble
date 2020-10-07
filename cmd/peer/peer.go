@@ -72,7 +72,11 @@ func runWatch(ctx context.Context, client peerpb.PeerClient) error {
 		case io.EOF, context.Canceled:
 			return nil
 		case nil:
-			fmt.Printf("%-12s %s %s\n", resp.GetType(), resp.GetName(), resp.GetAddress())
+			tlsServerName := ""
+			if tls := resp.GetTls(); tls != nil {
+				tlsServerName = fmt.Sprintf(" (TLS.ServerName: %s)", tls.GetServerName())
+			}
+			fmt.Printf("%-12s %s %s%s\n", resp.GetType(), resp.GetAddress(), resp.GetName(), tlsServerName)
 		default:
 			if status.Code(err) == codes.Canceled {
 				return nil
