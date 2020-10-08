@@ -32,11 +32,24 @@ type GRPCOptionFunc func(vp *viper.Viper) (grpc.DialOption, error)
 var GRPCOptionFuncs []GRPCOptionFunc
 
 func init() {
-	GRPCOptionFuncs = append(GRPCOptionFuncs, grpcOptionBlock)
+	GRPCOptionFuncs = append(
+		GRPCOptionFuncs,
+		grpcOptionBlock,
+		grpcOptionFailOnNonTempDialError,
+		grpcOptionConnError,
+	)
 }
 
 func grpcOptionBlock(_ *viper.Viper) (grpc.DialOption, error) {
 	return grpc.WithBlock(), nil
+}
+
+func grpcOptionFailOnNonTempDialError(_ *viper.Viper) (grpc.DialOption, error) {
+	return grpc.FailOnNonTempDialError(true), nil
+}
+
+func grpcOptionConnError(_ *viper.Viper) (grpc.DialOption, error) {
+	return grpc.WithReturnConnectionError(), nil
 }
 
 var grpcDialOptions []grpc.DialOption
