@@ -47,7 +47,7 @@ func New() *cobra.Command {
 			vp.SetConfigFile(cfg)
 		}
 		// if a config file is found, read it in.
-		if err := vp.ReadInConfig(); err == nil {
+		if err := vp.ReadInConfig(); err == nil && vp.GetBool("debug") {
 			fmt.Fprintln(rootCmd.ErrOrStderr(), "Using config file:", vp.ConfigFileUsed())
 		}
 	})
