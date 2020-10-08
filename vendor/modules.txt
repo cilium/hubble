@@ -1,6 +1,6 @@
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/cilium/cilium v1.9.0-rc0.0.20201007133158-ca601cda027a
+# github.com/cilium/cilium v1.9.0-rc0.0.20201007145948-2c42c8c8edcd
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
