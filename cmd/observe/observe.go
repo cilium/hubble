@@ -114,13 +114,13 @@ programs attached to endpoints and devices. This includes:
 
 	observerCmd.Flags().Var(filterVar(
 		"from-fqdn", ofilter,
-		"Show all flows originating at the given fully qualified domain name (e.g. \"*.cilium.io\")."))
+		`Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").`))
 	observerCmd.Flags().Var(filterVar(
 		"fqdn", ofilter,
-		"Show all flows related to the given fully qualified domain name (e.g. \"*.cilium.io\")."))
+		`Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").`))
 	observerCmd.Flags().Var(filterVar(
 		"to-fqdn", ofilter,
-		"Show all flows terminating at the given fully qualified domain name (e.g. \"*.cilium.io\")."))
+		`Show all flows terminating at the given fully qualified domain name (e.g. "*.cilium.io").`))
 
 	observerCmd.Flags().Var(filterVar(
 		"from-ip", ofilter,
@@ -154,13 +154,13 @@ programs attached to endpoints and devices. This includes:
 
 	observerCmd.Flags().Var(filterVar(
 		"from-label", ofilter,
-		"Show only flows originating in an endpoint with the given labels (e.g. \"key1=value1\", \"reserved:world\")"))
+		`Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
 	observerCmd.Flags().VarP(filterVarP(
 		"label", "l", ofilter, nil,
-		"Show only flows related to an endpoint with the given labels (e.g. \"key1=value1\", \"reserved:world\")"))
+		`Show only flows related to an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
 	observerCmd.Flags().Var(filterVar(
 		"to-label", ofilter,
-		"Show only flows terminating in an endpoint with given labels (e.g. \"key1=value1\", \"reserved:world\")"))
+		`Show only flows terminating in an endpoint with given labels (e.g. "key1=value1", "reserved:world")`))
 
 	observerCmd.Flags().Var(filterVar(
 		"from-service", ofilter,
@@ -178,7 +178,7 @@ programs attached to endpoints and devices. This includes:
 
 	observerCmd.Flags().Var(filterVar(
 		"http-status", ofilter,
-		"Show only flows which match this HTTP status code prefix (e.g. \"404\", \"5+\")"))
+		`Show only flows which match this HTTP status code prefix (e.g. "404", "5+")`))
 	observerCmd.Flags().Var(filterVar(
 		"http-method", ofilter,
 		`Show only flows which match this HTTP method (e.g. "get", "post")`))
@@ -188,7 +188,7 @@ programs attached to endpoints and devices. This includes:
 
 	observerCmd.Flags().Var(filterVar(
 		"protocol", ofilter,
-		"Show only flows which match the given L4/L7 flow protocol (e.g. \"udp\", \"http\")"))
+		`Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")`))
 
 	observerCmd.Flags().Var(filterVar(
 		"from-port", ofilter,
