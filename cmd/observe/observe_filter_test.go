@@ -125,10 +125,9 @@ func TestFilterLeftRight(t *testing.T) {
 		"--ip", "1.2.3.4",
 		"--ip", "5.6.7.8",
 		"--verdict", "DROPPED",
-		"--not",
-		"--pod", "deathstar",
-		"--not",
-		"--http-status", "200",
+		"--not", "--pod", "deathstar",
+		"--not", "--http-status", "200",
+		"--http-method", "get",
 	}))
 
 	require.NoError(t, handleArgs(f, false))
@@ -136,12 +135,14 @@ func TestFilterLeftRight(t *testing.T) {
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
 			{
-				SourceIp: []string{"1.2.3.4", "5.6.7.8"},
-				Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
+				SourceIp:   []string{"1.2.3.4", "5.6.7.8"},
+				Verdict:    []pb.Verdict{pb.Verdict_DROPPED},
+				HttpMethod: []string{"get"},
 			},
 			{
 				DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
 				Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
+				HttpMethod:    []string{"get"},
 			},
 		},
 		f.whitelist.flowFilters(),

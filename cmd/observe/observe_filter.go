@@ -119,6 +119,7 @@ func newObserveFilter() *observeFilter {
 			{"verdict"},
 			{"type"},
 			{"http-status"},
+			{"http-method"},
 			{"protocol"},
 			{"port", "to-port"},
 			{"port", "from-port"},
@@ -339,8 +340,12 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 			})
 		}
 		f.apply(func(f *pb.FlowFilter) {
-			// TODO: auto-check L7?
 			f.HttpStatusCode = append(f.HttpStatusCode, val)
+		})
+
+	case "http-method":
+		f.apply(func(f *pb.FlowFilter) {
+			f.HttpMethod = append(f.HttpMethod, val)
 		})
 
 	case "type":

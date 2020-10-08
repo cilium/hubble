@@ -179,6 +179,9 @@ programs attached to endpoints and devices. This includes:
 	observerCmd.Flags().Var(filterVar(
 		"http-status", ofilter,
 		"Show only flows which match this HTTP status code prefix (e.g. \"404\", \"5+\")"))
+	observerCmd.Flags().Var(filterVar(
+		"http-method", ofilter,
+		`Show only flows which match this HTTP method (e.g. "get", "post")`))
 
 	observerCmd.Flags().Var(filterVar(
 		"protocol", ofilter,
