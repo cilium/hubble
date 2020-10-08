@@ -335,11 +335,6 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 		})
 
 	case "http-status":
-		if wipe {
-			f.apply(func(f *pb.FlowFilter) {
-				f.HttpStatusCode = nil
-			})
-		}
 		f.apply(func(f *pb.FlowFilter) {
 			f.HttpStatusCode = append(f.HttpStatusCode, val)
 		})
