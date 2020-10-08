@@ -33,6 +33,36 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	// defaultConfigDir is the default directory path to store Hubble
+	// configuration files.
+	defaultConfigDir string
+	// fallbackConfigDir is the directory path to store Hubble configuration
+	// files if defaultConfigDir is unset. Note that it might also be unset.
+	fallbackConfigDir string
+	// defaultConfigFile is the path to an optional configuration file.
+	// It might be unset.
+	defaultConfigFile string
+)
+
+func init() {
+	// honor user config dir
+	if dir, err := os.UserConfigDir(); err == nil {
+		defaultConfigDir = filepath.Join(dir, "hubble")
+	}
+	// fallback to home directory
+	if dir, err := os.UserHomeDir(); err == nil {
+		fallbackConfigDir = filepath.Join(dir, ".hubble")
+	}
+
+	switch {
+	case defaultConfigDir != "":
+		defaultConfigFile = filepath.Join(defaultConfigDir, "config.yaml")
+	case fallbackConfigDir != "":
+		defaultConfigFile = filepath.Join(fallbackConfigDir, "config.yaml")
+	}
+}
+
 // New create a new root command.
 func New() *cobra.Command {
 	vp := newViper()
@@ -62,10 +92,10 @@ func New() *cobra.Command {
 	})
 
 	flags := rootCmd.PersistentFlags()
-	flags.String("config", "", "Config file (default is $HOME/.hubble.yaml).")
-	flags.BoolP("debug", "D", false, "Enable debug messages.")
-	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server.")
-	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout.")
+	flags.String("config", defaultConfigFile, "Optional config file")
+	flags.BoolP("debug", "D", false, "Enable debug messages")
+	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server")
+	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout")
 	flags.Bool(
 		"tls",
 		false,
@@ -130,11 +160,11 @@ func newViper() *viper.Viper {
 	vp.SetConfigName("config") // name of config file (without extension)
 	vp.SetConfigType("yaml")   // useful if the given config file does not have the extension in the name
 	vp.AddConfigPath(".")      // look for a config in the working directory first
-	if dir, err := os.UserConfigDir(); err == nil {
-		vp.AddConfigPath(filepath.Join(dir, "hubble")) // honor user config dir
+	if defaultConfigDir != "" {
+		vp.AddConfigPath(defaultConfigDir)
 	}
-	if dir, err := os.UserHomeDir(); err == nil {
-		vp.AddConfigPath(filepath.Join(dir, ".hubble")) // fallback to home directory
+	if fallbackConfigDir != "" {
+		vp.AddConfigPath(fallbackConfigDir)
 	}
 
 	// read config from environment variables
