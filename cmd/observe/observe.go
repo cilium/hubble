@@ -182,6 +182,9 @@ programs attached to endpoints and devices. This includes:
 	observerCmd.Flags().Var(filterVar(
 		"http-method", ofilter,
 		`Show only flows which match this HTTP method (e.g. "get", "post")`))
+	observerCmd.Flags().Var(filterVar(
+		"http-path", ofilter,
+		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
 
 	observerCmd.Flags().Var(filterVar(
 		"protocol", ofilter,

@@ -120,6 +120,7 @@ func newObserveFilter() *observeFilter {
 			{"type"},
 			{"http-status"},
 			{"http-method"},
+			{"http-path"},
 			{"protocol"},
 			{"port", "to-port"},
 			{"port", "from-port"},
@@ -346,6 +347,11 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 	case "http-method":
 		f.apply(func(f *pb.FlowFilter) {
 			f.HttpMethod = append(f.HttpMethod, val)
+		})
+
+	case "http-path":
+		f.apply(func(f *pb.FlowFilter) {
+			f.HttpPath = append(f.HttpPath, val)
 		})
 
 	case "type":

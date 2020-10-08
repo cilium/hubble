@@ -128,6 +128,7 @@ func TestFilterLeftRight(t *testing.T) {
 		"--not", "--pod", "deathstar",
 		"--not", "--http-status", "200",
 		"--http-method", "get",
+		"--http-path", "/page/\\d+",
 	}))
 
 	require.NoError(t, handleArgs(f, false))
@@ -138,11 +139,13 @@ func TestFilterLeftRight(t *testing.T) {
 				SourceIp:   []string{"1.2.3.4", "5.6.7.8"},
 				Verdict:    []pb.Verdict{pb.Verdict_DROPPED},
 				HttpMethod: []string{"get"},
+				HttpPath:   []string{"/page/\\d+"},
 			},
 			{
 				DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
 				Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
 				HttpMethod:    []string{"get"},
+				HttpPath:      []string{"/page/\\d+"},
 			},
 		},
 		f.whitelist.flowFilters(),
