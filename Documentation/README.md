@@ -20,6 +20,7 @@ branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
 
 ## Internals
 
+ * [Contributing](https://docs.cilium.io/en/latest/contributing/development/)
  * [Components](https://docs.cilium.io/en/latest/concepts/overview/#hubble)
  * [Architecture](https://docs.cilium.io/en/latest/hubble/)
  * [Code Overview](https://docs.cilium.io/en/latest/contributing/development/codeoverview/#hubble)
