@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/cilium/hubble/cmd/completion"
 	"github.com/cilium/hubble/cmd/observe"
@@ -80,11 +81,20 @@ func Execute() error {
 // newViper creates a new viper instance configured for Hubble.
 func newViper() *viper.Viper {
 	vp := viper.New()
-	vp.SetEnvPrefix("hubble")   // env var must start with HUBBLE_
-	vp.SetConfigName(".hubble") // name of config file (without extension)
-	vp.SetConfigType("yaml")    // useful if the given config file does not have the extension in the name
-	vp.AddConfigPath("$HOME")   // adding home directory as first search path
-	vp.AddConfigPath(".")       // optionally look for config in the working directory
-	vp.AutomaticEnv()           // read in environment variables that match
+
+	// read config from a file
+	vp.SetConfigName("config") // name of config file (without extension)
+	vp.SetConfigType("yaml")   // useful if the given config file does not have the extension in the name
+	vp.AddConfigPath(".")      // look for a config in the working directory first
+	if dir, err := os.UserConfigDir(); err == nil {
+		vp.AddConfigPath(filepath.Join(dir, "hubble")) // honor user config dir
+	}
+	if dir, err := os.UserHomeDir(); err == nil {
+		vp.AddConfigPath(filepath.Join(dir, ".hubble")) // fallback to home directory
+	}
+
+	// read config from environment variables
+	vp.SetEnvPrefix("hubble") // env var must start with HUBBLE_
+	vp.AutomaticEnv()         // read in environment variables that match
 	return vp
 }
