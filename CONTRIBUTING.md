@@ -3,7 +3,11 @@
 ## Contribution workflow
 
 Hubble uses GitHub for collaborative development. Please use GitHub issues to
-discuss proposals and use pull requests to suggest changes.
+discuss proposals and use pull requests to suggest changes. For more information
+see the [Cilium Development
+Guide](https://docs.cilium.io/en/latest/contributing/development/) and the
+[Hubble-specific
+notes](https://docs.cilium.io/en/latest/contributing/development/hubble/).
 
 ## Slack
 
