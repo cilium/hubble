@@ -22,6 +22,7 @@ import (
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/validate"
 	"github.com/cilium/hubble/cmd/completion"
+	"github.com/cilium/hubble/cmd/config"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/peer"
 	"github.com/cilium/hubble/cmd/reflect"
@@ -140,6 +141,7 @@ func New() *cobra.Command {
 
 	rootCmd.AddCommand(
 		completion.New(),
+		config.New(vp),
 		observe.New(vp),
 		peer.New(vp),
 		reflect.New(vp),
