@@ -15,28 +15,29 @@
 package config
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
-// New config command.
-func New(vp *viper.Viper) *cobra.Command {
-	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Modify or view hubble config",
-		Long:  "Modify or view hubble config",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			// override root persistent pre-run to avoid flag/config checks
-			// as we want to be able to modify/view the config even if it is
-			// invalid
-			return nil
-		},
+func newViewCommand(vp *viper.Viper) *cobra.Command {
+	return &cobra.Command{
+		Use:   "view",
+		Short: "Display merged configuration settings",
+		Long:  "Display merged configuration settings",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			return cmd.Help()
+			return runView(cmd, vp)
 		},
 	}
-	configCmd.AddCommand(
-		newViewCommand(vp),
-	)
-	return configCmd
+}
+
+func runView(cmd *cobra.Command, vp *viper.Viper) error {
+	bs, err := yaml.Marshal(vp.AllSettings())
+	if err != nil {
+		return fmt.Errorf("failed to marshal config to YAML: %w", err)
+	}
+	_, err = fmt.Fprint(cmd.OutOrStdout(), string(bs))
+	return err
 }
