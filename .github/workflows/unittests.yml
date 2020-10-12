@@ -32,3 +32,18 @@ jobs:
       with:
         name: release
         path: release
+  go-mod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.15.2'
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Check module vendoring
+        run: |
+          go mod tidy
+          go mod vendor
+          go mod verify
+          git diff --exit-code
