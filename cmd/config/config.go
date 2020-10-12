@@ -36,7 +36,17 @@ func New(vp *viper.Viper) *cobra.Command {
 		},
 	}
 	configCmd.AddCommand(
+		newSetCommand(vp),
 		newViewCommand(vp),
 	)
 	return configCmd
+}
+
+func isKey(vp *viper.Viper, key string) bool {
+	for _, k := range vp.AllKeys() {
+		if key == k {
+			return true
+		}
+	}
+	return false
 }
