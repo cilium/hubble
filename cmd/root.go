@@ -95,8 +95,8 @@ func New() *cobra.Command {
 	flags := rootCmd.PersistentFlags()
 	flags.String("config", defaultConfigFile, "Optional config file")
 	flags.BoolP("debug", "D", false, "Enable debug messages")
-	flags.String("server", defaults.GetDefaultSocketPath(), "Address of a Hubble server")
-	flags.Duration("timeout", defaults.DefaultDialTimeout, "Hubble server dialing timeout")
+	flags.String("server", defaults.GetSocketPath(), "Address of a Hubble server")
+	flags.Duration("timeout", defaults.DialTimeout, "Hubble server dialing timeout")
 	flags.Bool(
 		"tls",
 		false,
