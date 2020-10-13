@@ -108,7 +108,7 @@ func runStatus(conn *grpc.ClientConn) error {
 }
 
 func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.RequestTimeout)
 	defer cancel()
 
 	req := &healthpb.HealthCheckRequest{Service: v1.ObserverServiceName}
@@ -123,7 +123,7 @@ func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
 }
 
 func getStatus(conn *grpc.ClientConn) (*observer.ServerStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaults.DefaultRequestTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), defaults.RequestTimeout)
 	defer cancel()
 
 	req := &observer.ServerStatusRequest{}

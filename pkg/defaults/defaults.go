@@ -20,19 +20,11 @@ import (
 )
 
 const (
-	// DefaultSocketPathKey is the environment variable name to override the
-	// default socket path for observe and status commands.
-	DefaultSocketPathKey = "HUBBLE_DEFAULT_SOCKET_PATH"
+	// DialTimeout is the default timeout for dialing the server.
+	DialTimeout = 5 * time.Second
 
-	// DefaultDialTimeout is the timeout for dialing the server
-	DefaultDialTimeout = 5 * time.Second
-
-	// DefaultRequestTimeout is the timeout for client requests
-	DefaultRequestTimeout = 12 * time.Second
-
-	// defaultSocketPath on which to connect to the local hubble observer. Use
-	// GetDefaultSocketPath to access it.
-	defaultSocketPath = "unix:///var/run/cilium/hubble.sock"
+	// RequestTimeout is the default timeout for client requests.
+	RequestTimeout = 12 * time.Second
 
 	// FlowPrintCount is the default number of flows to print on the hubble
 	// observe CLI.
@@ -41,12 +33,20 @@ const (
 	// TargetTLSPrefix is a scheme that indicates that the target connection
 	// requires TLS.
 	TargetTLSPrefix = "tls://"
+
+	// socketPathKey is the environment variable name to override the default
+	// socket path for observe and status commands.
+	socketPathKey = "HUBBLE_DEFAULT_SOCKET_PATH"
+
+	// socketPath is the path of the socket on which to connect to the local
+	// hubble observer. Use GetDefaultSocketPath to access it.
+	socketPath = "unix:///var/run/cilium/hubble.sock"
 )
 
-// GetDefaultSocketPath returns the default server for status and observe command.
-func GetDefaultSocketPath() string {
-	if path, ok := os.LookupEnv(DefaultSocketPathKey); ok {
+// GetSocketPath returns the default server for status and observe command.
+func GetSocketPath() string {
+	if path, ok := os.LookupEnv(socketPathKey); ok {
 		return path
 	}
-	return defaultSocketPath
+	return socketPath
 }
