@@ -16,7 +16,9 @@ package config
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cast"
@@ -50,7 +52,7 @@ func runSet(cmd *cobra.Command, vp *viper.Viper, key, value string) error {
 		return fmt.Errorf("unknown key: %s", key)
 	}
 
-	// each viper key/val entry should be bound to a command flag
+	// each viper key/value entry should be bound to a command flag
 	flag := cmd.Flag(key)
 	if flag == nil {
 		return fmt.Errorf("key=%s not bound to a flag", key)
@@ -86,6 +88,47 @@ func runSet(cmd *cobra.Command, vp *viper.Viper, key, value string) error {
 	if err != nil {
 		return fmt.Errorf("cannot assign value=%s for key=%s, expected type=%s: %w", value, key, typ, err)
 	}
-	vp.Set(key, newVal)
-	return vp.WriteConfig()
+
+	// Create a file-only viper config from the configured file to avoid
+	// writing defaults and/or values set via environment variables or flags.
+	// This viper config is only used to write the resulting config.
+	// This method also prevents from writing default values for all keys
+	// therefore only writing key/value pairs explicitely set by the caller.
+	configPath := vp.GetString("config")
+	fileVP, err := newFileOnlyViper(configPath)
+	if err != nil {
+		return err
+	}
+	fileVP.Set(key, newVal)
+	return fileVP.WriteConfigAs(configPath)
+}
+
+// newFileOnlyViper creates a new viper config that only reads from the given
+// configuration file and is not bound to any environment variable or flag.
+func newFileOnlyViper(configPath string) (*viper.Viper, error) {
+	if configPath == "" {
+		return nil, errors.New("config file undefined")
+	}
+
+	path := filepath.Clean(configPath)
+	base := filepath.Base(path)
+	ext := filepath.Ext(path)
+
+	dir := filepath.Dir(path)
+	filename := strings.TrimSuffix(base, ext)
+	typ := strings.TrimPrefix(ext, ".")
+
+	vp := viper.New()
+	vp.SetConfigName(filename)
+	vp.SetConfigType(typ)
+	vp.AddConfigPath(dir)
+
+	if err := vp.ReadInConfig(); err != nil {
+		// it's OK so long as the failure is ConfigFileNotFound
+		// for all other cases, failing to read the config should be an error
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, err
+		}
+	}
+	return vp, nil
 }
