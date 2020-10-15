@@ -21,7 +21,7 @@ github.com/davecgh/go-spew/spew
 github.com/fsnotify/fsnotify
 # github.com/go-logr/logr v0.2.0
 github.com/go-logr/logr
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.4.3
 ## explicit
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto

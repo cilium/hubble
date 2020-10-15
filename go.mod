@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/cilium/cilium v1.9.0-rc0.0.20201007145948-2c42c8c8edcd
-	github.com/golang/protobuf v1.4.2
+	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2
 	github.com/gordonklaus/ineffassign v0.0.0-20200809085317-e36bfde3bb78
 	github.com/spf13/cast v1.3.0
