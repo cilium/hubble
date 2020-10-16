@@ -71,12 +71,11 @@ func New(vp *viper.Viper) *cobra.Command {
 func newObserveCmd(vp *viper.Viper, ofilter *observeFilter) *cobra.Command {
 	observerCmd := &cobra.Command{
 		Use:   "observe",
-		Short: "Display BPF program events running in the local node",
-		Long: `The hubble observer displays notifications and events emitted by the BPF
-programs attached to endpoints and devices. This includes:
-  * Dropped packet notifications
-  * Captured packet traces
-  * Debugging information`,
+		Short: "Observe flows of a Hubble server",
+		Long: `Observe provides visibility into flow information on the network and
+application level. Rich filtering enable observing specific flows related to
+individual pods, services, TCP connections, DNS queries, HTTP requests and
+more.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := handleArgs(ofilter, vp.GetBool("debug")); err != nil {
 				return err
