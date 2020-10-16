@@ -36,9 +36,9 @@ import (
 func New(vp *viper.Viper) *cobra.Command {
 	statusCmd := &cobra.Command{
 		Use:   "status",
-		Short: "Display status of hubble server",
-		Long: `Displays the status of the hubble server. This is
-		intended as a basic connectivity health check`,
+		Short: "Display status of Hubble server",
+		Long: `Display shows the status of the Hubble server. This is intended as a basic
+connectivity health check.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
