@@ -93,6 +93,12 @@ to reflect the next planned release, i.e.
 
     VERSION="$MAJOR.<$MINOR+1>.0-dev"
 
+## Update the changelog in the master branch
+
+Once the release PR has been merged, the changelog in the master branch needs to
+be updated as well. Make sure to copy the generated release notes to the
+changelog in the master.
+
 ## Create a GitHub release
 
 It is better to have github create the final release tag, rather than pushing
