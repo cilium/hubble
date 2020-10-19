@@ -1,4 +1,4 @@
-GO := go
+GO := CGO_ENABLED=0 go
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 IMAGE_REPOSITORY ?= quay.io/cilium/hubble
