@@ -68,7 +68,7 @@ to reflect the next planned release, i.e.
 Using https://github.com/cilium/release, prepare the release notes between the
 last minor version (latest patch) and current.
 
-    ./release --base $LAST_RELEASE --head v$MAJOR.$MINOR
+    ./release --repo cilium/hubble --base v$LAST_RELEASE --head v$MAJOR.$MINOR
     **Bugfixes:**
     * api: fix potential panic in endpoint's EqualsByID (#199, @Rolinh)
 
