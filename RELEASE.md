@@ -99,6 +99,12 @@ Once the release PR has been merged, the changelog in the master branch needs to
 be updated as well. Make sure to copy the generated release notes to the
 changelog in the master.
 
+## Update releases table in the readme file
+
+The README file contains a section which lists all currently supported releases
+in a table. The version in this table needs to be updated to match the new
+release.
+
 ## Create a GitHub release
 
 It is better to have github create the final release tag, rather than pushing
