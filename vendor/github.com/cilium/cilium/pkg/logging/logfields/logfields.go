@@ -202,6 +202,9 @@ const (
 	// SessionAffinityTimeout is a timeout for the session affinity
 	SessionAffinityTimeout = "sessionAffinityTimeout"
 
+	// LoadBalancerSourceRanges is the LB SVC source ranges
+	LoadBalancerSourceRanges = "loadBalancerSourceRanges"
+
 	// ClusterName is the name of the cluster
 	ClusterName = "clusterName"
 
@@ -238,14 +241,17 @@ const (
 	// BackendName is the name of the backend
 	BackendName = "backendName"
 
-	// SlaveSlot is the slot number in a service BPF map
-	SlaveSlot = "slaveSlot"
+	// BackendSlot is the backend slot number in a service BPF map
+	BackendSlot = "backendSlot"
 
 	// CiliumNetworkPolicy is a cilium specific NetworkPolicy
 	CiliumNetworkPolicy = "ciliumNetworkPolicy"
 
 	// CiliumNetworkPolicyName is the name of a CiliumNetworkPolicy
 	CiliumNetworkPolicyName = "ciliumNetworkPolicyName"
+
+	// CiliumClusterwideNetworkPolicyName is the name of the CiliumClusterWideNetworkPolicy
+	CiliumClusterwideNetworkPolicyName = "ciliumClusterwideNetworkPolicyName"
 
 	// BPFMapKey is a key from a BPF map
 	BPFMapKey = "bpfMapKey"
@@ -435,4 +441,8 @@ const (
 
 	// SysParamValue is the value of the kernel parameter (sysctl)
 	SysParamValue = "sysParamValue"
+
+	// HelpMessage is the help message corresponding to a log message.
+	// This is to make sure we keep separate contexts for logs and help messages.
+	HelpMessage = "helpMessage"
 )

@@ -143,6 +143,7 @@ const (
 	TraceFromStack
 	TraceFromOverlay
 	TraceFromNetwork
+	TraceToNetwork
 )
 
 // TraceObservationPoints is a map of all supported trace observation points
@@ -152,6 +153,7 @@ var TraceObservationPoints = map[uint8]string{
 	TraceToHost:      "to-host",
 	TraceToStack:     "to-stack",
 	TraceToOverlay:   "to-overlay",
+	TraceToNetwork:   "to-network",
 	TraceFromLxc:     "from-endpoint",
 	TraceFromProxy:   "from-proxy",
 	TraceFromHost:    "from-host",
@@ -166,6 +168,22 @@ func TraceObservationPoint(obsPoint uint8) string {
 		return str
 	}
 	return fmt.Sprintf("%d", obsPoint)
+}
+
+// TraceObservationPointHasConnState returns true if the observation point
+// obsPoint populates the TraceNotify.Reason field with connection tracking
+// information.
+func TraceObservationPointHasConnState(obsPoint uint8) bool {
+	switch obsPoint {
+	case TraceToLxc,
+		TraceToProxy,
+		TraceToHost,
+		TraceToStack,
+		TraceToNetwork:
+		return true
+	default:
+		return false
+	}
 }
 
 // AgentNotify is a notification from the agent
