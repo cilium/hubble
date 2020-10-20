@@ -1,6 +1,7 @@
 The following people, in alphabetical order, have either authored or signed
 off on commits in the Cilium repository:
 
+Adam Wolfe Gordon                       awg@digitalocean.com
 Adrien Trouillaud                       adrienjt@users.noreply.github.com
 Alban Crequy                            alban@kinvolk.io
 Alexander Alemayhu                      alexander@alemayhu.com
@@ -28,6 +29,7 @@ Bob Bouteillier                         bob.bouteillier@datadoghq.com
 Boran Car                               boran.car@gmail.com
 Brian Topping                           brian@coglative.com
 Bruno Miguel Custódio                   brunomcustodio@gmail.com
+Camilo Schoeningh                       camilo.schoeningh@dunnhumby.com
 Charles-Henri Guérin                    charles-henri.guerin@zenika.com
 Chris Tarazi                            chris@isovalent.com
 Christine Chen                          christine.chen@datadoghq.com
@@ -62,6 +64,7 @@ Frank Villaro-Dixon                     frank.villaro@infomaniak.com
 Fred Hsu                                fredlhsu@gmail.com
 Fredrik Lönnegren                       fredrik.lonnegren@gmail.com
 Fulvio Risso                            fulvio.risso@polito.it
+Gaurav Yadav                            gaurav.dev.iiitm@gmail.com
 George Kontridze                        gkontridze@plaid.com
 Gianluca Arbezzano                      gianarb92@gmail.com
 Glib Smaga                              code@gsmaga.com
@@ -84,6 +87,7 @@ Jed Salazar                             jed@isovalent.com
 Jerry J. Muzsik                         jerrymuzsik@icloud.com
 Jess Frazelle                           acidburn@microsoft.com
 Jianlin Lv                              Jianlin.Lv@arm.com
+JieJhih Jhang                           jiejhihjhang@gmail.com
 Jiong Wang                              jiong.wang@netronome.com
 Joe Farrell                             joe2farrell@gmail.com
 Joe Stringer                            joe@cilium.io
@@ -105,10 +109,12 @@ Katarzyna Borkmann                      kasia@iogearbox.net
 Kevin Burke                             kevin@burke.dev
 Kiran Bondalapati                       kiran@bondalapati.com
 Koichiro Den                            den@klaipeden.com
+Kornilios Kourtis                       kornilios@isovalent.com
 Laurent Bernaille                       laurent.bernaille@datadoghq.com
 Lehner Florian                          dev@der-flo.net
 Liu Qun                                 qunliu@zyhx-group.com
 Li Yi                                   denverdino@gmail.com
+m4rx0                                   m@footek.ch
 Maciej Kwiek                            maciej@isovalent.com
 Maciej Skrocki                          maciejskrocki@google.com
 Madhu Challa                            madhu@cilium.io
@@ -127,6 +133,7 @@ Matthew Gumport                         me@gum.pt
 Matt Layher                             mdlayher@gmail.com
 Maxime VISONNEAU                        maxime.visonneau@gmail.com
 Maximilian Bischoff                     maximilian.bischoff@inovex.de
+Maximilian Mack                         max@mack.io
 Melissa Peiffer                         mbp83@nau.edu
 Michael Schubert                        michael@kinvolk.io
 Michael Vorburger                       vorburger@redhat.com
@@ -136,8 +143,11 @@ Moh Ahmed                               moh.ahmed@cengn.ca
 Moritz Johner                           beller.moritz@googlemail.com
 Moshe Immerman                          moshe.immerman@vitalitygroup.com
 Nate Sweet                              nathanjsweet@pm.me
+Nathan Bird                             njbird@infiniteenergy.com
 Nathan Taylor                           ntaylor1781@gmail.com
+Neela Jacques                           neela@isovalent.com
 Nirmoy Das                              ndas@suse.de
+Ole Markus With                         o.with@sportradar.com
 Patrice Peterson                        patrice.peterson@mailbox.org
 Patrick Mahoney                         pmahoney@greenkeytech.com
 Patrik Cyvoct                           patrik@ptrk.io
@@ -145,6 +155,7 @@ Paul Chaignon                           paul@cilium.io
 Paweł Prażak                            pawelprazak@users.noreply.github.com
 Peiqi Shi                               uestc.shi@gmail.com
 Peter Slovak                            slovak.peto@gmail.com
+Philippe Lafoucrière                    philippe.lafoucriere@gmail.com
 Philipp Gniewosz                        philipp.gniewosz@adesso.de
 Pierre-Yves Aillet                      pyaillet@users.noreply.github.com
 Qasim Sarfraz                           qasim.sarfraz@esailors.de
@@ -176,6 +187,7 @@ Taeung Song                             treeze.taeung@gmail.com
 Tam Mach                                sayboras@yahoo.com
 Tasdik Rahman                           prodicus@outlook.com
 Thomas Bachman                          tbachman@yahoo.com
+Thomas Gosteli                          thomas.gosteli@protonmail.ch
 Thomas Graf                             thomas@cilium.io
 Timo Reimann                            ttr314@googlemail.com
 Tobias Klauser                          tklauser@distanz.ch

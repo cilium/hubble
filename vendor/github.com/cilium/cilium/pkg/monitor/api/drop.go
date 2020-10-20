@@ -29,7 +29,7 @@ var errors = map[uint8]string{
 	2:   "Invalid packet",
 	3:   "Interface",
 	4:   "Interface Decrypted",
-	5:   "LB, sock cgroup: No slave entry found",
+	5:   "LB, sock cgroup: No backend slot entry found",
 	6:   "LB, sock cgroup: No backend entry found",
 	7:   "LB, sock cgroup: Reverse entry update failed",
 	8:   "LB, sock cgroup: Reverse entry stale",
@@ -78,6 +78,7 @@ var errors = map[uint8]string{
 	174: "Is a ClusterIP",
 	175: "First logical datagram fragment not found",
 	176: "Forbidden ICMPv6 message",
+	177: "Denied by LB src range check",
 }
 
 // DropReason prints the drop reason in a human readable string
