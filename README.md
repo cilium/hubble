@@ -82,7 +82,7 @@ and have to be used with caution in critical production workloads.
 | Hubble CLI     | Core      | Stable |
 | Hubble Server  | Core      | Stable |
 | Hubble Metrics | Core      | Stable |
-| Hubble Relay   | Multinode | Beta   |
+| Hubble Relay   | Multinode | Stable |
 | Hubble UI      | UI        | Beta   |
 
 ## Architecture
