@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/validate"
@@ -173,6 +174,9 @@ func newViper() *viper.Viper {
 
 	// read config from environment variables
 	vp.SetEnvPrefix("hubble") // env var must start with HUBBLE_
-	vp.AutomaticEnv()         // read in environment variables that match
+	// replace - by _ for environment variable names
+	// (eg: the env var for tls-server-name is TLS_SERVER_NAME)
+	vp.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	vp.AutomaticEnv() // read in environment variables that match
 	return vp
 }
