@@ -15,8 +15,8 @@ branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
 
 ## Troubleshooting
 
-  * [Observing Flows with Hubble](https://docs.cilium.io/en/latest/troubleshooting/#observing-flows-with-hubble)
-  * [Observing Flows with Hubble Relay](https://docs.cilium.io/en/latest/troubleshooting/#observing-flows-with-hubble-relay)
+  * [Observing Flows with Hubble](https://docs.cilium.io/en/latest/operations/troubleshooting/#observing-flows-with-hubble)
+  * [Observing Flows with Hubble Relay](https://docs.cilium.io/en/latest/operations/troubleshooting/#observing-flows-with-hubble-relay)
 
 ## Internals
 
@@ -24,4 +24,4 @@ branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
  * [Components](https://docs.cilium.io/en/latest/concepts/overview/#hubble)
  * [Architecture](https://docs.cilium.io/en/latest/hubble/)
  * [Code Overview](https://docs.cilium.io/en/latest/contributing/development/codeoverview/#hubble)
- * [Metrics Reference](https://docs.cilium.io/en/latest/configuration/metrics/#hubble)
+ * [Metrics Reference](https://docs.cilium.io/en/latest/operations/metrics/#hubble)
