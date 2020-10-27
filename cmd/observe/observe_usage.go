@@ -46,7 +46,7 @@ func modifyTemplate(orig string, cmd *cobra.Command) string {
 		{
 			name: "Selectors (retrieve data from hubble)",
 			flags: []string{
-				"last", "since", "until", "follow",
+				"all", "last", "since", "until", "follow",
 			},
 		},
 		{
