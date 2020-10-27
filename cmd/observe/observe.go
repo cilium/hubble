@@ -40,6 +40,7 @@ import (
 
 var (
 	last               uint64
+	all                bool
 	sinceVar, untilVar string
 
 	jsonOutput          bool
@@ -103,7 +104,8 @@ more.`,
 		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
 
-	observerCmd.Flags().Uint64Var(&last, "last", 0, fmt.Sprintf("Get last N flows stored in the hubble (default %d)", defaults.FlowPrintCount))
+	observerCmd.Flags().Uint64Var(&last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
+	observerCmd.Flags().BoolVar(&all, "all", false, "Get all flows stored in Hubble's buffer")
 	observerCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow flows output")
 	observerCmd.Flags().StringVar(&sinceVar, "since", "", "Filter flows since a specific date (relative or RFC3339)")
 	observerCmd.Flags().StringVar(&untilVar, "until", "", "Filter flows until a specific date (relative or RFC3339)")
@@ -342,9 +344,15 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 		}
 	}
 
-	// no specific parameters were provided, just a vanilla `hubble observe`
-	if last == 0 && since == nil && until == nil {
-		last = defaults.FlowPrintCount
+	if since == nil && until == nil {
+		switch {
+		case all:
+			// all is an alias for last=uint64_max
+			last = ^uint64(0)
+		case last == 0:
+			// no specific parameters were provided, just a vanilla `hubble observe`
+			last = defaults.FlowPrintCount
+		}
 	}
 
 	var (
