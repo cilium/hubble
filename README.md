@@ -91,8 +91,8 @@ and have to be used with caution in critical production workloads.
 
 # Getting Started
 
-* [Introduction to Cilium & Hubble](https://docs.cilium.io/en/latest/intro/)
-* [Networking and Security Observability with Hubble](https://docs.cilium.io/en/latest/gettingstarted/hubble/)
+* [Introduction to Cilium & Hubble](https://docs.cilium.io/en/stable/intro/)
+* [Networking and Security Observability with Hubble](https://docs.cilium.io/en/stable/gettingstarted/hubble/)
 
 # Features
 

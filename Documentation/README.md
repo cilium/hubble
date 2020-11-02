@@ -8,20 +8,20 @@ branch](https://github.com/cilium/hubble/tree/v0.5/Documentation).
 
 ## Getting Started
 
- * [Quickstart](https://docs.cilium.io/en/latest/gettingstarted/hubble)
- * [What is Hubble?](https://docs.cilium.io/en/latest/intro/#what-is-hubble)
- * [Installation with Cilium](https://docs.cilium.io/en/latest/gettingstarted/#installation)
- * [Running Prometheus and Grafana](https://docs.cilium.io/en/latest/gettingstarted/grafana/)
+ * [Quickstart](https://docs.cilium.io/en/stable/gettingstarted/hubble)
+ * [What is Hubble?](https://docs.cilium.io/en/stable/intro/#what-is-hubble)
+ * [Installation with Cilium](https://docs.cilium.io/en/stable/gettingstarted/#installation)
+ * [Running Prometheus and Grafana](https://docs.cilium.io/en/stable/gettingstarted/grafana/)
 
 ## Troubleshooting
 
-  * [Observing Flows with Hubble](https://docs.cilium.io/en/latest/operations/troubleshooting/#observing-flows-with-hubble)
-  * [Observing Flows with Hubble Relay](https://docs.cilium.io/en/latest/operations/troubleshooting/#observing-flows-with-hubble-relay)
+  * [Observing Flows with Hubble](https://docs.cilium.io/en/stable/operations/troubleshooting/#observing-flows-with-hubble)
+  * [Observing Flows with Hubble Relay](https://docs.cilium.io/en/stable/operations/troubleshooting/#observing-flows-with-hubble-relay)
 
 ## Internals
 
- * [Contributing](https://docs.cilium.io/en/latest/contributing/development/)
- * [Components](https://docs.cilium.io/en/latest/concepts/overview/#hubble)
- * [Architecture](https://docs.cilium.io/en/latest/hubble/)
- * [Code Overview](https://docs.cilium.io/en/latest/contributing/development/codeoverview/#hubble)
- * [Metrics Reference](https://docs.cilium.io/en/latest/operations/metrics/#hubble)
+ * [Contributing](https://docs.cilium.io/en/stable/contributing/development/)
+ * [Components](https://docs.cilium.io/en/stable/concepts/overview/#hubble)
+ * [Architecture](https://docs.cilium.io/en/stable/hubble/)
+ * [Code Overview](https://docs.cilium.io/en/stable/contributing/development/codeoverview/#hubble)
+ * [Metrics Reference](https://docs.cilium.io/en/stable/operations/metrics/#hubble)
