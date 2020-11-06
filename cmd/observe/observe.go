@@ -19,8 +19,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
@@ -56,6 +58,12 @@ var (
 
 	numeric bool
 )
+
+var verdicts = []string{
+	pb.Verdict_FORWARDED.String(),
+	pb.Verdict_DROPPED.String(),
+	pb.Verdict_ERROR.String(),
+}
 
 func eventTypes() (l []string) {
 	for t := range monitorAPI.MessageTypeNames {
@@ -103,6 +111,9 @@ more.`,
 	observerCmd.Flags().VarP(filterVarP(
 		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
+	observerCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return eventTypes(), cobra.ShellCompDirectiveDefault
+	})
 
 	observerCmd.Flags().Uint64Var(&last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
 	observerCmd.Flags().BoolVar(&all, "all", false, "Get all flows stored in Hubble's buffer")
@@ -177,14 +188,47 @@ more.`,
 
 	observerCmd.Flags().Var(filterVar(
 		"verdict", ofilter,
-		fmt.Sprintf("Show only flows with this verdict [%v, %v]", pb.Verdict_FORWARDED, pb.Verdict_DROPPED)))
+		fmt.Sprintf("Show only flows with this verdict [%s]", strings.Join(verdicts, ", ")),
+	))
+	observerCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return verdicts, cobra.ShellCompDirectiveDefault
+	})
 
 	observerCmd.Flags().Var(filterVar(
 		"http-status", ofilter,
 		`Show only flows which match this HTTP status code prefix (e.g. "404", "5+")`))
+	observerCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		httpStatus := []string{
+			"100", "101", "102", "103",
+			"200", "201", "202", "203", "204", "205", "206", "207", "208",
+			"226",
+			"300", "301", "302", "303", "304", "305", "307", "308",
+			"400", "401", "402", "403", "404", "405", "406", "407", "408", "409",
+			"410", "411", "412", "413", "414", "415", "416", "417", "418",
+			"421", "422", "423", "424", "425", "426", "428", "429",
+			"431",
+			"451",
+			"500", "501", "502", "503", "504", "505", "506", "507", "508",
+			"510", "511",
+		}
+		return httpStatus, cobra.ShellCompDirectiveDefault
+	})
 	observerCmd.Flags().Var(filterVar(
 		"http-method", ofilter,
 		`Show only flows which match this HTTP method (e.g. "get", "post")`))
+	observerCmd.RegisterFlagCompletionFunc("http-method", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			http.MethodConnect,
+			http.MethodDelete,
+			http.MethodGet,
+			http.MethodHead,
+			http.MethodOptions,
+			http.MethodPatch,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodTrace,
+		}, cobra.ShellCompDirectiveDefault
+	})
 	observerCmd.Flags().Var(filterVar(
 		"http-path", ofilter,
 		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
@@ -230,6 +274,15 @@ more.`,
  json:     JSON encoding
  jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
  table:    Tab-aligned columns`)
+	observerCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"compact",
+			"dict",
+			"json",
+			"jsonpb",
+			"table",
+		}, cobra.ShellCompDirectiveDefault
+	})
 	observerCmd.Flags().BoolVarP(
 		&ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
 
