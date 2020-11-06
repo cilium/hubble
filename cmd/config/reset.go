@@ -29,6 +29,7 @@ func newResetCommand(vp *viper.Viper) *cobra.Command {
 		Long: "Reset all or an individual value in the hubble config file.\n" +
 			"When KEY is provided, this command is equivalent to 'set KEY'.\n" +
 			"If KEY is not provided, all values are reset to their default value.",
+		ValidArgs: vp.AllKeys(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch len(args) {
 			case 1:
