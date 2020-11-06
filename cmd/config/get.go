@@ -29,6 +29,7 @@ func newGetCommand(vp *viper.Viper) *cobra.Command {
 		Short: "Get an individual value in the hubble config file",
 		Long: "Get an individual value in the hubble config file.\n" +
 			"If KEY is not provided, this command is equivalent to 'view'.",
+		ValidArgs: vp.AllKeys(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			switch len(args) {
 			case 1:

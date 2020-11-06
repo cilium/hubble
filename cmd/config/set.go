@@ -32,6 +32,7 @@ func newSetCommand(vp *viper.Viper) *cobra.Command {
 		Short: "Set an individual value in the hubble config file",
 		Long: "Set an individual value in the hubble config file.\n" +
 			"If VALUE is not provided, the value is reset to its default value.",
+		ValidArgs: vp.AllKeys(),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var val string
 			switch len(args) {
