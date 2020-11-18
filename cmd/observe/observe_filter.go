@@ -118,6 +118,7 @@ func newObserveFilter() *observeFilter {
 			{"service", "to-service"},
 			{"verdict"},
 			{"type"},
+			{"dns-query"},
 			{"http-status"},
 			{"http-method"},
 			{"http-path"},
@@ -203,6 +204,12 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 	}
 
 	switch name {
+	// dns filters
+	case "dns-query":
+		f.apply(func(f *pb.FlowFilter) {
+			f.DnsQuery = append(f.DnsQuery, val)
+		})
+
 	// fqdn filters
 	case "fqdn":
 		f.applyLeft(func(f *pb.FlowFilter) {

@@ -195,6 +195,10 @@ more.`,
 	})
 
 	observerCmd.Flags().Var(filterVar(
+		"dns-query", ofilter,
+		`Show all flows related to the given DNS query (e.g. "*.cilium.io").`))
+
+	observerCmd.Flags().Var(filterVar(
 		"http-status", ofilter,
 		`Show only flows which match this HTTP status code prefix (e.g. "404", "5+")`))
 	observerCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {

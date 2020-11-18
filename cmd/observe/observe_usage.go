@@ -59,9 +59,10 @@ func modifyTemplate(orig string, cmd *cobra.Command) string {
 				"label", "to-label", "from-label",
 				"namespace", "to-namespace", "from-namespace",
 				"service", "to-service", "from-service",
-				"port", "to-port", "from-port",
-				"type", "verdict", "http-status", "http-method", "http-path", "protocol",
 				"identity", "to-identity", "from-identity",
+				"port", "to-port", "from-port",
+				"http-status", "http-method", "http-path",
+				"dns-query", "type", "verdict", "protocol",
 			},
 		},
 	}
