@@ -2,7 +2,7 @@ GO := CGO_ENABLED=0 go
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 TARGET=hubble
-VERSION=0.8.0-dev
+VERSION=$(shell cat VERSION)
 GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
 GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD)
 GO_TAGS ?=
