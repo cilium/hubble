@@ -1,13 +1,14 @@
 GO := CGO_ENABLED=0 go
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
-IMAGE_REPOSITORY ?= quay.io/cilium/hubble
-CONTAINER_ENGINE ?= docker
 TARGET=hubble
 VERSION=0.6.1
 GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
 GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD)
 GO_TAGS ?=
+IMAGE_REPOSITORY ?= quay.io/cilium/hubble
+IMAGE_TAG ?= $(if $(findstring -dev,$(VERSION)),latest,v$(VERSION))
+CONTAINER_ENGINE ?= docker
 RELEASE_UID ?= $(shell id -u)
 RELEASE_GID ?= $(shell id -g)
 
