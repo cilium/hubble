@@ -257,6 +257,10 @@ more.`,
 		"to-identity", ofilter,
 		"Show all flows terminating at an endpoint with the given security identity"))
 
+	observerCmd.Flags().Var(filterVar(
+		"node-name", ofilter,
+		`Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")`))
+
 	observerCmd.Flags().BoolVarP(
 		&jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
 	)
