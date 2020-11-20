@@ -36,7 +36,7 @@ message Flow {
     // l4
     Layer4 l4 = 6;
 
-    // unused 7
+    reserved 7; // removed, do not use
 
     Endpoint source = 8;
     Endpoint destination = 9;
@@ -46,7 +46,7 @@ message Flow {
     // NodeName is the name of the node from which this Flow was captured.
     string node_name = 11;
 
-    // unused 12
+    reserved 12; // removed, do not use
 
     // all names the source IP can have.
     repeated string source_names = 13;
@@ -56,9 +56,12 @@ message Flow {
     // L7 information. This field is set if and only if FlowType is L7.
     Layer7 l7 = 15;
 
-    bool reply = 16;
+    // Deprecated. This suffers from false negatives due to protobuf not being
+    // able to distinguish between the value being false or it being absent.
+    // Please use is_reply instead.
+    bool reply = 16 [deprecated=true];
 
-    // unused 17-18
+    reserved 17, 18; // removed, do not use
 
     // EventType of the originating Cilium event
     CiliumEventType event_type = 19;
@@ -80,6 +83,11 @@ message Flow {
 
     // only applicable to Verdict = DROPPED.
     DropReason drop_reason_desc = 25;
+
+    // is_reply indicates that this was a packet (L4) or message (L7) in the
+    // reply direction. May be absent (in which case it is unknown whether it
+    // is a reply or not).
+    google.protobuf.BoolValue is_reply = 26;
 
     // This is a temporary workaround to support summary field for pb.Flow without
     // duplicating logic from the old parser. This field will be removed once we
@@ -218,8 +226,9 @@ enum Verdict {
     ERROR = 3;
 }
 
-// Taken from pkg/monitor/api/drop.go. Note that non-drop reasons (i.e. values
-// less than api.DropMin) are not used here.
+// These values are shared with pkg/monitor/api/drop.go and bpf/lib/common.h.
+// Note that non-drop reasons (i.e. values less than api.DropMin) are not used
+// here.
 enum DropReason {
     // non-drop reasons
     DROP_REASON_UNKNOWN = 0;
@@ -367,6 +376,13 @@ message FlowFilter {
     repeated string http_method = 21;
     // http_path is a list of regular expressions to filter on the HTTP path.
     repeated string http_path = 22;
+
+    // tcp_flags filters flows based on TCP header flags
+    repeated TCPFlags tcp_flags = 23;
+
+    // node_name is a list of patterns to filter on the node name, e.g. (e.g.
+    // "k8s*", "test-cluster/*.domain.com", "cluster-name/").
+    repeated string node_name = 24;
 }
 
 // EventType are constants are based on the ones from <linux/perf_event.h>.
