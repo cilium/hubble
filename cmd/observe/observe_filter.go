@@ -126,6 +126,7 @@ func newObserveFilter() *observeFilter {
 			{"port", "from-port"},
 			{"identity", "to-identity"},
 			{"identity", "from-identity"},
+			{"node-name"},
 		},
 	}
 }
@@ -430,6 +431,12 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 		identity := uint32(i)
 		f.apply(func(f *pb.FlowFilter) {
 			f.DestinationIdentity = append(f.DestinationIdentity, identity)
+		})
+
+	// node name filters
+	case "node-name":
+		f.apply(func(f *pb.FlowFilter) {
+			f.NodeName = append(f.NodeName, val)
 		})
 	}
 
