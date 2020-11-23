@@ -69,15 +69,13 @@ the same notes will be used in the github release.
     git add CHANGELOG.md
     git commit -s -m "Modify changelog for $MAJOR.$MINOR.$PATCH release"
 
-## Modify the version constant in the Makefile to match the new release
+## Modify the version constant in the VERSION to match the new release
 
 Usually this only consists of dropping the `-dev` suffix from the string.
 
-    VERSION="$MAJOR.$MINOR.$PATCH"
-
 Commit and push the changes to the prep branch
 
-    git add Makefile
+    git add VERSION
     git commit -s -m "Modify version to $MAJOR.$MINOR.$PATCH"
 
 ## Push the prep branch and open a Pull Request
