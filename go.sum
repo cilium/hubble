@@ -92,8 +92,8 @@ github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWR
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cilium/arping v1.0.1-0.20201009104213-b546132ab753/go.mod h1:hnjbWhP2F454GKo6vEscP3emePUtB+5ODiGAICLgMzQ=
-github.com/cilium/cilium v1.9.0-rc1.0.20201120102040-c0b68419e6d8 h1:g2h+Q2Gv3tJDsx/ezCqPf4p4MthyvNuWrqF0RFac9y0=
-github.com/cilium/cilium v1.9.0-rc1.0.20201120102040-c0b68419e6d8/go.mod h1:m+YH3JLfBzQTfvFmCq+b1dePwl9dcmm4JNiNpPsMFl8=
+github.com/cilium/cilium v1.9.0-rc1.0.20201127124437-ae069dcbc51f h1:JOuSSnpUaFFBbZ5VraWLTLad8Y5rOcNY3uoxfWIXAMw=
+github.com/cilium/cilium v1.9.0-rc1.0.20201127124437-ae069dcbc51f/go.mod h1:m+YH3JLfBzQTfvFmCq+b1dePwl9dcmm4JNiNpPsMFl8=
 github.com/cilium/client-go v0.0.0-20201116093811-e3ac748c004a/go.mod h1:ZrEy7+wj9PjH5VMBCuu/BDlvtUAku0oVFk4MmnW9mWA=
 github.com/cilium/deepequal-gen v0.0.0-20200406125435-ad6a9003139e/go.mod h1:c4R5wxGyXhbM6zyKeRKNIc9aab5EZi4z4oOSZvUMvZA=
 github.com/cilium/dns v1.1.4-0.20190417235132-8e25ec9a0ff3 h1:wenYMyWJ08dgEUUj0Ija8qdK/V9vL3ThAD5sjOYlFlg=
