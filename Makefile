@@ -87,6 +87,6 @@ vet:
 	go vet $$(go list ./...)
 
 image:
-	$(CONTAINER_ENGINE) build -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
+	$(CONTAINER_ENGINE) build $(DOCKER_FLAGS) -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
 .PHONY: all hubble release install clean test bench check check-fmt ineffassign lint vet image
