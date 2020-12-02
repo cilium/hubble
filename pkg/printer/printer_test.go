@@ -21,7 +21,9 @@ import (
 	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -629,4 +631,202 @@ func TestHostname(t *testing.T) {
 	assert.Equal(t, "1.1.1.1:80", p.Hostname("1.1.1.1", "80", "default", "pod", "service", []string{}))
 	assert.Equal(t, "1.1.1.1", p.Hostname("1.1.1.1", "0", "default", "pod", "", []string{}))
 	assert.Equal(t, "1.1.1.1", p.Hostname("1.1.1.1", "0", "default", "pod", "service", []string{}))
+}
+
+func TestPrinter_AgentEventDetails(t *testing.T) {
+	startTS, err := ptypes.TimestampProto(time.Now())
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name string
+		ev   *pb.AgentEvent
+		want string
+	}{
+		{
+			name: "nil",
+			want: "UNKNOWN",
+		},
+		{
+			name: "empty",
+			ev:   &pb.AgentEvent{},
+			want: "UNKNOWN",
+		},
+		{
+			name: "unknown without notification",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_AGENT_EVENT_UNKNOWN,
+			},
+			want: "UNKNOWN",
+		},
+		{
+			name: "agent start without notification",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_AGENT_STARTED,
+			},
+			want: "UNKNOWN",
+		},
+		{
+			name: "agent start with notification",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_AGENT_STARTED,
+				Notification: &pb.AgentEvent_AgentStart{
+					AgentStart: &pb.TimeNotification{
+						Time: startTS,
+					},
+				},
+			},
+			want: "start time: " + fmtTimestamp(startTS),
+		},
+		{
+			name: "policy update",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_POLICY_UPDATED,
+				Notification: &pb.AgentEvent_PolicyUpdate{
+					PolicyUpdate: &pb.PolicyUpdateNotification{
+						Labels:    []string{"foo=bar", "baz=foo"},
+						Revision:  1,
+						RuleCount: 2,
+					},
+				},
+			},
+			want: "labels: [foo=bar,baz=foo], revision: 1, count: 2",
+		},
+		{
+			name: "policy delete",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_POLICY_DELETED,
+				Notification: &pb.AgentEvent_PolicyUpdate{
+					PolicyUpdate: &pb.PolicyUpdateNotification{
+						Revision:  42,
+						RuleCount: 1,
+					},
+				},
+			},
+			want: "labels: [], revision: 42, count: 1",
+		},
+		{
+			name: "endpoint regenerate success",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_ENDPOINT_REGENERATE_SUCCESS,
+				Notification: &pb.AgentEvent_EndpointRegenerate{
+					EndpointRegenerate: &pb.EndpointRegenNotification{
+						Id:     42,
+						Labels: []string{"baz=bar", "some=label"},
+					},
+				},
+			},
+			want: "id: 42, labels: [baz=bar,some=label]",
+		},
+		{
+			name: "endpoint regenerate failure",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_ENDPOINT_REGENERATE_FAILURE,
+				Notification: &pb.AgentEvent_EndpointRegenerate{
+					EndpointRegenerate: &pb.EndpointRegenNotification{
+						Id:     42,
+						Labels: []string{"baz=bar", "some=label"},
+						Error:  "some error",
+					},
+				},
+			},
+			want: "id: 42, labels: [baz=bar,some=label], error: some error",
+		},
+		{
+			name: "endpoint created",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_ENDPOINT_CREATED,
+				Notification: &pb.AgentEvent_EndpointUpdate{
+					EndpointUpdate: &pb.EndpointUpdateNotification{
+						Id:        1027,
+						PodName:   "cilium-xyz",
+						Namespace: "kube-system",
+					},
+				},
+			},
+			want: "id: 1027, pod name: cilium-xyz, namespace: kube-system",
+		},
+		{
+			name: "ipcache upsert",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_IPCACHE_UPSERTED,
+				Notification: &pb.AgentEvent_IpcacheUpdate{
+					IpcacheUpdate: &pb.IPCacheNotification{
+						Cidr:     "10.1.2.3/32",
+						Identity: 42,
+						OldIdentity: &wrappers.UInt32Value{
+							Value: 23,
+						},
+						HostIp:     "192.168.3.9",
+						EncryptKey: 3,
+					},
+				},
+			},
+			want: "cidr: 10.1.2.3/32, identity: 42, old identity: 23, host ip: 192.168.3.9, encrypt key: 3",
+		},
+		{
+			name: "ipcache delete",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_IPCACHE_DELETED,
+				Notification: &pb.AgentEvent_IpcacheUpdate{
+					IpcacheUpdate: &pb.IPCacheNotification{
+						Cidr:      "10.0.1.2/32",
+						Identity:  42,
+						OldHostIp: "192.168.1.23",
+					},
+				},
+			},
+			want: "cidr: 10.0.1.2/32, identity: 42, old host ip: 192.168.1.23, encrypt key: 0",
+		},
+		{
+			name: "service upsert",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_SERVICE_UPSERTED,
+				Notification: &pb.AgentEvent_ServiceUpsert{
+					ServiceUpsert: &pb.ServiceUpsertNotification{
+						Id: 42,
+						FrontendAddress: &pb.ServiceUpsertNotificationAddr{
+							Ip:   "10.0.0.42",
+							Port: 8008,
+						},
+						BackendAddresses: []*pb.ServiceUpsertNotificationAddr{
+							{
+								Ip:   "192.168.1.23",
+								Port: 80,
+							},
+							{
+								Ip:   "192.168.1.24",
+								Port: 80,
+							},
+						},
+						Type:          "foobar",
+						TrafficPolicy: "pol1",
+						Name:          "foo",
+						Namespace:     "bar",
+					},
+				},
+			},
+			want: "id: 42, frontend: 10.0.0.42:8008, backends: [192.168.1.23:80,192.168.1.24:80], type: foobar, traffic policy: pol1, name: foo, namespace: bar",
+		},
+		{
+			name: "service delete",
+			ev: &pb.AgentEvent{
+				Type: pb.AgentEventType_SERVICE_DELETED,
+				Notification: &pb.AgentEvent_ServiceDelete{
+					ServiceDelete: &pb.ServiceDeleteNotification{
+						Id: 42,
+					},
+				},
+			},
+			want: "id: 42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getAgentEventDetails(tt.ev); got != tt.want {
+				t.Errorf("getAgentEventDetails()\ngot:  %v,\nwant: %v", got, tt.want)
+			}
+		})
+	}
+
 }

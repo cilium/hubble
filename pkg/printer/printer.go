@@ -384,6 +384,170 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 	return nil
 }
 
+func formatServiceAddr(a *pb.ServiceUpsertNotificationAddr) string {
+	return fmt.Sprintf("%s:%d", a.Ip, a.Port)
+}
+
+func getAgentEventDetails(e *pb.AgentEvent) string {
+	switch e.GetType() {
+	case pb.AgentEventType_AGENT_EVENT_UNKNOWN:
+		if u := e.GetUnknown(); u != nil {
+			return fmt.Sprintf("type: %s, notification: %s", u.Type, u.Notification)
+		}
+	case pb.AgentEventType_AGENT_STARTED:
+		if a := e.GetAgentStart(); a != nil {
+			return fmt.Sprintf("start time: %s", fmtTimestamp(a.Time))
+		}
+	case pb.AgentEventType_POLICY_UPDATED, pb.AgentEventType_POLICY_DELETED:
+		if p := e.GetPolicyUpdate(); p != nil {
+			return fmt.Sprintf("labels: [%s], revision: %d, count: %d",
+				strings.Join(p.Labels, ","), p.Revision, p.RuleCount)
+		}
+	case pb.AgentEventType_ENDPOINT_REGENERATE_SUCCESS, pb.AgentEventType_ENDPOINT_REGENERATE_FAILURE:
+		if r := e.GetEndpointRegenerate(); r != nil {
+			var sb strings.Builder
+			fmt.Fprintf(&sb, "id: %d, labels: [%s]", r.Id, strings.Join(r.Labels, ","))
+			if re := r.Error; re != "" {
+				fmt.Fprintf(&sb, ", error: %s", re)
+			}
+			return sb.String()
+		}
+	case pb.AgentEventType_ENDPOINT_CREATED, pb.AgentEventType_ENDPOINT_DELETED:
+		if ep := e.GetEndpointUpdate(); ep != nil {
+			var sb strings.Builder
+			fmt.Fprintf(&sb, "id: %d", ep.Id)
+			if n := ep.PodName; n != "" {
+				fmt.Fprintf(&sb, ", pod name: %s", n)
+			}
+			if n := ep.Namespace; n != "" {
+				fmt.Fprintf(&sb, ", namespace: %s", n)
+			}
+			return sb.String()
+		}
+	case pb.AgentEventType_IPCACHE_UPSERTED, pb.AgentEventType_IPCACHE_DELETED:
+		if i := e.GetIpcacheUpdate(); i != nil {
+			var sb strings.Builder
+			fmt.Fprintf(&sb, "cidr: %s, identity: %d", i.Cidr, i.Identity)
+			if i.OldIdentity != nil {
+				fmt.Fprintf(&sb, ", old identity: %d", i.OldIdentity.Value)
+			}
+			if i.HostIp != "" {
+				fmt.Fprintf(&sb, ", host ip: %s", i.HostIp)
+			}
+			if i.OldHostIp != "" {
+				fmt.Fprintf(&sb, ", old host ip: %s", i.OldHostIp)
+			}
+			fmt.Fprintf(&sb, ", encrypt key: %d", i.EncryptKey)
+			return sb.String()
+		}
+	case pb.AgentEventType_SERVICE_UPSERTED:
+		if svc := e.GetServiceUpsert(); svc != nil {
+			var sb strings.Builder
+			fmt.Fprintf(&sb, "id: %d", svc.Id)
+			if fe := svc.FrontendAddress; fe != nil {
+				fmt.Fprintf(&sb, ", frontend: %s", formatServiceAddr(fe))
+			}
+			if bes := svc.BackendAddresses; len(bes) != 0 {
+				backends := make([]string, 0, len(bes))
+				for _, a := range bes {
+					backends = append(backends, formatServiceAddr(a))
+				}
+				fmt.Fprintf(&sb, ", backends: [%s]", strings.Join(backends, ","))
+			}
+			if t := svc.Type; t != "" {
+				fmt.Fprintf(&sb, ", type: %s", t)
+			}
+			if tp := svc.TrafficPolicy; tp != "" {
+				fmt.Fprintf(&sb, ", traffic policy: %s", tp)
+			}
+			if n := svc.Name; n != "" {
+				fmt.Fprintf(&sb, ", name: %s", n)
+			}
+			if ns := svc.Namespace; ns != "" {
+				fmt.Fprintf(&sb, ", namespace: %s", ns)
+			}
+			return sb.String()
+		}
+	case pb.AgentEventType_SERVICE_DELETED:
+		if s := e.GetServiceDelete(); s != nil {
+			return fmt.Sprintf("id: %d", s.Id)
+		}
+	}
+	return "UNKNOWN"
+}
+
+// WriteProtoAgentEvent writes v1.AgentEvent into the output writer.
+func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
+	e := r.GetAgentEvent()
+	if e == nil {
+		return errors.New("not an agent event")
+	}
+
+	switch p.opts.output {
+	case JSONOutput:
+		return p.jsonEncoder.Encode(e)
+	case JSONPBOutput:
+		return p.jsonEncoder.Encode(r)
+	case DictOutput:
+		ew := &errWriter{w: p.opts.w}
+
+		if p.line != 0 {
+			ew.write(dictSeparator)
+		}
+
+		ew.write("  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline)
+		if p.opts.nodeName {
+			ew.write("       NODE: ", r.GetNodeName(), newline)
+		}
+		ew.write(
+			"       TYPE: ", e.GetType(), newline,
+			"    DETAILS: ", getAgentEventDetails(e), newline,
+		)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out agent event: %v", ew.err)
+		}
+	case TabOutput:
+		ew := &errWriter{w: p.tw}
+		if p.line == 0 {
+			ew.write("TIMESTAMP", tab)
+			if p.opts.nodeName {
+				ew.write("NODE", tab)
+			}
+			ew.write(
+				"TYPE", tab,
+				"DETAILS", newline,
+			)
+		}
+		ew.write(fmtTimestamp(r.GetTime()), tab)
+		if p.opts.nodeName {
+			ew.write(r.GetNodeName(), tab)
+		}
+		ew.write(
+			e.GetType(), tab,
+			getAgentEventDetails(e), newline,
+		)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out agent event: %v", ew.err)
+		}
+	case CompactOutput:
+		var node string
+
+		if p.opts.nodeName {
+			node = fmt.Sprintf(" [%s]", r.GetNodeName())
+		}
+		_, err := fmt.Fprintf(p.opts.w,
+			"%s%s: %s\n",
+			fmtTimestamp(r.GetTime()),
+			node,
+			e.GetType())
+		if err != nil {
+			return fmt.Errorf("failed to write out agent event: %v", err)
+		}
+	}
+	p.line++
+	return nil
+}
+
 // MaybeTime returns a Millisecond precision timestamp, or "N/A" if nil.
 func MaybeTime(t *time.Time) string {
 	if t != nil {
@@ -425,6 +589,8 @@ func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error 
 		return p.WriteProtoFlow(res)
 	case *observerpb.GetFlowsResponse_NodeStatus:
 		return p.WriteProtoNodeStatusEvent(res)
+	case *observerpb.GetFlowsResponse_AgentEvent:
+		return p.WriteProtoAgentEvent(res)
 	case nil:
 		return nil
 	default:
