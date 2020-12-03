@@ -52,6 +52,7 @@ HUBBLE_TLS_ALLOW_INSECURE and so on.`,
 			return cmd.Help()
 		},
 	}
+
 	configCmd.AddCommand(
 		newGetCommand(vp),
 		newResetCommand(vp),

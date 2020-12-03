@@ -25,8 +25,11 @@ import (
 
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	relaypb "github.com/cilium/cilium/api/v1/relay"
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -38,7 +41,7 @@ var listOpts struct {
 }
 
 func newListCommand(vp *viper.Viper) *cobra.Command {
-	cmd := &cobra.Command{
+	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "List Hubble nodes",
 		RunE: func(cmd *cobra.Command, _ []string) error {
@@ -53,20 +56,24 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(
+	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
+	formattingFlags.StringVarP(
 		&listOpts.output, "output", "o", "table",
 		`Specify the output format, one of:
  json:     JSON encoding
  table:    Tab-aligned columns
  wide:     Tab-aligned columns with additional information`)
-	cmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	listCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"json",
 			"table",
 			"wide",
 		}, cobra.ShellCompDirectiveDefault
 	})
-	return cmd
+	listCmd.Flags().AddFlagSet(formattingFlags)
+
+	listCmd.SetUsageTemplate(template.Usage(formattingFlags, config.ServerFlags))
+	return listCmd
 }
 
 func runList(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {

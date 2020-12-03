@@ -24,7 +24,9 @@ import (
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -50,6 +52,11 @@ connectivity health check.`,
 			return runStatus(hubbleConn)
 		},
 	}
+
+	// add config.ServerFlags to the help template as these flags are used by
+	// this command
+	statusCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+
 	return statusCmd
 }
 

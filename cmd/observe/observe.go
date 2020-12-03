@@ -27,13 +27,16 @@ import (
 	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/cilium/hubble/pkg/defaults"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -41,22 +44,29 @@ import (
 )
 
 var (
-	last               uint64
-	all                bool
-	sinceVar, untilVar string
+	selectorOpts struct {
+		all          bool
+		last         uint64
+		since, until string
+		follow       bool
+	}
 
-	jsonOutput          bool
-	compactOutput       bool
-	dictOutput          bool
-	output              string
-	follow              bool
-	ignoreStderr        bool
-	enableIPTranslation bool
-	nodeName            bool
+	formattingOpts struct {
+		jsonOutput    bool
+		compactOutput bool
+		dictOutput    bool
+		output        string
+
+		enableIPTranslation bool
+		nodeName            bool
+		numeric             bool
+	}
+
+	otherOpts struct {
+		ignoreStderr bool
+	}
 
 	printer *hubprinter.Printer
-
-	numeric bool
 )
 
 var verdicts = []string{
@@ -78,7 +88,7 @@ func New(vp *viper.Viper) *cobra.Command {
 }
 
 func newObserveCmd(vp *viper.Viper, ofilter *observeFilter) *cobra.Command {
-	observerCmd := &cobra.Command{
+	observeCmd := &cobra.Command{
 		Use:   "observe",
 		Short: "Observe flows of a Hubble server",
 		Long: `Observe provides visibility into flow information on the network and
@@ -108,96 +118,173 @@ more.`,
 			return nil
 		},
 	}
-	observerCmd.Flags().VarP(filterVarP(
-		"type", "t", ofilter, []string{},
-		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
-	observerCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return eventTypes(), cobra.ShellCompDirectiveDefault
-	})
 
-	observerCmd.Flags().Uint64Var(&last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
-	observerCmd.Flags().BoolVar(&all, "all", false, "Get all flows stored in Hubble's buffer")
-	observerCmd.Flags().BoolVarP(&follow, "follow", "f", false, "Follow flows output")
-	observerCmd.Flags().StringVar(&sinceVar, "since", "", "Filter flows since a specific date (relative or RFC3339)")
-	observerCmd.Flags().StringVar(&untilVar, "until", "", "Filter flows until a specific date (relative or RFC3339)")
+	// selector flags
+	selectorFlags := pflag.NewFlagSet("selectors", pflag.ContinueOnError)
+	selectorFlags.BoolVar(&selectorOpts.all, "all", false, "Get all flows stored in Hubble's buffer")
+	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
+	selectorFlags.StringVar(&selectorOpts.since, "since", "", "Filter flows since a specific date (relative or RFC3339)")
+	selectorFlags.StringVar(&selectorOpts.until, "until", "", "Filter flows until a specific date (relative or RFC3339)")
+	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
+	observeCmd.Flags().AddFlagSet(selectorFlags)
 
-	observerCmd.Flags().Var(filterVar(
+	// filter flags
+	filterFlags := pflag.NewFlagSet("filters", pflag.ContinueOnError)
+	filterFlags.Var(filterVar(
 		"not", ofilter,
 		"Reverses the next filter to be blacklist i.e. --not --from-ip 2.2.2.2"))
-	observerCmd.Flags().Lookup("not").NoOptDefVal = "true"
-
-	observerCmd.Flags().Var(filterVar(
-		"from-fqdn", ofilter,
-		`Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").`))
-	observerCmd.Flags().Var(filterVar(
-		"fqdn", ofilter,
-		`Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").`))
-	observerCmd.Flags().Var(filterVar(
-		"to-fqdn", ofilter,
-		`Show all flows terminating at the given fully qualified domain name (e.g. "*.cilium.io").`))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-ip", ofilter,
-		"Show all flows originating at the given IP address."))
-	observerCmd.Flags().Var(filterVar(
-		"ip", ofilter,
-		"Show all flows related to the given IP address."))
-	observerCmd.Flags().Var(filterVar(
-		"to-ip", ofilter,
-		"Show all flows terminating at the given IP address."))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-pod", ofilter,
-		"Show all flows originating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
-	observerCmd.Flags().Var(filterVar(
-		"pod", ofilter,
-		"Show all flows related to the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
-	observerCmd.Flags().Var(filterVar(
-		"to-pod", ofilter,
-		"Show all flows terminating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-namespace", ofilter,
-		"Show all flows originating in the given Kubernetes namespace."))
-	observerCmd.Flags().VarP(filterVarP(
-		"namespace", "n", ofilter, nil,
-		"Show all flows related to the given Kubernetes namespace."))
-	observerCmd.Flags().Var(filterVar(
-		"to-namespace", ofilter,
-		"Show all flows terminating in the given Kubernetes namespace."))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-label", ofilter,
-		`Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
-	observerCmd.Flags().VarP(filterVarP(
-		"label", "l", ofilter, nil,
-		`Show only flows related to an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
-	observerCmd.Flags().Var(filterVar(
-		"to-label", ofilter,
-		`Show only flows terminating in an endpoint with given labels (e.g. "key1=value1", "reserved:world")`))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-service", ofilter,
-		"Show all flows originating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
-	observerCmd.Flags().Var(filterVar(
-		"service", ofilter,
-		"Show all flows related to the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
-	observerCmd.Flags().Var(filterVar(
-		"to-service", ofilter,
-		"Show all flows terminating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
-
-	observerCmd.Flags().Var(filterVar(
+	filterFlags.Var(filterVar(
+		"node-name", ofilter,
+		`Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")`))
+	filterFlags.Var(filterVar(
+		"protocol", ofilter,
+		`Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")`))
+	filterFlags.VarP(filterVarP(
+		"type", "t", ofilter, []string{},
+		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
+	filterFlags.Var(filterVar(
 		"verdict", ofilter,
 		fmt.Sprintf("Show only flows with this verdict [%s]", strings.Join(verdicts, ", ")),
 	))
-	observerCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return verdicts, cobra.ShellCompDirectiveDefault
-	})
 
-	observerCmd.Flags().Var(filterVar(
+	filterFlags.Var(filterVar(
 		"http-status", ofilter,
 		`Show only flows which match this HTTP status code prefix (e.g. "404", "5+")`))
-	observerCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	filterFlags.Var(filterVar(
+		"http-method", ofilter,
+		`Show only flows which match this HTTP method (e.g. "get", "post")`))
+	filterFlags.Var(filterVar(
+		"http-path", ofilter,
+		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
+
+	filterFlags.Var(filterVar(
+		"from-fqdn", ofilter,
+		`Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").`))
+	filterFlags.Var(filterVar(
+		"fqdn", ofilter,
+		`Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").`))
+	filterFlags.Var(filterVar(
+		"to-fqdn", ofilter,
+		`Show all flows terminating at the given fully qualified domain name (e.g. "*.cilium.io").`))
+
+	filterFlags.Var(filterVar(
+		"from-ip", ofilter,
+		"Show all flows originating at the given IP address."))
+	filterFlags.Var(filterVar(
+		"ip", ofilter,
+		"Show all flows related to the given IP address."))
+	filterFlags.Var(filterVar(
+		"to-ip", ofilter,
+		"Show all flows terminating at the given IP address."))
+
+	filterFlags.Var(filterVar(
+		"from-pod", ofilter,
+		"Show all flows originating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
+	filterFlags.Var(filterVar(
+		"pod", ofilter,
+		"Show all flows related to the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
+	filterFlags.Var(filterVar(
+		"to-pod", ofilter,
+		"Show all flows terminating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
+
+	filterFlags.Var(filterVar(
+		"from-namespace", ofilter,
+		"Show all flows originating in the given Kubernetes namespace."))
+	filterFlags.VarP(filterVarP(
+		"namespace", "n", ofilter, nil,
+		"Show all flows related to the given Kubernetes namespace."))
+	filterFlags.Var(filterVar(
+		"to-namespace", ofilter,
+		"Show all flows terminating in the given Kubernetes namespace."))
+
+	filterFlags.Var(filterVar(
+		"from-label", ofilter,
+		`Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
+	filterFlags.VarP(filterVarP(
+		"label", "l", ofilter, nil,
+		`Show only flows related to an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
+	filterFlags.Var(filterVar(
+		"to-label", ofilter,
+		`Show only flows terminating in an endpoint with given labels (e.g. "key1=value1", "reserved:world")`))
+
+	filterFlags.Var(filterVar(
+		"from-service", ofilter,
+		"Show all flows originating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+	filterFlags.Var(filterVar(
+		"service", ofilter,
+		"Show all flows related to the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+	filterFlags.Var(filterVar(
+		"to-service", ofilter,
+		"Show all flows terminating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+
+	filterFlags.Var(filterVar(
+		"from-port", ofilter,
+		"Show only flows with the given source port (e.g. 8080)"))
+	filterFlags.Var(filterVar(
+		"port", ofilter,
+		"Show only flows with given port in either source or destination (e.g. 8080)"))
+	filterFlags.Var(filterVar(
+		"to-port", ofilter,
+		"Show only flows with the given destination port (e.g. 8080)"))
+
+	filterFlags.Var(filterVar(
+		"from-identity", ofilter,
+		"Show all flows originating at an endpoint with the given security identity"))
+	filterFlags.Var(filterVar(
+		"identity", ofilter,
+		"Show all flows related to an endpoint with the given security identity"))
+	filterFlags.Var(filterVar(
+		"to-identity", ofilter,
+		"Show all flows terminating at an endpoint with the given security identity"))
+	observeCmd.Flags().AddFlagSet(filterFlags)
+
+	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
+	formattingFlags.BoolVarP(
+		&formattingOpts.jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
+	)
+	formattingFlags.BoolVar(
+		&formattingOpts.compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
+	)
+	formattingFlags.BoolVar(
+		&formattingOpts.dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
+	)
+	formattingFlags.StringVarP(
+		&formattingOpts.output, "output", "o", "",
+		`Specify the output format, one of:
+ compact:  Compact output
+ dict:     Each flow is shown as KEY:VALUE pair
+ json:     JSON encoding
+ jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
+ table:    Tab-aligned columns`)
+	formattingFlags.BoolVar(
+		&formattingOpts.numeric,
+		"numeric",
+		false,
+		"Display all information in numeric form",
+	)
+	formattingFlags.BoolVar(
+		&formattingOpts.enableIPTranslation,
+		"ip-translation",
+		true,
+		"Translate IP addresses to logical names such as pod name, FQDN, ...",
+	)
+	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
+	observeCmd.Flags().AddFlagSet(formattingFlags)
+
+	// other flags
+	otherFlags := pflag.NewFlagSet("other", pflag.ContinueOnError)
+	otherFlags.BoolVarP(
+		&otherOpts.ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
+	observeCmd.Flags().AddFlagSet(otherFlags)
+
+	// advanced completion for flags
+	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return eventTypes(), cobra.ShellCompDirectiveDefault
+	})
+	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return verdicts, cobra.ShellCompDirectiveDefault
+	})
+	observeCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		httpStatus := []string{
 			"100", "101", "102", "103",
 			"200", "201", "202", "203", "204", "205", "206", "207", "208",
@@ -213,10 +300,7 @@ more.`,
 		}
 		return httpStatus, cobra.ShellCompDirectiveDefault
 	})
-	observerCmd.Flags().Var(filterVar(
-		"http-method", ofilter,
-		`Show only flows which match this HTTP method (e.g. "get", "post")`))
-	observerCmd.RegisterFlagCompletionFunc("http-method", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	observeCmd.RegisterFlagCompletionFunc("http-method", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			http.MethodConnect,
 			http.MethodDelete,
@@ -229,56 +313,7 @@ more.`,
 			http.MethodTrace,
 		}, cobra.ShellCompDirectiveDefault
 	})
-	observerCmd.Flags().Var(filterVar(
-		"http-path", ofilter,
-		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
-
-	observerCmd.Flags().Var(filterVar(
-		"protocol", ofilter,
-		`Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")`))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-port", ofilter,
-		"Show only flows with the given source port (e.g. 8080)"))
-	observerCmd.Flags().Var(filterVar(
-		"port", ofilter,
-		"Show only flows with given port in either source or destination (e.g. 8080)"))
-	observerCmd.Flags().Var(filterVar(
-		"to-port", ofilter,
-		"Show only flows with the given destination port (e.g. 8080)"))
-
-	observerCmd.Flags().Var(filterVar(
-		"from-identity", ofilter,
-		"Show all flows originating at an endpoint with the given security identity"))
-	observerCmd.Flags().Var(filterVar(
-		"identity", ofilter,
-		"Show all flows related to an endpoint with the given security identity"))
-	observerCmd.Flags().Var(filterVar(
-		"to-identity", ofilter,
-		"Show all flows terminating at an endpoint with the given security identity"))
-
-	observerCmd.Flags().Var(filterVar(
-		"node-name", ofilter,
-		`Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")`))
-
-	observerCmd.Flags().BoolVarP(
-		&jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
-	)
-	observerCmd.Flags().BoolVar(
-		&compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
-	)
-	observerCmd.Flags().BoolVar(
-		&dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
-	)
-	observerCmd.Flags().StringVarP(
-		&output, "output", "o", "",
-		`Specify the output format, one of:
- compact:  Compact output
- dict:     Each flow is shown as KEY:VALUE pair
- json:     JSON encoding
- jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
- table:    Tab-aligned columns`)
-	observerCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	observeCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"compact",
 			"dict",
@@ -287,28 +322,13 @@ more.`,
 			"table",
 		}, cobra.ShellCompDirectiveDefault
 	})
-	observerCmd.Flags().BoolVarP(
-		&ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
 
-	observerCmd.Flags().BoolVar(
-		&numeric,
-		"numeric",
-		false,
-		"Display all information in numeric form",
-	)
+	// default value for when the flag is on the command line without any options
+	observeCmd.Flags().Lookup("not").NoOptDefVal = "true"
 
-	observerCmd.Flags().BoolVar(
-		&enableIPTranslation,
-		"ip-translation",
-		true,
-		"Translate IP addresses to logical names such as pod name, FQDN, ...",
-	)
+	observeCmd.SetUsageTemplate(template.Usage(selectorFlags, filterFlags, formattingFlags, config.ServerFlags, otherFlags))
 
-	observerCmd.Flags().BoolVarP(&nodeName, "print-node-name", "", false, "Print node name in output")
-
-	customObserverHelp(observerCmd)
-
-	return observerCmd
+	return observeCmd
 }
 
 func handleArgs(ofilter *observeFilter, debug bool) (err error) {
@@ -319,17 +339,17 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	// initialize the printer with any options that were passed in
 	var opts []hubprinter.Option
 
-	if output == "" { // support deprecated output flags if provided
-		if jsonOutput {
-			output = "json"
-		} else if dictOutput {
-			output = "dict"
-		} else if compactOutput {
-			output = "compact"
+	if formattingOpts.output == "" { // support deprecated output flags if provided
+		if formattingOpts.jsonOutput {
+			formattingOpts.output = "json"
+		} else if formattingOpts.dictOutput {
+			formattingOpts.output = "dict"
+		} else if formattingOpts.compactOutput {
+			formattingOpts.output = "compact"
 		}
 	}
 
-	switch output {
+	switch formattingOpts.output {
 	case "compact":
 		opts = append(opts, hubprinter.Compact())
 	case "dict":
@@ -339,34 +359,34 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	case "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
-		if follow {
+		if selectorOpts.follow {
 			return fmt.Errorf("table output format is not compatible with follow mode")
 		}
 		opts = append(opts, hubprinter.Tab())
 	case "":
 		// no format specified, choose most appropriate format based on
 		// user provided flags
-		if follow {
+		if selectorOpts.follow {
 			opts = append(opts, hubprinter.Compact())
 		} else {
 			opts = append(opts, hubprinter.Tab())
 		}
 	default:
-		return fmt.Errorf("invalid output format: %s", output)
+		return fmt.Errorf("invalid output format: %s", formattingOpts.output)
 	}
-	if ignoreStderr {
+	if otherOpts.ignoreStderr {
 		opts = append(opts, hubprinter.IgnoreStderr())
 	}
-	if numeric {
-		enableIPTranslation = false
+	if formattingOpts.numeric {
+		formattingOpts.enableIPTranslation = false
 	}
-	if enableIPTranslation {
+	if formattingOpts.enableIPTranslation {
 		opts = append(opts, hubprinter.WithIPTranslation())
 	}
 	if debug {
 		opts = append(opts, hubprinter.WithDebug())
 	}
-	if nodeName {
+	if formattingOpts.nodeName {
 		opts = append(opts, hubprinter.WithNodeName())
 	}
 	printer = hubprinter.New(opts...)
@@ -374,10 +394,10 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 }
 
 func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
-	// convert sinceVar into a param for GetFlows
+	// convert selectorOpts.since into a param for GetFlows
 	var since, until *timestamp.Timestamp
-	if sinceVar != "" {
-		st, err := hubtime.FromString(sinceVar)
+	if selectorOpts.since != "" {
+		st, err := hubtime.FromString(selectorOpts.since)
 		if err != nil {
 			return fmt.Errorf("failed to parse the since time: %v", err)
 		}
@@ -389,8 +409,8 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 		// Set the until field if both --since and --until options are specified and --follow
 		// is not specified. If --since is specified but --until is not, the server sets the
 		// --until option to the current timestamp.
-		if untilVar != "" && !follow {
-			ut, err := hubtime.FromString(untilVar)
+		if selectorOpts.until != "" && !selectorOpts.follow {
+			ut, err := hubtime.FromString(selectorOpts.until)
 			if err != nil {
 				return fmt.Errorf("failed to parse the until time: %v", err)
 			}
@@ -403,12 +423,12 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 
 	if since == nil && until == nil {
 		switch {
-		case all:
+		case selectorOpts.all:
 			// all is an alias for last=uint64_max
-			last = ^uint64(0)
-		case last == 0:
+			selectorOpts.last = ^uint64(0)
+		case selectorOpts.last == 0:
 			// no specific parameters were provided, just a vanilla `hubble observe`
-			last = defaults.FlowPrintCount
+			selectorOpts.last = defaults.FlowPrintCount
 		}
 	}
 
@@ -425,8 +445,8 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 
 	client := observer.NewObserverClient(conn)
 	req := &observer.GetFlowsRequest{
-		Number:    last,
-		Follow:    follow,
+		Number:    selectorOpts.last,
+		Follow:    selectorOpts.follow,
 		Whitelist: wl,
 		Blacklist: bl,
 		Since:     since,
