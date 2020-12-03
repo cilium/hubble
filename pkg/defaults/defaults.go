@@ -16,6 +16,7 @@ package defaults
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -42,6 +43,36 @@ const (
 	// hubble observer. Use GetDefaultSocketPath to access it.
 	socketPath = "unix:///var/run/cilium/hubble.sock"
 )
+
+var (
+	// ConfigDir is the default directory path to store Hubble
+	// configuration files. It may be unset.
+	ConfigDir string
+	// ConfigDirFallback is the directory path to store Hubble configuration
+	// files if defaultConfigDir is unset. Note that it may also be unset.
+	ConfigDirFallback string
+	// ConfigFile is the path to an optional configuration file.
+	// It may be unset.
+	ConfigFile string
+)
+
+func init() {
+	// honor user config dir
+	if dir, err := os.UserConfigDir(); err == nil {
+		ConfigDir = filepath.Join(dir, "hubble")
+	}
+	// fallback to home directory
+	if dir, err := os.UserHomeDir(); err == nil {
+		ConfigDirFallback = filepath.Join(dir, ".hubble")
+	}
+
+	switch {
+	case ConfigDir != "":
+		ConfigFile = filepath.Join(ConfigDir, "config.yaml")
+	case ConfigDirFallback != "":
+		ConfigFile = filepath.Join(ConfigDirFallback, "config.yaml")
+	}
+}
 
 // GetSocketPath returns the default server for status and observe command.
 func GetSocketPath() string {

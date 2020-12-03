@@ -19,7 +19,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/spf13/cobra"
@@ -45,6 +47,11 @@ func New(vp *viper.Viper) *cobra.Command {
 		},
 		Hidden: true,
 	}
+
+	// add config.ServerFlags to the help template as these flags are used by
+	// this command
+	reflectCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+
 	return reflectCmd
 }
 

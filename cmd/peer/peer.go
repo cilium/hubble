@@ -15,73 +15,28 @@
 package peer
 
 import (
-	"context"
-	"fmt"
-	"io"
-
-	peerpb "github.com/cilium/cilium/api/v1/peer"
-	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/config"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // New creates a new hidden peer command.
 func New(vp *viper.Viper) *cobra.Command {
-	cmd := &cobra.Command{
+	peerCmd := &cobra.Command{
 		Use:     "peers",
 		Aliases: []string{"peer"},
 		Short:   "Get information about Hubble peers",
 		Long:    `Get information about Hubble peers.`,
 		Hidden:  true, // this command is only useful for development/debugging purposes
 	}
-	cmd.AddCommand(
+
+	// add config.ServerFlags to the help template as these flags are used by
+	// this command
+	peerCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+
+	peerCmd.AddCommand(
 		newWatchCommand(vp),
 	)
-	return cmd
-}
-
-func newWatchCommand(vp *viper.Viper) *cobra.Command {
-	return &cobra.Command{
-		Use:     "watch",
-		Aliases: []string{"w"},
-		Short:   "Watch for Hubble peers updates",
-		Long:    `Watch for Hubble peers updates.`,
-		RunE: func(_ *cobra.Command, _ []string) error {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
-			if err != nil {
-				return err
-			}
-			defer hubbleConn.Close()
-			return runWatch(ctx, peerpb.NewPeerClient(hubbleConn))
-		},
-	}
-}
-
-func runWatch(ctx context.Context, client peerpb.PeerClient) error {
-	b, err := client.Notify(ctx, &peerpb.NotifyRequest{})
-	if err != nil {
-		return err
-	}
-	for {
-		resp, err := b.Recv()
-		switch err {
-		case io.EOF, context.Canceled:
-			return nil
-		case nil:
-			tlsServerName := ""
-			if tls := resp.GetTls(); tls != nil {
-				tlsServerName = fmt.Sprintf(" (TLS.ServerName: %s)", tls.GetServerName())
-			}
-			fmt.Printf("%-12s %s %s%s\n", resp.GetType(), resp.GetAddress(), resp.GetName(), tlsServerName)
-		default:
-			if status.Code(err) == codes.Canceled {
-				return nil
-			}
-			return err
-		}
-	}
+	return peerCmd
 }
