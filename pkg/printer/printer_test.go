@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-	"time"
 
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/golang/protobuf/ptypes"
@@ -448,6 +447,16 @@ func Test_fmtTimestamp(t *testing.T) {
 			want: "Jan  1 00:00:00.000",
 		},
 		{
+			name: "valid non-zero",
+			args: args{
+				t: &timestamp.Timestamp{
+					Seconds: 1530984600,
+					Nanos:   123000000,
+				},
+			},
+			want: "Jul  7 17:30:00.123",
+		},
+		{
 			name: "invalid",
 			args: args{
 				t: &timestamp.Timestamp{
@@ -611,13 +620,6 @@ func Test_getFlowType(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestMaybeTime(t *testing.T) {
-	assert.Equal(t, "N/A", MaybeTime(nil))
-
-	mt := time.Date(2018, time.July, 07, 17, 30, 0, 123000000, time.UTC)
-	assert.Equal(t, "Jul  7 17:30:00.123", MaybeTime(&mt))
 }
 
 func TestHostname(t *testing.T) {
