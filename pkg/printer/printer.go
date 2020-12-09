@@ -166,7 +166,8 @@ func fmtTimestamp(ts *timestamp.Timestamp) string {
 	if err != nil || t.IsZero() {
 		return "N/A"
 	}
-	return MaybeTime(&t)
+	// TODO: support more date formats through options to `hubble observe`
+	return t.Format(time.StampMilli)
 }
 
 // GetFlowType returns the type of a flow as a string.
@@ -546,15 +547,6 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 	}
 	p.line++
 	return nil
-}
-
-// MaybeTime returns a Millisecond precision timestamp, or "N/A" if nil.
-func MaybeTime(t *time.Time) string {
-	if t != nil {
-		// TODO: support more date formats through options to `hubble observe`
-		return t.Format(time.StampMilli)
-	}
-	return "N/A"
 }
 
 // Hostname returns a "host:ip" formatted pair for the given ip and port. If
