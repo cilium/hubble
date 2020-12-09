@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/cilium/cilium v1.9.0-rc1.0.20201209155612-002bd9c37c4d
-	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2
 	github.com/gordonklaus/ineffassign v0.0.0-20200809085317-e36bfde3bb78
 	github.com/spf13/cast v1.3.1
@@ -14,6 +13,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
 	google.golang.org/grpc v1.33.2
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 	honnef.co/go/tools v0.0.1-2020.1.6
 )

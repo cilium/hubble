@@ -18,22 +18,21 @@ import (
 	"bytes"
 	"strings"
 	"testing"
-
-	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/golang/protobuf/ptypes/wrappers"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
 	buf := bytes.Buffer{}
 	f := pb.Flow{
-		Time: &timestamp.Timestamp{
+		Time: &timestamppb.Timestamp{
 			Seconds: 1234,
 			Nanos:   567800000,
 		},
@@ -429,7 +428,7 @@ func Test_getHostNames(t *testing.T) {
 
 func Test_fmtTimestamp(t *testing.T) {
 	type args struct {
-		t *timestamp.Timestamp
+		t *timestamppb.Timestamp
 	}
 	tests := []struct {
 		name string
@@ -439,7 +438,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
-				t: &timestamp.Timestamp{
+				t: &timestamppb.Timestamp{
 					Seconds: 0,
 					Nanos:   0,
 				},
@@ -449,7 +448,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "valid non-zero",
 			args: args{
-				t: &timestamp.Timestamp{
+				t: &timestamppb.Timestamp{
 					Seconds: 1530984600,
 					Nanos:   123000000,
 				},
@@ -459,7 +458,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "invalid",
 			args: args{
-				t: &timestamp.Timestamp{
+				t: &timestamppb.Timestamp{
 					Seconds: -1,
 					Nanos:   -1,
 				},
@@ -636,8 +635,8 @@ func TestHostname(t *testing.T) {
 }
 
 func TestPrinter_AgentEventDetails(t *testing.T) {
-	startTS, err := ptypes.TimestampProto(time.Now())
-	assert.NoError(t, err)
+	startTS := timestamppb.New(time.Now())
+	assert.NoError(t, startTS.CheckValid())
 
 	tests := []struct {
 		name string
@@ -755,7 +754,7 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 					IpcacheUpdate: &pb.IPCacheNotification{
 						Cidr:     "10.1.2.3/32",
 						Identity: 42,
-						OldIdentity: &wrappers.UInt32Value{
+						OldIdentity: &wrapperspb.UInt32Value{
 							Value: 23,
 						},
 						HostIp:     "192.168.3.9",

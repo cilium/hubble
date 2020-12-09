@@ -22,12 +22,12 @@ import (
 	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/template"
-	"github.com/golang/protobuf/proto"
-	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	rpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 )
 
 // New returns the reflect command.
@@ -113,7 +113,7 @@ func handleDescriptorResponse(
 	encoder *json.Encoder,
 ) error {
 	for _, r := range resp.FileDescriptorResponse.FileDescriptorProto {
-		desc := descriptor.FileDescriptorProto{}
+		desc := descriptorpb.FileDescriptorProto{}
 		if err := proto.Unmarshal(r, &desc); err != nil {
 			return err
 		}

@@ -33,14 +33,13 @@ import (
 	"github.com/cilium/hubble/pkg/defaults"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -395,15 +394,15 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 
 func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 	// convert selectorOpts.since into a param for GetFlows
-	var since, until *timestamp.Timestamp
+	var since, until *timestamppb.Timestamp
 	if selectorOpts.since != "" {
 		st, err := hubtime.FromString(selectorOpts.since)
 		if err != nil {
 			return fmt.Errorf("failed to parse the since time: %v", err)
 		}
 
-		since, err = ptypes.TimestampProto(st)
-		if err != nil {
+		since = timestamppb.New(st)
+		if err := since.CheckValid(); err != nil {
 			return fmt.Errorf("failed to convert `since` timestamp to proto: %v", err)
 		}
 		// Set the until field if both --since and --until options are specified and --follow
@@ -414,8 +413,8 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 			if err != nil {
 				return fmt.Errorf("failed to parse the until time: %v", err)
 			}
-			until, err = ptypes.TimestampProto(ut)
-			if err != nil {
+			until = timestamppb.New(ut)
+			if err := until.CheckValid(); err != nil {
 				return fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
 			}
 		}

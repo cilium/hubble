@@ -32,8 +32,7 @@ import (
 	relaypb "github.com/cilium/cilium/api/v1/relay"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/monitor/api"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Printer for flows.
@@ -161,13 +160,12 @@ func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
 	return src, dst
 }
 
-func fmtTimestamp(ts *timestamp.Timestamp) string {
-	t, err := ptypes.Timestamp(ts)
-	if err != nil || t.IsZero() {
+func fmtTimestamp(ts *timestamppb.Timestamp) string {
+	if !ts.IsValid() {
 		return "N/A"
 	}
 	// TODO: support more date formats through options to `hubble observe`
-	return t.Format(time.StampMilli)
+	return ts.AsTime().Format(time.StampMilli)
 }
 
 // GetFlowType returns the type of a flow as a string.
