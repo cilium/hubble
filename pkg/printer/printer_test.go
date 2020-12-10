@@ -794,8 +794,8 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 								Port: 80,
 							},
 							{
-								Ip:   "192.168.1.24",
-								Port: 80,
+								Ip:   "2001:db8:85a3:::8a2e:370:1337",
+								Port: 8080,
 							},
 						},
 						Type:          "foobar",
@@ -805,7 +805,7 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 					},
 				},
 			},
-			want: "id: 42, frontend: 10.0.0.42:8008, backends: [192.168.1.23:80,192.168.1.24:80], type: foobar, traffic policy: pol1, name: foo, namespace: bar",
+			want: "id: 42, frontend: 10.0.0.42:8008, backends: [192.168.1.23:80,[2001:db8:85a3:::8a2e:370:1337]:8080], type: foobar, traffic policy: pol1, name: foo, namespace: bar",
 		},
 		{
 			name: "service delete",
