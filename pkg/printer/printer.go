@@ -385,7 +385,7 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 }
 
 func formatServiceAddr(a *pb.ServiceUpsertNotificationAddr) string {
-	return fmt.Sprintf("%s:%d", a.Ip, a.Port)
+	return net.JoinHostPort(a.Ip, strconv.Itoa(int(a.Port)))
 }
 
 func getAgentEventDetails(e *pb.AgentEvent) string {
