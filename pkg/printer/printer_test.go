@@ -738,12 +738,12 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 				Notification: &pb.AgentEvent_EndpointUpdate{
 					EndpointUpdate: &pb.EndpointUpdateNotification{
 						Id:        1027,
-						PodName:   "cilium-xyz",
 						Namespace: "kube-system",
+						PodName:   "cilium-xyz",
 					},
 				},
 			},
-			want: "id: 1027, pod name: cilium-xyz, namespace: kube-system",
+			want: "id: 1027, namespace: kube-system, pod name: cilium-xyz",
 		},
 		{
 			name: "ipcache upsert",
@@ -800,12 +800,12 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 						},
 						Type:          "foobar",
 						TrafficPolicy: "pol1",
-						Name:          "foo",
 						Namespace:     "bar",
+						Name:          "foo",
 					},
 				},
 			},
-			want: "id: 42, frontend: 10.0.0.42:8008, backends: [192.168.1.23:80,[2001:db8:85a3:::8a2e:370:1337]:8080], type: foobar, traffic policy: pol1, name: foo, namespace: bar",
+			want: "id: 42, frontend: 10.0.0.42:8008, backends: [192.168.1.23:80,[2001:db8:85a3:::8a2e:370:1337]:8080], type: foobar, traffic policy: pol1, namespace: bar, name: foo",
 		},
 		{
 			name: "service delete",
