@@ -416,11 +416,11 @@ func getAgentEventDetails(e *pb.AgentEvent) string {
 		if ep := e.GetEndpointUpdate(); ep != nil {
 			var sb strings.Builder
 			fmt.Fprintf(&sb, "id: %d", ep.Id)
-			if n := ep.PodName; n != "" {
-				fmt.Fprintf(&sb, ", pod name: %s", n)
-			}
 			if n := ep.Namespace; n != "" {
 				fmt.Fprintf(&sb, ", namespace: %s", n)
+			}
+			if n := ep.PodName; n != "" {
+				fmt.Fprintf(&sb, ", pod name: %s", n)
 			}
 			return sb.String()
 		}
@@ -460,11 +460,11 @@ func getAgentEventDetails(e *pb.AgentEvent) string {
 			if tp := svc.TrafficPolicy; tp != "" {
 				fmt.Fprintf(&sb, ", traffic policy: %s", tp)
 			}
-			if n := svc.Name; n != "" {
-				fmt.Fprintf(&sb, ", name: %s", n)
-			}
 			if ns := svc.Namespace; ns != "" {
 				fmt.Fprintf(&sb, ", namespace: %s", ns)
+			}
+			if n := svc.Name; n != "" {
+				fmt.Fprintf(&sb, ", name: %s", n)
 			}
 			return sb.String()
 		}
