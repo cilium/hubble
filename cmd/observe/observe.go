@@ -138,6 +138,9 @@ more.`,
 	filterFlags.Var(filterVar(
 		"protocol", ofilter,
 		`Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")`))
+	filterFlags.Var(filterVar(
+		"tcp-flags", ofilter,
+		`Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")`))
 	filterFlags.VarP(filterVarP(
 		"type", "t", ofilter, []string{},
 		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))

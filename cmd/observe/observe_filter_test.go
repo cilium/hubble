@@ -257,3 +257,22 @@ func TestInvalidIdentity(t *testing.T) {
 	require.Error(t, cmd.Flags().Parse([]string{"--to-identity", "bad"}))
 	require.Error(t, cmd.Flags().Parse([]string{"--identity", "bad"}))
 }
+
+func TestTcpFlags(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(viper.New(), f)
+
+	// valid TCP flags
+	validflags := []string{"SYN", "syn", "FIN", "RST", "PSH", "ACK", "URG", "ECE", "CWR", "NS", "syn,ack"}
+	for _, f := range validflags {
+		require.NoError(t, cmd.Flags().Parse([]string{"--tcp-flags", f}))                               // single --tcp-flags
+		require.NoError(t, cmd.Flags().Parse([]string{"--tcp-flags", f, "--tcp-flags", "syn"}))         // multiple --tcp-flags
+		require.NoError(t, cmd.Flags().Parse([]string{"--tcp-flags", f, "--not", "--tcp-flags", "NS"})) // --not --tcp-flags
+	}
+
+	// invalid TCP flags
+	invalidflags := []string{"unknown", "syn,unknown", "unknown,syn", "syn,", ",syn"}
+	for _, f := range invalidflags {
+		require.Error(t, cmd.Flags().Parse([]string{"--tcp-flags", f}))
+	}
+}

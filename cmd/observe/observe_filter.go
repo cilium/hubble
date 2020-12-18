@@ -127,6 +127,7 @@ func newObserveFilter() *observeFilter {
 			{"identity", "to-identity"},
 			{"identity", "from-identity"},
 			{"node-name"},
+			{"tcp-flags"},
 		},
 	}
 }
@@ -157,6 +158,36 @@ func (of *observeFilter) checkConflict(t *filterTracker, name, val string) error
 		}
 	}
 	return nil
+}
+
+func parseTCPFlags(val string) (*pb.TCPFlags, error) {
+	flags := &pb.TCPFlags{}
+	s := strings.Split(val, ",")
+	for _, f := range s {
+		switch strings.ToUpper(f) {
+		case "SYN":
+			flags.SYN = true
+		case "FIN":
+			flags.FIN = true
+		case "RST":
+			flags.RST = true
+		case "PSH":
+			flags.PSH = true
+		case "ACK":
+			flags.ACK = true
+		case "URG":
+			flags.URG = true
+		case "ECE":
+			flags.ECE = true
+		case "CWR":
+			flags.CWR = true
+		case "NS":
+			flags.NS = true
+		default:
+			return nil, fmt.Errorf("unknown tcp flag: %s", f)
+		}
+	}
+	return flags, nil
 }
 
 func (of *observeFilter) Set(name, val string, track bool) error {
@@ -437,6 +468,16 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 	case "node-name":
 		f.apply(func(f *pb.FlowFilter) {
 			f.NodeName = append(f.NodeName, val)
+		})
+
+	// TCP Flags filter
+	case "tcp-flags":
+		flags, err := parseTCPFlags(val)
+		if err != nil {
+			return err
+		}
+		f.apply(func(f *pb.FlowFilter) {
+			f.TcpFlags = append(f.TcpFlags, flags)
 		})
 	}
 
