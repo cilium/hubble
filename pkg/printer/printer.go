@@ -30,7 +30,6 @@ import (
 	pb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	relaypb "github.com/cilium/cilium/api/v1/relay"
-	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -109,7 +108,7 @@ func (p *Printer) WriteErr(msg string) error {
 }
 
 // GetPorts returns source and destination port of a flow.
-func (p *Printer) GetPorts(f v1.Flow) (string, string) {
+func (p *Printer) GetPorts(f *pb.Flow) (string, string) {
 	l4 := f.GetL4()
 	if l4 == nil {
 		return "", ""
@@ -125,7 +124,7 @@ func (p *Printer) GetPorts(f v1.Flow) (string, string) {
 }
 
 // GetHostNames returns source and destination hostnames of a flow.
-func (p *Printer) GetHostNames(f v1.Flow) (string, string) {
+func (p *Printer) GetHostNames(f *pb.Flow) (string, string) {
 	var srcNamespace, dstNamespace, srcPodName, dstPodName, srcSvcName, dstSvcName string
 	if f == nil {
 		return "", ""
@@ -169,7 +168,7 @@ func fmtTimestamp(ts *timestamppb.Timestamp) string {
 }
 
 // GetFlowType returns the type of a flow as a string.
-func GetFlowType(f v1.Flow) string {
+func GetFlowType(f *pb.Flow) string {
 	if l7 := f.GetL7(); l7 != nil {
 		l7Protocol := "l7"
 		l7Type := strings.ToLower(l7.Type.String())
