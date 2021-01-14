@@ -180,6 +180,26 @@ func TestFilterLeftRight(t *testing.T) {
 	}
 }
 
+func TestAgentEventSubTypeMap(t *testing.T) {
+	// Make sure to keep agent event sub-types maps in sync. See agentEventSubtypes godoc for
+	// details.
+	require.Len(t, agentEventSubtypes, len(monitorAPI.AgentNotifications))
+	for _, v := range agentEventSubtypes {
+		require.Contains(t, monitorAPI.AgentNotifications, v)
+	}
+	agentEventSubtypesContainsValue := func(an monitorAPI.AgentNotification) bool {
+		for _, v := range agentEventSubtypes {
+			if v == an {
+				return true
+			}
+		}
+		return false
+	}
+	for k := range monitorAPI.AgentNotifications {
+		require.True(t, agentEventSubtypesContainsValue(k))
+	}
+}
+
 func TestFilterType(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(viper.New(), f)
@@ -192,6 +212,10 @@ func TestFilterType(t *testing.T) {
 		"-t", "trace:some-invalid-sub-type",
 	}))
 
+	require.Error(t, cmd.Flags().Parse([]string{
+		"-t", "agent:Policy updated",
+	}))
+
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"-t", "254",
 		"-t", "255:127",
@@ -200,6 +224,8 @@ func TestFilterType(t *testing.T) {
 		"-t", strconv.Itoa(monitorAPI.MessageTypeTrace) + ":" + strconv.Itoa(monitorAPI.TraceToHost),
 		"-t", "agent",
 		"-t", "agent:3",
+		"-t", "agent:policy-updated",
+		"-t", "agent:service-deleted",
 	}))
 
 	require.NoError(t, handleArgs(f, false))
@@ -238,6 +264,16 @@ func TestFilterType(t *testing.T) {
 						Type:         monitorAPI.MessageTypeAgent,
 						MatchSubType: true,
 						SubType:      3,
+					},
+					{
+						Type:         monitorAPI.MessageTypeAgent,
+						MatchSubType: true,
+						SubType:      int32(monitorAPI.AgentNotifyPolicyUpdated),
+					},
+					{
+						Type:         monitorAPI.MessageTypeAgent,
+						MatchSubType: true,
+						SubType:      int32(monitorAPI.AgentNotifyServiceDeleted),
 					},
 				},
 			},
