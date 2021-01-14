@@ -403,19 +403,17 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 		}
 
 		if len(s) > 1 {
-		OUTER:
 			switch t {
 			case monitorAPI.MessageTypeTrace:
 				for k, v := range monitorAPI.TraceObservationPoints {
 					if s[1] == v {
 						typeFilter.MatchSubType = true
 						typeFilter.SubType = int32(k)
-						break OUTER
+						break
 					}
 				}
-				// fallthrough to parse subtype as integer
-				fallthrough
-			default:
+			}
+			if !typeFilter.MatchSubType {
 				t, err := strconv.ParseUint(s[1], 10, 32)
 				if err != nil {
 					return fmt.Errorf("unable to parse event sub-type '%s', not a known sub-type name and unable to parse as numeric value: %s", s[1], err)
