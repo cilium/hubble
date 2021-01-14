@@ -15,9 +15,12 @@
 package observe
 
 import (
+	"strconv"
 	"testing"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/spf13/viper"
@@ -93,9 +96,11 @@ func TestFilterDispatch(t *testing.T) {
 	if diff := cmp.Diff(
 		[]*pb.FlowFilter{
 			{
-				SourceIp:  []string{"1.2.3.4", "5.6.7.8"},
-				Verdict:   []pb.Verdict{pb.Verdict_DROPPED},
-				EventType: []*pb.EventTypeFilter{{Type: 129}},
+				SourceIp: []string{"1.2.3.4", "5.6.7.8"},
+				Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
+				EventType: []*pb.EventTypeFilter{
+					{Type: monitorAPI.MessageTypeAccessLog},
+				},
 			},
 		},
 		f.whitelist.flowFilters(),
@@ -172,6 +177,76 @@ func TestFilterLeftRight(t *testing.T) {
 		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("blacklist filter mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestFilterType(t *testing.T) {
+	f := newObserveFilter()
+	cmd := newObserveCmd(viper.New(), f)
+
+	require.Error(t, cmd.Flags().Parse([]string{
+		"-t", "some-invalid-type",
+	}))
+
+	require.Error(t, cmd.Flags().Parse([]string{
+		"-t", "trace:some-invalid-sub-type",
+	}))
+
+	require.NoError(t, cmd.Flags().Parse([]string{
+		"-t", "254",
+		"-t", "255:127",
+		"-t", "trace:to-endpoint",
+		"-t", "trace:from-endpoint",
+		"-t", strconv.Itoa(monitorAPI.MessageTypeTrace) + ":" + strconv.Itoa(monitorAPI.TraceToHost),
+		"-t", "agent",
+		"-t", "agent:3",
+	}))
+
+	require.NoError(t, handleArgs(f, false))
+	if diff := cmp.Diff(
+		[]*pb.FlowFilter{
+			{
+				EventType: []*pb.EventTypeFilter{
+					{
+						Type: 254,
+					},
+
+					{
+						Type:         255,
+						MatchSubType: true,
+						SubType:      127,
+					},
+					{
+						Type:         monitorAPI.MessageTypeTrace,
+						MatchSubType: true,
+						SubType:      monitorAPI.TraceToLxc,
+					},
+					{
+						Type:         monitorAPI.MessageTypeTrace,
+						MatchSubType: true,
+						SubType:      monitorAPI.TraceFromLxc,
+					},
+					{
+						Type:         monitorAPI.MessageTypeTrace,
+						MatchSubType: true,
+						SubType:      monitorAPI.TraceToHost,
+					},
+					{
+						Type: monitorAPI.MessageTypeAgent,
+					},
+					{
+						Type:         monitorAPI.MessageTypeAgent,
+						MatchSubType: true,
+						SubType:      3,
+					},
+				},
+			},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(pb.EventTypeFilter{}),
+	); diff != "" {
+		t.Errorf("filter mismatch (-want +got):\n%s", diff)
 	}
 }
 
