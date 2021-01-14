@@ -223,6 +223,26 @@ func (of *observeFilter) Set(name, val string, track bool) error {
 	return of.set(of.whitelist, name, val, track)
 }
 
+// agentEventSubtypes are the valid agent event sub-types. This map is neccesary
+// because the sub-type strings in monitorAPI.AgentNotifications contain
+// upper-case characters and spaces which are inconvenient to pass as CLI filter
+// arguments.
+var agentEventSubtypes = map[string]monitorAPI.AgentNotification{
+	"unspecified":                 monitorAPI.AgentNotifyUnspec,
+	"message":                     monitorAPI.AgentNotifyGeneric,
+	"agent-started":               monitorAPI.AgentNotifyStart,
+	"policy-updated":              monitorAPI.AgentNotifyPolicyUpdated,
+	"policy-deleted":              monitorAPI.AgentNotifyPolicyDeleted,
+	"endpoint-regenerate-success": monitorAPI.AgentNotifyEndpointRegenerateSuccess,
+	"endpoint-regenerate-failure": monitorAPI.AgentNotifyEndpointRegenerateFail,
+	"endpoint-created":            monitorAPI.AgentNotifyEndpointCreated,
+	"endpoint-deleted":            monitorAPI.AgentNotifyEndpointDeleted,
+	"ipcache-upserted":            monitorAPI.AgentNotifyIPCacheUpserted,
+	"ipcache-deleted":             monitorAPI.AgentNotifyIPCacheDeleted,
+	"service-upserted":            monitorAPI.AgentNotifyServiceUpserted,
+	"service-deleted":             monitorAPI.AgentNotifyServiceDeleted,
+}
+
 func (of *observeFilter) set(f *filterTracker, name, val string, track bool) error {
 	// track the change if this is non-default user operation
 	wipe := false
@@ -411,6 +431,13 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 						typeFilter.SubType = int32(k)
 						break
 					}
+				}
+			case monitorAPI.MessageTypeAgent:
+				// See agentEventSubtypes godoc for why we're
+				// not using monitorAPI.AgentNotifications here.
+				if st, ok := agentEventSubtypes[s[1]]; ok {
+					typeFilter.MatchSubType = true
+					typeFilter.SubType = int32(st)
 				}
 			}
 			if !typeFilter.MatchSubType {
