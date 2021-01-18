@@ -56,6 +56,7 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
 		},
 	}
 
+	// formatting flags
 	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
 	formattingFlags.StringVarP(
 		&listOpts.output, "output", "o", "table",
@@ -63,6 +64,9 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
  json:     JSON encoding
  table:    Tab-aligned columns
  wide:     Tab-aligned columns with additional information`)
+	listCmd.Flags().AddFlagSet(formattingFlags)
+
+	// advanced completion for flags
 	listCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"json",
@@ -70,7 +74,6 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
 			"wide",
 		}, cobra.ShellCompDirectiveDefault
 	})
-	listCmd.Flags().AddFlagSet(formattingFlags)
 
 	listCmd.SetUsageTemplate(template.Usage(formattingFlags, config.ServerFlags))
 	return listCmd
