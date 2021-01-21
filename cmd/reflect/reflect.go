@@ -38,7 +38,7 @@ func New(vp *viper.Viper) *cobra.Command {
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
+			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 			if err != nil {
 				return err
 			}

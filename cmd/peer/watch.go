@@ -20,6 +20,7 @@ import (
 	"io"
 
 	peerpb "github.com/cilium/cilium/api/v1/peer"
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +37,7 @@ func newWatchCommand(vp *viper.Viper) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
+			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 			if err != nil {
 				return err
 			}

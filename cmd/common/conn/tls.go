@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -33,18 +34,18 @@ func init() {
 }
 
 func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
-	target := vp.GetString("server")
-	if !(vp.GetBool("tls") || strings.HasPrefix(target, defaults.TargetTLSPrefix)) {
+	target := vp.GetString(config.KeyServer)
+	if !(vp.GetBool(config.KeyTLS) || strings.HasPrefix(target, defaults.TargetTLSPrefix)) {
 		return grpc.WithInsecure(), nil
 	}
 
 	tlsConfig := tls.Config{
-		InsecureSkipVerify: vp.GetBool("tls-allow-insecure"),
-		ServerName:         vp.GetString("tls-server-name"),
+		InsecureSkipVerify: vp.GetBool(config.KeyTLSAllowInsecure),
+		ServerName:         vp.GetString(config.KeyTLSServerName),
 	}
 
 	// optional custom CAs
-	caFiles := vp.GetStringSlice("tls-ca-cert-files")
+	caFiles := vp.GetStringSlice(config.KeyTLSCACertFiles)
 	if len(caFiles) > 0 {
 		ca := x509.NewCertPool()
 		for _, path := range caFiles {
@@ -60,8 +61,8 @@ func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 	}
 
 	// optional mTLS
-	clientCertFile := vp.GetString("tls-client-cert-file")
-	clientKeyFile := vp.GetString("tls-client-key-file")
+	clientCertFile := vp.GetString(config.KeyTLSClientCertFile)
+	clientKeyFile := vp.GetString(config.KeyTLSClientKeyFile)
 	var cert *tls.Certificate
 	if clientCertFile != "" && clientKeyFile != "" {
 		c, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)

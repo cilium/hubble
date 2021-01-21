@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -95,7 +96,7 @@ func runSet(cmd *cobra.Command, vp *viper.Viper, key, value string) error {
 	// This viper config is only used to write the resulting config.
 	// This method also prevents from writing default values for all keys
 	// therefore only writing key/value pairs explicitely set by the caller.
-	configPath := vp.GetString("config")
+	configPath := vp.GetString(config.KeyConfig)
 	fileVP, err := newFileOnlyViper(configPath)
 	if err != nil {
 		return err

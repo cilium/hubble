@@ -18,6 +18,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,15 +43,15 @@ func init() {
 func validateMutualTLSFlags(_ *cobra.Command, vp *viper.Viper) error {
 	var needTLS bool
 	switch {
-	case vp.GetString("tls-client-key-file") != "" && vp.GetString("tls-client-cert-file") != "":
+	case vp.GetString(config.KeyTLSClientKeyFile) != "" && vp.GetString(config.KeyTLSClientCertFile) != "":
 		needTLS = true
-	case vp.GetString("tls-client-key-file") != "":
+	case vp.GetString(config.KeyTLSClientKeyFile) != "":
 		fallthrough
-	case vp.GetString("tls-client-cert-file") != "":
+	case vp.GetString(config.KeyTLSClientCertFile) != "":
 		return ErrInvalidKeypair
 	}
 
-	if needTLS && !(vp.GetBool("tls") || strings.HasPrefix(vp.GetString("server"), defaults.TargetTLSPrefix)) {
+	if needTLS && !(vp.GetBool(config.KeyTLS) || strings.HasPrefix(vp.GetString(config.KeyServer), defaults.TargetTLSPrefix)) {
 		return ErrTLSRequired
 	}
 	return nil

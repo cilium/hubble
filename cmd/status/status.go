@@ -44,7 +44,7 @@ connectivity health check.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
+			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 			if err != nil {
 				return err
 			}
