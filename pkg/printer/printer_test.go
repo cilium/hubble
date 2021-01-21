@@ -587,6 +587,18 @@ func Test_getFlowType(t *testing.T) {
 			want: "Error while correcting L3 checksum",
 		},
 		{
+			name: "Debug Capture",
+			args: args{
+				f: &pb.Flow{
+					EventType: &pb.CiliumEventType{
+						Type: monitorAPI.MessageTypeCapture,
+					},
+					DebugCapturePoint: pb.DebugCapturePoint_DBG_CAPTURE_FROM_LB,
+				},
+			},
+			want: "DBG_CAPTURE_FROM_LB",
+		},
+		{
 			name: "invalid",
 			args: args{
 				f: &pb.Flow{
