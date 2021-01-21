@@ -536,10 +536,11 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 			node = fmt.Sprintf(" [%s]", r.GetNodeName())
 		}
 		_, err := fmt.Fprintf(p.opts.w,
-			"%s%s: %s\n",
+			"%s%s: %s (%s)\n",
 			fmtTimestamp(r.GetTime()),
 			node,
-			e.GetType())
+			e.GetType(),
+			getAgentEventDetails(e))
 		if err != nil {
 			return fmt.Errorf("failed to write out agent event: %v", err)
 		}
