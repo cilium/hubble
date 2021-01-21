@@ -95,12 +95,12 @@ application level. Rich filtering enable observing specific flows related to
 individual pods, services, TCP connections, DNS queries, HTTP requests and
 more.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(ofilter, vp.GetBool("debug")); err != nil {
+			if err := handleArgs(ofilter, vp.GetBool(config.KeyDebug)); err != nil {
 				return err
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString("server"), vp.GetDuration("timeout"))
+			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 			if err != nil {
 				return err
 			}

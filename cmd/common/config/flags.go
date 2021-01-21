@@ -23,18 +23,18 @@ import (
 // when bound to a viper instance).
 const (
 	// GlobalFlags keys.
-	KeyConfig = "config"
-	KeyDebug  = "debug"
+	KeyConfig = "config" // string
+	KeyDebug  = "debug"  // bool
 
 	// ServerFlags keys.
-	KeyServer            = "server"
-	KeyTLS               = "tls"
-	KeyTLSAllowInsecure  = "tls-allow-insecure"
-	KeyTLSCACertFiles    = "tls-ca-cert-files"
-	KeyTLSClientCertFile = "tls-client-cert-file"
-	KeyTLSClientKeyFile  = "tls-client-key-file"
-	KeyTLSServerName     = "tls-server-name"
-	KeyTimeout           = "timeout"
+	KeyServer            = "server"               // string
+	KeyTLS               = "tls"                  // bool
+	KeyTLSAllowInsecure  = "tls-allow-insecure"   // bool
+	KeyTLSCACertFiles    = "tls-ca-cert-files"    // []string
+	KeyTLSClientCertFile = "tls-client-cert-file" // string
+	KeyTLSClientKeyFile  = "tls-client-key-file"  // string
+	KeyTLSServerName     = "tls-server-name"      // string
+	KeyTimeout           = "timeout"              // time.Duration
 )
 
 // GlobalFlags are flags that apply to any command.
