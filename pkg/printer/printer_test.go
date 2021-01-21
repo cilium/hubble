@@ -843,3 +843,200 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 	}
 
 }
+func TestPrinter_WriteProtoDebugEvent(t *testing.T) {
+	buf := bytes.Buffer{}
+	ts := &timestamppb.Timestamp{
+		Seconds: 1234,
+		Nanos:   567800000,
+	}
+	node := "k8s1"
+	dbg := &pb.DebugEvent{
+		Type: pb.DebugEventType_DBG_CT_VERDICT,
+		Source: &pb.Endpoint{
+			ID:        690,
+			Identity:  1332,
+			Namespace: "cilium-test",
+			Labels: []string{
+				"k8s:io.cilium.k8s.policy.cluster=default",
+				"k8s:io.cilium.k8s.policy.serviceaccount=default",
+				"k8s:io.kubernetes.pod.namespace=cilium-test",
+				"k8s:name=pod-to-a-denied-cnp",
+			},
+			PodName: "pod-to-a-denied-cnp-75cb89dfd-vqhd9",
+		},
+		Hash:    wrapperspb.UInt32(180354257),
+		Arg1:    wrapperspb.UInt32(0),
+		Arg2:    wrapperspb.UInt32(0),
+		Arg3:    wrapperspb.UInt32(0),
+		Message: "CT verdict: New, revnat=0",
+		Cpu:     wrapperspb.Int32(1),
+	}
+	type args struct {
+		dbg  *pb.DebugEvent
+		ts   *timestamppb.Timestamp
+		node string
+	}
+	tests := []struct {
+		name     string
+		options  []Option
+		args     args
+		wantErr  bool
+		expected string
+	}{
+		{
+			name: "tabular",
+			options: []Option{
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `TIMESTAMP             FROM                                                           TYPE             CPU/MARK       MESSAGE
+Jan  1 00:20:34.567   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690)      DBG_CT_VERDICT   01 0xabffcd1   CT verdict: New, revnat=0`,
+		},
+		{
+			name: "tabular-with-node",
+			options: []Option{
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `TIMESTAMP             NODE   FROM                                                           TYPE             CPU/MARK       MESSAGE
+Jan  1 00:20:34.567   k8s1   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690)      DBG_CT_VERDICT   01 0xabffcd1   CT verdict: New, revnat=0`,
+		},
+		{
+			name: "compact",
+			options: []Option{
+				Compact(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr:  false,
+			expected: "Jan  1 00:20:34.567: cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690) DBG_CT_VERDICT MARK: 0xabffcd1 CPU: 01 (CT verdict: New, revnat=0)\n",
+		},
+		{
+			name: "compact-with-node",
+			options: []Option{
+				Compact(),
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr:  false,
+			expected: "Jan  1 00:20:34.567 [k8s1]: cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690) DBG_CT_VERDICT MARK: 0xabffcd1 CPU: 01 (CT verdict: New, revnat=0)\n",
+		},
+		{
+			name: "json",
+			options: []Option{
+				JSON(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `{"type":"DBG_CT_VERDICT","source":{"ID":690,"identity":1332,"namespace":"cilium-test","labels":` +
+				`["k8s:io.cilium.k8s.policy.cluster=default","k8s:io.cilium.k8s.policy.serviceaccount=default",` +
+				`"k8s:io.kubernetes.pod.namespace=cilium-test","k8s:name=pod-to-a-denied-cnp"],` +
+				`"pod_name":"pod-to-a-denied-cnp-75cb89dfd-vqhd9"},` +
+				`"hash":180354257,"arg1":0,"arg2":0,"arg3":0,"message":"CT verdict: New, revnat=0","cpu":1}`,
+		},
+		{
+			name: "jsonpb",
+			options: []Option{
+				JSONPB(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `{"debug_event":{"type":"DBG_CT_VERDICT",` +
+				`"source":{"ID":690,"identity":1332,"namespace":"cilium-test",` +
+				`"labels":["k8s:io.cilium.k8s.policy.cluster=default","k8s:io.cilium.k8s.policy.serviceaccount=default",` +
+				`"k8s:io.kubernetes.pod.namespace=cilium-test","k8s:name=pod-to-a-denied-cnp"],` +
+				`"pod_name":"pod-to-a-denied-cnp-75cb89dfd-vqhd9"},` +
+				`"hash":180354257,"arg1":0,"arg2":0,"arg3":0,"message":"CT verdict: New, revnat=0","cpu":1},` +
+				`"node_name":"k8s1","time":"1970-01-01T00:20:34.567800Z"}`,
+		},
+		{
+			name: "dict",
+			options: []Option{
+				Dict(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `  TIMESTAMP: Jan  1 00:20:34.567
+       TYPE: DBG_CT_VERDICT
+       FROM: cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690)
+       MARK: 0xabffcd1
+        CPU: 01
+    MESSAGE: CT verdict: New, revnat=0`,
+		},
+		{
+			name: "dict-with-node",
+			options: []Option{
+				Dict(),
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				dbg:  dbg,
+				node: node,
+				ts:   ts,
+			},
+			wantErr: false,
+			expected: `  TIMESTAMP: Jan  1 00:20:34.567
+       NODE: k8s1
+       TYPE: DBG_CT_VERDICT
+       FROM: cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID: 690)
+       MARK: 0xabffcd1
+        CPU: 01
+    MESSAGE: CT verdict: New, revnat=0`,
+		},
+	}
+
+	for _, tt := range tests {
+		buf.Reset()
+		t.Run(tt.name, func(t *testing.T) {
+			p := New(tt.options...)
+			res := &observerpb.GetFlowsResponse{
+				ResponseTypes: &observerpb.GetFlowsResponse_DebugEvent{
+					DebugEvent: tt.args.dbg,
+				},
+				NodeName: tt.args.node,
+				Time:     tt.args.ts,
+			}
+			if err := p.WriteProtoDebugEvent(res); (err != nil) != tt.wantErr {
+				t.Errorf("WriteProtoDebugEvent() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			require.NoError(t, p.Close())
+			require.Equal(t, strings.TrimSpace(tt.expected), strings.TrimSpace(buf.String()))
+		})
+	}
+}

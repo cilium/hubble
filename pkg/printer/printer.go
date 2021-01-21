@@ -32,6 +32,7 @@ import (
 	relaypb "github.com/cilium/cilium/api/v1/relay"
 	"github.com/cilium/cilium/pkg/monitor/api"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // Printer for flows.
@@ -86,6 +87,7 @@ func New(fopts ...Option) *Printer {
 const (
 	tab     = "\t"
 	newline = "\n"
+	space   = " "
 
 	dictSeparator = "------------"
 
@@ -549,6 +551,119 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 	return nil
 }
 
+func fmtHexUint32(v *wrapperspb.UInt32Value) string {
+	if v == nil {
+		return "N/A"
+	}
+	return "0x" + strconv.FormatUint(uint64(v.GetValue()), 16)
+}
+
+func fmtCPU(cpu *wrapperspb.Int32Value) string {
+	if cpu == nil {
+		return "N/A"
+	}
+	return fmt.Sprintf("%02d", cpu.GetValue())
+}
+
+func fmtEndpointShort(ep *pb.Endpoint) string {
+	if ep == nil {
+		return "N/A"
+	}
+
+	str := fmt.Sprintf("ID: %d", ep.GetID())
+	if ns, pod := ep.GetNamespace(), ep.GetPodName(); ns != "" && pod != "" {
+		str = fmt.Sprintf("%s/%s (%s)", ns, pod, str)
+	} else if lbls := ep.GetLabels(); len(lbls) == 1 && strings.HasPrefix("reserved:", lbls[0]) {
+		str = fmt.Sprintf("%s (%s)", lbls[0], str)
+	}
+
+	return str
+}
+
+// WriteProtoDebugEvent writes a flowpb.DebugEvent into the output writer.
+func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetFlowsResponse) error {
+	e := r.GetDebugEvent()
+	if e == nil {
+		return errors.New("not a debug event")
+	}
+
+	switch p.opts.output {
+	case JSONOutput:
+		return p.jsonEncoder.Encode(e)
+	case JSONPBOutput:
+		return p.jsonEncoder.Encode(r)
+	case DictOutput:
+		ew := &errWriter{w: p.opts.w}
+
+		if p.line != 0 {
+			ew.write(dictSeparator)
+		}
+
+		ew.write("  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline)
+		if p.opts.nodeName {
+			ew.write("       NODE: ", r.GetNodeName(), newline)
+		}
+		ew.write(
+			"",
+			"       TYPE: ", e.GetType(), newline,
+			"       FROM: ", fmtEndpointShort(e.GetSource()), newline,
+			"       MARK: ", fmtHexUint32(e.GetHash()), newline,
+			"        CPU: ", fmtCPU(e.GetCpu()), newline,
+			"    MESSAGE: ", e.GetMessage(), newline,
+		)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out debug event: %v", ew.err)
+		}
+	case TabOutput:
+		ew := &errWriter{w: p.tw}
+		if p.line == 0 {
+			ew.write("TIMESTAMP", tab)
+			if p.opts.nodeName {
+				ew.write("NODE", tab)
+			}
+			ew.write(
+				"FROM", tab, tab,
+				"TYPE", tab,
+				"CPU/MARK", tab,
+				"MESSAGE", newline,
+			)
+		}
+		ew.write(fmtTimestamp(r.GetTime()), tab)
+		if p.opts.nodeName {
+			ew.write(r.GetNodeName(), tab)
+		}
+		ew.write(
+			fmtEndpointShort(e.GetSource()), tab, tab,
+			e.GetType(), tab,
+			fmtCPU(e.GetCpu()), space, fmtHexUint32(e.GetHash()), tab,
+			e.GetMessage(), newline,
+		)
+		if ew.err != nil {
+			return fmt.Errorf("failed to write out debug event: %v", ew.err)
+		}
+	case CompactOutput:
+		var node string
+		if p.opts.nodeName {
+			node = fmt.Sprintf(" [%s]", r.GetNodeName())
+		}
+		_, err := fmt.Fprintf(p.opts.w,
+			"%s%s: %s %s MARK: %s CPU: %s (%s)\n",
+			fmtTimestamp(r.GetTime()),
+			node,
+			fmtEndpointShort(e.GetSource()),
+			e.GetType(),
+			fmtHexUint32(e.GetHash()),
+			fmtCPU(e.GetCpu()),
+			e.GetMessage(),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to write out debug event: %v", err)
+		}
+	}
+	p.line++
+	return nil
+}
+
 // Hostname returns a "host:ip" formatted pair for the given ip and port. If
 // port is empty, only the host is returned. The host part is either the pod or
 // service name (if set), or a comma-separated list of domain names (if set),
@@ -583,6 +698,8 @@ func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error 
 		return p.WriteProtoNodeStatusEvent(res)
 	case *observerpb.GetFlowsResponse_AgentEvent:
 		return p.WriteProtoAgentEvent(res)
+	case *observerpb.GetFlowsResponse_DebugEvent:
+		return p.WriteProtoDebugEvent(res)
 	case nil:
 		return nil
 	default:
