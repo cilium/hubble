@@ -195,6 +195,8 @@ func GetFlowType(f *pb.Flow) string {
 		case pb.Verdict_DROPPED:
 			return api.DropReason(uint8(f.GetDropReason()))
 		}
+	case api.MessageTypeCapture:
+		return f.GetDebugCapturePoint().String()
 	}
 
 	return "UNKNOWN"
