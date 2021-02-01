@@ -1,0 +1,32 @@
+name: codeql
+
+on:
+  push:
+    branches:
+    - master
+    - v0.7
+    - v0.6
+    - v0.5
+  pull_request:
+    branches:
+    - master
+  schedule:
+    - cron: "45 7 * * 3"
+
+jobs:
+  analyze:
+    if: github.repository == 'cilium/hubble'
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: go
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
