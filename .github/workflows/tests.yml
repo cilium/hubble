@@ -24,6 +24,8 @@ jobs:
       run: make check
     - name: Run unit tests
       run: make test
+    - name: Build
+      run: make
     - name: Build release binaries
       run: make release
   go-mod:
