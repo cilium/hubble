@@ -12,7 +12,7 @@ This tool misses some cases because it does not consider any type information in
 
 For basic usage, run the following command from the root of your project:
 
-    ineffassign ./*
+    ineffassign ./...
 
 Which will analyze all packages beneath the current directory.
 
