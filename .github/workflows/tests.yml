@@ -24,14 +24,8 @@ jobs:
       run: make check
     - name: Run unit tests
       run: make test
-    - name: Generate artifacts
+    - name: Build release binaries
       run: make release
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v2
-      if: success()
-      with:
-        name: release
-        path: release
   go-mod:
     runs-on: ubuntu-latest
     steps:
