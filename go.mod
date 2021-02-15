@@ -7,7 +7,7 @@ require (
 	github.com/google/go-cmp v0.5.4
 	github.com/gordonklaus/ineffassign v0.0.0-20210209182638-d0e41b2fc8ed
 	github.com/spf13/cast v1.3.1
-	github.com/spf13/cobra v1.1.2
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.6-0.20200504143853-81378bbcd8a1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
