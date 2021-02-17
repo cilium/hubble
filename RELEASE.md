@@ -84,6 +84,20 @@ The pull request has to be `v$MAJOR.$MINOR.$PATCH-prep -> v$MAJOR.$MINOR`
 
 Once the pull request is approved and merged, a tag can be created.
 
+## Tag a release
+
+Identify the right commit and tag the release.
+
+Example:
+
+    git tag -a v0.7.1 -m 'v0.7.1' <commit-sha>
+
+Then push the tag.
+
+Example:
+
+    git push origin v0.7.1
+
 ## Modify the version constant on the master branch, if needed
 
 After branching out from the tree for release, the version need to be updated
@@ -103,31 +117,13 @@ The README file contains a section which lists all currently supported releases
 in a table. The version in this table needs to be updated to match the new
 release.
 
-## Create a GitHub release
+## Update the GitHub release notes
 
-It is better to have github create the final release tag, rather than pushing
-it through git. Pushing through git will auto-create an empty release and
-notify all the users before you have a chance to include the list of changes,
-or any other metadata.
+When a tag is pushed, a Github Action job takes care of creating a new Github
+draft release, building artifacts and attaching them to the draft release.
 
-https://github.com/cilium/hubble/releases/new
-
-    Tag version:            v$MAJOR.$MINOR.$PATCH
-    Target:                 v$MAJOR.$MINOR
-    Release title:          same as tag version
-    Describe this release:  Paste the earlier generated release notes
-
-    Check the "This is a pre-release" box if `-rc*` or `0.x.x` release
-
-## Finally, upload release tarballs to the GitHub release
-
-Generate the release tarballs using `contrib/scripts/release.sh` script:
-
-    make release
-
-This will generate tarballs and associated checksum files in the `release`
-directory. Make sure to upload these tarball and checksum to the GitHub release
-page.
+The release notes need to be manually added before manually publishing the
+release.
 
 ## Update the README.md
 
