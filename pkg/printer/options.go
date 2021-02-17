@@ -16,7 +16,6 @@ package printer
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 // Output enum of the printer.
@@ -94,7 +93,7 @@ func Writer(w io.Writer) Option {
 // IgnoreStderr configures the output to not print any
 func IgnoreStderr() Option {
 	return func(opts *Options) {
-		opts.werr = ioutil.Discard
+		opts.werr = io.Discard
 	}
 }
 

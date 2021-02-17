@@ -19,7 +19,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/cilium/hubble/cmd/common/config"
@@ -49,7 +49,7 @@ func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 	if len(caFiles) > 0 {
 		ca := x509.NewCertPool()
 		for _, path := range caFiles {
-			certPEM, err := ioutil.ReadFile(path)
+			certPEM, err := os.ReadFile(path)
 			if err != nil {
 				return nil, fmt.Errorf("cannot load cert '%s': %s", path, err)
 			}
