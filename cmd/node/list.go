@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -92,52 +93,60 @@ func runList(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) err
 	})
 	switch listOpts.output {
 	case "json":
-		bs, err := json.MarshalIndent(nodes, "", "  ")
-		if err != nil {
-			return err
-		}
-		_, err = fmt.Fprintln(cmd.OutOrStdout(), string(bs))
-		return err
+		return jsonOutput(cmd.OutOrStdout(), nodes)
 	case "table", "wide":
-		tw := tabwriter.NewWriter(cmd.OutOrStdout(), 2, 0, 3, ' ', 0)
-		fmt.Fprint(tw, "NAME\tSTATUS\tAGE\tFLOWS/S\tCURRENT/MAX-FLOWS")
-		if listOpts.output == "wide" {
-			fmt.Fprint(tw, "\tVERSION\tADDRESS\tTLS")
-		}
-		fmt.Fprintln(tw)
-
-		for _, n := range nodes {
-			age := notAvailable
-			flowsPerSec := notAvailable
-			if uptime := time.Duration(n.GetUptimeNs()).Round(time.Second); uptime > 0 {
-				age = uptime.String()
-				flowsPerSec = fmt.Sprintf("%.2f", float64(n.GetSeenFlows())/uptime.Seconds())
-			}
-			flowsRatio := notAvailable
-			if maxFlows := n.GetMaxFlows(); maxFlows > 0 {
-				flowsRatio = fmt.Sprintf("%d/%d (%6.2f%%)", n.GetNumFlows(), maxFlows, (float64(n.GetNumFlows())/float64(maxFlows))*100)
-			}
-			version := notAvailable
-			if v := n.GetVersion(); v != "" {
-				version = v
-			}
-			fmt.Fprint(tw, n.GetName(), "\t", strings.Title(nodeStateToString(n.GetState())), "\t", age, "\t", flowsPerSec, "\t", flowsRatio)
-			if listOpts.output == "wide" {
-				tls := notAvailable
-				if t := n.GetTls(); t != nil {
-					tls = "Disabled"
-					if t.Enabled {
-						tls = "Enabled"
-					}
-				}
-				fmt.Fprint(tw, "\t", version, "\t", n.GetAddress(), "\t", tls)
-			}
-			fmt.Fprintln(tw)
-		}
-		return tw.Flush()
+		return tableOutput(cmd.OutOrStdout(), nodes)
 	default:
 		return fmt.Errorf("unknown output format: %s", listOpts.output)
 	}
+}
+
+func tableOutput(buf io.Writer, nodes []*observerpb.Node) error {
+	tw := tabwriter.NewWriter(buf, 2, 0, 3, ' ', 0)
+	fmt.Fprint(tw, "NAME\tSTATUS\tAGE\tFLOWS/S\tCURRENT/MAX-FLOWS")
+	if listOpts.output == "wide" {
+		fmt.Fprint(tw, "\tVERSION\tADDRESS\tTLS")
+	}
+	fmt.Fprintln(tw)
+
+	for _, n := range nodes {
+		age := notAvailable
+		flowsPerSec := notAvailable
+		if uptime := time.Duration(n.GetUptimeNs()).Round(time.Second); uptime > 0 {
+			age = uptime.String()
+			flowsPerSec = fmt.Sprintf("%.2f", float64(n.GetSeenFlows())/uptime.Seconds())
+		}
+		flowsRatio := notAvailable
+		if maxFlows := n.GetMaxFlows(); maxFlows > 0 {
+			flowsRatio = fmt.Sprintf("%d/%d (%6.2f%%)", n.GetNumFlows(), maxFlows, (float64(n.GetNumFlows())/float64(maxFlows))*100)
+		}
+		version := notAvailable
+		if v := n.GetVersion(); v != "" {
+			version = v
+		}
+		fmt.Fprint(tw, n.GetName(), "\t", strings.Title(nodeStateToString(n.GetState())), "\t", age, "\t", flowsPerSec, "\t", flowsRatio)
+		if listOpts.output == "wide" {
+			tls := notAvailable
+			if t := n.GetTls(); t != nil {
+				tls = "Disabled"
+				if t.Enabled {
+					tls = "Enabled"
+				}
+			}
+			fmt.Fprint(tw, "\t", version, "\t", n.GetAddress(), "\t", tls)
+		}
+		fmt.Fprintln(tw)
+	}
+	return tw.Flush()
+}
+
+func jsonOutput(buf io.Writer, nodes []*observerpb.Node) error {
+	bs, err := json.MarshalIndent(nodes, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(buf, string(bs))
+	return err
 }
 
 func nodeStateToString(state relaypb.NodeState) string {
