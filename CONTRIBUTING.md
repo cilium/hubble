@@ -12,7 +12,8 @@ notes](https://docs.cilium.io/en/latest/contributing/development/hubble/).
 ## Slack
 
 Most Hubble developers are using Slack to communicate outside of GitHub. Join
-the `#hubble-devel` channel on [Cilium Slack](https://cilium.io/slack).
+the `#sig-hubble` channel on
+[Cilium Slack](https://cilium.slack.com/archives/CQRL25N0N).
 
 ## Code of conduct
 
