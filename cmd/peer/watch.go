@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
 	peerpb "github.com/cilium/cilium/api/v1/peer"
 	"github.com/cilium/hubble/cmd/common/config"
@@ -58,11 +59,7 @@ func runWatch(ctx context.Context, client peerpb.PeerClient) error {
 		case io.EOF, context.Canceled:
 			return nil
 		case nil:
-			tlsServerName := ""
-			if tls := resp.GetTls(); tls != nil {
-				tlsServerName = fmt.Sprintf(" (TLS.ServerName: %s)", tls.GetServerName())
-			}
-			fmt.Printf("%-12s %s %s%s\n", resp.GetType(), resp.GetAddress(), resp.GetName(), tlsServerName)
+			processResponse(os.Stdout, resp)
 		default:
 			if status.Code(err) == codes.Canceled {
 				return nil
@@ -70,4 +67,12 @@ func runWatch(ctx context.Context, client peerpb.PeerClient) error {
 			return err
 		}
 	}
+}
+
+func processResponse(w io.Writer, resp *peerpb.ChangeNotification) {
+	tlsServerName := ""
+	if tls := resp.GetTls(); tls != nil {
+		tlsServerName = fmt.Sprintf(" (TLS.ServerName: %s)", tls.GetServerName())
+	}
+	_, _ = fmt.Fprintf(w, "%-12s %s %s%s\n", resp.GetType(), resp.GetAddress(), resp.GetName(), tlsServerName)
 }
