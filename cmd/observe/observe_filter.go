@@ -16,6 +16,7 @@ package observe
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -41,6 +42,14 @@ type filterTracker struct {
 	// the defaults need to be wiped the first time user touches a []string
 	// value.
 	changed []string
+}
+
+func (f filterTracker) String() string {
+	ff := f.flowFilters()
+	if bs, err := json.Marshal(ff); err == nil {
+		return fmt.Sprintf("%v", string(bs))
+	}
+	return fmt.Sprintf("%v", ff)
 }
 
 func (f *filterTracker) add(name string) bool {
