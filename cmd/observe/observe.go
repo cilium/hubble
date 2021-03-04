@@ -95,8 +95,12 @@ application level. Rich filtering enable observing specific flows related to
 individual pods, services, TCP connections, DNS queries, HTTP requests and
 more.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := handleArgs(ofilter, vp.GetBool(config.KeyDebug)); err != nil {
+			debug := vp.GetBool(config.KeyDebug)
+			if err := handleArgs(ofilter, debug); err != nil {
 				return err
+			}
+			if debug {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Using filters:\n=> include: %s\n=> exclude: %s\n", ofilter.whitelist, ofilter.blacklist)
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
