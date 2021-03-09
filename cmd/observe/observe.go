@@ -183,6 +183,18 @@ more.`,
 		"to-ip", ofilter,
 		"Show all flows terminating at the given IP address."))
 
+	filterFlags.VarP(filterVarP(
+		"ipv4", "4", ofilter, nil,
+		`Show only IPv4 flows`))
+	filterFlags.Lookup("ipv4").NoOptDefVal = "v4" // add default val so none is required to be provided
+	filterFlags.VarP(filterVarP(
+		"ipv6", "6", ofilter, nil,
+		`Show only IPv6 flows`))
+	filterFlags.Lookup("ipv6").NoOptDefVal = "v6" // add default val so none is required to be provided
+	filterFlags.Var(filterVar(
+		"ip-version", ofilter,
+		`Show only IPv4, IPv6 flows or non IP flows (e.g. ARP packets) (ie: "none", "v4", "v6")`))
+
 	filterFlags.Var(filterVar(
 		"from-pod", ofilter,
 		"Show all flows originating in the given pod name ([namespace/]<pod-name>). If namespace is not provided, 'default' is used"))
@@ -287,6 +299,9 @@ more.`,
 	observeCmd.Flags().AddFlagSet(otherFlags)
 
 	// advanced completion for flags
+	observeCmd.RegisterFlagCompletionFunc("ip-version", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"none", "v4", "v6"}, cobra.ShellCompDirectiveDefault
+	})
 	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return eventTypes(), cobra.ShellCompDirectiveDefault
 	})

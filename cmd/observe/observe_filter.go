@@ -199,6 +199,16 @@ func parseTCPFlags(val string) (*pb.TCPFlags, error) {
 	return flags, nil
 }
 
+func ipVersion(v string) pb.IPVersion {
+	switch strings.ToLower(v) {
+	case "4", "v4", "ipv4", "ip4":
+		return pb.IPVersion_IPv4
+	case "6", "v6", "ipv6", "ip6":
+		return pb.IPVersion_IPv6
+	}
+	return pb.IPVersion_IP_NOT_USED
+}
+
 func (of *observeFilter) Set(name, val string, track bool) error {
 	// --not simply toggles the destination of the next filter into blacklist
 	if name == "not" {
@@ -312,6 +322,19 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 	case "to-ip":
 		f.apply(func(f *pb.FlowFilter) {
 			f.DestinationIp = append(f.DestinationIp, val)
+		})
+	// ip version filters
+	case "ipv4":
+		f.apply(func(f *pb.FlowFilter) {
+			f.IpVersion = append(f.IpVersion, pb.IPVersion_IPv4)
+		})
+	case "ipv6":
+		f.apply(func(f *pb.FlowFilter) {
+			f.IpVersion = append(f.IpVersion, pb.IPVersion_IPv6)
+		})
+	case "ip-version":
+		f.apply(func(f *pb.FlowFilter) {
+			f.IpVersion = append(f.IpVersion, ipVersion(val))
 		})
 	// label filters
 	case "label":
