@@ -248,12 +248,15 @@ more.`,
 	formattingFlags.BoolVarP(
 		&formattingOpts.jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
 	)
+	formattingFlags.MarkDeprecated("json", "use '--output json' instead")
 	formattingFlags.BoolVar(
 		&formattingOpts.compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
 	)
+	formattingFlags.MarkDeprecated("compact", "use '--output compact' instead")
 	formattingFlags.BoolVar(
 		&formattingOpts.dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
 	)
+	formattingFlags.MarkDeprecated("dict", "use '--output dict' instead")
 	formattingFlags.StringVarP(
 		&formattingOpts.output, "output", "o", "",
 		`Specify the output format, one of:
