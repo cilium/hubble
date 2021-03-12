@@ -19,6 +19,15 @@ import (
 	"time"
 )
 
+const (
+	// RFC3339Milli is a time format layout for use in time.Format and
+	// time.Parse. It follows the RFC3339 format with millisecond precision.
+	RFC3339Milli = "2006-01-02T15:04:05.999Z07:00"
+	// RFC3339Micro is a time format layout for use in time.Format and
+	// time.Parse. It follows the RFC3339 format with microsecond precision.
+	RFC3339Micro = "2006-01-02T15:04:05.999999Z07:00"
+)
+
 var (
 	// Now is a hijackable function for time.Now() that makes unit testing a lot
 	// easier for stuff that relies on relative time.
