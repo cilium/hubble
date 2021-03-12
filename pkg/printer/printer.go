@@ -59,9 +59,10 @@ func (ew *errWriter) write(a ...interface{}) {
 func New(fopts ...Option) *Printer {
 	// default options
 	opts := Options{
-		output: TabOutput,
-		w:      os.Stdout,
-		werr:   os.Stderr,
+		output:     TabOutput,
+		w:          os.Stdout,
+		werr:       os.Stderr,
+		timeFormat: time.StampMilli,
 	}
 
 	// apply optional parameters
@@ -161,12 +162,11 @@ func (p *Printer) GetHostNames(f *pb.Flow) (string, string) {
 	return src, dst
 }
 
-func fmtTimestamp(ts *timestamppb.Timestamp) string {
+func fmtTimestamp(layout string, ts *timestamppb.Timestamp) string {
 	if !ts.IsValid() {
 		return "N/A"
 	}
-	// TODO: support more date formats through options to `hubble observe`
-	return ts.AsTime().Format(time.StampMilli)
+	return ts.AsTime().Format(layout)
 }
 
 // GetFlowType returns the type of a flow as a string.
@@ -226,7 +226,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 				"SUMMARY", newline,
 			)
 		}
-		ew.write(fmtTimestamp(f.GetTime()), tab)
+		ew.write(fmtTimestamp(p.opts.timeFormat, f.GetTime()), tab)
 		if p.opts.nodeName {
 			ew.write(f.GetNodeName(), tab)
 		}
@@ -251,7 +251,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 
 		// this is a little crude, but will do for now. should probably find the
 		// longest header and auto-format the keys
-		ew.write("  TIMESTAMP: ", fmtTimestamp(f.GetTime()), newline)
+		ew.write("  TIMESTAMP: ", fmtTimestamp(p.opts.timeFormat, f.GetTime()), newline)
 		if p.opts.nodeName {
 			ew.write("       NODE: ", f.GetNodeName(), newline)
 		}
@@ -274,7 +274,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 		}
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s%s: %s -> %s %s %s (%s)\n",
-			fmtTimestamp(f.GetTime()),
+			fmtTimestamp(p.opts.timeFormat, f.GetTime()),
 			node,
 			src,
 			dst,
@@ -356,7 +356,7 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 			message = strconv.Quote(m)
 		}
 		_, err := fmt.Fprint(p.opts.werr,
-			"  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline,
+			"  TIMESTAMP: ", fmtTimestamp(p.opts.timeFormat, r.GetTime()), newline,
 			"      STATE: ", s.StateChange.String(), newline,
 			"      NODES: ", nodeNames, newline,
 			"    MESSAGE: ", message, newline,
@@ -367,7 +367,7 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 	case TabOutput, CompactOutput:
 		numNodes := len(s.NodeNames)
 		nodeNames := joinWithCutOff(s.NodeNames, ", ", nodeNamesCutOff)
-		prefix := fmt.Sprintf("%s [%s]", fmtTimestamp(r.GetTime()), r.GetNodeName())
+		prefix := fmt.Sprintf("%s [%s]", fmtTimestamp(p.opts.timeFormat, r.GetTime()), r.GetNodeName())
 		msg := fmt.Sprintf("%s: unknown node status event: %+v", prefix, s)
 		switch s.StateChange {
 		case relaypb.NodeState_NODE_CONNECTED:
@@ -390,7 +390,7 @@ func formatServiceAddr(a *pb.ServiceUpsertNotificationAddr) string {
 	return net.JoinHostPort(a.Ip, strconv.Itoa(int(a.Port)))
 }
 
-func getAgentEventDetails(e *pb.AgentEvent) string {
+func getAgentEventDetails(e *pb.AgentEvent, timeLayout string) string {
 	switch e.GetType() {
 	case pb.AgentEventType_AGENT_EVENT_UNKNOWN:
 		if u := e.GetUnknown(); u != nil {
@@ -398,7 +398,7 @@ func getAgentEventDetails(e *pb.AgentEvent) string {
 		}
 	case pb.AgentEventType_AGENT_STARTED:
 		if a := e.GetAgentStart(); a != nil {
-			return fmt.Sprintf("start time: %s", fmtTimestamp(a.Time))
+			return fmt.Sprintf("start time: %s", fmtTimestamp(timeLayout, a.Time))
 		}
 	case pb.AgentEventType_POLICY_UPDATED, pb.AgentEventType_POLICY_DELETED:
 		if p := e.GetPolicyUpdate(); p != nil {
@@ -497,13 +497,13 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 			ew.write(dictSeparator)
 		}
 
-		ew.write("  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline)
+		ew.write("  TIMESTAMP: ", fmtTimestamp(p.opts.timeFormat, r.GetTime()), newline)
 		if p.opts.nodeName {
 			ew.write("       NODE: ", r.GetNodeName(), newline)
 		}
 		ew.write(
 			"       TYPE: ", e.GetType(), newline,
-			"    DETAILS: ", getAgentEventDetails(e), newline,
+			"    DETAILS: ", getAgentEventDetails(e, p.opts.timeFormat), newline,
 		)
 		if ew.err != nil {
 			return fmt.Errorf("failed to write out agent event: %v", ew.err)
@@ -520,13 +520,13 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 				"DETAILS", newline,
 			)
 		}
-		ew.write(fmtTimestamp(r.GetTime()), tab)
+		ew.write(fmtTimestamp(p.opts.timeFormat, r.GetTime()), tab)
 		if p.opts.nodeName {
 			ew.write(r.GetNodeName(), tab)
 		}
 		ew.write(
 			e.GetType(), tab,
-			getAgentEventDetails(e), newline,
+			getAgentEventDetails(e, p.opts.timeFormat), newline,
 		)
 		if ew.err != nil {
 			return fmt.Errorf("failed to write out agent event: %v", ew.err)
@@ -539,10 +539,10 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
 		}
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s%s: %s (%s)\n",
-			fmtTimestamp(r.GetTime()),
+			fmtTimestamp(p.opts.timeFormat, r.GetTime()),
 			node,
 			e.GetType(),
-			getAgentEventDetails(e))
+			getAgentEventDetails(e, p.opts.timeFormat))
 		if err != nil {
 			return fmt.Errorf("failed to write out agent event: %v", err)
 		}
@@ -599,7 +599,7 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetFlowsResponse) error {
 			ew.write(dictSeparator)
 		}
 
-		ew.write("  TIMESTAMP: ", fmtTimestamp(r.GetTime()), newline)
+		ew.write("  TIMESTAMP: ", fmtTimestamp(p.opts.timeFormat, r.GetTime()), newline)
 		if p.opts.nodeName {
 			ew.write("       NODE: ", r.GetNodeName(), newline)
 		}
@@ -628,7 +628,7 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetFlowsResponse) error {
 				"MESSAGE", newline,
 			)
 		}
-		ew.write(fmtTimestamp(r.GetTime()), tab)
+		ew.write(fmtTimestamp(p.opts.timeFormat, r.GetTime()), tab)
 		if p.opts.nodeName {
 			ew.write(r.GetNodeName(), tab)
 		}
@@ -648,7 +648,7 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetFlowsResponse) error {
 		}
 		_, err := fmt.Fprintf(p.opts.w,
 			"%s%s: %s %s MARK: %s CPU: %s (%s)\n",
-			fmtTimestamp(r.GetTime()),
+			fmtTimestamp(p.opts.timeFormat, r.GetTime()),
 			node,
 			fmtEndpointShort(e.GetSource()),
 			e.GetType(),

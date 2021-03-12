@@ -428,7 +428,8 @@ func Test_getHostNames(t *testing.T) {
 
 func Test_fmtTimestamp(t *testing.T) {
 	type args struct {
-		t *timestamppb.Timestamp
+		layout string
+		t      *timestamppb.Timestamp
 	}
 	tests := []struct {
 		name string
@@ -438,6 +439,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "valid",
 			args: args{
+				layout: time.StampMilli,
 				t: &timestamppb.Timestamp{
 					Seconds: 0,
 					Nanos:   0,
@@ -448,6 +450,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "valid non-zero",
 			args: args{
+				layout: time.StampMilli,
 				t: &timestamppb.Timestamp{
 					Seconds: 1530984600,
 					Nanos:   123000000,
@@ -458,6 +461,7 @@ func Test_fmtTimestamp(t *testing.T) {
 		{
 			name: "invalid",
 			args: args{
+				layout: time.StampMilli,
 				t: &timestamppb.Timestamp{
 					Seconds: -1,
 					Nanos:   -1,
@@ -473,7 +477,7 @@ func Test_fmtTimestamp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := fmtTimestamp(tt.args.t); got != tt.want {
+			if got := fmtTimestamp(tt.args.layout, tt.args.t); got != tt.want {
 				t.Errorf("getTimestamp() = %v, want %v", got, tt.want)
 			}
 		})
@@ -688,7 +692,7 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 					},
 				},
 			},
-			want: "start time: " + fmtTimestamp(startTS),
+			want: "start time: " + fmtTimestamp(time.StampMilli, startTS),
 		},
 		{
 			name: "policy update",
@@ -836,7 +840,7 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getAgentEventDetails(tt.ev); got != tt.want {
+			if got := getAgentEventDetails(tt.ev, time.StampMilli); got != tt.want {
 				t.Errorf("getAgentEventDetails()\ngot:  %v,\nwant: %v", got, tt.want)
 			}
 		})
