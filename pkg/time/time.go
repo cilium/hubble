@@ -34,6 +34,16 @@ var (
 	Now = time.Now
 )
 
+// layouts is a set of supported time format layouts. Format that only apply to
+// local times should not be added to this list.
+var layouts = []string{
+	time.RFC3339,
+	time.RFC3339Nano,
+	RFC3339Milli,
+	RFC3339Micro,
+	time.RFC1123Z,
+}
+
 // FromString takes as input a string in either RFC3339 or time.Duration
 // format in the past and converts it to a time.Time.
 func FromString(input string) (time.Time, error) {
@@ -43,10 +53,11 @@ func FromString(input string) (time.Time, error) {
 		return Now().Add(-d), nil
 	}
 
-	// try as rfc3339
-	t, err := time.Parse(time.RFC3339, input)
-	if err == nil {
-		return t, nil
+	for _, layout := range layouts {
+		t, err := time.Parse(layout, input)
+		if err == nil {
+			return t, nil
+		}
 	}
 
 	return time.Time{}, fmt.Errorf(
