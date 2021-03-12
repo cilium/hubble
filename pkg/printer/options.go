@@ -43,6 +43,7 @@ type Options struct {
 	enableDebug         bool
 	enableIPTranslation bool
 	nodeName            bool
+	timeFormat          string
 }
 
 // Option ...
@@ -115,5 +116,15 @@ func WithIPTranslation() Option {
 func WithNodeName() Option {
 	return func(opts *Options) {
 		opts.nodeName = true
+	}
+}
+
+// WithTimeFormat specifies the time format layout to use when printing out
+// timestamps. This option has no effect if JSON or JSONPB option is used.
+// The layout must be a time format layout as specified in the standard
+// library's time package.
+func WithTimeFormat(layout string) Option {
+	return func(opts *Options) {
+		opts.timeFormat = layout
 	}
 }
