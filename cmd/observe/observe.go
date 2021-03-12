@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	pb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
@@ -56,6 +57,8 @@ var (
 		dictOutput    bool
 		output        string
 
+		timeFormat string
+
 		enableIPTranslation bool
 		nodeName            bool
 		numeric             bool
@@ -79,6 +82,25 @@ func eventTypes() (l []string) {
 		l = append(l, t)
 	}
 	return
+}
+
+func timeFormatNameToLayout(name string) string {
+	switch strings.ToLower(name) {
+	case "rfc3339":
+		return time.RFC3339
+	case "rfc3339milli":
+		return hubtime.RFC3339Milli
+	case "rfc3339micro":
+		return hubtime.RFC3339Micro
+	case "rfc3339nano":
+		return time.RFC3339Nano
+	case "rfc1123z":
+		return time.RFC1123Z
+	case "stampmilli":
+		fallthrough
+	default:
+		return time.StampMilli
+	}
 }
 
 // New observer command.
@@ -256,6 +278,7 @@ more.`,
 		"Show all flows terminating at an endpoint with the given security identity"))
 	observeCmd.Flags().AddFlagSet(filterFlags)
 
+	// formatting flags
 	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
 	formattingFlags.BoolVarP(
 		&formattingOpts.jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
@@ -290,6 +313,17 @@ more.`,
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
 	)
 	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
+	formattingFlags.StringVar(
+		&formattingOpts.timeFormat, "time-format", "StampMilli",
+		fmt.Sprintf(`Specify the time format for printing. This option does not apply to the json and jsonpb output type. One of:
+  StampMilli:   %s
+  RFC3339:      %s
+  RFC3339Milli: %s
+  RFC3339Micro: %s
+  RFC3339Nano:  %s
+  RFC1123Z:     %s
+ `, time.StampMilli, time.RFC3339, hubtime.RFC3339Milli, hubtime.RFC3339Micro, time.RFC3339Nano, time.RFC1123Z),
+	)
 	observeCmd.Flags().AddFlagSet(formattingFlags)
 
 	// other flags
@@ -346,6 +380,16 @@ more.`,
 			"table",
 		}, cobra.ShellCompDirectiveDefault
 	})
+	observeCmd.RegisterFlagCompletionFunc("time-format", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"StampMilli",
+			"RFC3339",
+			"RFC3339Milli",
+			"RFC3339Micro",
+			"RFC3339Nano",
+			"RFC1123Z",
+		}, cobra.ShellCompDirectiveDefault
+	})
 
 	// default value for when the flag is on the command line without any options
 	observeCmd.Flags().Lookup("not").NoOptDefVal = "true"
@@ -361,7 +405,9 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	}
 
 	// initialize the printer with any options that were passed in
-	var opts []hubprinter.Option
+	var opts = []hubprinter.Option{
+		hubprinter.WithTimeFormat(timeFormatNameToLayout(formattingOpts.timeFormat)),
+	}
 
 	if formattingOpts.output == "" { // support deprecated output flags if provided
 		if formattingOpts.jsonOutput {
