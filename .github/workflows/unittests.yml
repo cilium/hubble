@@ -17,7 +17,7 @@ jobs:
         path: go/src/github.com/cilium/hubble
     - uses: actions/setup-go@v1
       with:
-        go-version: '1.15.9'
+        go-version: '1.15.10'
     - name: Run static checks
       env:
         GOPATH: /home/runner/work/hubble/go
@@ -38,7 +38,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v1
         with:
-          go-version: '1.15.9'
+          go-version: '1.15.10'
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Check module vendoring
