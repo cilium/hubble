@@ -15,7 +15,7 @@ require (
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
-	honnef.co/go/tools v0.1.2
+	honnef.co/go/tools v0.1.3
 )
 
 // Replace directives from github.com/cilium/cilium. Keep in sync when updating Cilium!
