@@ -130,6 +130,12 @@ release.
 Update the *Releases* section of the `README.md` to point to the latest
 GitHub release.
 
+## Update the `VERSION` file
+
+After `v$MAJOR.$MINOR.$PATCH` is released, the next commit should restore the
+`v$MAJOR.$MINOR` branch to the `v$MAJOR.$MINOR.{$PATCH+1}-dev` to separate
+unreleased hubble versions in a branch from releases.
+
 ## (OPTIONAL) Update `stable.txt` in the master branch
 
 Hubble's installation instruction in the Cilium documentation uses the version specified in
