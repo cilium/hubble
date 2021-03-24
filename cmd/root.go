@@ -15,7 +15,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/cilium/hubble/cmd/common/config"
@@ -31,6 +30,7 @@ import (
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
 	"github.com/cilium/hubble/pkg"
+	"github.com/cilium/hubble/pkg/logger"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -63,8 +63,11 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 			vp.SetConfigFile(cfg)
 		}
 		// if a config file is found, read it in.
-		if err := vp.ReadInConfig(); err == nil && vp.GetBool(config.KeyDebug) {
-			fmt.Fprintln(rootCmd.ErrOrStderr(), "Using config file:", vp.ConfigFileUsed())
+		err := vp.ReadInConfig()
+		// initialize the logger after all the config parameters get loaded to viper.
+		logger.Initialize(vp)
+		if err == nil {
+			logger.Logger.WithField("config-file", vp.ConfigFileUsed()).Debug("Using config file")
 		}
 	})
 
