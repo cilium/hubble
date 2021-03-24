@@ -37,7 +37,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -131,8 +130,12 @@ more.`,
 				return err
 			}
 			defer hubbleConn.Close()
-
-			if err := runObserve(hubbleConn, ofilter); err != nil {
+			req, err := getRequest(ofilter)
+			if err != nil {
+				return err
+			}
+			client := observer.NewObserverClient(hubbleConn)
+			if err := getFlows(client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unknown {
@@ -463,18 +466,18 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	return nil
 }
 
-func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
+func getRequest(ofilter *observeFilter) (*observer.GetFlowsRequest, error) {
 	// convert selectorOpts.since into a param for GetFlows
 	var since, until *timestamppb.Timestamp
 	if selectorOpts.since != "" {
 		st, err := hubtime.FromString(selectorOpts.since)
 		if err != nil {
-			return fmt.Errorf("failed to parse the since time: %v", err)
+			return nil, fmt.Errorf("failed to parse the since time: %v", err)
 		}
 
 		since = timestamppb.New(st)
 		if err := since.CheckValid(); err != nil {
-			return fmt.Errorf("failed to convert `since` timestamp to proto: %v", err)
+			return nil, fmt.Errorf("failed to convert `since` timestamp to proto: %v", err)
 		}
 		// Set the until field if both --since and --until options are specified and --follow
 		// is not specified. If --since is specified but --until is not, the server sets the
@@ -482,11 +485,11 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 		if selectorOpts.until != "" && !selectorOpts.follow {
 			ut, err := hubtime.FromString(selectorOpts.until)
 			if err != nil {
-				return fmt.Errorf("failed to parse the until time: %v", err)
+				return nil, fmt.Errorf("failed to parse the until time: %v", err)
 			}
 			until = timestamppb.New(ut)
 			if err := until.CheckValid(); err != nil {
-				return fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
+				return nil, fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
 			}
 		}
 	}
@@ -513,7 +516,6 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 		bl = ofilter.blacklist.flowFilters()
 	}
 
-	client := observer.NewObserverClient(conn)
 	req := &observer.GetFlowsRequest{
 		Number:    selectorOpts.last,
 		Follow:    selectorOpts.follow,
@@ -523,7 +525,7 @@ func runObserve(conn *grpc.ClientConn, ofilter *observeFilter) error {
 		Until:     until,
 	}
 
-	return getFlows(client, req)
+	return req, nil
 }
 
 func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) error {
