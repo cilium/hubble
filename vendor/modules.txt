@@ -67,6 +67,7 @@ github.com/pmezard/go-difflib/difflib
 # github.com/sasha-s/go-deadlock v0.2.1-0.20190427202633-1595213edefa
 github.com/sasha-s/go-deadlock
 # github.com/sirupsen/logrus v1.7.0
+## explicit
 github.com/sirupsen/logrus
 github.com/sirupsen/logrus/hooks/syslog
 # github.com/spf13/afero v1.3.3

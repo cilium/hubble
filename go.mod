@@ -6,6 +6,7 @@ require (
 	github.com/cilium/cilium v1.9.0-rc1.0.20210209141502-b944040a9ec8
 	github.com/google/go-cmp v0.5.5
 	github.com/gordonklaus/ineffassign v0.0.0-20210209182638-d0e41b2fc8ed
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.6-0.20200504143853-81378bbcd8a1

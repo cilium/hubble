@@ -32,6 +32,7 @@ import (
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/cilium/hubble/pkg/defaults"
+	"github.com/cilium/hubble/pkg/logger"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/spf13/cobra"
@@ -120,9 +121,6 @@ more.`,
 			if err := handleArgs(ofilter, debug); err != nil {
 				return err
 			}
-			if debug {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Using filters:\n=> include: %s\n=> exclude: %s\n", ofilter.whitelist, ofilter.blacklist)
-			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
@@ -134,6 +132,7 @@ more.`,
 			if err != nil {
 				return err
 			}
+			logger.Logger.WithField("request", req).Debug("Sending GetFlows request")
 			client := observer.NewObserverClient(hubbleConn)
 			if err := getFlows(client, req); err != nil {
 				msg := err.Error()
