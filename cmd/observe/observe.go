@@ -110,6 +110,20 @@ func New(vp *viper.Viper) *cobra.Command {
 
 func newObserveCmd(vp *viper.Viper, ofilter *observeFilter) *cobra.Command {
 	observeCmd := &cobra.Command{
+		Example: `* Piping flows to hubble observe
+
+  Save output from 'hubble observe -o jsonpb' command to a file, and pipe it to
+  the observe command later for offline processing. For example:
+
+    hubble observe -o jsonpb --last 1000 > flows.json
+
+  Then,
+
+    cat flows.json | hubble observe
+
+  Note that the observe command ignores --follow, --last, and server flags when it
+  reads flows from stdin. The observe command processes and output flows in the same
+  order they are read from stdin without sorting them by timestamp.`,
 		Use:   "observe",
 		Short: "Observe flows of a Hubble server",
 		Long: `Observe provides visibility into flow information on the network and
@@ -121,19 +135,32 @@ more.`,
 			if err := handleArgs(ofilter, debug); err != nil {
 				return err
 			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
-			if err != nil {
-				return err
-			}
-			defer hubbleConn.Close()
 			req, err := getRequest(ofilter)
 			if err != nil {
 				return err
 			}
+
+			var client observer.ObserverClient
+			fi, err := os.Stdin.Stat()
+			if err != nil {
+				return err
+			}
+			if fi.Mode()&os.ModeNamedPipe != 0 {
+				// read flows from stdin
+				client = newIOReaderObserver(os.Stdin)
+			} else {
+				// read flows from a hubble server
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
+				if err != nil {
+					return err
+				}
+				defer hubbleConn.Close()
+				client = observer.NewObserverClient(hubbleConn)
+			}
+
 			logger.Logger.WithField("request", req).Debug("Sending GetFlows request")
-			client := observer.NewObserverClient(hubbleConn)
 			if err := getFlows(client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
