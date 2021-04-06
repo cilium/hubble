@@ -114,6 +114,9 @@ func New(log *logrus.Entry) *cobra.Command {
 			if err = Serve(ctx, log, listeners, s.GetGRPCServer()); err != nil {
 				return err
 			}
+			if unfilteredExportConfig != "" {
+				go server.ExportUnfilteredFlows(s.GetGRPCServer(), unfilteredExportConfig)
+			}
 			if err := s.HandleMonitorSocket(ctx, nodeName); err != nil {
 				return fmt.Errorf("failed to handle monitor socket: %v", err)
 			}
@@ -141,6 +144,17 @@ func New(log *logrus.Entry) *cobra.Command {
 	serverCmd.Flags().Lookup("gops").Hidden = true
 	serverCmd.Flags().Lookup("pprof").Hidden = true
 
+	// A hidden flag to export unfiltered flows to a rotated file for
+	// troubleshooting. The syntax is "$filepath;$max-size-mb;$max-backups".
+	// For example:
+	//
+	//   --flow-export=/var/run/cilium/flow/flow.log;10;5
+	//
+	// writes flows to /var/run/cilium/flow/flow.log, rotate the file at 10MB
+	// (pre-compression), and keep the last 5 rotated files.
+	serverCmd.Flags().StringVar(&unfilteredExportConfig, "flow-export", "", "EXPERIMENTAL: Configuration for flow export file")
+	serverCmd.Flags().Lookup("flow-export").Hidden = true
+
 	return serverCmd
 }
 
@@ -156,6 +170,8 @@ var (
 	metricsServer  string
 
 	gopsVar, pprofVar bool
+
+	unfilteredExportConfig string
 )
 
 const (

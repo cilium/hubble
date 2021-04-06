@@ -20,6 +20,7 @@ require (
 	go.uber.org/goleak v1.0.0
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
 	google.golang.org/grpc v1.25.1
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	k8s.io/apimachinery v0.17.3
 )
 
