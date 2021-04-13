@@ -26,6 +26,7 @@ import (
 	"github.com/cilium/hubble/cmd/node"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/cmd/peer"
+	"github.com/cilium/hubble/cmd/record"
 	"github.com/cilium/hubble/cmd/reflect"
 	"github.com/cilium/hubble/cmd/status"
 	"github.com/cilium/hubble/cmd/version"
@@ -94,6 +95,7 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 		node.New(vp),
 		observe.New(vp),
 		peer.New(vp),
+		record.New(vp),
 		reflect.New(vp),
 		status.New(vp),
 		version.New(),
