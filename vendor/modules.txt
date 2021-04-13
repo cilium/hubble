@@ -5,6 +5,7 @@ github.com/BurntSushi/toml
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
 github.com/cilium/cilium/api/v1/peer
+github.com/cilium/cilium/api/v1/recorder
 github.com/cilium/cilium/api/v1/relay
 github.com/cilium/cilium/pkg/defaults
 github.com/cilium/cilium/pkg/hubble/api/v1
@@ -114,6 +115,7 @@ golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 golang.org/x/sync/semaphore
 # golang.org/x/sys v0.0.0-20210314195730-07df6a141424
+## explicit
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
