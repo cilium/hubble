@@ -45,6 +45,14 @@ func (o *ioReaderObserver) GetFlows(_ context.Context, in *observer.GetFlowsRequ
 	return newIOReaderClient(o.scanner, in)
 }
 
+func (o *ioReaderObserver) GetAgentEvents(_ context.Context, _ *observer.GetAgentEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetAgentEventsClient, error) {
+	return nil, status.Errorf(codes.Unimplemented, "GetAgentEvents not implemented")
+}
+
+func (o *ioReaderObserver) GetDebugEvents(_ context.Context, _ *observer.GetDebugEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetDebugEventsClient, error) {
+	return nil, status.Errorf(codes.Unimplemented, "GetDebugEvents not implemented")
+}
+
 func (o *ioReaderObserver) GetNodes(_ context.Context, _ *observer.GetNodesRequest, _ ...grpc.CallOption) (*observer.GetNodesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "GetNodes not implemented")
 }

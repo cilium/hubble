@@ -1029,12 +1029,10 @@ Jan  1 00:20:34.567   k8s1   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID
 		buf.Reset()
 		t.Run(tt.name, func(t *testing.T) {
 			p := New(tt.options...)
-			res := &observerpb.GetFlowsResponse{
-				ResponseTypes: &observerpb.GetFlowsResponse_DebugEvent{
-					DebugEvent: tt.args.dbg,
-				},
-				NodeName: tt.args.node,
-				Time:     tt.args.ts,
+			res := &observerpb.GetDebugEventsResponse{
+				DebugEvent: tt.args.dbg,
+				NodeName:   tt.args.node,
+				Time:       tt.args.ts,
 			}
 			if err := p.WriteProtoDebugEvent(res); (err != nil) != tt.wantErr {
 				t.Errorf("WriteProtoDebugEvent() error = %v, wantErr %v", err, tt.wantErr)
