@@ -75,6 +75,13 @@ const (
 	// HubbleSockPath.
 	HubbleSockPathEnv = "HUBBLE_SOCK"
 
+	// HubbleRecorderStoragePath specifies the directory in which pcap files
+	// created via the Hubble Recorder API are stored
+	HubbleRecorderStoragePath = RuntimePath + "/pcaps"
+
+	// HubbleRecorderSinkQueueSize is the queue size for each recorder sink
+	HubbleRecorderSinkQueueSize = 1024
+
 	// MonitorSockPath1_2 is the path to the UNIX domain socket used to
 	// distribute BPF and agent events to listeners.
 	// This is the 1.2 protocol version.
@@ -256,6 +263,10 @@ const (
 	// K8sSyncTimeout specifies the standard time to allow for synchronizing
 	// local caches with Kubernetes state before exiting.
 	K8sSyncTimeout = 3 * time.Minute
+
+	// AllocatorListTimeout specifies the standard time to allow for listing
+	// initial allocator state from kvstore before exiting.
+	AllocatorListTimeout = 3 * time.Minute
 
 	// K8sWatcherEndpointSelector specifies the k8s endpoints that Cilium
 	// should watch for.

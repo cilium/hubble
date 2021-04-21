@@ -479,7 +479,7 @@ func getAgentEventDetails(e *pb.AgentEvent, timeLayout string) string {
 }
 
 // WriteProtoAgentEvent writes v1.AgentEvent into the output writer.
-func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetFlowsResponse) error {
+func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetAgentEventsResponse) error {
 	e := r.GetAgentEvent()
 	if e == nil {
 		return errors.New("not an agent event")
@@ -581,7 +581,7 @@ func fmtEndpointShort(ep *pb.Endpoint) string {
 }
 
 // WriteProtoDebugEvent writes a flowpb.DebugEvent into the output writer.
-func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetFlowsResponse) error {
+func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetDebugEventsResponse) error {
 	e := r.GetDebugEvent()
 	if e == nil {
 		return errors.New("not a debug event")
@@ -696,10 +696,6 @@ func (p *Printer) WriteGetFlowsResponse(res *observerpb.GetFlowsResponse) error 
 		return p.WriteProtoFlow(res)
 	case *observerpb.GetFlowsResponse_NodeStatus:
 		return p.WriteProtoNodeStatusEvent(res)
-	case *observerpb.GetFlowsResponse_AgentEvent:
-		return p.WriteProtoAgentEvent(res)
-	case *observerpb.GetFlowsResponse_DebugEvent:
-		return p.WriteProtoDebugEvent(res)
 	case nil:
 		return nil
 	default:
