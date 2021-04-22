@@ -272,11 +272,21 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 		if p.opts.nodeName {
 			node = fmt.Sprintf(" [%s]", f.GetNodeName())
 		}
+		arrow := "->"
+		if f.GetIsReply() == nil {
+			// direction is unknown.
+			arrow = "<>"
+		} else if f.GetIsReply().Value {
+			// flip the arrow and src/dst for reply packets.
+			src, dst = dst, src
+			arrow = "<-"
+		}
 		_, err := fmt.Fprintf(p.opts.w,
-			"%s%s: %s -> %s %s %s (%s)\n",
+			"%s%s: %s %s %s %s %s (%s)\n",
 			fmtTimestamp(p.opts.timeFormat, f.GetTime()),
 			node,
 			src,
+			arrow,
 			dst,
 			GetFlowType(f),
 			f.GetVerdict().String(),
