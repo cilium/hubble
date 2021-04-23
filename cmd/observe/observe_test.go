@@ -19,10 +19,31 @@ import (
 	"time"
 
 	"github.com/cilium/cilium/api/v1/observer"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func TestEventTypes(t *testing.T) {
+	// Make sure to keep event type slices in sync. Agent events, debug
+	// events and recorder captures have separate subcommands and are not
+	// supported in observe, thus the -3. See eventTypes godoc for details.
+	require.Len(t, eventTypes, len(monitorAPI.MessageTypeNames)-3)
+	for _, v := range eventTypes {
+		require.Contains(t, monitorAPI.MessageTypeNames, v)
+	}
+	for k := range monitorAPI.MessageTypeNames {
+		switch k {
+		case monitorAPI.MessageTypeNameAgent,
+			monitorAPI.MessageTypeNameDebug,
+			monitorAPI.MessageTypeNameRecCapture:
+			continue
+		}
+		require.Contains(t, eventTypes, k)
+	}
+}
 
 func Test_getRequest(t *testing.T) {
 	filter := newObserveFilter()

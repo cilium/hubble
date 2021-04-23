@@ -77,11 +77,16 @@ var verdicts = []string{
 	pb.Verdict_ERROR.String(),
 }
 
-func eventTypes() (l []string) {
-	for t := range monitorAPI.MessageTypeNames {
-		l = append(l, t)
-	}
-	return
+// eventTypes are the valid event types supported by observe. This corresponds
+// to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent,
+// MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
+// message types are not supported by observe but have separate sub-commands.
+var eventTypes = []string{
+	monitorAPI.MessageTypeNameDrop,
+	monitorAPI.MessageTypeNameCapture,
+	monitorAPI.MessageTypeNameTrace,
+	monitorAPI.MessageTypeNameL7,
+	monitorAPI.MessageTypeNamePolicyVerdict,
 }
 
 func timeFormatNameToLayout(name string) string {
@@ -198,7 +203,7 @@ more.`,
 		`Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")`))
 	filterFlags.VarP(filterVarP(
 		"type", "t", ofilter, []string{},
-		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes())))
+		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes)))
 	filterFlags.Var(filterVar(
 		"verdict", ofilter,
 		fmt.Sprintf("Show only flows with this verdict [%s]", strings.Join(verdicts, ", ")),
@@ -366,7 +371,7 @@ more.`,
 		return []string{"none", "v4", "v6"}, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return eventTypes(), cobra.ShellCompDirectiveDefault
+		return eventTypes, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return verdicts, cobra.ShellCompDirectiveDefault
