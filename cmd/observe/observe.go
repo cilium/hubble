@@ -327,13 +327,14 @@ more.`,
 	)
 	formattingFlags.MarkDeprecated("dict", "use '--output dict' instead")
 	formattingFlags.StringVarP(
-		&formattingOpts.output, "output", "o", "",
+		&formattingOpts.output, "output", "o", "compact",
 		`Specify the output format, one of:
  compact:  Compact output
  dict:     Each flow is shown as KEY:VALUE pair
  json:     JSON encoding
  jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
- table:    Tab-aligned columns`)
+ table:    Tab-aligned columns
+`)
 	formattingFlags.BoolVar(
 		&formattingOpts.numeric,
 		"numeric",
@@ -467,14 +468,6 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 			return fmt.Errorf("table output format is not compatible with follow mode")
 		}
 		opts = append(opts, hubprinter.Tab())
-	case "":
-		// no format specified, choose most appropriate format based on
-		// user provided flags
-		if selectorOpts.follow {
-			opts = append(opts, hubprinter.Compact())
-		} else {
-			opts = append(opts, hubprinter.Tab())
-		}
 	default:
 		return fmt.Errorf("invalid output format: %s", formattingOpts.output)
 	}
