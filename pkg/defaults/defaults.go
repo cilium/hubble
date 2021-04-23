@@ -21,6 +21,9 @@ import (
 )
 
 const (
+	// ServerAddress is the default server address.
+	ServerAddress = "localhost:4245"
+
 	// DialTimeout is the default timeout for dialing the server.
 	DialTimeout = 5 * time.Second
 

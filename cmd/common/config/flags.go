@@ -54,7 +54,7 @@ func initGlobalFlags() {
 }
 
 func initServerFlags() {
-	ServerFlags.String(KeyServer, defaults.GetSocketPath(), "Address of a Hubble server")
+	ServerFlags.String(KeyServer, defaults.ServerAddress, "Address of a Hubble server")
 	ServerFlags.Duration(KeyTimeout, defaults.DialTimeout, "Hubble server dialing timeout")
 	ServerFlags.Bool(
 		KeyTLS,
