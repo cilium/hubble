@@ -16,6 +16,7 @@ package time
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -63,4 +64,34 @@ func FromString(input string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf(
 		"failed to convert %s to time", input,
 	)
+}
+
+// FormatNames are the valid time format names accepted by this package.
+var FormatNames = []string{
+	"StampMilli",
+	"RFC3339",
+	"RFC3339Milli",
+	"RFC3339Micro",
+	"RFC3339Nano",
+	"RFC1123Z",
+}
+
+// FormatNameToLayout returns the time format layout for the time format name.
+func FormatNameToLayout(name string) string {
+	switch strings.ToLower(name) {
+	case "rfc3339":
+		return time.RFC3339
+	case "rfc3339milli":
+		return RFC3339Milli
+	case "rfc3339micro":
+		return RFC3339Micro
+	case "rfc3339nano":
+		return time.RFC3339Nano
+	case "rfc1123z":
+		return time.RFC1123Z
+	case "stampmilli":
+		fallthrough
+	default:
+		return time.StampMilli
+	}
 }
