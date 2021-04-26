@@ -89,25 +89,6 @@ var eventTypes = []string{
 	monitorAPI.MessageTypeNamePolicyVerdict,
 }
 
-func timeFormatNameToLayout(name string) string {
-	switch strings.ToLower(name) {
-	case "rfc3339":
-		return time.RFC3339
-	case "rfc3339milli":
-		return hubtime.RFC3339Milli
-	case "rfc3339micro":
-		return hubtime.RFC3339Micro
-	case "rfc3339nano":
-		return time.RFC3339Nano
-	case "rfc1123z":
-		return time.RFC1123Z
-	case "stampmilli":
-		fallthrough
-	default:
-		return time.StampMilli
-	}
-}
-
 // New observer command.
 func New(vp *viper.Viper) *cobra.Command {
 	return newObserveCmd(vp, newObserveFilter())
@@ -417,14 +398,7 @@ more.`,
 		}, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("time-format", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return []string{
-			"StampMilli",
-			"RFC3339",
-			"RFC3339Milli",
-			"RFC3339Micro",
-			"RFC3339Nano",
-			"RFC1123Z",
-		}, cobra.ShellCompDirectiveDefault
+		return hubtime.FormatNames, cobra.ShellCompDirectiveDefault
 	})
 
 	// default value for when the flag is on the command line without any options
@@ -442,7 +416,7 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 
 	// initialize the printer with any options that were passed in
 	var opts = []hubprinter.Option{
-		hubprinter.WithTimeFormat(timeFormatNameToLayout(formattingOpts.timeFormat)),
+		hubprinter.WithTimeFormat(hubtime.FormatNameToLayout(formattingOpts.timeFormat)),
 	}
 
 	if formattingOpts.output == "" { // support deprecated output flags if provided
