@@ -21,8 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	completionExample = `
+const completionExample = `
 # Installing bash completion on macOS using homebrew
 ## If running Bash 3.2 included with macOS
 	brew install bash-completion
@@ -59,7 +58,6 @@ var (
         hubble completion fish | source
 ## Write fish completion code to a file
         hubble completion fish > ~/.config/fish/completions/hubble.fish`
-)
 
 // New creates a new shell completion command.
 func New() *cobra.Command {
