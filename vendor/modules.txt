@@ -161,7 +161,7 @@ golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # google.golang.org/genproto v0.0.0-20210126160654-44e461bb6506
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.36.1
+# google.golang.org/grpc v1.37.0
 ## explicit
 google.golang.org/grpc
 google.golang.org/grpc/attributes
