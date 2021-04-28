@@ -145,6 +145,9 @@ more.`,
 				return err
 			}
 
+			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
+			defer cancel()
+
 			var client observer.ObserverClient
 			fi, err := os.Stdin.Stat()
 			if err != nil {
@@ -155,8 +158,6 @@ more.`,
 				client = newIOReaderObserver(os.Stdin)
 			} else {
 				// read flows from a hubble server
-				ctx, cancel := context.WithCancel(context.Background())
-				defer cancel()
 				hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 				if err != nil {
 					return err
@@ -166,7 +167,7 @@ more.`,
 			}
 
 			logger.Logger.WithField("request", req).Debug("Sending GetFlows request")
-			if err := getFlows(client, req); err != nil {
+			if err := getFlows(ctx, client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
 				if s, ok := status.FromError(err); ok && s.Code() == codes.Unknown {
@@ -552,25 +553,11 @@ func getRequest(ofilter *observeFilter) (*observer.GetFlowsRequest, error) {
 	return req, nil
 }
 
-func getFlows(client observer.ObserverClient, req *observer.GetFlowsRequest) error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func getFlows(ctx context.Context, client observer.ObserverClient, req *observer.GetFlowsRequest) error {
 	b, err := client.GetFlows(ctx, req)
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, os.Interrupt)
-		select {
-		case <-sigs:
-		case <-ctx.Done():
-			signal.Stop(sigs)
-		}
-		cancel()
-	}()
-
 	defer printer.Close()
 
 	for {
