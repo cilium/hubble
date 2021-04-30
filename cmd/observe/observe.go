@@ -1,4 +1,4 @@
-// Copyright 2019 Authors of Hubble
+// Copyright 2019-2021 Authors of Hubble
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ more.`,
 	selectorFlags.StringVar(&selectorOpts.since, "since", "", "Filter flows since a specific date (relative or RFC3339)")
 	selectorFlags.StringVar(&selectorOpts.until, "until", "", "Filter flows until a specific date (relative or RFC3339)")
 	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
-	observeCmd.Flags().AddFlagSet(selectorFlags)
+	observeCmd.PersistentFlags().AddFlagSet(selectorFlags)
 
 	// filter flags
 	filterFlags := pflag.NewFlagSet("filters", pflag.ContinueOnError)
@@ -294,20 +294,37 @@ more.`,
 		"Show all flows terminating at an endpoint with the given security identity"))
 	observeCmd.Flags().AddFlagSet(filterFlags)
 
-	// formatting flags
-	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
-	formattingFlags.BoolVarP(
+	// formatting flags only to `hubble observe`, but not sub-commands. Will be added to
+	// generic formatting flags below.
+	observeFormattingFlags := pflag.NewFlagSet("", pflag.ContinueOnError)
+	observeFormattingFlags.BoolVarP(
 		&formattingOpts.jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
 	)
-	formattingFlags.MarkDeprecated("json", "use '--output json' instead")
-	formattingFlags.BoolVar(
+	observeFormattingFlags.MarkDeprecated("json", "use '--output json' instead")
+	observeFormattingFlags.BoolVar(
 		&formattingOpts.compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
 	)
-	formattingFlags.MarkDeprecated("compact", "use '--output compact' instead")
-	formattingFlags.BoolVar(
+	observeFormattingFlags.MarkDeprecated("compact", "use '--output compact' instead")
+	observeFormattingFlags.BoolVar(
 		&formattingOpts.dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
 	)
-	formattingFlags.MarkDeprecated("dict", "use '--output dict' instead")
+	observeFormattingFlags.MarkDeprecated("dict", "use '--output dict' instead")
+	observeFormattingFlags.BoolVar(
+		&formattingOpts.numeric,
+		"numeric",
+		false,
+		"Display all information in numeric form",
+	)
+	observeFormattingFlags.BoolVar(
+		&formattingOpts.enableIPTranslation,
+		"ip-translation",
+		true,
+		"Translate IP addresses to logical names such as pod name, FQDN, ...",
+	)
+	observeCmd.Flags().AddFlagSet(observeFormattingFlags)
+
+	// generic formatting flags, available to `hubble observe`, including sub-commands.
+	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
 	formattingFlags.StringVarP(
 		&formattingOpts.output, "output", "o", "compact",
 		`Specify the output format, one of:
@@ -317,18 +334,6 @@ more.`,
  jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
  table:    Tab-aligned columns
 `)
-	formattingFlags.BoolVar(
-		&formattingOpts.numeric,
-		"numeric",
-		false,
-		"Display all information in numeric form",
-	)
-	formattingFlags.BoolVar(
-		&formattingOpts.enableIPTranslation,
-		"ip-translation",
-		true,
-		"Translate IP addresses to logical names such as pod name, FQDN, ...",
-	)
 	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
 	formattingFlags.StringVar(
 		&formattingOpts.timeFormat, "time-format", "StampMilli",
@@ -341,13 +346,13 @@ more.`,
   RFC1123Z:     %s
  `, time.StampMilli, time.RFC3339, hubtime.RFC3339Milli, hubtime.RFC3339Micro, time.RFC3339Nano, time.RFC1123Z),
 	)
-	observeCmd.Flags().AddFlagSet(formattingFlags)
+	observeCmd.PersistentFlags().AddFlagSet(formattingFlags)
 
 	// other flags
 	otherFlags := pflag.NewFlagSet("other", pflag.ContinueOnError)
 	otherFlags.BoolVarP(
 		&otherOpts.ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
-	observeCmd.Flags().AddFlagSet(otherFlags)
+	observeCmd.PersistentFlags().AddFlagSet(otherFlags)
 
 	// advanced completion for flags
 	observeCmd.RegisterFlagCompletionFunc("ip-version", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -404,6 +409,11 @@ more.`,
 	// default value for when the flag is on the command line without any options
 	observeCmd.Flags().Lookup("not").NoOptDefVal = "true"
 
+	observeCmd.AddCommand(
+		newAgentEventsCommand(vp, selectorFlags, formattingFlags, config.ServerFlags, otherFlags),
+	)
+
+	formattingFlags.AddFlagSet(observeFormattingFlags)
 	observeCmd.SetUsageTemplate(template.Usage(selectorFlags, filterFlags, formattingFlags, config.ServerFlags, otherFlags))
 
 	return observeCmd
