@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package node
+package list
 
 import (
 	"context"
@@ -41,10 +41,11 @@ var listOpts struct {
 	output string
 }
 
-func newListCommand(vp *viper.Viper) *cobra.Command {
+func newNodeCommand(vp *viper.Viper) *cobra.Command {
 	listCmd := &cobra.Command{
-		Use:   "list",
-		Short: "List Hubble nodes",
+		Use:     "nodes",
+		Aliases: []string{"node"},
+		Short:   "List Hubble nodes",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -53,7 +54,7 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
 				return err
 			}
 			defer hubbleConn.Close()
-			return runList(ctx, cmd, hubbleConn)
+			return runListNodes(ctx, cmd, hubbleConn)
 		},
 	}
 
@@ -80,7 +81,7 @@ func newListCommand(vp *viper.Viper) *cobra.Command {
 	return listCmd
 }
 
-func runList(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
+func runListNodes(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) error {
 	req := &observerpb.GetNodesRequest{}
 	res, err := observerpb.NewObserverClient(conn).GetNodes(ctx, req)
 	if err != nil {

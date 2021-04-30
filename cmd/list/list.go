@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package node
+package list
 
 import (
 	"github.com/cilium/hubble/cmd/common/config"
@@ -21,21 +21,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-// New creates a new hidden peer command.
+// New creates a new list command.
 func New(vp *viper.Viper) *cobra.Command {
-	nodeCmd := &cobra.Command{
-		Use:     "nodes",
-		Aliases: []string{"node"},
-		Short:   "Get information about Hubble nodes",
-		Long:    `Get information about Hubble nodes.`,
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "List Hubble objects",
 	}
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
-	nodeCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+	listCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
 
-	nodeCmd.AddCommand(
-		newListCommand(vp),
+	listCmd.AddCommand(
+		newNodeCommand(vp),
 	)
-	return nodeCmd
+	return listCmd
 }
