@@ -34,6 +34,10 @@ const (
 	// observe CLI.
 	FlowPrintCount = 20
 
+	// EventsPrintCount is the default number of agent/debug events to print
+	// on the hubble events CLI.
+	EventsPrintCount = 20
+
 	// TargetTLSPrefix is a scheme that indicates that the target connection
 	// requires TLS.
 	TargetTLSPrefix = "tls://"
