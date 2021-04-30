@@ -411,6 +411,7 @@ more.`,
 
 	observeCmd.AddCommand(
 		newAgentEventsCommand(vp, selectorFlags, formattingFlags, config.ServerFlags, otherFlags),
+		newDebugEventsCommand(vp, selectorFlags, formattingFlags, config.ServerFlags, otherFlags),
 	)
 
 	formattingFlags.AddFlagSet(observeFormattingFlags)
