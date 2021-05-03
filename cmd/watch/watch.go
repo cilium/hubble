@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package peer
+package watch
 
 import (
 	"github.com/cilium/hubble/cmd/common/config"
@@ -24,10 +24,9 @@ import (
 // New creates a new hidden peer command.
 func New(vp *viper.Viper) *cobra.Command {
 	peerCmd := &cobra.Command{
-		Use:     "peers",
-		Aliases: []string{"peer"},
-		Short:   "Get information about Hubble peers",
-		Long:    `Get information about Hubble peers.`,
+		Use:     "watch",
+		Aliases: []string{"w"},
+		Short:   "Watch Hubble objects",
 		Hidden:  true, // this command is only useful for development/debugging purposes
 	}
 
@@ -36,7 +35,7 @@ func New(vp *viper.Viper) *cobra.Command {
 	peerCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
 
 	peerCmd.AddCommand(
-		newWatchCommand(vp),
+		newPeerCommand(vp),
 	)
 	return peerCmd
 }
