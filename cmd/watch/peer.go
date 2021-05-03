@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package peer
+package watch
 
 import (
 	"context"
@@ -29,12 +29,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func newWatchCommand(vp *viper.Viper) *cobra.Command {
+func newPeerCommand(vp *viper.Viper) *cobra.Command {
 	return &cobra.Command{
-		Use:     "watch",
-		Aliases: []string{"w"},
+		Use:     "peers",
+		Aliases: []string{"peer"},
 		Short:   "Watch for Hubble peers updates",
-		Long:    `Watch for Hubble peers updates.`,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -43,12 +42,12 @@ func newWatchCommand(vp *viper.Viper) *cobra.Command {
 				return err
 			}
 			defer hubbleConn.Close()
-			return runWatch(ctx, peerpb.NewPeerClient(hubbleConn))
+			return runPeer(ctx, peerpb.NewPeerClient(hubbleConn))
 		},
 	}
 }
 
-func runWatch(ctx context.Context, client peerpb.PeerClient) error {
+func runPeer(ctx context.Context, client peerpb.PeerClient) error {
 	b, err := client.Notify(ctx, &peerpb.NotifyRequest{})
 	if err != nil {
 		return err
