@@ -62,7 +62,8 @@ powers.
 
 | Version                                            | Release Date        | Supported Cilium Version | Artifacts                                                              |
 |----------------------------------------------------|---------------------|--------------------------|------------------------------------------------------------------------|
-| [v0.7](https://github.com/cilium/hubble/tree/v0.7) | 2020-10-22 (v0.7.1) | Cilium 1.9, Cilium 1.8   | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.7.1) |
+| [v0.8](https://github.com/cilium/hubble/tree/v0.8) | 2021-05-03 (v0.8.0) | Cilium 1.10 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.8.0) |
+| [v0.7](https://github.com/cilium/hubble/tree/v0.7) | 2020-10-22 (v0.7.1) | Cilium 1.9 and older     | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.7.1) |
 | [v0.6](https://github.com/cilium/hubble/tree/v0.6) | 2020-05-29 (v0.6.1) | Cilium 1.8               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.6.1) |
 | [v0.5](https://github.com/cilium/hubble/tree/v0.5) | 2020-07-28 (v0.5.2) | Cilium 1.7               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.5.2) |
 
