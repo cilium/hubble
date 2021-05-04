@@ -30,7 +30,7 @@ jobs:
             Note for maintainers:: Please, update the desciption with the actual release notes (see RELEASE.md for instructions).
       - name: Upload artifacts 
         id: upload-release-artifacts
-        uses: skx/github-action-publish-binaries@master
+        uses: skx/github-action-publish-binaries@c881a3f8ffb80b684f367660178d38ceabc065c2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
