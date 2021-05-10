@@ -1,6 +1,6 @@
 # Do not upgrade to alpine 3.13 as its nslookup tool returns 1, instead of 0
 # for domain name lookups.
-FROM docker.io/library/golang:1.16.3-alpine3.12@sha256:371dc6bf7e0c7ce112a29341b000c40d840aef1dbb4fdcb3ae5c0597e28f3061 as builder
+FROM docker.io/library/golang:1.16.4-alpine3.12@sha256:371dc6bf7e0c7ce112a29341b000c40d840aef1dbb4fdcb3ae5c0597e28f3061 as builder
 WORKDIR /go/src/github.com/cilium/hubble
 RUN apk add --no-cache git make
 COPY . .
