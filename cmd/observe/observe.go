@@ -62,6 +62,7 @@ var (
 		enableIPTranslation bool
 		nodeName            bool
 		numeric             bool
+		color               string
 	}
 
 	otherOpts struct {
@@ -321,6 +322,11 @@ more.`,
 		true,
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
 	)
+	observeFormattingFlags.StringVar(
+		&formattingOpts.color,
+		"color", "auto",
+		"Colorize the output when the output format is one of 'compact' or 'dict'. The value is one of 'auto' (default), 'always' or 'never'",
+	)
 	observeCmd.Flags().AddFlagSet(observeFormattingFlags)
 
 	// generic formatting flags, available to `hubble observe`, including sub-commands.
@@ -402,6 +408,9 @@ more.`,
 			"table",
 		}, cobra.ShellCompDirectiveDefault
 	})
+	observeCmd.RegisterFlagCompletionFunc("color", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"auto", "always", "never"}, cobra.ShellCompDirectiveDefault
+	})
 	observeCmd.RegisterFlagCompletionFunc("time-format", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return hubtime.FormatNames, cobra.ShellCompDirectiveDefault
 	})
@@ -428,6 +437,7 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	// initialize the printer with any options that were passed in
 	var opts = []hubprinter.Option{
 		hubprinter.WithTimeFormat(hubtime.FormatNameToLayout(formattingOpts.timeFormat)),
+		hubprinter.WithColor(formattingOpts.color),
 	}
 
 	if formattingOpts.output == "" { // support deprecated output flags if provided
