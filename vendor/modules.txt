@@ -23,6 +23,9 @@ github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.10.0
+## explicit
+github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.10-0.20200417215612-7f4cf4dd2b52
 github.com/fsnotify/fsnotify
 # github.com/go-logr/logr v0.4.0
@@ -62,6 +65,10 @@ github.com/hashicorp/hcl/json/token
 github.com/inconshreveable/mousetrap
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
+# github.com/mattn/go-colorable v0.1.8
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.12
+github.com/mattn/go-isatty
 # github.com/mitchellh/mapstructure v1.4.0
 github.com/mitchellh/mapstructure
 # github.com/pelletier/go-toml v1.7.0
