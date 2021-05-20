@@ -1,5 +1,6 @@
 name: codeql
 
+# Any change in triggers needs to be reflected in the concurrency group.
 on:
   push:
     branches:
@@ -12,6 +13,10 @@ on:
     - master
   schedule:
     - cron: "45 7 * * 3"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.after || 'scheduled' }}
+  cancel-in-progress: true
 
 jobs:
   analyze:

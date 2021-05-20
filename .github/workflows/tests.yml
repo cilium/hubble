@@ -1,4 +1,6 @@
 name: Run static checks and unit tests
+
+# Any change in triggers needs to be reflected in the concurrency group.
 on:
   push:
     branches:
@@ -8,6 +10,11 @@ on:
     branches:
     - master
     - v*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.after }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
