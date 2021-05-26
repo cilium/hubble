@@ -1,0 +1,43 @@
+# See https://golangci-lint.run/usage/configuration/ for available options.
+# Also https://github.com/cilium/cilium/blob/master/.golangci.yaml as a
+# reference.
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - goerr113
+    - gofmt
+    - goimports
+    - gosec 
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - revive
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+
+linters-settings:
+  gosimple:
+    go: "1.16"
+  govet: 
+    enable-all: true
+    disable:
+      - fieldalignment
+      - shadow 
+  staticcheck:
+    go: "1.16"
+  unused:
+    go: "1.16"
+
+issues:
+  exclude-rules:
+    - linters: [staticcheck]
+      text: "SA1019" # deprecated methods
+    - linters: [goerr113]
+      text: "do not define dynamic errors, use wrapped static errors instead"
+    - linters: [gosec]
+      text: "G402" # TLS InsecureSkipVerify may be true
