@@ -14,6 +14,9 @@ RELEASE_GID ?= $(shell id -g)
 
 TEST_TIMEOUT ?= 5s
 
+GOLANGCILINT_WANT_VERSION = 1.40.1
+GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
+
 all: hubble
 
 hubble:
@@ -66,27 +69,15 @@ test:
 bench:
 	go test -timeout=30s -bench=. $$(go list ./...)
 
-check: check-fmt ineffassign lint staticcheck vet
-
-check-fmt:
-	./contrib/scripts/check-fmt.sh
-
-ineffassign:
-	./tools/ineffassign .
-
-lint:
-	./tools/golint -set_exit_status $$(go list ./...)
-
-# Ignored staticcheck warnings:
-# - SA1019 deprecation warnings: https://staticcheck.io/docs/checks#SA1019
-# - ST1000 missing package comment: https://staticcheck.io/docs/checks#ST1000
-staticcheck:
-	./tools/staticcheck -checks="all,-SA1019,-ST1000" ./...
-
-vet:
-	go vet $$(go list ./...)
+ifneq (,$(findstring $(GOLANGCILINT_WANT_VERSION),$(GOLANGCILINT_VERSION)))
+check:
+	golangci-lint run
+else
+check:
+	docker run --rm -v `pwd`:/app -w /app docker.io/golangci/golangci-lint:v$(GOLANGCILINT_WANT_VERSION) golangci-lint run
+endif
 
 image:
 	$(CONTAINER_ENGINE) build $(DOCKER_FLAGS) -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
-.PHONY: all hubble release install clean test bench check check-fmt ineffassign lint vet image
+.PHONY: all hubble release install clean test bench check image
