@@ -242,10 +242,10 @@ func (of *observeFilter) Set(name, val string, track bool) error {
 	return of.set(of.whitelist, name, val, track)
 }
 
-// agentEventSubtypes are the valid agent event sub-types. This map is neccesary
-// because the sub-type strings in monitorAPI.AgentNotifications contain
-// upper-case characters and spaces which are inconvenient to pass as CLI filter
-// arguments.
+// agentEventSubtypes are the valid agent event sub-types. This map is
+// necessary because the sub-type strings in monitorAPI.AgentNotifications
+// contain upper-case characters and spaces which are inconvenient to pass as
+// CLI filter arguments.
 var agentEventSubtypes = map[string]monitorAPI.AgentNotification{
 	"unspecified":                 monitorAPI.AgentNotifyUnspec,
 	"message":                     monitorAPI.AgentNotifyGeneric,
