@@ -95,7 +95,7 @@ func runSet(cmd *cobra.Command, vp *viper.Viper, key, value string) error {
 	// writing defaults and/or values set via environment variables or flags.
 	// This viper config is only used to write the resulting config.
 	// This method also prevents from writing default values for all keys
-	// therefore only writing key/value pairs explicitely set by the caller.
+	// therefore only writing key/value pairs explicitly set by the caller.
 	configPath := vp.GetString(config.KeyConfig)
 	fileVP, err := newFileOnlyViper(configPath)
 	if err != nil {
