@@ -26,9 +26,13 @@ jobs:
       with:
         go-version: '1.16.4'
     - name: Run static checks
-      env:
-        GOPATH: /home/runner/work/hubble/go
-      run: make check
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.40.1
+        args: --config=.golangci.yml --verbose
+        skip-go-installation: true
+        skip-pkg-cache: true
+        skip-build-cache: true
     - name: Run unit tests
       run: make test
     - name: Build
