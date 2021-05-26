@@ -23,7 +23,7 @@ github.com/cilium/cilium/pkg/monitor/api
 github.com/cilium/cilium/pkg/monitor/notifications
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/fatih/color v1.10.0
+# github.com/fatih/color v1.12.0
 ## explicit
 github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.10-0.20200417215612-7f4cf4dd2b52
