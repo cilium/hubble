@@ -76,6 +76,7 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 		{
 			name: "tabular",
 			options: []Option{
+				WithColor("never"),
 				Writer(&buf),
 			},
 			args: args{
@@ -88,6 +89,7 @@ Jan  1 00:20:34.567   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROPPED   T
 		{
 			name: "tabular-with-node",
 			options: []Option{
+				WithColor("never"),
 				WithNodeName(),
 				Writer(&buf),
 			},
@@ -102,6 +104,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "compact",
 			options: []Option{
 				Compact(),
+				WithColor("never"),
 				Writer(&buf),
 			},
 			args: args{
@@ -116,6 +119,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "compact-with-node",
 			options: []Option{
 				Compact(),
+				WithColor("never"),
 				WithNodeName(),
 				Writer(&buf),
 			},
@@ -131,6 +135,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "compact-reply",
 			options: []Option{
 				Compact(),
+				WithColor("never"),
 				WithNodeName(),
 				Writer(&buf),
 			},
@@ -146,6 +151,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "compact-direction-unknown",
 			options: []Option{
 				Compact(),
+				WithColor("never"),
 				WithNodeName(),
 				Writer(&buf),
 			},
@@ -161,6 +167,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "json",
 			options: []Option{
 				JSON(),
+				WithColor("never"),
 				Writer(&buf),
 			},
 			args: args{
@@ -179,6 +186,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "jsonpb",
 			options: []Option{
 				JSONPB(),
+				WithColor("never"),
 				Writer(&buf),
 			},
 			args: args{
@@ -197,6 +205,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			name: "dict",
 			options: []Option{
 				Dict(),
+				WithColor("never"),
 				Writer(&buf),
 			},
 			args: args{
@@ -214,6 +223,7 @@ DESTINATION: 2.2.2.2:8080
 			name: "dict-with-node",
 			options: []Option{
 				Dict(),
+				WithColor("never"),
 				WithNodeName(),
 				Writer(&buf),
 			},
