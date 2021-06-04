@@ -33,24 +33,15 @@ jobs:
         skip-go-installation: true
         skip-pkg-cache: true
         skip-build-cache: true
+    - name: Check module vendoring
+      run: |
+        go mod tidy
+        go mod vendor
+        go mod verify
+        git diff --exit-code
     - name: Run unit tests
       run: make test
     - name: Build
       run: make
     - name: Build release binaries
       run: make release
-  go-mod:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Go
-        uses: actions/setup-go@v2.1.3
-        with:
-          go-version: '1.16.4'
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Check module vendoring
-        run: |
-          go mod tidy
-          go mod vendor
-          go mod verify
-          git diff --exit-code
