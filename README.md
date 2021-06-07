@@ -52,20 +52,24 @@ The Linux kernel technology [eBPF] is enabling visibility into systems and
 applications at a granularity and efficiency that was not possible before. It
 does so in a completely transparent way, without requiring the application to
 change or for the application to hide information. By building on top of
-[Cilium], Hubble can leverage [eBPF] for visibility. By leveraging on [eBPF], all
+[Cilium], Hubble can leverage [eBPF] for visibility. By leveraging [eBPF], all
 visibility is programmable and allows for a dynamic approach that minimizes
-overhead while providing deep and detailed insight where required. Hubble
-has been created and specifically designed to make best use of these new [eBPF]
+overhead while providing deep and detailed insight where required. Hubble has
+been created and specifically designed to make best use of these new [eBPF]
 powers.
 
 ## Releases
 
-| Version                                            | Release Date        | Supported Cilium Version | Artifacts                                                              |
-|----------------------------------------------------|---------------------|--------------------------|------------------------------------------------------------------------|
-| [v0.8](https://github.com/cilium/hubble/tree/v0.8) | 2021-05-03 (v0.8.0) | Cilium 1.10 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.8.0) |
-| [v0.7](https://github.com/cilium/hubble/tree/v0.7) | 2020-10-22 (v0.7.1) | Cilium 1.9 and older     | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.7.1) |
-| [v0.6](https://github.com/cilium/hubble/tree/v0.6) | 2020-05-29 (v0.6.1) | Cilium 1.8               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.6.1) |
-| [v0.5](https://github.com/cilium/hubble/tree/v0.5) | 2020-07-28 (v0.5.2) | Cilium 1.7               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.5.2) |
+Since the release of v0.8, the Hubble CLI is backward compatible with all
+supported Cilium releases. For this reason, only the latest Hubble CLI version
+is maintained.
+
+| Version                                            | Release Date        | Maintained | Supported Cilium Version | Artifacts                                                              |
+|----------------------------------------------------|---------------------|------------|--------------------------|------------------------------------------------------------------------|
+| [v0.8](https://github.com/cilium/hubble/tree/v0.8) | 2021-05-03 (v0.8.0) | Yes        | Cilium 1.10 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.8.0) |
+| [v0.7](https://github.com/cilium/hubble/tree/v0.7) | 2020-10-22 (v0.7.1) | No         | Cilium 1.9 and older     | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.7.1) |
+| [v0.6](https://github.com/cilium/hubble/tree/v0.6) | 2020-05-29 (v0.6.1) | No         | Cilium 1.8               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.6.1) |
+| [v0.5](https://github.com/cilium/hubble/tree/v0.5) | 2020-07-28 (v0.5.2) | No         | Cilium 1.7               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.5.2) |
 
 ## Component Stability
 
@@ -195,7 +199,10 @@ Identifying pods which have received DNS response indicating failure:
 
 # Community
 
-Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat with Cilium Hubble developers and other Cilium / Hubble users. This is a good place to learn about Hubble and Cilium, ask questions, and share your experiences.
+Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat
+with Cilium Hubble developers and other Cilium / Hubble users. This is a good
+place to learn about Hubble and Cilium, ask questions, and share your
+experiences.
 
 Learn more about [Cilium].
 
