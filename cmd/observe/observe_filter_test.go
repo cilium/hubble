@@ -180,26 +180,6 @@ func TestFilterLeftRight(t *testing.T) {
 	}
 }
 
-func TestAgentEventSubTypeMap(t *testing.T) {
-	// Make sure to keep agent event sub-types maps in sync. See agentEventSubtypes godoc for
-	// details.
-	require.Len(t, agentEventSubtypes, len(monitorAPI.AgentNotifications))
-	for _, v := range agentEventSubtypes {
-		require.Contains(t, monitorAPI.AgentNotifications, v)
-	}
-	agentEventSubtypesContainsValue := func(an monitorAPI.AgentNotification) bool {
-		for _, v := range agentEventSubtypes {
-			if v == an {
-				return true
-			}
-		}
-		return false
-	}
-	for k := range monitorAPI.AgentNotifications {
-		require.True(t, agentEventSubtypesContainsValue(k))
-	}
-}
-
 func TestFilterType(t *testing.T) {
 	f := newObserveFilter()
 	cmd := newObserveCmd(viper.New(), f)
