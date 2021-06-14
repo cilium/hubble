@@ -19,10 +19,33 @@ import (
 	"time"
 
 	"github.com/cilium/cilium/api/v1/observer"
+	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/pkg/defaults"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+func TestAgentEventSubTypeMap(t *testing.T) {
+	// Make sure to keep agent event sub-types maps in sync. See
+	// agentEventSubtypes godoc for details.
+	require.Len(t, agentEventSubtypes, len(monitorAPI.AgentNotifications))
+	for _, v := range agentEventSubtypes {
+		require.Contains(t, monitorAPI.AgentNotifications, v)
+	}
+	agentEventSubtypesContainsValue := func(an monitorAPI.AgentNotification) bool {
+		for _, v := range agentEventSubtypes {
+			if v == an {
+				return true
+			}
+		}
+		return false
+	}
+	for k := range monitorAPI.AgentNotifications {
+		require.True(t, agentEventSubtypesContainsValue(k))
+	}
+}
 
 func Test_getAgentEventsRequest(t *testing.T) {
 	selectorOpts.since = ""
