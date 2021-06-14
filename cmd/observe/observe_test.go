@@ -46,6 +46,8 @@ func TestEventTypes(t *testing.T) {
 }
 
 func Test_getRequest(t *testing.T) {
+	selectorOpts.since = ""
+	selectorOpts.until = ""
 	filter := newObserveFilter()
 	req, err := getRequest(filter)
 	assert.NoError(t, err)
