@@ -10,10 +10,10 @@ require (
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.6-0.20200504143853-81378bbcd8a1
-	github.com/spf13/viper v1.7.1
+	github.com/spf13/viper v1.8.0
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
-	google.golang.org/grpc v1.37.1
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
 )
