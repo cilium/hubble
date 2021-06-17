@@ -519,8 +519,9 @@ func getRequest(ofilter *observeFilter) (*observer.GetFlowsRequest, error) {
 		case selectorOpts.all:
 			// all is an alias for last=uint64_max
 			selectorOpts.last = ^uint64(0)
-		case selectorOpts.last == 0:
-			// no specific parameters were provided, just a vanilla `hubble observe`
+		case selectorOpts.last == 0 && !selectorOpts.follow:
+			// no specific parameters were provided, just a vanilla
+			// `hubble observe` in non-follow mode
 			selectorOpts.last = defaults.FlowPrintCount
 		}
 	}
