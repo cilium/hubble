@@ -1,0 +1,11 @@
+# Code owners groups assigned to this repository and a brief description of their areas:
+# @cilium/ci-structure       Continuous integration, testing
+# @cilium/contributing       Developer documentation & tools
+# @cilium/hubble             All related to Hubble (client and server)
+
+# The following filepaths should be sorted so that more specific paths occur
+# after the less specific paths, otherwise the ownership for the specific paths
+# is not properly picked up in Github.
+* @cilium/hubble
+/.github/workflows/ @cilium/ci-structure @cilium/hubble
+/CODEOWNERS @cilium/contributing
