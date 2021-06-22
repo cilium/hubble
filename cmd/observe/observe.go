@@ -78,11 +78,11 @@ var verdicts = []string{
 	pb.Verdict_ERROR.String(),
 }
 
-// eventTypes are the valid event types supported by observe. This corresponds
+// flowEventTypes are the valid event types supported by observe. This corresponds
 // to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent,
 // MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
 // message types are not supported by observe but have separate sub-commands.
-var eventTypes = []string{
+var flowEventTypes = []string{
 	monitorAPI.MessageTypeNameDrop,
 	monitorAPI.MessageTypeNameCapture,
 	monitorAPI.MessageTypeNameTrace,
@@ -92,10 +92,10 @@ var eventTypes = []string{
 
 // New observer command.
 func New(vp *viper.Viper) *cobra.Command {
-	return newObserveCmd(vp, newObserveFilter())
+	return newFlowsCmd(vp, newFlowFilter())
 }
 
-func newObserveCmd(vp *viper.Viper, ofilter *observeFilter) *cobra.Command {
+func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
 	observeCmd := &cobra.Command{
 		Example: `* Piping flows to hubble observe
 
@@ -119,10 +119,10 @@ individual pods, services, TCP connections, DNS queries, HTTP requests and
 more.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			debug := vp.GetBool(config.KeyDebug)
-			if err := handleArgs(ofilter, debug); err != nil {
+			if err := handleFlowArgs(ofilter, debug); err != nil {
 				return err
 			}
-			req, err := getRequest(ofilter)
+			req, err := getFlowsRequest(ofilter)
 			if err != nil {
 				return err
 			}
@@ -186,7 +186,7 @@ more.`,
 		`Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")`))
 	filterFlags.VarP(filterVarP(
 		"type", "t", ofilter, []string{},
-		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", eventTypes)))
+		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", flowEventTypes)))
 	filterFlags.Var(filterVar(
 		"verdict", ofilter,
 		fmt.Sprintf("Show only flows with this verdict [%s]", strings.Join(verdicts, ", ")),
@@ -365,7 +365,7 @@ more.`,
 		return []string{"none", "v4", "v6"}, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return eventTypes, cobra.ShellCompDirectiveDefault
+		return flowEventTypes, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return verdicts, cobra.ShellCompDirectiveDefault
@@ -429,7 +429,7 @@ more.`,
 	return observeCmd
 }
 
-func handleArgs(ofilter *observeFilter, debug bool) (err error) {
+func handleFlowArgs(ofilter *flowFilter, debug bool) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}
@@ -486,7 +486,7 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	return nil
 }
 
-func getRequest(ofilter *observeFilter) (*observer.GetFlowsRequest, error) {
+func getFlowsRequest(ofilter *flowFilter) (*observer.GetFlowsRequest, error) {
 	// convert selectorOpts.since into a param for GetFlows
 	var since, until *timestamppb.Timestamp
 	if selectorOpts.since != "" {

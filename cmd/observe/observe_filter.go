@@ -103,7 +103,7 @@ func (f *filterTracker) flowFilters() []*pb.FlowFilter {
 }
 
 // Implements pflag.Value
-type observeFilter struct {
+type flowFilter struct {
 	whitelist *filterTracker
 	blacklist *filterTracker
 
@@ -116,8 +116,8 @@ type observeFilter struct {
 	conflicts [][]string // conflict config
 }
 
-func newObserveFilter() *observeFilter {
-	return &observeFilter{
+func newFlowFilter() *flowFilter {
+	return &flowFilter{
 		conflicts: [][]string{
 			{"from-fqdn", "from-ip", "from-namespace", "from-pod", "fqdn", "ip", "namespace", "pod"},
 			{"to-fqdn", "to-ip", "to-namespace", "to-pod", "fqdn", "ip", "namespace", "pod"},
@@ -141,7 +141,7 @@ func newObserveFilter() *observeFilter {
 	}
 }
 
-func (of *observeFilter) hasChanged(list []string, name string) bool {
+func (of *flowFilter) hasChanged(list []string, name string) bool {
 	for _, c := range list {
 		if c == name {
 			return true
@@ -150,7 +150,7 @@ func (of *observeFilter) hasChanged(list []string, name string) bool {
 	return false
 }
 
-func (of *observeFilter) checkConflict(t *filterTracker, name, val string) error {
+func (of *flowFilter) checkConflict(t *filterTracker, name, val string) error {
 	// check for conflicts
 	for _, group := range of.conflicts {
 		for _, flag := range group {
@@ -209,7 +209,7 @@ func ipVersion(v string) pb.IPVersion {
 	return pb.IPVersion_IP_NOT_USED
 }
 
-func (of *observeFilter) Set(name, val string, track bool) error {
+func (of *flowFilter) Set(name, val string, track bool) error {
 	// --not simply toggles the destination of the next filter into blacklist
 	if name == "not" {
 		if of.blacklisting {
@@ -262,7 +262,7 @@ var agentEventSubtypes = map[string]monitorAPI.AgentNotification{
 	"service-deleted":             monitorAPI.AgentNotifyServiceDeleted,
 }
 
-func (of *observeFilter) set(f *filterTracker, name, val string, track bool) error {
+func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error {
 	// track the change if this is non-default user operation
 	wipe := false
 	if track {
@@ -541,7 +541,7 @@ func (of *observeFilter) set(f *filterTracker, name, val string, track bool) err
 	return nil
 }
 
-func (of observeFilter) Type() string {
+func (of flowFilter) Type() string {
 	return "filter"
 }
 
@@ -549,14 +549,14 @@ func (of observeFilter) Type() string {
 // flow through the same object. By default, Cobra doesn't call `Set()` with the
 // name of the argument, only it's value.
 type filterDispatch struct {
-	*observeFilter
+	*flowFilter
 
 	name string
 	def  []string
 }
 
 func (d filterDispatch) Set(s string) error {
-	return d.observeFilter.Set(d.name, s, true)
+	return d.flowFilter.Set(d.name, s, true)
 }
 
 // for some reason String() is used for default value in pflag/cobra
@@ -584,29 +584,29 @@ func (d filterDispatch) String() string {
 
 func filterVar(
 	name string,
-	of *observeFilter,
+	of *flowFilter,
 	desc string,
 ) (pflag.Value, flagName, flagDesc) {
 	return &filterDispatch{
-		name:          name,
-		observeFilter: of,
+		name:       name,
+		flowFilter: of,
 	}, name, desc
 }
 
 func filterVarP(
 	name string,
 	short string,
-	of *observeFilter,
+	of *flowFilter,
 	def []string,
 	desc string,
 ) (pflag.Value, flagName, shortName, flagDesc) {
 	d := &filterDispatch{
-		name:          name,
-		def:           def,
-		observeFilter: of,
+		name:       name,
+		def:        def,
+		flowFilter: of,
 	}
 	for _, val := range def {
-		d.observeFilter.Set(name, val, false /* do not track */)
+		d.flowFilter.Set(name, val, false /* do not track */)
 
 	}
 	return d, name, short, desc

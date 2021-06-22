@@ -29,9 +29,9 @@ import (
 func TestEventTypes(t *testing.T) {
 	// Make sure to keep event type slices in sync. Agent events, debug
 	// events and recorder captures have separate subcommands and are not
-	// supported in observe, thus the -3. See eventTypes godoc for details.
-	require.Len(t, eventTypes, len(monitorAPI.MessageTypeNames)-3)
-	for _, v := range eventTypes {
+	// supported in observe, thus the -3. See flowEventTypes godoc for details.
+	require.Len(t, flowEventTypes, len(monitorAPI.MessageTypeNames)-3)
+	for _, v := range flowEventTypes {
 		require.Contains(t, monitorAPI.MessageTypeNames, v)
 	}
 	for k := range monitorAPI.MessageTypeNames {
@@ -41,20 +41,20 @@ func TestEventTypes(t *testing.T) {
 			monitorAPI.MessageTypeNameRecCapture:
 			continue
 		}
-		require.Contains(t, eventTypes, k)
+		require.Contains(t, flowEventTypes, k)
 	}
 }
 
-func Test_getRequest(t *testing.T) {
+func Test_getFlowsRequest(t *testing.T) {
 	selectorOpts.since = ""
 	selectorOpts.until = ""
-	filter := newObserveFilter()
-	req, err := getRequest(filter)
+	filter := newFlowFilter()
+	req, err := getFlowsRequest(filter)
 	assert.NoError(t, err)
 	assert.Equal(t, &observer.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.since = "2021-03-23T00:00:00Z"
 	selectorOpts.until = "2021-03-24T00:00:00Z"
-	req, err = getRequest(filter)
+	req, err = getFlowsRequest(filter)
 	assert.NoError(t, err)
 	since, err := time.Parse(time.RFC3339, selectorOpts.since)
 	assert.NoError(t, err)
