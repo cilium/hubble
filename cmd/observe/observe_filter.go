@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	pb "github.com/cilium/cilium/api/v1/flow"
+	flowpb "github.com/cilium/cilium/api/v1/flow"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/spf13/pflag"
 	"google.golang.org/protobuf/proto"
@@ -36,7 +36,7 @@ type (
 
 type filterTracker struct {
 	// the resulting filter will be `left OR right`
-	left, right *pb.FlowFilter
+	left, right *flowpb.FlowFilter
 
 	// which values were touched by the user. This is important because all of
 	// the defaults need to be wiped the first time user touches a []string
@@ -66,33 +66,33 @@ func (f *filterTracker) add(name string) bool {
 	return true
 }
 
-func (f *filterTracker) apply(update func(*pb.FlowFilter)) {
+func (f *filterTracker) apply(update func(*flowpb.FlowFilter)) {
 	f.applyLeft(update)
 	f.applyRight(update)
 }
 
-func (f *filterTracker) applyLeft(update func(*pb.FlowFilter)) {
+func (f *filterTracker) applyLeft(update func(*flowpb.FlowFilter)) {
 	if f.left == nil {
-		f.left = &pb.FlowFilter{}
+		f.left = &flowpb.FlowFilter{}
 	}
 	update(f.left)
 }
 
-func (f *filterTracker) applyRight(update func(*pb.FlowFilter)) {
+func (f *filterTracker) applyRight(update func(*flowpb.FlowFilter)) {
 	if f.right == nil {
-		f.right = &pb.FlowFilter{}
+		f.right = &flowpb.FlowFilter{}
 	}
 	update(f.right)
 }
 
-func (f *filterTracker) flowFilters() []*pb.FlowFilter {
+func (f *filterTracker) flowFilters() []*flowpb.FlowFilter {
 	if f.left == nil && f.right == nil {
 		return nil
 	} else if proto.Equal(f.left, f.right) {
-		return []*pb.FlowFilter{f.left}
+		return []*flowpb.FlowFilter{f.left}
 	}
 
-	filters := []*pb.FlowFilter{}
+	filters := []*flowpb.FlowFilter{}
 	if f.left != nil {
 		filters = append(filters, f.left)
 	}
@@ -169,8 +169,8 @@ func (of *flowFilter) checkConflict(t *filterTracker, name, val string) error {
 	return nil
 }
 
-func parseTCPFlags(val string) (*pb.TCPFlags, error) {
-	flags := &pb.TCPFlags{}
+func parseTCPFlags(val string) (*flowpb.TCPFlags, error) {
+	flags := &flowpb.TCPFlags{}
 	s := strings.Split(val, ",")
 	for _, f := range s {
 		switch strings.ToUpper(f) {
@@ -199,14 +199,14 @@ func parseTCPFlags(val string) (*pb.TCPFlags, error) {
 	return flags, nil
 }
 
-func ipVersion(v string) pb.IPVersion {
+func ipVersion(v string) flowpb.IPVersion {
 	switch strings.ToLower(v) {
 	case "4", "v4", "ipv4", "ip4":
-		return pb.IPVersion_IPv4
+		return flowpb.IPVersion_IPv4
 	case "6", "v6", "ipv6", "ip6":
-		return pb.IPVersion_IPv6
+		return flowpb.IPVersion_IPv6
 	}
-	return pb.IPVersion_IP_NOT_USED
+	return flowpb.IPVersion_IP_NOT_USED
 }
 
 func (of *flowFilter) Set(name, val string, track bool) error {
@@ -276,171 +276,171 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	switch name {
 	// fqdn filters
 	case "fqdn":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceFqdn = append(f.SourceFqdn, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationFqdn = append(f.DestinationFqdn, val)
 		})
 	case "from-fqdn":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceFqdn = append(f.SourceFqdn, val)
 		})
 	case "to-fqdn":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationFqdn = append(f.DestinationFqdn, val)
 		})
 
 	// pod filters
 	case "pod":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourcePod = append(f.SourcePod, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val)
 		})
 	case "from-pod":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourcePod = append(f.SourcePod, val)
 		})
 	case "to-pod":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val)
 		})
 	// ip filters
 	case "ip":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceIp = append(f.SourceIp, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationIp = append(f.DestinationIp, val)
 		})
 	case "from-ip":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceIp = append(f.SourceIp, val)
 		})
 	case "to-ip":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationIp = append(f.DestinationIp, val)
 		})
 	// ip version filters
 	case "ipv4":
-		f.apply(func(f *pb.FlowFilter) {
-			f.IpVersion = append(f.IpVersion, pb.IPVersion_IPv4)
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.IpVersion = append(f.IpVersion, flowpb.IPVersion_IPv4)
 		})
 	case "ipv6":
-		f.apply(func(f *pb.FlowFilter) {
-			f.IpVersion = append(f.IpVersion, pb.IPVersion_IPv6)
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.IpVersion = append(f.IpVersion, flowpb.IPVersion_IPv6)
 		})
 	case "ip-version":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.IpVersion = append(f.IpVersion, ipVersion(val))
 		})
 	// label filters
 	case "label":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceLabel = append(f.SourceLabel, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationLabel = append(f.DestinationLabel, val)
 		})
 	case "from-label":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceLabel = append(f.SourceLabel, val)
 		})
 	case "to-label":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationLabel = append(f.DestinationLabel, val)
 		})
 
 	// namespace filters (translated to pod filters)
 	case "namespace":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourcePod = append(f.SourcePod, val+"/")
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val+"/")
 		})
 	case "from-namespace":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourcePod = append(f.SourcePod, val+"/")
 		})
 	case "to-namespace":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val+"/")
 		})
 	// service filters
 	case "service":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceService = append(f.SourceService, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationService = append(f.DestinationService, val)
 		})
 	case "from-service":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceService = append(f.SourceService, val)
 		})
 	case "to-service":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationService = append(f.DestinationService, val)
 		})
 
 	// port filters
 	case "port":
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourcePort = append(f.SourcePort, val)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationPort = append(f.DestinationPort, val)
 		})
 	case "from-port":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourcePort = append(f.SourcePort, val)
 		})
 	case "to-port":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationPort = append(f.DestinationPort, val)
 		})
 
 	case "verdict":
 		if wipe {
-			f.apply(func(f *pb.FlowFilter) {
+			f.apply(func(f *flowpb.FlowFilter) {
 				f.Verdict = nil
 			})
 		}
 
-		vv, ok := pb.Verdict_value[val]
+		vv, ok := flowpb.Verdict_value[val]
 		if !ok {
 			return fmt.Errorf("invalid --verdict value: %v", val)
 		}
-		f.apply(func(f *pb.FlowFilter) {
-			f.Verdict = append(f.Verdict, pb.Verdict(vv))
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.Verdict = append(f.Verdict, flowpb.Verdict(vv))
 		})
 
 	case "http-status":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpStatusCode = append(f.HttpStatusCode, val)
 		})
 
 	case "http-method":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpMethod = append(f.HttpMethod, val)
 		})
 
 	case "http-path":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpPath = append(f.HttpPath, val)
 		})
 
 	case "type":
 		if wipe {
-			f.apply(func(f *pb.FlowFilter) {
+			f.apply(func(f *flowpb.FlowFilter) {
 				f.EventType = nil
 			})
 		}
 
-		typeFilter := &pb.EventTypeFilter{}
+		typeFilter := &flowpb.EventTypeFilter{}
 
 		s := strings.SplitN(val, ":", 2)
 		t, ok := monitorAPI.MessageTypeNames[s[0]]
@@ -481,11 +481,11 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 				typeFilter.SubType = int32(t)
 			}
 		}
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.EventType = append(f.EventType, typeFilter)
 		})
 	case "protocol":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.Protocol = append(f.Protocol, val)
 		})
 
@@ -496,10 +496,10 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
 		identity := uint32(i)
-		f.applyLeft(func(f *pb.FlowFilter) {
+		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceIdentity = append(f.SourceIdentity, identity)
 		})
-		f.applyRight(func(f *pb.FlowFilter) {
+		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationIdentity = append(f.DestinationIdentity, identity)
 		})
 	case "from-identity":
@@ -508,7 +508,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
 		identity := uint32(i)
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceIdentity = append(f.SourceIdentity, identity)
 		})
 	case "to-identity":
@@ -517,13 +517,13 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity: %s: %s", val, err)
 		}
 		identity := uint32(i)
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationIdentity = append(f.DestinationIdentity, identity)
 		})
 
 	// node name filters
 	case "node-name":
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.NodeName = append(f.NodeName, val)
 		})
 
@@ -533,7 +533,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		if err != nil {
 			return err
 		}
-		f.apply(func(f *pb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.TcpFlags = append(f.TcpFlags, flags)
 		})
 	}

@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"testing"
 
-	pb "github.com/cilium/cilium/api/v1/flow"
+	flowpb "github.com/cilium/cilium/api/v1/flow"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
 	"github.com/google/go-cmp/cmp"
@@ -94,29 +94,29 @@ func TestFilterDispatch(t *testing.T) {
 
 	require.NoError(t, handleFlowArgs(f, false))
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{
 				SourceIp: []string{"1.2.3.4", "5.6.7.8"},
-				Verdict:  []pb.Verdict{pb.Verdict_DROPPED},
-				EventType: []*pb.EventTypeFilter{
+				Verdict:  []flowpb.Verdict{flowpb.Verdict_DROPPED},
+				EventType: []*flowpb.EventTypeFilter{
 					{Type: monitorAPI.MessageTypeAccessLog},
 				},
 			},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
-		cmpopts.IgnoreUnexported(pb.EventTypeFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.EventTypeFilter{}),
 	); diff != "" {
 		t.Errorf("whitelist filter mismatch (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{
 				DestinationIp: []string{"5.5.5.5"},
 			},
 		},
 		f.blacklist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("blacklist filter mismatch (-want +got):\n%s", diff)
 	}
@@ -140,30 +140,30 @@ func TestFilterLeftRight(t *testing.T) {
 	require.NoError(t, handleFlowArgs(f, false))
 
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{
 				SourceIp:   []string{"1.2.3.4", "5.6.7.8"},
-				Verdict:    []pb.Verdict{pb.Verdict_DROPPED},
+				Verdict:    []flowpb.Verdict{flowpb.Verdict_DROPPED},
 				HttpMethod: []string{"get"},
 				HttpPath:   []string{"/page/\\d+"},
 				NodeName:   []string{"k8s*"},
 			},
 			{
 				DestinationIp: []string{"1.2.3.4", "5.6.7.8"},
-				Verdict:       []pb.Verdict{pb.Verdict_DROPPED},
+				Verdict:       []flowpb.Verdict{flowpb.Verdict_DROPPED},
 				HttpMethod:    []string{"get"},
 				HttpPath:      []string{"/page/\\d+"},
 				NodeName:      []string{"k8s*"},
 			},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("whitelist filter mismatch (-want +got):\n%s", diff)
 	}
 
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{
 				SourcePod:      []string{"deathstar"},
 				HttpStatusCode: []string{"200"},
@@ -174,7 +174,7 @@ func TestFilterLeftRight(t *testing.T) {
 			},
 		},
 		f.blacklist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("blacklist filter mismatch (-want +got):\n%s", diff)
 	}
@@ -210,9 +210,9 @@ func TestFilterType(t *testing.T) {
 
 	require.NoError(t, handleFlowArgs(f, false))
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{
-				EventType: []*pb.EventTypeFilter{
+				EventType: []*flowpb.EventTypeFilter{
 					{
 						Type: 254,
 					},
@@ -259,8 +259,8 @@ func TestFilterType(t *testing.T) {
 			},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
-		cmpopts.IgnoreUnexported(pb.EventTypeFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.EventTypeFilter{}),
 	); diff != "" {
 		t.Errorf("filter mismatch (-want +got):\n%s", diff)
 	}
@@ -276,12 +276,12 @@ func TestLabels(t *testing.T) {
 	})
 	require.NoError(t, err)
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{SourceLabel: []string{"k1=v1,k2=v2", "k3"}},
 			{DestinationLabel: []string{"k1=v1,k2=v2", "k3"}},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
@@ -294,12 +294,12 @@ func TestIdentity(t *testing.T) {
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{SourceIdentity: []uint32{1, 2}},
 			{DestinationIdentity: []uint32{1, 2}},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
@@ -312,11 +312,11 @@ func TestFromIdentity(t *testing.T) {
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{SourceIdentity: []uint32{1, 2}},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
@@ -329,11 +329,11 @@ func TestToIdentity(t *testing.T) {
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
 	if diff := cmp.Diff(
-		[]*pb.FlowFilter{
+		[]*flowpb.FlowFilter{
 			{DestinationIdentity: []uint32{1, 2}},
 		},
 		f.whitelist.flowFilters(),
-		cmpopts.IgnoreUnexported(pb.FlowFilter{}),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
 	); diff != "" {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}

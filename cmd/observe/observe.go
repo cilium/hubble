@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/cilium/cilium/api/v1/flow"
+	flowpb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/cmd/common/config"
@@ -73,9 +73,9 @@ var (
 )
 
 var verdicts = []string{
-	pb.Verdict_FORWARDED.String(),
-	pb.Verdict_DROPPED.String(),
-	pb.Verdict_ERROR.String(),
+	flowpb.Verdict_FORWARDED.String(),
+	flowpb.Verdict_DROPPED.String(),
+	flowpb.Verdict_ERROR.String(),
 }
 
 // flowEventTypes are the valid event types supported by observe. This corresponds
@@ -527,8 +527,8 @@ func getFlowsRequest(ofilter *flowFilter) (*observer.GetFlowsRequest, error) {
 	}
 
 	var (
-		wl []*pb.FlowFilter
-		bl []*pb.FlowFilter
+		wl []*flowpb.FlowFilter
+		bl []*flowpb.FlowFilter
 	)
 	if ofilter.whitelist != nil {
 		wl = ofilter.whitelist.flowFilters()
