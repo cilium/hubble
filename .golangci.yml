@@ -34,6 +34,13 @@ linters-settings:
     go: "1.16"
 
 issues:
+  # Default rules exclude Go doc comments check, which is rather unfortunate.
+  # In order to enable Go doc checks, defaults rules have to be disabled.
+  # See https://github.com/golangci/golangci-lint/issues/456 for details.
+  exclude-use-default: false
+  exclude:
+    - (G104|G307) # EXC0008 gosec: Duplicated errcheck checks
+
   exclude-rules:
     - linters: [staticcheck]
       text: "SA1019" # deprecated methods
