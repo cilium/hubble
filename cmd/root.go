@@ -21,7 +21,6 @@ import (
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/cilium/hubble/cmd/common/validate"
-	"github.com/cilium/hubble/cmd/completion"
 	cmdConfig "github.com/cilium/hubble/cmd/config"
 	"github.com/cilium/hubble/cmd/list"
 	"github.com/cilium/hubble/cmd/observe"
@@ -91,7 +90,6 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 
 	rootCmd.AddCommand(
 		cmdConfig.New(vp),
-		completion.New(),
 		list.New(vp),
 		observe.New(vp),
 		record.New(vp),
