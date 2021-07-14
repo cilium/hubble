@@ -210,12 +210,12 @@ func GetFlowType(f *pb.Flow) string {
 func (p Printer) getVerdict(f *pb.Flow) string {
 	verdict := f.GetVerdict()
 	switch verdict {
+	case pb.Verdict_AUDIT:
+		return p.color.verdictAudit(verdict.String())
 	case pb.Verdict_FORWARDED:
 		return p.color.verdictForwarded(verdict.String())
 	case pb.Verdict_DROPPED, pb.Verdict_ERROR:
 		return p.color.verdictDropped(verdict.String())
-	case pb.Verdict_AUDIT:
-		return p.color.verdictAudit(verdict.String())
 	default:
 		return verdict.String()
 	}
@@ -299,7 +299,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			arrow = "<-"
 		}
 		_, err := fmt.Fprintf(p.opts.w,
-			"%s%s: %s %s %s %s %s (%s)\n",
+			"%s%s: %s %s %s %s %s %s %s (%s)\n",
 			fmtTimestamp(p.opts.timeFormat, f.GetTime()),
 			node,
 			src,
@@ -307,6 +307,8 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			dst,
 			GetFlowType(f),
 			p.getVerdict(f),
+			f.GetPolicyName(),
+			f.GetAuditType(),
 			f.GetSummary())
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)

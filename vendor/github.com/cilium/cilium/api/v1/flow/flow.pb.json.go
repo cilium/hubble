@@ -15,7 +15,7 @@ func (msg *Flow) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -33,7 +33,7 @@ func (msg *Layer4) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -51,7 +51,7 @@ func (msg *Layer7) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -69,7 +69,7 @@ func (msg *Endpoint) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -87,7 +87,7 @@ func (msg *TCP) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -105,7 +105,7 @@ func (msg *IP) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -123,7 +123,7 @@ func (msg *Ethernet) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -141,7 +141,7 @@ func (msg *TCPFlags) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -159,7 +159,7 @@ func (msg *UDP) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -177,7 +177,7 @@ func (msg *ICMPv4) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -195,7 +195,7 @@ func (msg *ICMPv6) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -213,7 +213,7 @@ func (msg *EventTypeFilter) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -231,7 +231,7 @@ func (msg *CiliumEventType) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -249,7 +249,7 @@ func (msg *FlowFilter) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -267,7 +267,7 @@ func (msg *DNS) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -285,7 +285,7 @@ func (msg *HTTPHeader) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -303,7 +303,7 @@ func (msg *HTTP) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -321,7 +321,7 @@ func (msg *Kafka) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -339,7 +339,7 @@ func (msg *Service) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -357,7 +357,7 @@ func (msg *LostEvent) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -375,7 +375,7 @@ func (msg *AgentEvent) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -393,7 +393,7 @@ func (msg *AgentEventUnknown) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -411,7 +411,7 @@ func (msg *TimeNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -429,7 +429,7 @@ func (msg *PolicyUpdateNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -447,7 +447,7 @@ func (msg *EndpointRegenNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -465,7 +465,7 @@ func (msg *EndpointUpdateNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -483,7 +483,7 @@ func (msg *IPCacheNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -501,7 +501,7 @@ func (msg *ServiceUpsertNotificationAddr) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -519,7 +519,7 @@ func (msg *ServiceUpsertNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -537,7 +537,7 @@ func (msg *ServiceDeleteNotification) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -555,7 +555,7 @@ func (msg *NetworkInterface) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
@@ -573,7 +573,7 @@ func (msg *DebugEvent) MarshalJSON() ([]byte, error) {
 	err := (&jsonpb.Marshaler{
 		EnumsAsInts:  false,
 		EmitDefaults: false,
-		OrigName:     true,
+		OrigName:     false,
 	}).Marshal(&buf, msg)
 	return buf.Bytes(), err
 }
