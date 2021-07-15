@@ -3,8 +3,9 @@ INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 TARGET=hubble
 VERSION=$(shell cat VERSION)
-GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD)
-GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD)
+# homebrew uses the github release's tarball of the source that does not contain the '.git' directory.
+GIT_BRANCH = $(shell which git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD 2> /dev/null)
+GIT_HASH = $(shell which git >/dev/null 2>&1 && git rev-parse --short HEAD 2> /dev/null)
 GO_TAGS ?=
 IMAGE_REPOSITORY ?= quay.io/cilium/hubble
 IMAGE_TAG ?= $(if $(findstring -dev,$(VERSION)),latest,v$(VERSION))
