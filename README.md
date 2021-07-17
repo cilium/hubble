@@ -111,7 +111,7 @@ Hubble enables zero-effort automatic discovery of the service dependency graph
 for Kubernetes Clusters at L3/L4 and even L7, allowing user-friendly
 visualization and filtering of those dataflows as a Service Map.
 
-See [Hubble Service Map Tutorial](tutorials/deploy-hubble-servicemap/README.md)
+See [Hubble Service Map Tutorial](https://docs.cilium.io/en/stable/gettingstarted/hubble/)
 for more examples.
 
 ![Service Map](Documentation/images/servicemap.png)
