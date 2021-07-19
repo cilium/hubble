@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.1] - 2021-07-19
+
+This patch release updates gRPC and Cilium dependencies to v1.37.1 and v1.10.3
+respectively. The Go version, which is used to create release binaries, is also
+updated to the latest v1.16.6. A minor, mostly cosmetic, bug is also fixed
+which allows building Hubble without any warning being displayed when the `.git`
+directory is not present.
+
+**Misc Changes:**
+
+* v0.8: bump cilium to v1.10.2, Go to v1.16.6 (#586, @rolinh)
+* v0.8: release: pin skx/github-action-publish-binaries to a specific sha (#547, @rolinh)
+* v0.8: update cilium to v1.10.3, backport git version fix (#591, @rolinh)
+* v0.8: Update Go to 1.16.4 (#549, @tklauser)
+* v0.8: Update Go to 1.16.5 (#565, @tklauser)
+* v0.8: vendor: bump github.com/cilium/cilium to v1.10.0 (#557, @tklauser)
+* v0.8: vendor: bump grpc to v1.37.1; honnef tools to v0.1.4 (#553, @rolinh)
+
 ## [v0.8.0] - 2021-05-03
 
 This release coincides with Cilium 1.10 and has support for new API additions
