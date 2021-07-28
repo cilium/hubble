@@ -104,6 +104,7 @@ more.`,
 			if fi.Mode()&os.ModeNamedPipe != 0 {
 				// read flows from stdin
 				client = newIOReaderObserver(os.Stdin)
+				logger.Logger.Debug("Reading flows from stdin")
 			} else {
 				// read flows from a hubble server
 				hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
