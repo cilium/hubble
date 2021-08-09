@@ -52,10 +52,7 @@ var (
 	}
 
 	formattingOpts struct {
-		jsonOutput    bool
-		compactOutput bool
-		dictOutput    bool
-		output        string
+		output string
 
 		timeFormat string
 
@@ -297,18 +294,6 @@ more.`,
 	// formatting flags only to `hubble observe`, but not sub-commands. Will be added to
 	// generic formatting flags below.
 	observeFormattingFlags := pflag.NewFlagSet("", pflag.ContinueOnError)
-	observeFormattingFlags.BoolVarP(
-		&formattingOpts.jsonOutput, "json", "j", false, "Deprecated. Use '--output json' instead.",
-	)
-	observeFormattingFlags.MarkDeprecated("json", "use '--output json' instead")
-	observeFormattingFlags.BoolVar(
-		&formattingOpts.compactOutput, "compact", false, "Deprecated. Use '--output compact' instead.",
-	)
-	observeFormattingFlags.MarkDeprecated("compact", "use '--output compact' instead")
-	observeFormattingFlags.BoolVar(
-		&formattingOpts.dictOutput, "dict", false, "Deprecated. Use '--output dict' instead.",
-	)
-	observeFormattingFlags.MarkDeprecated("dict", "use '--output dict' instead")
 	observeFormattingFlags.BoolVar(
 		&formattingOpts.numeric,
 		"numeric",
@@ -428,16 +413,6 @@ func handleArgs(ofilter *observeFilter, debug bool) (err error) {
 	// initialize the printer with any options that were passed in
 	var opts = []hubprinter.Option{
 		hubprinter.WithTimeFormat(hubtime.FormatNameToLayout(formattingOpts.timeFormat)),
-	}
-
-	if formattingOpts.output == "" { // support deprecated output flags if provided
-		if formattingOpts.jsonOutput {
-			formattingOpts.output = "json"
-		} else if formattingOpts.dictOutput {
-			formattingOpts.output = "dict"
-		} else if formattingOpts.compactOutput {
-			formattingOpts.output = "compact"
-		}
 	}
 
 	switch formattingOpts.output {
