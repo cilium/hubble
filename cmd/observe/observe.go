@@ -29,10 +29,7 @@ var (
 	}
 
 	formattingOpts struct {
-		jsonOutput    bool
-		compactOutput bool
-		dictOutput    bool
-		output        string
+		output string
 
 		timeFormat string
 
