@@ -33,14 +33,20 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 const (
 	filterSep = " "
 )
 
-var fileSinkPrefix string
-var maxCaptureLength uint32
+var (
+	fileSinkPrefix   string
+	maxCaptureLength uint32
+
+	packetLimit, bytesLimit uint64
+	timeLimit               time.Duration
+)
 
 // New creates a new record subcommand
 func New(vp *viper.Viper) *cobra.Command {
@@ -79,6 +85,10 @@ protocols are TCP, UDP and ANY.`,
 	recorderFlags := pflag.NewFlagSet("recorder", pflag.ContinueOnError)
 	recorderFlags.StringVar(&fileSinkPrefix, "file-prefix", "hubble", "File prefix of the resulting pcap file")
 	recorderFlags.Uint32Var(&maxCaptureLength, "max-capture-len", 0, "Sets the maximum capture length (zero for full capture)")
+
+	recorderFlags.Uint64Var(&packetLimit, "packet-limit", 0, "Sets a limit on how many packets to capture on each node")
+	recorderFlags.Uint64Var(&bytesLimit, "bytes-limit", 0, "Sets a limit on how many bytes to capture on each node")
+	recorderFlags.DurationVar(&timeLimit, "time-limit", 0, "Sets a limit on how long to capture on each node")
 
 	recordCmd.Flags().AddFlagSet(recorderFlags)
 	recordCmd.SetUsageTemplate(template.Usage(config.ServerFlags, recorderFlags))
@@ -168,6 +178,11 @@ func runRecord(ctx context.Context, conn *grpc.ClientConn, filters []*recorderpb
 				},
 				Include:          filters,
 				MaxCaptureLength: maxCaptureLength,
+				StopCondition: &recorderpb.StopCondition{
+					BytesCapturedCount:   bytesLimit,
+					PacketsCapturedCount: packetLimit,
+					TimeElapsed:          durationpb.New(timeLimit),
+				},
 			},
 		},
 	})
