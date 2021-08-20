@@ -14,7 +14,7 @@
 
 // Ensure build fails on versions of Go that are not supported by Hubble.
 // This build tag should be kept in sync with the version specified in go.mod.
-// +build go1.16
+// +build go1.17
 
 package main
 
