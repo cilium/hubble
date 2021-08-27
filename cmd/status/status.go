@@ -18,9 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
-	"time"
+	"io"
 
 	"github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
@@ -28,11 +26,17 @@ import (
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/cilium/hubble/pkg/defaults"
+	"github.com/cilium/hubble/pkg/printer"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
+
+var formattingOpts struct {
+	output string
+}
 
 // New status command.
 func New(vp *viper.Viper) *cobra.Command {
@@ -49,9 +53,30 @@ connectivity health check.`,
 				return err
 			}
 			defer hubbleConn.Close()
-			return runStatus(hubbleConn)
+			return runStatus(hubbleConn, cmd.OutOrStdout())
 		},
 	}
+
+	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
+	formattingFlags.StringVarP(
+		&formattingOpts.output, "output", "o", "compact",
+		`Specify the output format, one of:
+ compact:  Compact output
+ dict:     Status is shown as KEY:VALUE pair
+ json:     JSON encoding
+ table:    Tab-aligned columns
+`)
+	statusCmd.Flags().AddFlagSet(formattingFlags)
+
+	// advanced completion for flags
+	statusCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			"compact",
+			"dict",
+			"json",
+			"table",
+		}, cobra.ShellCompDirectiveDefault
+	})
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
@@ -60,13 +85,15 @@ connectivity health check.`,
 	return statusCmd
 }
 
-func runStatus(conn *grpc.ClientConn) error {
+func runStatus(conn *grpc.ClientConn, out io.Writer) error {
 	// get the standard GRPC health check to see if the server is up
 	healthy, status, err := getHC(conn)
 	if err != nil {
 		return fmt.Errorf("failed getting status: %v", err)
 	}
-	fmt.Printf("Healthcheck (via %s): %s\n", conn.Target(), status)
+	if formattingOpts.output == "compact" {
+		fmt.Fprintf(out, "Healthcheck (via %s): %s\n", conn.Target(), status)
+	}
 	if !healthy {
 		return errors.New("not healthy")
 	}
@@ -76,42 +103,27 @@ func runStatus(conn *grpc.ClientConn) error {
 	if err != nil {
 		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
-	flowsRatio := ""
-	if ss.MaxFlows > 0 {
-		flowsRatio = fmt.Sprintf(" (%.2f%%)", (float64(ss.NumFlows)/float64(ss.MaxFlows))*100)
-	}
-	fmt.Printf("Current/Max Flows: %v/%v%s\n", ss.NumFlows, ss.MaxFlows, flowsRatio)
 
-	flowsPerSec := "N/A"
-	if uptime := time.Duration(ss.UptimeNs).Seconds(); uptime > 0 {
-		flowsPerSec = fmt.Sprintf("%.2f", float64(ss.SeenFlows)/uptime)
+	var opts = []printer.Option{}
+	switch formattingOpts.output {
+	case "compact":
+		opts = append(opts, printer.Compact())
+	case "dict":
+		opts = append(opts, printer.Dict())
+	case "json", "JSON":
+		opts = append(opts, printer.JSON())
+	case "jsonpb":
+		opts = append(opts, printer.JSONPB())
+	case "tab", "table":
+		opts = append(opts, printer.Tab())
+	default:
+		return fmt.Errorf("invalid output format: %s", formattingOpts.output)
 	}
-	fmt.Printf("Flows/s: %s\n", flowsPerSec)
-
-	numConnected := ss.GetNumConnectedNodes()
-	numUnavailable := ss.GetNumUnavailableNodes()
-	if numConnected != nil {
-		total := ""
-		if numUnavailable != nil {
-			total = fmt.Sprintf("/%d", numUnavailable.Value+numConnected.Value)
-		}
-		fmt.Printf("Connected Nodes: %d%s\n", numConnected.Value, total)
+	p := printer.New(opts...)
+	if err := p.WriteServerStatusResponse(ss); err != nil {
+		return err
 	}
-	if numUnavailable != nil && numUnavailable.Value > 0 {
-		if unavailable := ss.GetUnavailableNodes(); unavailable != nil {
-			sort.Strings(unavailable) // it's nicer when displaying unavailable nodes list
-			if numUnavailable.Value > uint32(len(unavailable)) {
-				unavailable = append(unavailable, fmt.Sprintf("and %d more...", numUnavailable.Value-uint32(len(unavailable))))
-			}
-			fmt.Printf("Unavailable Nodes: %d\n  - %s\n",
-				numUnavailable.Value,
-				strings.Join(unavailable, "\n  - "),
-			)
-		} else {
-			fmt.Printf("Unavailable Nodes: %d\n", numUnavailable.Value)
-		}
-	}
-	return nil
+	return p.Close()
 }
 
 func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
