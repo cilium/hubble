@@ -263,7 +263,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 
 		if p.line != 0 {
 			// TODO: line length?
-			ew.write(dictSeparator)
+			ew.write(dictSeparator, newline)
 		}
 
 		// this is a little crude, but will do for now. should probably find the
