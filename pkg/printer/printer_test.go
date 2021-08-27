@@ -1090,3 +1090,157 @@ Jan  1 00:20:34.567   k8s1   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID
 		})
 	}
 }
+
+func TestPrinter_WriteServerStatusResponse(t *testing.T) {
+	buf := bytes.Buffer{}
+	ss := &observerpb.ServerStatusResponse{
+		NumFlows:  2031,
+		MaxFlows:  4095,
+		SeenFlows: 2348885,
+		UptimeNs:  301515181665,
+		Version:   "cilium v1.10.3+g4145278",
+	}
+	ssn := &observerpb.ServerStatusResponse{
+		NumFlows:            2771,
+		MaxFlows:            8190,
+		SeenFlows:           2771,
+		UptimeNs:            301515181665,
+		Version:             "hubble-relay v1.10.3+g4145278",
+		NumConnectedNodes:   &wrapperspb.UInt32Value{Value: 2},
+		NumUnavailableNodes: &wrapperspb.UInt32Value{Value: 0},
+	}
+	type args struct {
+		ss *observerpb.ServerStatusResponse
+	}
+	tests := []struct {
+		name     string
+		options  []Option
+		args     args
+		wantErr  bool
+		expected string
+	}{
+		{
+			name: "tabular",
+			options: []Option{
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ss},
+			wantErr: false,
+			expected: `
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME NS      NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2031        4095        2348885      301515181665   N/A                   N/A                     cilium v1.10.3+g4145278`,
+		}, {
+			name: "tabular-with-nodes",
+			options: []Option{
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ssn},
+			wantErr: false,
+			expected: `
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME NS      NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2771        8190        2771         301515181665   2                     0                       hubble-relay v1.10.3+g4145278`,
+		}, {
+			name: "compact",
+			options: []Option{
+				Compact(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ss},
+			wantErr: false,
+			expected: `
+Current/Max Flows: 2031/4095 (49.60%)
+Flows/s: 7790.27`,
+		}, {
+			name: "compact-with-nodes",
+			options: []Option{
+				Compact(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ssn},
+			wantErr: false,
+			expected: `
+Current/Max Flows: 2771/8190 (33.83%)
+Flows/s: 9.19
+Connected Nodes: 2/2`,
+		}, {
+			name: "json",
+			options: []Option{
+				JSON(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:     args{ss},
+			wantErr:  false,
+			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.10.3+g4145278"}`,
+		}, {
+			name: "json-with-nodes",
+			options: []Option{
+				JSON(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:     args{ssn},
+			wantErr:  false,
+			expected: `{"num_flows":"2771","max_flows":"8190","seen_flows":"2771","uptime_ns":"301515181665","num_connected_nodes":2,"num_unavailable_nodes":0,"version":"hubble-relay v1.10.3+g4145278"}`,
+		}, {
+			name: "jsonpb",
+			options: []Option{
+				JSONPB(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:     args{ss},
+			wantErr:  false,
+			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.10.3+g4145278"}`,
+		}, {
+			name: "dict",
+			options: []Option{
+				Dict(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ss},
+			wantErr: false,
+			expected: `
+          NUM FLOWS: 2031
+          MAX FLOWS: 4095
+         SEEN FLOWS: 2348885
+          UPTIME NS: 301515181665
+NUM CONNECTED NODES: N/A
+ NUM UNAVAIL. NODES: N/A
+            VERSION: cilium v1.10.3+g4145278`,
+		}, {
+			name: "dict-with-nodes",
+			options: []Option{
+				Dict(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{ssn},
+			wantErr: false,
+			expected: `
+          NUM FLOWS: 2771
+          MAX FLOWS: 8190
+         SEEN FLOWS: 2771
+          UPTIME NS: 301515181665
+NUM CONNECTED NODES: 2
+ NUM UNAVAIL. NODES: 0
+            VERSION: hubble-relay v1.10.3+g4145278`,
+		},
+	}
+	for _, tt := range tests {
+		buf.Reset()
+		t.Run(tt.name, func(t *testing.T) {
+			p := New(tt.options...)
+			if err := p.WriteServerStatusResponse(tt.args.ss); (err != nil) != tt.wantErr {
+				t.Errorf("WriteServerStatusResponse() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			require.NoError(t, p.Close())
+			require.Equal(t, strings.TrimSpace(tt.expected), strings.TrimSpace(buf.String()))
+		})
+	}
+}
