@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.16
 
 require (
-	github.com/cilium/cilium v1.10.3
+	github.com/cilium/cilium v1.10.4
 	github.com/fatih/color v1.12.0
 	github.com/google/go-cmp v0.5.6
 	github.com/gordonklaus/ineffassign v0.0.0-20210209182638-d0e41b2fc8ed

@@ -1,6 +1,6 @@
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/cilium/cilium v1.10.3
+# github.com/cilium/cilium v1.10.4
 ## explicit
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
@@ -292,7 +292,7 @@ honnef.co/go/tools/staticcheck
 honnef.co/go/tools/stylecheck
 honnef.co/go/tools/unused
 honnef.co/go/tools/unused/typemap
-# k8s.io/apimachinery v0.21.1
+# k8s.io/apimachinery v0.21.3
 k8s.io/apimachinery/pkg/util/errors
 k8s.io/apimachinery/pkg/util/sets
 k8s.io/apimachinery/pkg/util/validation
