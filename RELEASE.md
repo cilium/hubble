@@ -131,6 +131,20 @@ After `v$MAJOR.$MINOR.$PATCH` is released, the next commit should restore the
 `v$MAJOR.$MINOR` branch to the `v$MAJOR.$MINOR.{$PATCH+1}-dev` to separate
 unreleased hubble versions in a branch from releases.
 
+## Announce the release on Slack
+
+Post a release announcement message in the [Cilium Slack #hubble
+channel](https://cilium.herokuapp.com/).
+
+Example:
+
+    ￼ Hubble CLI v0.8.2 is released ￼
+      Release notes and binaries: https://github.com/cilium/hubble/releases/tag/v0.8.2
+      Notable changes:
+      - Change 1
+      - Change 2
+      - ...
+
 ## (OPTIONAL) Update `stable.txt` in the master branch
 
 Hubble's installation instruction in the Cilium documentation uses the version specified in
