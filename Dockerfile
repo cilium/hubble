@@ -12,7 +12,7 @@ RUN make clean && make hubble
 # thread[1].
 # [0]: https://bugs.busybox.net/show_bug.cgi?id=12541
 # [1]: https://github.com/gliderlabs/docker-alpine/issues/539
-FROM docker.io/library/alpine:3.14.0@sha256:1775bebec23e1f3ce486989bfc9ff3c4e951690df84aa9f926497d82f2ffca9d
+FROM docker.io/library/alpine:3.14.2@sha256:69704ef328d05a9f806b6b8502915e6a0a4faa4d72018dc42343f511490daf8a
 RUN apk add --no-cache bash curl jq
 COPY --from=builder /go/src/github.com/cilium/hubble/hubble /usr/bin
 CMD ["/usr/bin/hubble"]
