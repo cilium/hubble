@@ -6,6 +6,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.8.2] - 2021-09-10
+
+This patch release fixes a bug in the dict output where a newline was missing.
+It also removes long-deprecated `--json`, `--compact` and `--dict` flags (use
+the `--output` flag instead) that actually turned out to be broken at this
+point. A very visible addition is color support, a change that was backported
+from the `master` branch upon popular request.
+In addition, the Go version, which is used to create release binaries, is
+updated to the latest v1.16.8 and the Cilium dependency is updated to v1.10.4.
+
+**Minor Changes:**
+* Backport color output to v0.8 branch (#609, @michi-covalent)
+
+**Bugfixes:**
+* v0.8: printer: fix dict outout newline (#617, @rolinh)
+
+**Misc Changes:**
+* [v0.8] go.mod, vendor: bump cilium to v1.10.4 (#619, @tklauser)
+* v0.8: cmd/observe: remove depreacted formatting flags (json, compact, dict) (#606, @rolinh)
+* v0.8: Update Go to 1.16.7 (#605, @tklauser)
+* v0.8: update Go to v1.16.8, Alpine base image to 3.14.2 (#621, @rolinh)
+
 ## [v0.8.1] - 2021-07-19
 
 This patch release updates gRPC and Cilium dependencies to v1.37.1 and v1.10.3
