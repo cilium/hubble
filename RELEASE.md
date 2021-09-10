@@ -111,11 +111,11 @@ Once the release PR has been merged, the changelog in the master branch needs to
 be updated as well. Make sure to copy the generated release notes to the
 changelog in the master.
 
-## Update releases table in the readme file
+## Update the README.md
 
-The README file contains a section which lists all currently supported releases
-in a table. The version in this table needs to be updated to match the new
-release.
+Update the *Releases* section of the `README.md` to point to the latest GitHub
+release. This section lists all currently supported releases in a table. The
+version in this table needs to be updated to match the new release.
 
 ## Update the GitHub release notes
 
@@ -124,11 +124,6 @@ draft release, building artifacts and attaching them to the draft release.
 
 The release notes need to be manually added before manually publishing the
 release.
-
-## Update the README.md
-
-Update the *Releases* section of the `README.md` to point to the latest
-GitHub release.
 
 ## Update the `VERSION` file
 
