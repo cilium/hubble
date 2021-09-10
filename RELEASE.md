@@ -156,3 +156,13 @@ To update `stable.txt`, do:
     git push
 
 and then open a pull request against the master branch.
+
+## (OPTIONAL) Update the Homebrew formula
+
+The Homebrew formula for Hubble can be updated using the command:
+
+   brew bump-formula-pr --version=$MAJOR.$MINOR.$PATCH hubble
+
+This will automatically create a PR against https://github.com/Homebrew/homebrew-core
+bumping the version. This assumes a GitHub access token exported in
+`$HOMEBREW_GITHUB_API_TOKEN`, see `brew bump-formula-pr --help` for details.
