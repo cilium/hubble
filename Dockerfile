@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.16.7-alpine3.14@sha256:3e6a2def9a57f23344a75bd71d9cd79726f0fbaf4b75330be5669773df0e9d4c as builder
+FROM docker.io/library/golang:1.16.8-alpine3.14@sha256:4a4352b4af82d07bebf8bbfc0deede7ebf28904d5f41cfb34959ae1073ee3261 as builder
 WORKDIR /go/src/github.com/cilium/hubble
 RUN apk add --no-cache git make
 COPY . .
