@@ -8,7 +8,7 @@ linters:
     - goerr113
     - gofmt
     - goimports
-    - gosec 
+    - gosec
     - gosimple
     - govet
     - ineffassign
@@ -22,16 +22,18 @@ linters:
 
 linters-settings:
   gosimple:
-    go: "1.16"
-  govet: 
+    go: "1.17"
+  govet:
     enable-all: true
     disable:
       - fieldalignment
-      - shadow 
+      - shadow
   staticcheck:
-    go: "1.16"
+    go: "1.17"
+  stylecheck:
+    go: "1.17"
   unused:
-    go: "1.16"
+    go: "1.17"
 
 issues:
   # Default rules exclude Go doc comments check, which is rather unfortunate.
