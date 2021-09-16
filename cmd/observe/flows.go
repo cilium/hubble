@@ -47,6 +47,7 @@ var verdicts = []string{
 	flowpb.Verdict_FORWARDED.String(),
 	flowpb.Verdict_DROPPED.String(),
 	flowpb.Verdict_AUDIT.String(),
+	flowpb.Verdict_REDIRECTED.String(),
 	flowpb.Verdict_ERROR.String(),
 }
 
