@@ -203,12 +203,10 @@ func GetFlowType(f *pb.Flow) string {
 		return api.DropReason(uint8(f.GetEventType().GetSubType()))
 	case api.MessageTypePolicyVerdict:
 		switch f.GetVerdict() {
-		case pb.Verdict_FORWARDED:
+		case pb.Verdict_FORWARDED, pb.Verdict_AUDIT, pb.Verdict_REDIRECTED:
 			return api.PolicyMatchType(f.GetPolicyMatchType()).String()
 		case pb.Verdict_DROPPED:
 			return api.DropReason(uint8(f.GetDropReason()))
-		case pb.Verdict_AUDIT:
-			return "AUDIT"
 		case pb.Verdict_ERROR:
 			// ERROR should only happen for L7 events.
 		}
@@ -222,7 +220,7 @@ func GetFlowType(f *pb.Flow) string {
 func (p Printer) getVerdict(f *pb.Flow) string {
 	verdict := f.GetVerdict()
 	switch verdict {
-	case pb.Verdict_FORWARDED:
+	case pb.Verdict_FORWARDED, pb.Verdict_REDIRECTED:
 		return p.color.verdictForwarded(verdict.String())
 	case pb.Verdict_DROPPED, pb.Verdict_ERROR:
 		return p.color.verdictDropped(verdict.String())
