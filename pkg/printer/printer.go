@@ -207,6 +207,10 @@ func GetFlowType(f *pb.Flow) string {
 			return api.PolicyMatchType(f.GetPolicyMatchType()).String()
 		case pb.Verdict_DROPPED:
 			return api.DropReason(uint8(f.GetDropReason()))
+		case pb.Verdict_AUDIT:
+			return "AUDIT"
+		case pb.Verdict_ERROR:
+			// ERROR should only happen for L7 events.
 		}
 	case api.MessageTypeCapture:
 		return f.GetDebugCapturePoint().String()
