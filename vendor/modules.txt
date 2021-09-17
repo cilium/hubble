@@ -1,5 +1,5 @@
-# github.com/cilium/cilium v1.10.0-rc0.0.20210811091228-2d075ea34720
-## explicit; go 1.16
+# github.com/cilium/cilium v1.10.0-rc0.0.20210920080743-ccdb74b92768
+## explicit; go 1.17
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/observer
 github.com/cilium/cilium/api/v1/peer
