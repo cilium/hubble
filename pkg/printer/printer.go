@@ -771,9 +771,9 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 			"NUM CONNECTED NODES", tab,
 			"NUM UNAVAILABLE NODES", tab,
 			"VERSION", newline,
-			res.GetNumFlows(), tab,
-			res.GetMaxFlows(), tab,
-			res.GetSeenFlows(), tab,
+			uint64Grouping(res.GetNumFlows()), tab,
+			uint64Grouping(res.GetMaxFlows()), tab,
+			uint64Grouping(res.GetSeenFlows()), tab,
 			res.GetUptimeNs(), tab,
 			numConnectedNodes, tab,
 			numUnavailableNodes, tab,
@@ -785,9 +785,9 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 	case DictOutput:
 		ew := &errWriter{w: p.opts.w}
 		ew.write(
-			"          NUM FLOWS: ", res.GetNumFlows(), newline,
-			"          MAX FLOWS: ", res.GetMaxFlows(), newline,
-			"         SEEN FLOWS: ", res.GetSeenFlows(), newline,
+			"          NUM FLOWS: ", uint64Grouping(res.GetNumFlows()), newline,
+			"          MAX FLOWS: ", uint64Grouping(res.GetMaxFlows()), newline,
+			"         SEEN FLOWS: ", uint64Grouping(res.GetSeenFlows()), newline,
 			"          UPTIME NS: ", res.GetUptimeNs(), newline,
 			"NUM CONNECTED NODES: ", numConnectedNodes, newline,
 			" NUM UNAVAIL. NODES: ", numUnavailableNodes, newline,
@@ -802,7 +802,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 		if res.MaxFlows > 0 {
 			flowsRatio = fmt.Sprintf(" (%.2f%%)", (float64(res.NumFlows)/float64(res.MaxFlows))*100)
 		}
-		ew.writef("Current/Max Flows: %v/%v%s\n", res.NumFlows, res.MaxFlows, flowsRatio)
+		ew.writef("Current/Max Flows: %v/%v%s\n", uint64Grouping(res.NumFlows), uint64Grouping(res.MaxFlows), flowsRatio)
 
 		flowsPerSec := "N/A"
 		if uptime := time.Duration(res.UptimeNs).Seconds(); uptime > 0 {
