@@ -1128,8 +1128,8 @@ func TestPrinter_WriteServerStatusResponse(t *testing.T) {
 			args:    args{ss},
 			wantErr: false,
 			expected: `
-NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME NS      NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
-2,031       4,095       2,348,885    301515181665   N/A                   N/A                     cilium v1.10.3+g4145278`,
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2,031       4,095       2,348,885    5m1.515181665s   N/A                   N/A                     cilium v1.10.3+g4145278`,
 		}, {
 			name: "tabular-with-nodes",
 			options: []Option{
@@ -1139,8 +1139,8 @@ NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME NS      NUM CONNECTED NODES   NUM UN
 			args:    args{ssn},
 			wantErr: false,
 			expected: `
-NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME NS      NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
-2,771       8,190       2,771        301515181665   2                     0                       hubble-relay v1.10.3+g4145278`,
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2,771       8,190       2,771        5m1.515181665s   2                     0                       hubble-relay v1.10.3+g4145278`,
 		}, {
 			name: "compact",
 			options: []Option{
@@ -1209,7 +1209,7 @@ Connected Nodes: 2/2`,
           NUM FLOWS: 2,031
           MAX FLOWS: 4,095
          SEEN FLOWS: 2,348,885
-          UPTIME NS: 301515181665
+             UPTIME: 5m1.515181665s
 NUM CONNECTED NODES: N/A
  NUM UNAVAIL. NODES: N/A
             VERSION: cilium v1.10.3+g4145278`,
@@ -1226,7 +1226,7 @@ NUM CONNECTED NODES: N/A
           NUM FLOWS: 2,771
           MAX FLOWS: 8,190
          SEEN FLOWS: 2,771
-          UPTIME NS: 301515181665
+             UPTIME: 5m1.515181665s
 NUM CONNECTED NODES: 2
  NUM UNAVAIL. NODES: 0
             VERSION: hubble-relay v1.10.3+g4145278`,
