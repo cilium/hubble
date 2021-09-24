@@ -15,7 +15,9 @@
 package printer
 
 import (
+	"math"
 	"strconv"
+	"time"
 )
 
 // uint64Grouping formats n by grouping digits by 3, separated by a comma
@@ -37,4 +39,14 @@ func uint64Grouping(n uint64) string {
 			s[j] = ','
 		}
 	}
+}
+
+// formatDurationNS formats a duration expressed in nanosecond to a human
+// readable duration. For example, 100_000_000_000 is formatted as 1m40s.
+func formatDurationNS(ns uint64) string {
+	if ns > math.MaxInt64 {
+		// duration doesn't fit in a time.Duration (int64)
+		return strconv.FormatUint(ns, 10) + "ns"
+	}
+	return time.Duration(ns).String()
 }
