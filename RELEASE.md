@@ -175,7 +175,7 @@ and then open a pull request against the master branch.
 
 The Homebrew formula for Hubble can be updated using the command:
 
-   brew bump-formula-pr --version=$MAJOR.$MINOR.$PATCH hubble
+    brew bump-formula-pr --version=$MAJOR.$MINOR.$PATCH hubble
 
 This will automatically create a PR against https://github.com/Homebrew/homebrew-core
 bumping the version. This assumes a GitHub access token exported in
