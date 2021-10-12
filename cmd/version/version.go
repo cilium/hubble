@@ -37,7 +37,7 @@ func New() *cobra.Command {
 			case pkg.GitHash != "":
 				gitInfo = fmt.Sprintf("@%s", pkg.GitHash)
 			}
-			fmt.Printf("%s v%s%s compiled with %v on %v/%v\n", cmd.Root().Name(), pkg.Version, gitInfo, runtime.Version(), runtime.GOOS, runtime.GOARCH)
+			fmt.Printf("%s %s%s compiled with %v on %v/%v\n", cmd.Root().Name(), pkg.Version, gitInfo, runtime.Version(), runtime.GOOS, runtime.GOARCH)
 		},
 	}
 }
