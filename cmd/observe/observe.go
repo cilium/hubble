@@ -73,6 +73,7 @@ var verdicts = []string{
 	pb.Verdict_FORWARDED.String(),
 	pb.Verdict_DROPPED.String(),
 	pb.Verdict_AUDIT.String(),
+	pb.Verdict_REDIRECTED.String(),
 	pb.Verdict_ERROR.String(),
 }
 
