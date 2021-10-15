@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.16
 
 require (
-	github.com/cilium/cilium v1.10.4
+	github.com/cilium/cilium v1.10.5
 	github.com/fatih/color v1.12.0
 	github.com/google/go-cmp v0.5.6
 	github.com/gordonklaus/ineffassign v0.0.0-20210209182638-d0e41b2fc8ed
@@ -14,7 +14,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5
-	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 	google.golang.org/grpc v1.37.1
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
