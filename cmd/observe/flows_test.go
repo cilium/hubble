@@ -15,6 +15,9 @@
 package observe
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,12 +52,12 @@ func Test_getFlowsRequest(t *testing.T) {
 	selectorOpts.since = ""
 	selectorOpts.until = ""
 	filter := newFlowFilter()
-	req, err := getFlowsRequest(filter)
+	req, err := getFlowsRequest(filter, nil, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, &observer.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.since = "2021-03-23T00:00:00Z"
 	selectorOpts.until = "2021-03-24T00:00:00Z"
-	req, err = getFlowsRequest(filter)
+	req, err = getFlowsRequest(filter, nil, nil)
 	assert.NoError(t, err)
 	since, err := time.Parse(time.RFC3339, selectorOpts.since)
 	assert.NoError(t, err)
@@ -65,4 +68,37 @@ func Test_getFlowsRequest(t *testing.T) {
 		Since:  timestamppb.New(since),
 		Until:  timestamppb.New(until),
 	}, req)
+}
+
+func Test_getFlowsRequestWithRawFilters(t *testing.T) {
+	allowlist := []string{
+		`{"source_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}`,
+		`{"destination_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}`,
+	}
+	denylist := []string{
+		`{"source_label":["k8s:k8s-app=kube-dns"]}`,
+		`{"destination_label":["k8s:k8s-app=kube-dns"]}`,
+	}
+	req, err := getFlowsRequest(newFlowFilter(), allowlist, denylist)
+	assert.NoError(t, err)
+
+	// convert filters in the request back to JSON and check if it matches the original allowlist/denylist.
+	var b strings.Builder
+	err = json.NewEncoder(&b).Encode(req.Whitelist)
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(allowlist, ",")), b.String())
+	b.Reset()
+	err = json.NewEncoder(&b).Encode(req.Blacklist)
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(denylist, ",")), b.String())
+}
+
+func Test_getFlowsRequestWithInvalidRawFilters(t *testing.T) {
+	filters := []string{
+		`{"invalid":["filters"]}`,
+	}
+	_, err := getFlowsRequest(newFlowFilter(), filters, nil)
+	assert.Equal(t, `invalid --allowlist flag: failed to decode '{"invalid":["filters"]}': unknown field "invalid" in flow.FlowFilter`, err.Error())
+	_, err = getFlowsRequest(newFlowFilter(), nil, filters)
+	assert.Equal(t, `invalid --denylist flag: failed to decode '{"invalid":["filters"]}': unknown field "invalid" in flow.FlowFilter`, err.Error())
 }

@@ -197,6 +197,52 @@ Identifying pods which have received DNS response indicating failure:
     starwars/enterprise-5775b56c4b-thtwl:37800   starwars/deathstar-695d8f7ddc-lvj84:80(http)   Policy denied (L3)   TCP Flags: SYN
     starwars/enterprise-5775b56c4b-thtwl:37800   starwars/deathstar-695d8f7ddc-lvj84:80(http)   Policy denied (L3)   TCP Flags: SYN
 
+### Specifying Raw Flow Filters
+
+Hubble supports extensive set of filtering options that can be specified as a combination of
+allowlist and denylist. Hubble applies these filters as follows:
+
+    for each flow:
+      if flow does not match any of the allowlist filters:
+        continue
+      if flow matches any of the denylist filters:
+        continue
+      send flow to client
+
+You can pass these filters to `hubble observe` command as
+[JSON-encoded](https://developers.google.com/protocol-buffers/docs/proto3#json)
+[FlowFilters](https://github.com/cilium/cilium/blob/v1.10.5/api/v1/flow/flow.proto#L348). For
+example, to observe flows that match the following conditions:
+
+- Either the source or destination identity contains `k8s:io.kubernetes.pod.namespace=kube-system`
+  or `reserved:host` label, AND
+- Neither the source nor destination identity contains `k8s:k8s-app=kube-dns` label:
+
+      hubble observe \
+        --allowlist '{"source_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}' \
+        --allowlist '{"destination_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}' \
+        --denylist '{"source_label":["k8s:k8s-app=kube-dns"]}' \
+        --denylist '{"destination_label":["k8s:k8s-app=kube-dns"]}'
+
+Alternatively, you can also specify these flags as `HUBBLE_{ALLOWLIST,DENYLIST}` environment variables:
+
+    cat > allowlist.txt <<EOF
+    {"source_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}
+    {"destination_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}
+    EOF
+
+    cat > denylist.txt <<EOF
+    {"source_label":["k8s:k8s-app=kube-dns"]}
+    {"destination_label":["k8s:k8s-app=kube-dns"]}
+    EOF
+
+    HUBBLE_ALLOWLIST=$(cat allowlist.txt)
+    HUBBLE_DENYLIST=$(cat denylist.txt)
+    export HUBBLE_ALLOWLIST
+    export HUBBLE_DENYLIST
+
+    hubble observe
+
 # Community
 
 Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat

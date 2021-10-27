@@ -16,6 +16,7 @@ package observe
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -63,6 +64,11 @@ var flowEventTypes = []string{
 	monitorAPI.MessageTypeNamePolicyVerdict,
 }
 
+const (
+	allowlistFlag = "allowlist"
+	denylistFlag  = "denylist"
+)
+
 func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
 	observeCmd := &cobra.Command{
 		Example: `* Piping flows to hubble observe
@@ -90,7 +96,7 @@ more.`,
 			if err := handleFlowArgs(ofilter, debug); err != nil {
 				return err
 			}
-			req, err := getFlowsRequest(ofilter)
+			req, err := getFlowsRequest(ofilter, vp.GetStringSlice(allowlistFlag), vp.GetStringSlice(denylistFlag))
 			if err != nil {
 				return err
 			}
@@ -264,6 +270,13 @@ more.`,
 		"Show all flows terminating at an endpoint with the given security identity"))
 	observeCmd.Flags().AddFlagSet(filterFlags)
 
+	rawFilterFlags := pflag.NewFlagSet("raw-filters", pflag.ContinueOnError)
+	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
+	rawFilterFlags.StringArray(denylistFlag, []string{}, "Specify denylist as JSON encoded FlowFilters")
+	observeCmd.Flags().AddFlagSet(rawFilterFlags)
+	// bind these flags to viper so that they can be specified as environment variables.
+	vp.BindPFlags(rawFilterFlags)
+
 	// formatting flags only to `hubble observe`, but not sub-commands. Will be added to
 	// generic formatting flags below.
 	observeFormattingFlags := pflag.NewFlagSet("", pflag.ContinueOnError)
@@ -381,7 +394,7 @@ more.`,
 	)
 
 	formattingFlags.AddFlagSet(observeFormattingFlags)
-	observeCmd.SetUsageTemplate(template.Usage(selectorFlags, filterFlags, formattingFlags, config.ServerFlags, otherFlags))
+	observeCmd.SetUsageTemplate(template.Usage(selectorFlags, filterFlags, rawFilterFlags, formattingFlags, config.ServerFlags, otherFlags))
 
 	return observeCmd
 }
@@ -433,7 +446,25 @@ func handleFlowArgs(ofilter *flowFilter, debug bool) (err error) {
 	return nil
 }
 
-func getFlowsRequest(ofilter *flowFilter) (*observer.GetFlowsRequest, error) {
+func parseRawFilters(filters []string) ([]*flowpb.FlowFilter, error) {
+	var results []*flowpb.FlowFilter
+	for _, f := range filters {
+		dec := json.NewDecoder(strings.NewReader(f))
+		for {
+			var result flowpb.FlowFilter
+			if err := dec.Decode(&result); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return nil, fmt.Errorf("failed to decode '%v': %w", f, err)
+			}
+			results = append(results, &result)
+		}
+	}
+	return results, nil
+}
+
+func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string) (*observer.GetFlowsRequest, error) {
 	// convert selectorOpts.since into a param for GetFlows
 	var since, until *timestamppb.Timestamp
 	if selectorOpts.since != "" {
@@ -483,6 +514,19 @@ func getFlowsRequest(ofilter *flowFilter) (*observer.GetFlowsRequest, error) {
 	if ofilter.blacklist != nil {
 		bl = ofilter.blacklist.flowFilters()
 	}
+
+	// load filters from raw filter flags
+	al, err := parseRawFilters(allowlist)
+	if err != nil {
+		return nil, fmt.Errorf("invalid --allowlist flag: %w", err)
+
+	}
+	wl = append(wl, al...)
+	dl, err := parseRawFilters(denylist)
+	if err != nil {
+		return nil, fmt.Errorf("invalid --denylist flag: %w", err)
+	}
+	bl = append(bl, dl...)
 
 	req := &observer.GetFlowsRequest{
 		Number:    selectorOpts.last,
