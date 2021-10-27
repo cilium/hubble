@@ -42,6 +42,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gopkg.in/yaml.v2"
 )
 
 var verdicts = []string{
@@ -68,6 +69,42 @@ const (
 	allowlistFlag = "allowlist"
 	denylistFlag  = "denylist"
 )
+
+// getFlowsFilters struct is only used for printing allowlist/denylist filters as YAML.
+type getFlowsFilters struct {
+	Allowlist []string `yaml:"allowlist,omitempty"`
+	Denylist  []string `yaml:"denylist,omitempty"`
+}
+
+// getFlowFiltersYAML returns allowlist/denylist filters as a YAML string. This YAML can then be
+// passed to hubble observe command via `--config` flag.
+func getFlowFiltersYAML(req *observer.GetFlowsRequest) (string, error) {
+	var allowlist, denylist []string
+	for _, filter := range req.Whitelist {
+		filterJSON, err := json.Marshal(filter)
+		if err != nil {
+			return "", err
+		}
+		allowlist = append(allowlist, string(filterJSON))
+
+	}
+	for _, filter := range req.Blacklist {
+		filterJSON, err := json.Marshal(filter)
+		if err != nil {
+			return "", err
+		}
+		denylist = append(denylist, string(filterJSON))
+	}
+	filters := getFlowsFilters{
+		Allowlist: allowlist,
+		Denylist:  denylist,
+	}
+	out, err := yaml.Marshal(filters)
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
 
 func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
 	observeCmd := &cobra.Command{
@@ -99,6 +136,14 @@ more.`,
 			req, err := getFlowsRequest(ofilter, vp.GetStringSlice(allowlistFlag), vp.GetStringSlice(denylistFlag))
 			if err != nil {
 				return err
+			}
+			if otherOpts.printRawFilters {
+				filterYAML, err := getFlowFiltersYAML(req)
+				if err != nil {
+					return err
+				}
+				fmt.Print(filterYAML)
+				return nil
 			}
 
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
@@ -326,8 +371,12 @@ more.`,
 
 	// other flags
 	otherFlags := pflag.NewFlagSet("other", pflag.ContinueOnError)
-	otherFlags.BoolVarP(
-		&otherOpts.ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
+	otherFlags.BoolVarP(&otherOpts.ignoreStderr,
+		"silent-errors", "s", false,
+		"Silently ignores errors and warnings")
+	otherFlags.BoolVar(&otherOpts.printRawFilters,
+		"print-raw-filters", false,
+		"Print allowlist/denylist filters and exit without sending the request to Hubble server")
 	observeCmd.PersistentFlags().AddFlagSet(otherFlags)
 
 	// advanced completion for flags

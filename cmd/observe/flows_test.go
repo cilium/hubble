@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	flowpb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/pkg/defaults"
@@ -101,4 +102,19 @@ func Test_getFlowsRequestWithInvalidRawFilters(t *testing.T) {
 	assert.Equal(t, `invalid --allowlist flag: failed to decode '{"invalid":["filters"]}': unknown field "invalid" in flow.FlowFilter`, err.Error())
 	_, err = getFlowsRequest(newFlowFilter(), nil, filters)
 	assert.Equal(t, `invalid --denylist flag: failed to decode '{"invalid":["filters"]}': unknown field "invalid" in flow.FlowFilter`, err.Error())
+}
+
+func Test_getFlowFiltersYAML(t *testing.T) {
+	req := observer.GetFlowsRequest{
+		Whitelist: []*flowpb.FlowFilter{{SourceIp: []string{"1.2.3.4/16"}}},
+		Blacklist: []*flowpb.FlowFilter{{SourcePort: []string{"80"}}},
+	}
+	out, err := getFlowFiltersYAML(&req)
+	expected := `allowlist:
+- '{"source_ip":["1.2.3.4/16"]}'
+denylist:
+- '{"source_port":["80"]}'
+`
+	assert.NoError(t, err)
+	assert.Equal(t, expected, out)
 }

@@ -243,6 +243,29 @@ Alternatively, you can also specify these flags as `HUBBLE_{ALLOWLIST,DENYLIST}`
 
     hubble observe
 
+Note that `--allowlist` and `--denylist` filters get included in the request **in addition to**
+regular flow filters like `--label` or `--namespace`. Use `--print-raw-filters` flag to verify
+the exact filters that the Hubble CLI generates. For example:
+
+    % hubble observe --print-raw-filters \
+        -t drop \
+        -n kube-system \
+        --not --label "k8s:k8s-app=kube-dns" \
+        --allowlist '{"source_label":["k8s:k8s-app=my-app"]}'
+    allowlist:
+    - '{"source_pod":["kube-system/"],"event_type":[{"type":1}]}'
+    - '{"destination_pod":["kube-system/"],"event_type":[{"type":1}]}'
+    - '{"source_label":["k8s:k8s-app=my-app"]}'
+    denylist:
+    - '{"source_label":["k8s:k8s-app=kube-dns"]}'
+    - '{"destination_label":["k8s:k8s-app=kube-dns"]}'
+
+The output YAML can be saved to a file and passed to `hubble observe` command with `--config`
+flag. For example:
+
+    % hubble observe --print-raw-filters --allowlist '{"source_label":["k8s:k8s-app=my-app"]}' > filters.yaml
+    % hubble observe --config ./filters.yaml
+
 # Community
 
 Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat
