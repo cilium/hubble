@@ -41,6 +41,7 @@ var (
 
 	otherOpts struct {
 		ignoreStderr bool
+		dryRun       bool
 	}
 
 	printer *hubprinter.Printer

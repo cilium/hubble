@@ -16,6 +16,7 @@ package observe
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -93,6 +94,14 @@ more.`,
 			req, err := getFlowsRequest(ofilter)
 			if err != nil {
 				return err
+			}
+			if otherOpts.dryRun {
+				output, err := json.MarshalIndent(req, "", "  ")
+				if err != nil {
+					return err
+				}
+				fmt.Print(string(output))
+				return nil
 			}
 
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
@@ -315,6 +324,8 @@ more.`,
 	otherFlags := pflag.NewFlagSet("other", pflag.ContinueOnError)
 	otherFlags.BoolVarP(
 		&otherOpts.ignoreStderr, "silent-errors", "s", false, "Silently ignores errors and warnings")
+	otherFlags.BoolVar(
+		&otherOpts.dryRun, "dry-run", false, "Print GetFlowsRequest and exit without sending the request to Hubble server")
 	observeCmd.PersistentFlags().AddFlagSet(otherFlags)
 
 	// advanced completion for flags
