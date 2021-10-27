@@ -40,7 +40,8 @@ var (
 	}
 
 	otherOpts struct {
-		ignoreStderr bool
+		ignoreStderr    bool
+		printRawFilters bool
 	}
 
 	printer *hubprinter.Printer
