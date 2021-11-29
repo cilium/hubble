@@ -4,7 +4,6 @@
 package labels
 
 import (
-	"bytes"
 	"crypto/sha512"
 	"encoding/json"
 	"fmt"
@@ -38,6 +37,11 @@ const (
 	// received any labels yet.
 	IDNameInit = "init"
 
+	// IDNameKubeAPIServer is the label used to identify the kube-apiserver. It
+	// is part of the reserved identity 7 and it is also used in conjunction
+	// with IDNameHost if the kube-apiserver is running on the local host.
+	IDNameKubeAPIServer = "kube-apiserver"
+
 	// IDNameNone is the label used to identify no endpoint or other L3 entity.
 	// It will never be assigned and this "label" is here for consistency with
 	// other Entities.
@@ -57,6 +61,16 @@ var (
 
 	// LabelHost is the label used for the host endpoint.
 	LabelHost = Labels{IDNameHost: NewLabel(IDNameHost, "", LabelSourceReserved)}
+
+	// LabelWorld is the label used for world.
+	LabelWorld = Labels{IDNameWorld: NewLabel(IDNameWorld, "", LabelSourceReserved)}
+
+	// LabelRemoteNode is the label used for remote nodes.
+	LabelRemoteNode = Labels{IDNameRemoteNode: NewLabel(IDNameRemoteNode, "", LabelSourceReserved)}
+
+	// LabelKubeAPIServer is the label used for the kube-apiserver. See comment
+	// on IDNameKubeAPIServer.
+	LabelKubeAPIServer = Labels{IDNameKubeAPIServer: NewLabel(IDNameKubeAPIServer, "", LabelSourceReserved)}
 )
 
 const (
@@ -253,10 +267,8 @@ func (l *Label) IsValid() bool {
 
 // UnmarshalJSON TODO create better explanation about unmarshall with examples
 func (l *Label) UnmarshalJSON(data []byte) error {
-	decoder := json.NewDecoder(bytes.NewReader(data))
-
 	if l == nil {
-		return fmt.Errorf("cannot unmarhshal to nil pointer")
+		return fmt.Errorf("cannot unmarshal to nil pointer")
 	}
 
 	if len(data) == 0 {
@@ -269,7 +281,7 @@ func (l *Label) UnmarshalJSON(data []byte) error {
 		Value  string `json:"value,omitempty"`
 	}
 
-	err := decoder.Decode(&aux)
+	err := json.Unmarshal(data, &aux)
 	if err != nil {
 		// If parsing of the full representation failed then try the short
 		// form in the format:
@@ -277,8 +289,7 @@ func (l *Label) UnmarshalJSON(data []byte) error {
 		// [SOURCE:]KEY[=VALUE]
 		var aux string
 
-		decoder = json.NewDecoder(bytes.NewReader(data))
-		if err := decoder.Decode(&aux); err != nil {
+		if err := json.Unmarshal(data, &aux); err != nil {
 			return fmt.Errorf("decode of Label as string failed: %+v", err)
 		}
 
@@ -340,7 +351,7 @@ func GetExtendedKeyFrom(str string) string {
 // fmt.Printf("%+v\n", l)
 //   map[string]Label{"foo":Label{Key:"foo", Value:"bar", Source:"cilium"}}
 func Map2Labels(m map[string]string, source string) Labels {
-	o := Labels{}
+	o := make(Labels, len(m))
 	for k, v := range m {
 		l := NewLabel(k, v, source)
 		o[l.Key] = l
@@ -350,7 +361,7 @@ func Map2Labels(m map[string]string, source string) Labels {
 
 // StringMap converts Labels into map[string]string
 func (l Labels) StringMap() map[string]string {
-	o := map[string]string{}
+	o := make(map[string]string, len(l))
 	for _, v := range l {
 		o[v.Source+":"+v.Key] = v.Value
 	}
@@ -359,7 +370,7 @@ func (l Labels) StringMap() map[string]string {
 
 // StringMap converts Labels into map[string]string
 func (l Labels) K8sStringMap() map[string]string {
-	o := map[string]string{}
+	o := make(map[string]string, len(l))
 	for _, v := range l {
 		if v.Source == LabelSourceK8s || v.Source == LabelSourceAny || v.Source == LabelSourceUnspec {
 			o[v.Key] = v.Value
@@ -419,6 +430,18 @@ func (l Labels) MergeLabels(from Labels) {
 	for k, v := range from {
 		l[k] = v
 	}
+}
+
+// Remove is similar to MergeLabels, but returns a new Labels object with the
+// specified Labels removed. The received Labels is not modified.
+func (l Labels) Remove(from Labels) Labels {
+	result := make(Labels, len(l))
+	for k, v := range l {
+		if _, exists := from[k]; !exists {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 // SHA256Sum calculates l' internal SHA256Sum. For a particular set of labels is
@@ -500,6 +523,16 @@ func (l Labels) FindReserved() Labels {
 func (l Labels) IsReserved() bool {
 	for _, lbl := range l {
 		if lbl.Source == LabelSourceReserved {
+			return true
+		}
+	}
+	return false
+}
+
+// Has returns true if l contains the given label.
+func (l Labels) Has(label Label) bool {
+	for _, lbl := range l {
+		if lbl.matches(&label) {
 			return true
 		}
 	}
