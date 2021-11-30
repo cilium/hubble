@@ -6,6 +6,93 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.9.0] - 2021-11-30
+
+Hubble v0.9.0 coincides with Cilium v1.11. It brings many improvements to the
+CLI: Colored output (#551), improved readability and alternative output formats
+in `hubble status` (#629, #614), and the ability to specify custom filters via
+the newly introduced `--allowlist` and `--denylist` flags (#643). Other changes
+include automatic stop conditions for `hubble record` (#607), omit displaying
+old flows in follow mode by default (#573) and client binary support for
+Windows ARM64 (#618).
+
+**Minor Changes:**
+* build release binaries for Windows ARM64 (#618, @rolinh)
+* cmd/observe: add color support (#551, @rolinh)
+* cmd/observe: do not set `--last` to 20 by default in follow mode (#573, @rolinh)
+* cmd/record: Add stop condition flags (#607, @gandro)
+* cmd/status: add support for multiple output formats (#614, @rolinh)
+* observe: Add --allowlist / --denylist flags (#643, @michi-covalent)
+* printer: group digits by 3 for flow counters and make uptime human-readable (#629, @rolinh)
+* Update cobra to v1.2.1 and use built-in completion command (#582, @rolinh)
+
+**Bugfixes:**
+* printer: Add missing verdicts (#626, @pchaigno)
+* printer: fix dict outout newline (#615, @rolinh)
+
+**CI Changes:**
+* .github: Cancel outdated PR and push workflows (#555, @pchaigno)
+* Add CODEOWNERS (#576, @gandro)
+* ci: bump golangci-lint to v1.42.0 (#611, @tklauser)
+* CODEOWNERS: assign GH actions to github-sec team (#577, @tklauser)
+
+**Misc Changes:**
+* .github/workflows: move Go module vendoring check to build checks (#563, @tklauser)
+* .github: Rename maintainer's little helper's config file (#569, @pchaigno)
+* build(deps): bump actions/checkout from 2 to 2.3.5 (#640, @dependabot[bot])
+* build(deps): bump actions/checkout from 2.3.5 to 2.4.0 (#648, @dependabot[bot])
+* build(deps): bump actions/setup-go from 2.1.3 to 2.1.4 (#616, @dependabot[bot])
+* build(deps): bump github.com/fatih/color from 1.10.0 to 1.12.0 (#558, @dependabot[bot])
+* build(deps): bump github.com/fatih/color from 1.12.0 to 1.13.0 (#633, @dependabot[bot])
+* build(deps): bump github.com/google/go-cmp from 0.5.5 to 0.5.6 (#561, @dependabot[bot])
+* build(deps): bump github.com/spf13/cast from 1.3.1 to 1.4.0 (#600, @dependabot[bot])
+* build(deps): bump github.com/spf13/cast from 1.4.0 to 1.4.1 (#613, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.8.0 to 1.8.1 (#579, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.8.1 to 1.9.0 (#628, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.38.0 to 1.39.0 (#584, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.39.0 to 1.39.1 (#608, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.39.1 to 1.40.0 (#610, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.40.0 to 1.41.0 (#634, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.41.0 to 1.42.0 (#649, @dependabot[bot])
+* build(deps): bump google.golang.org/protobuf from 1.26.0 to 1.27.1 (#583, @dependabot[bot])
+* build(deps): bump skx/github-action-publish-binaries from c881a3f8ffb80b684f367660178d38ceabc065c2 to 2.0 (#632, @dependabot[bot])
+* ci: bump Go to 1.17 for golangci-lint (#625, @kaworu)
+* ci: enable checks for missing Go documentation (#581, @rolinh)
+* ci: fix the go vendoring check (#575, @kaworu)
+* cmd/observe: move flows specific code to flows*.go files (#578, @tklauser)
+* cmd/observe: remove depreacted formatting flags (json, compact, dict) (#603, @rolinh)
+* cmd/observe: rename flow-related functions, types and import aliases (#574, @tklauser)
+* CODEOWNERS: assign Go module vendoring to @cilium/vendor (#580, @tklauser)
+* docker: add note about bogus busybox's nslookup implementation (#587, @rolinh)
+* Fix broken link (#593, @sharjeelaziz)
+* git commands in the Makefile return the empty string if they fail. (#589, @zhiyanfoo)
+* github: Add "Image Release Build" workflow (#627, @gandro)
+* Log a debug message when reading from stdin (#598, @michi-covalent)
+* Makefile: Introduce GO_BUILD variable (#560, @gandro)
+* pkg/printer: disable color output in tests (#562, @tklauser)
+* Prepare for 0.9 development cycle (#545, @gandro)
+* readme: clarify that only the latest version is maintained/supported (#568, @rolinh)
+* RELEASE.md: document Homebrew formular update as optional step (#624, @tklauser)
+* RELEASE.md: fix brew command formatting (#630, @tklauser)
+* release: pin skx/github-action-publish-binaries to a specific sha (#546, @rolinh)
+* Small test cleanups (#571, @tklauser)
+* Update doc and stable.txt for v0.8.2 release (#623, @rolinh)
+* Update Go to 1.16.4 (#548, @tklauser)
+* Update Go to 1.16.5 (#564, @tklauser)
+* Update Go to 1.16.7 (#604, @tklauser)
+* Update Go to 1.17 (#612, @tklauser)
+* Update Go to 1.17.2 (#635, @tklauser)
+* update Go to v1.16.6, alpine to 3.14 (#585, @rolinh)
+* update Go to v1.17.1 (#620, @rolinh)
+* Update Go to v1.17.3, golangci-lint to v1.43.0 (#646, @rolinh)
+* Update readme, changelog and stable.txt for v0.8.1 release (#595, @rolinh)
+* Use golangci-lint for static checks (#559, @rolinh)
+* vendor: bump github.com/cilium/cilium to latest master (#556, @tklauser)
+* vendor: Bump github.com/cilium/cilium to v1.11.0-rc3 (#650, @gandro)
+* vendor: bump grpc to v1.37.1; honnef tools to v0.1.4 (#552, @rolinh)
+* vendor: bump viper to v1.8.0 and grpc to v1.38.0 (#572, @rolinh)
+* version: Drop the "v" prefix (#638, @michi-covalent)
+
 ## [v0.8.2] - 2021-09-10
 
 This patch release fixes a bug in the dict output where a newline was missing.
