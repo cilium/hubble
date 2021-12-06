@@ -99,9 +99,9 @@ func Test_getFlowsRequestWithInvalidRawFilters(t *testing.T) {
 		`{"invalid":["filters"]}`,
 	}
 	_, err := getFlowsRequest(newFlowFilter(), filters, nil)
-	assert.Equal(t, `invalid --allowlist flag: failed to decode '{"invalid":["filters"]}': proto:`+"\u00a0"+`(line 1:2): unknown field "invalid"`, err.Error())
+	assert.Contains(t, err.Error(), `invalid --allowlist flag: failed to decode '{"invalid":["filters"]}': `)
 	_, err = getFlowsRequest(newFlowFilter(), nil, filters)
-	assert.Equal(t, `invalid --denylist flag: failed to decode '{"invalid":["filters"]}': proto:`+"\u00a0"+`(line 1:2): unknown field "invalid"`, err.Error())
+	assert.Contains(t, err.Error(), `invalid --denylist flag: failed to decode '{"invalid":["filters"]}': `)
 }
 
 func Test_getFlowFiltersYAML(t *testing.T) {
