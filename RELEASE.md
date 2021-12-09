@@ -33,7 +33,7 @@ If `.0` patch version is being created, a new `major.minor` branch has to be
 made first. That branch will serve for tagging all releases, as well as
 pointing to the latest patch release.
 
-    git checkout -b v$MAJOR.$MINOR $RELEASE_HASH
+    git switch -c v$MAJOR.$MINOR $RELEASE_HASH
 
 NOTE: Do not directly commit to this branch. Follow the process and open a Pull
 Request from the prep branch.
@@ -43,7 +43,7 @@ Request from the prep branch.
 This branch will be used to prepare all the necessary things to get ready for
 release.
 
-    git checkout -b v$MAJOR.$MINOR.$PATCH-prep
+    git switch -c v$MAJOR.$MINOR.$PATCH-prep
 
 ## Prepare the release notes
 
@@ -163,7 +163,7 @@ whether to update `stable.txt`. Let's say `stable.txt` is currently pointing to 
 
 To update `stable.txt`, do:
 
-    git checkout -b update-stable-txt master
+    git switch -c update-stable-txt master
     echo v$MAJOR.$MINOR.$PATCH > stable.txt
     git add stable.txt
     git commit -as -m "Point stable.txt to $MAJOR.$MINOR.$PATCH"
