@@ -29,7 +29,7 @@ example, they will look as follows:
 
 ## Create release branch
 
-If `.0` patch version is being created, a new `major.minor` branch has to be
+If a `.0` patch version is being created, a new `major.minor` branch has to be
 made first. That branch will serve for tagging all releases, as well as
 pointing to the latest patch release.
 
@@ -38,7 +38,7 @@ pointing to the latest patch release.
 NOTE: Do not directly commit to this branch. Follow the process and open a Pull
 Request from the prep branch.
 
-## Create release prep branch
+## Create a release prep branch
 
 This branch will be used to prepare all the necessary things to get ready for
 release.
