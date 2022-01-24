@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/cilium/cilium v1.11.1
 	github.com/fatih/color v1.13.0
-	github.com/google/go-cmp v0.5.6
+	github.com/google/go-cmp v0.5.7
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.3.0
