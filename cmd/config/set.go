@@ -18,6 +18,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -124,6 +125,13 @@ func newFileOnlyViper(configPath string) (*viper.Viper, error) {
 	vp.SetConfigName(filename)
 	vp.SetConfigType(typ)
 	vp.AddConfigPath(dir)
+
+	// Ensure that the configuration directory exists as viper does not create
+	// the directory fo the configuration file if it doesn't already exist.
+	// (note: MkdirAll does nothing if it exists already)
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return nil, fmt.Errorf("configuration directory does not exist and cannot be created: %w", err)
+	}
 
 	if err := vp.ReadInConfig(); err != nil {
 		// it's OK so long as the failure is ConfigFileNotFound
