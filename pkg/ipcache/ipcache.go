@@ -21,7 +21,6 @@ import (
 
 	"github.com/cilium/cilium/api/v1/models"
 	"github.com/cilium/cilium/pkg/identity"
-	"github.com/cilium/cilium/pkg/source"
 )
 
 // IPIdentity contains the data associated with an IP address
@@ -160,7 +159,7 @@ func (ipc *IPCache) InitializeFrom(entries []*models.IPListEntry) error {
 		}
 
 		var ns, pod string
-		if e.Metadata != nil && e.Metadata.Source == string(source.Kubernetes) {
+		if e.Metadata != nil {
 			ns = e.Metadata.Namespace
 			pod = e.Metadata.Name
 		}

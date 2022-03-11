@@ -480,7 +480,7 @@ func TestIPCache_InitializeFrom(t *testing.T) {
 						Metadata: &models.IPListEntryMetadata{
 							Source:    "other",
 							Name:      "whoknows",
-							Namespace: "none",
+							Namespace: "any-source-is-ok",
 						},
 					},
 				},
@@ -503,6 +503,8 @@ func TestIPCache_InitializeFrom(t *testing.T) {
 						CIDR:       cidr3333,
 						Identity:   300,
 						EncryptKey: 12,
+						Namespace:  "any-source-is-ok",
+						PodName:    "whoknows",
 					},
 				},
 			},
