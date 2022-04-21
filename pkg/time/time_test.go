@@ -43,22 +43,44 @@ func TestFromString(t *testing.T) {
 			input:    "2019-06-30T18:00:00Z",
 			expected: "2019-06-30T18:00:00Z",
 		},
+		{
+			input:    "2019-06-30",
+			expected: "2019-06-30T00:00:00Z",
+		},
+		{
+			input:    "2019-06-30T18Z",
+			expected: "2019-06-30T18:00:00Z",
+		},
+		{
+			input:    "2019-06-30T18:45Z",
+			expected: "2019-06-30T18:45:00Z",
+		},
+		{
+			input:    "2019-06-30T18+02:00",
+			expected: "2019-06-30T16:00:00Z",
+		},
+		{
+			input:    "2019-06-30T18:45+02:00",
+			expected: "2019-06-30T16:45:00Z",
+		},
 	}
 
 	for _, tt := range tests {
-		got, err := FromString(tt.input)
-		if err != nil {
-			t.Errorf("failed to parse %s", tt.input)
-		}
+		t.Run(tt.input, func(t *testing.T) {
+			got, err := FromString(tt.input)
+			if err != nil {
+				t.Errorf("failed to parse %s", tt.input)
+			}
 
-		expected, err := FromString(tt.expected)
-		if err != nil {
-			t.Errorf("failed to parse %s", tt.expected)
-		}
+			expected, err := FromString(tt.expected)
+			if err != nil {
+				t.Errorf("failed to parse %s", tt.expected)
+			}
 
-		if !got.Equal(expected) {
-			t.Errorf("%s should equal %s", got, expected)
-		}
+			if !got.Equal(expected) {
+				t.Errorf("%s should equal %s", got, expected)
+			}
+		})
 	}
 }
 

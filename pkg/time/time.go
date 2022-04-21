@@ -21,6 +21,15 @@ import (
 )
 
 const (
+	// YearMonthDay is a time format similar to RFC3339 with day granularity
+	// instead of second.
+	YearMonthDay = "2006-01-02"
+	// YearMonthDayHour is a time format similar to RFC3339 with hour
+	// granularity instead of second.
+	YearMonthDayHour = "2006-01-02T15Z07:00"
+	// YearMonthDayHourMinute is a time format similar to RFC3339 with minute
+	// granularity instead of second.
+	YearMonthDayHourMinute = "2006-01-02T15:04Z07:00"
 	// RFC3339Milli is a time format layout for use in time.Format and
 	// time.Parse. It follows the RFC3339 format with millisecond precision.
 	RFC3339Milli = "2006-01-02T15:04:05.999Z07:00"
@@ -38,6 +47,9 @@ var (
 // layouts is a set of supported time format layouts. Format that only apply to
 // local times should not be added to this list.
 var layouts = []string{
+	YearMonthDay,
+	YearMonthDayHour,
+	YearMonthDayHourMinute,
 	time.RFC3339,
 	time.RFC3339Nano,
 	RFC3339Milli,
@@ -68,6 +80,9 @@ func FromString(input string) (time.Time, error) {
 
 // FormatNames are the valid time format names accepted by this package.
 var FormatNames = []string{
+	"YearMonthDay",
+	"YearMonthDayHour",
+	"YearMonthDayHourMinute",
 	"StampMilli",
 	"RFC3339",
 	"RFC3339Milli",
@@ -79,6 +94,12 @@ var FormatNames = []string{
 // FormatNameToLayout returns the time format layout for the time format name.
 func FormatNameToLayout(name string) string {
 	switch strings.ToLower(name) {
+	case "yearmonthday":
+		return YearMonthDay
+	case "yearmonthdayhour":
+		return YearMonthDayHour
+	case "yearmonthdayhourminute":
+		return YearMonthDayHourMinute
 	case "rfc3339":
 		return time.RFC3339
 	case "rfc3339milli":
