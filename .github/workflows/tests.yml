@@ -22,7 +22,7 @@ jobs:
     - uses: actions/checkout@dcd71f646680f2efd8db4afa5ad64fdcba30e748
     - uses: actions/setup-go@v3
       with:
-        go-version: '1.18.0'
+        go-version: '1.18.1'
     - name: Run static checks
       uses: golangci/golangci-lint-action@v3.1.0
       with:
