@@ -185,9 +185,55 @@ more.`,
 	selectorFlags := pflag.NewFlagSet("selectors", pflag.ContinueOnError)
 	selectorFlags.BoolVar(&selectorOpts.all, "all", false, "Get all flows stored in Hubble's buffer")
 	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
-	selectorFlags.StringVar(&selectorOpts.since, "since", "", "Filter flows since a specific date (relative or RFC3339)")
-	selectorFlags.StringVar(&selectorOpts.until, "until", "", "Filter flows until a specific date (relative or RFC3339)")
 	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
+	selectorFlags.StringVar(&selectorOpts.since,
+		"since", "",
+		fmt.Sprintf(`Filter flows since a specific date. The format is relative (e.g. 3s, 4m, 1h43,, ...) or one of:
+  StampMilli:             %s
+  YearMonthDay:           %s
+  YearMonthDayHour:       %s
+  YearMonthDayHourMinute: %s
+  RFC3339:                %s
+  RFC3339Milli:           %s
+  RFC3339Micro:           %s
+  RFC3339Nano:            %s
+  RFC1123Z:               %s
+ `,
+			time.StampMilli,
+			hubtime.YearMonthDay,
+			hubtime.YearMonthDayHour,
+			hubtime.YearMonthDayHourMinute,
+			time.RFC3339,
+			hubtime.RFC3339Milli,
+			hubtime.RFC3339Micro,
+			time.RFC3339Nano,
+			time.RFC1123Z,
+		),
+	)
+	selectorFlags.StringVar(&selectorOpts.until,
+		"until", "",
+		fmt.Sprintf(`Filter flows until a specific date. The format is relative (e.g. 3s, 4m, 1h43,, ...) or one of:
+  StampMilli:             %s
+  YearMonthDay:           %s
+  YearMonthDayHour:       %s
+  YearMonthDayHourMinute: %s
+  RFC3339:                %s
+  RFC3339Milli:           %s
+  RFC3339Micro:           %s
+  RFC3339Nano:            %s
+  RFC1123Z:               %s
+ `,
+			time.StampMilli,
+			hubtime.YearMonthDay,
+			hubtime.YearMonthDayHour,
+			hubtime.YearMonthDayHourMinute,
+			time.RFC3339,
+			hubtime.RFC3339Milli,
+			hubtime.RFC3339Micro,
+			time.RFC3339Nano,
+			time.RFC1123Z,
+		),
+	)
 	observeCmd.PersistentFlags().AddFlagSet(selectorFlags)
 
 	// filter flags
@@ -349,23 +395,36 @@ more.`,
 	formattingFlags.StringVarP(
 		&formattingOpts.output, "output", "o", "compact",
 		`Specify the output format, one of:
- compact:  Compact output
- dict:     Each flow is shown as KEY:VALUE pair
- json:     JSON encoding
- jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
- table:    Tab-aligned columns
+  compact:  Compact output
+  dict:     Each flow is shown as KEY:VALUE pair
+  json:     JSON encoding
+  jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
+  table:    Tab-aligned columns
 `)
 	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
 	formattingFlags.StringVar(
 		&formattingOpts.timeFormat, "time-format", "StampMilli",
 		fmt.Sprintf(`Specify the time format for printing. This option does not apply to the json and jsonpb output type. One of:
-  StampMilli:   %s
-  RFC3339:      %s
-  RFC3339Milli: %s
-  RFC3339Micro: %s
-  RFC3339Nano:  %s
-  RFC1123Z:     %s
- `, time.StampMilli, time.RFC3339, hubtime.RFC3339Milli, hubtime.RFC3339Micro, time.RFC3339Nano, time.RFC1123Z),
+  StampMilli:             %s
+  YearMonthDay:           %s
+  YearMonthDayHour:       %s
+  YearMonthDayHourMinute: %s
+  RFC3339:                %s
+  RFC3339Milli:           %s
+  RFC3339Micro:           %s
+  RFC3339Nano:            %s
+  RFC1123Z:               %s
+ `,
+			time.StampMilli,
+			hubtime.YearMonthDay,
+			hubtime.YearMonthDayHour,
+			hubtime.YearMonthDayHourMinute,
+			time.RFC3339,
+			hubtime.RFC3339Milli,
+			hubtime.RFC3339Micro,
+			time.RFC3339Nano,
+			time.RFC1123Z,
+		),
 	)
 	observeCmd.PersistentFlags().AddFlagSet(formattingFlags)
 
