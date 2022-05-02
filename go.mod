@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/cilium/cilium v1.11.1
 	github.com/fatih/color v1.13.0
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.4.0
@@ -77,7 +77,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
-	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
