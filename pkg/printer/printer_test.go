@@ -44,6 +44,12 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 			Source:      "1.1.1.1",
 			Destination: "2.2.2.2",
 		},
+		Source: &pb.Endpoint{
+			Identity: 4,
+		},
+		Destination: &pb.Endpoint{
+			Identity: 12345,
+		},
 		L4: &pb.Layer4{
 			Protocol: &pb.Layer4_TCP{
 				TCP: &pb.TCP{
@@ -112,7 +118,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567: " +
-				"1.1.1.1:31793 -> 2.2.2.2:8080 " +
+				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (identity:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -128,7 +134,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"1.1.1.1:31793 -> 2.2.2.2:8080 " +
+				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (identity:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -144,7 +150,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"2.2.2.2:8080 <- 1.1.1.1:31793 " +
+				"2.2.2.2:8080 (identity:12345) <- 1.1.1.1:31793 (health) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -160,7 +166,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"1.1.1.1:31793 <> 2.2.2.2:8080 " +
+				"1.1.1.1:31793 (health) <> 2.2.2.2:8080 (identity:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -178,6 +184,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 				`"verdict":"DROPPED",` +
 				`"IP":{"source":"1.1.1.1","destination":"2.2.2.2"},` +
 				`"l4":{"TCP":{"source_port":31793,"destination_port":8080}},` +
+				`"source":{"identity":4},"destination":{"identity":12345},` +
 				`"Type":"L3_L4","node_name":"k8s1",` +
 				`"event_type":{"type":1,"sub_type":133},` +
 				`"is_reply":false,"Summary":"TCP Flags: SYN"}`,
@@ -197,6 +204,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 				`"verdict":"DROPPED",` +
 				`"IP":{"source":"1.1.1.1","destination":"2.2.2.2"},` +
 				`"l4":{"TCP":{"source_port":31793,"destination_port":8080}},` +
+				`"source":{"identity":4},"destination":{"identity":12345},` +
 				`"Type":"L3_L4","node_name":"k8s1",` +
 				`"event_type":{"type":1,"sub_type":133},` +
 				`"is_reply":false,"Summary":"TCP Flags: SYN"}}`,
