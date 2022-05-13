@@ -137,6 +137,11 @@ more.`,
 			if err != nil {
 				return err
 			}
+			err = runRequestModifiers(vp, req)
+			if err != nil {
+				return err
+			}
+
 			if otherOpts.printRawFilters {
 				filterYAML, err := getFlowFiltersYAML(req)
 				if err != nil {
@@ -672,4 +677,21 @@ func getFlows(ctx context.Context, client observer.ObserverClient, req *observer
 			return err
 		}
 	}
+}
+
+var requestModifiers []RequestModifier
+
+type RequestModifier func(vp *viper.Viper, req *observer.GetFlowsRequest) error
+
+func runRequestModifiers(vp *viper.Viper, req *observer.GetFlowsRequest) error {
+	for _, rm := range requestModifiers {
+		if err := rm(vp, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func AddRequestModifier(rm RequestModifier) {
+	requestModifiers = append(requestModifiers, rm)
 }
