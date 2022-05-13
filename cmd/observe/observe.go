@@ -26,6 +26,7 @@ var (
 		last         uint64
 		since, until string
 		follow       bool
+		first        uint64
 	}
 
 	formattingOpts struct {

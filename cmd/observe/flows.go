@@ -198,6 +198,7 @@ more.`,
 	selectorFlags := pflag.NewFlagSet("selectors", pflag.ContinueOnError)
 	selectorFlags.BoolVar(&selectorOpts.all, "all", false, "Get all flows stored in Hubble's buffer")
 	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
+	selectorFlags.Uint64Var(&selectorOpts.first, "first", 0, "Get first N flows stored in Hubble's buffer")
 	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
 	selectorFlags.StringVar(&selectorOpts.since,
 		"since", "",
@@ -590,6 +591,17 @@ func parseRawFilters(filters []string) ([]*flowpb.FlowFilter, error) {
 }
 
 func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string) (*observer.GetFlowsRequest, error) {
+	first := selectorOpts.first > 0
+	if first && selectorOpts.last > 0 {
+		return nil, fmt.Errorf("cannot set both --first and --last")
+	}
+	if first && selectorOpts.all {
+		return nil, fmt.Errorf("cannot set both --first and --all")
+	}
+	if first && selectorOpts.follow {
+		return nil, fmt.Errorf("cannot set both --first and --follow")
+	}
+
 	// convert selectorOpts.since into a param for GetFlows
 	var since, until *timestamppb.Timestamp
 	if selectorOpts.since != "" {
@@ -617,7 +629,7 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		}
 	}
 
-	if since == nil && until == nil {
+	if since == nil && until == nil && !first {
 		switch {
 		case selectorOpts.all:
 			// all is an alias for last=uint64_max
@@ -653,13 +665,19 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 	}
 	bl = append(bl, dl...)
 
+	number := selectorOpts.last
+	if first {
+		number = selectorOpts.first
+	}
+
 	req := &observer.GetFlowsRequest{
-		Number:    selectorOpts.last,
+		Number:    number,
 		Follow:    selectorOpts.follow,
 		Whitelist: wl,
 		Blacklist: bl,
 		Since:     since,
 		Until:     until,
+		First:     first,
 	}
 
 	return req, nil
