@@ -50,7 +50,7 @@ func New(vp *viper.Viper) *cobra.Command {
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
-	reflectCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+	template.RegisterFlagSets(reflectCmd.Name(), config.ServerFlags)
 
 	return reflectCmd
 }

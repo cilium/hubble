@@ -91,7 +91,7 @@ protocols are TCP, UDP and ANY.`,
 	recorderFlags.DurationVar(&timeLimit, "time-limit", 0, "Sets a limit on how long to capture on each node")
 
 	recordCmd.Flags().AddFlagSet(recorderFlags)
-	recordCmd.SetUsageTemplate(template.Usage(config.ServerFlags, recorderFlags))
+	template.RegisterFlagSets(recordCmd.Name(), config.ServerFlags, recorderFlags)
 
 	return recordCmd
 }

@@ -83,7 +83,8 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 	// add it by default in the help template
 	// config.GlobalFlags is always added to the help template as it's global
 	// to all commands
-	rootCmd.SetUsageTemplate(template.Usage())
+	template.RegisterFlagSets(rootCmd.Name())
+	rootCmd.SetUsageTemplate(template.Usage)
 
 	rootCmd.SetErr(os.Stderr)
 	rootCmd.SetVersionTemplate("{{with .Name}}{{printf \"%s \" .}}{{end}}{{printf \"v%s\" .Version}}\r\n")

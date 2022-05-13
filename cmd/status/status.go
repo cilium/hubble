@@ -80,7 +80,7 @@ connectivity health check.`,
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
-	statusCmd.SetUsageTemplate(template.Usage(config.ServerFlags))
+	template.RegisterFlagSets(statusCmd.Name(), config.ServerFlags)
 
 	return statusCmd
 }

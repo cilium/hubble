@@ -15,15 +15,36 @@
 package template
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/cilium/hubble/cmd/common/config"
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
+var commandFlagSets = map[string][]*pflag.FlagSet{}
+
+func init() {
+	cobra.AddTemplateFunc("title", strings.Title)
+	cobra.AddTemplateFunc("getFlagSets", getFlagSets)
+}
+
+// RegisterFlagSets registers flags to be included in a commands usage text (--help).
+func RegisterFlagSets(cmdName string, flagsets ...*pflag.FlagSet) {
+	commandFlagSets[cmdName] = append(commandFlagSets[cmdName], flagsets...)
+}
+
+func getFlagSets(cmdName string) []*pflag.FlagSet {
+	flagsets, ok := commandFlagSets[cmdName]
+	if !ok {
+		return []*pflag.FlagSet{config.GlobalFlags}
+	}
+	return append(flagsets, config.GlobalFlags)
+}
+
 const (
-	header = `Usage:{{if .Runnable}}
+	// Usage is the cobra UsageTemplate for Hubble CLI.
+	Usage = `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
@@ -36,28 +57,13 @@ Examples:
 Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}
 
-`
-	footer = `{{- if .HasHelpSubCommands}}Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+{{range getFlagSets .Name }}{{ title .Name}} Flags:
+{{ .FlagUsages }}
+{{end}}Get help:
+  -h, --help	Help for any command or subcommand
+{{- if .HasHelpSubCommands}}Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
   {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
 
 Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
 `
 )
-
-// Usage returns a usage template string with the given sets of flags.
-// Each flag set is separated in a new flags section with the flagset name as
-// section title.
-// When used with cobra commands, the resulting template may be passed as a
-// parameter to command.SetUsageTemplate().
-func Usage(flagSets ...*pflag.FlagSet) string {
-	var b strings.Builder
-	b.WriteString(header)
-	for _, fs := range append(flagSets, config.GlobalFlags) {
-		fmt.Fprintf(&b, "%s Flags:\n", strings.Title(fs.Name()))
-		fmt.Fprintln(&b, fs.FlagUsages())
-	}
-	// treat the special --help flag separately
-	b.WriteString("Get help:\n  -h, --help	Help for any command or subcommand")
-	b.WriteString(footer)
-	return b.String()
-}
