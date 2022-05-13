@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2017-2019 Authors of Cilium
+// Copyright Authors of Cilium
 
 // Package metrics holds prometheus metrics objects and related utility functions. It
 // does not abstract away the prometheus client but the caller rarely needs to
@@ -13,13 +13,14 @@ package metrics
 import (
 	"net/http"
 
-	"github.com/cilium/cilium/api/v1/models"
-	"github.com/cilium/cilium/pkg/version"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+
+	"github.com/cilium/cilium/api/v1/models"
+	"github.com/cilium/cilium/pkg/version"
 )
 
 const (
@@ -50,6 +51,9 @@ const (
 
 	// SubsystemKVStore is the subsystem to scope metrics related to the kvstore.
 	SubsystemKVStore = "kvstore"
+
+	// SubsystemFQDN is the subsystem to scope metrics related to the FQDN proxy.
+	SubsystemFQDN = "fqdn"
 
 	// SubsystemNodes is the subsystem to scope metrics related to the node manager.
 	SubsystemNodes = "nodes"
@@ -168,6 +172,40 @@ const (
 
 	// LabelDirection is the label for traffic direction
 	LabelDirection = "direction"
+
+	// LabelSourceCluster is the label for source cluster name
+	LabelSourceCluster = "source_cluster"
+
+	// LabelSourceNodeName is the label for source node name
+	LabelSourceNodeName = "source_node_name"
+
+	// LabelTargetCluster is the label for target cluster name
+	LabelTargetCluster = "target_cluster"
+
+	// LabelTargetNodeIP is the label for target node IP
+	LabelTargetNodeIP = "target_node_ip"
+
+	// LabelTargetNodeName is the label for target node name
+	LabelTargetNodeName = "target_node_name"
+
+	// LabelTargetNodeType is the label for target node type (local_node, remote_intra_cluster, vs remote_inter_cluster)
+	LabelTargetNodeType = "target_node_type"
+
+	LabelLocationLocalNode          = "local_node"
+	LabelLocationRemoteIntraCluster = "remote_intra_cluster"
+	LabelLocationRemoteInterCluster = "remote_inter_cluster"
+
+	// LabelType is the label for type in general (e.g. endpoint, node)
+	LabelType         = "type"
+	LabelPeerEndpoint = "endpoint"
+	LabelPeerNode     = "node"
+
+	LabelTrafficHTTP = "http"
+	LabelTrafficICMP = "icmp"
+
+	LabelAddressType          = "address_type"
+	LabelAddressTypePrimary   = "primary"
+	LabelAddressTypeSecondary = "secondary"
 )
 
 var (
@@ -176,6 +214,16 @@ var (
 	// APIInteractions is the total time taken to process an API call made
 	// to the cilium-agent
 	APIInteractions = NoOpObserverVec
+
+	// Status
+
+	// NodeConnectivityStatus is the connectivity status between local node to
+	// other node intra or inter cluster.
+	NodeConnectivityStatus = NoOpGaugeVec
+
+	// NodeConnectivityLatency is the connectivity latency between local node to
+	// other node intra or inter cluster.
+	NodeConnectivityLatency = NoOpGaugeVec
 
 	// Endpoint
 
@@ -276,6 +324,10 @@ var (
 	// ProxyUpstreamTime is how long the upstream server took to reply labeled
 	// by error, protocol and span time
 	ProxyUpstreamTime = NoOpObserverVec
+
+	// ProxyDatapathUpdateTimeout is a count of all the timeouts encountered while
+	// updating the datapath due to an FQDN IP update
+	ProxyDatapathUpdateTimeout = NoOpCounter
 
 	// L3-L4 statistics
 
@@ -386,6 +438,20 @@ var (
 	// GC job.
 	FQDNGarbageCollectorCleanedTotal = NoOpCounter
 
+	// FQDNActiveNames is the number of domains inside the DNS cache that have
+	// not expired (by TTL), per endpoint.
+	FQDNActiveNames = NoOpGaugeVec
+
+	// FQDNActiveIPs is the number of IPs inside the DNS cache associated with
+	// a domain that has not expired (by TTL) and are currently active, per
+	// endpoint.
+	FQDNActiveIPs = NoOpGaugeVec
+
+	// FQDNAliveZombieConnections is the number IPs associated with domains
+	// that have expired (by TTL) yet still associated with an active
+	// connection (aka zombie), per endpoint.
+	FQDNAliveZombieConnections = NoOpGaugeVec
+
 	// BPFSyscallDuration is the metric for bpf syscalls duration.
 	BPFSyscallDuration = NoOpObserverVec
 
@@ -443,6 +509,8 @@ var (
 
 type Configuration struct {
 	APIInteractionsEnabled                  bool
+	NodeConnectivityStatusEnabled           bool
+	NodeConnectivityLatencyEnabled          bool
 	EndpointRegenerationCountEnabled        bool
 	EndpointStateCountEnabled               bool
 	EndpointRegenerationTimeStatsEnabled    bool
@@ -465,6 +533,7 @@ type Configuration struct {
 	ProxyForwardedEnabled                   bool
 	ProxyDeniedEnabled                      bool
 	ProxyReceivedEnabled                    bool
+	ProxyDatapathUpdateTimeoutEnabled       bool
 	NoOpObserverVecEnabled                  bool
 	DropCountEnabled                        bool
 	DropBytesEnabled                        bool
@@ -491,6 +560,9 @@ type Configuration struct {
 	KVStoreEventsQueueDurationEnabled       bool
 	KVStoreQuorumErrorsEnabled              bool
 	FQDNGarbageCollectorCleanedTotalEnabled bool
+	FQDNActiveNames                         bool
+	FQDNActiveIPs                           bool
+	FQDNActiveZombiesConnections            bool
 	BPFSyscallDurationEnabled               bool
 	BPFMapOps                               bool
 	BPFMapPressure                          bool
@@ -535,6 +607,8 @@ func DefaultMetrics() map[string]struct{} {
 		Namespace + "_forward_count_total":                                           {},
 		Namespace + "_forward_bytes_total":                                           {},
 		Namespace + "_endpoint_propagation_delay_seconds":                            {},
+		Namespace + "_node_connectivity_status":                                      {},
+		Namespace + "_node_connectivity_latency_seconds":                             {},
 		Namespace + "_" + SubsystemDatapath + "_conntrack_dump_resets_total":         {},
 		Namespace + "_" + SubsystemDatapath + "_conntrack_gc_runs_total":             {},
 		Namespace + "_" + SubsystemDatapath + "_conntrack_gc_key_fallbacks_total":    {},
@@ -555,7 +629,7 @@ func DefaultMetrics() map[string]struct{} {
 		Namespace + "_" + SubsystemKVStore + "_operations_duration_seconds":          {},
 		Namespace + "_" + SubsystemKVStore + "_events_queue_seconds":                 {},
 		Namespace + "_" + SubsystemKVStore + "_quorum_errors_total":                  {},
-		Namespace + "_fqdn_gc_deletions_total":                                       {},
+		Namespace + "_" + SubsystemFQDN + "_gc_deletions_total":                      {},
 		Namespace + "_" + SubsystemBPF + "_map_ops_total":                            {},
 		Namespace + "_" + SubsystemTriggers + "_policy_update_total":                 {},
 		Namespace + "_" + SubsystemTriggers + "_policy_update_folds":                 {},
@@ -815,6 +889,16 @@ func CreateConfiguration(metricsEnabled []string) (Configuration, []prometheus.C
 
 			collectors = append(collectors, ProxyUpstreamTime)
 			c.NoOpObserverVecEnabled = true
+
+		case Namespace + "_proxy_datapath_update_timeout_total":
+			ProxyDatapathUpdateTimeout = prometheus.NewCounter(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Name:      "proxy_datapath_update_timeout_total",
+				Help:      "Number of total datapath update timeouts due to FQDN IP updates",
+			})
+
+			collectors = append(collectors, ProxyDatapathUpdateTimeout)
+			c.ProxyDatapathUpdateTimeoutEnabled = true
 
 		case Namespace + "_drop_count_total":
 			DropCount = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -1087,15 +1171,49 @@ func CreateConfiguration(metricsEnabled []string) (Configuration, []prometheus.C
 			collectors = append(collectors, KVStoreQuorumErrors)
 			c.KVStoreQuorumErrorsEnabled = true
 
-		case Namespace + "_fqdn_gc_deletions_total":
+		case Namespace + "_" + SubsystemFQDN + "_gc_deletions_total":
 			FQDNGarbageCollectorCleanedTotal = prometheus.NewCounter(prometheus.CounterOpts{
 				Namespace: Namespace,
-				Name:      "fqdn_gc_deletions_total",
+				Subsystem: SubsystemFQDN,
+				Name:      "gc_deletions_total",
 				Help:      "Number of FQDNs that have been cleaned on FQDN Garbage collector job",
 			})
 
 			collectors = append(collectors, FQDNGarbageCollectorCleanedTotal)
 			c.FQDNGarbageCollectorCleanedTotalEnabled = true
+
+		case Namespace + "_" + SubsystemFQDN + "_active_names":
+			FQDNActiveNames = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: SubsystemFQDN,
+				Name:      "active_names",
+				Help:      "Number of domains inside the DNS cache that have not expired (by TTL), per endpoint",
+			}, []string{LabelPeerEndpoint})
+
+			collectors = append(collectors, FQDNActiveNames)
+			c.FQDNActiveNames = true
+
+		case Namespace + "_" + SubsystemFQDN + "_active_ips":
+			FQDNActiveIPs = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: SubsystemFQDN,
+				Name:      "active_ips",
+				Help:      "Number of IPs inside the DNS cache associated with a domain that has not expired (by TTL), per endpoint",
+			}, []string{LabelPeerEndpoint})
+
+			collectors = append(collectors, FQDNActiveIPs)
+			c.FQDNActiveIPs = true
+
+		case Namespace + "_" + SubsystemFQDN + "_alive_zombie_connections":
+			FQDNAliveZombieConnections = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: SubsystemFQDN,
+				Name:      "alive_zombie_connections",
+				Help:      "Number of IPs associated with domains that have expired (by TTL) yet still associated with an active connection (aka zombie), per endpoint",
+			}, []string{LabelPeerEndpoint})
+
+			collectors = append(collectors, FQDNAliveZombieConnections)
+			c.FQDNActiveZombiesConnections = true
 
 		case Namespace + "_" + SubsystemBPF + "_syscall_duration_seconds":
 			BPFSyscallDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -1150,7 +1268,7 @@ func CreateConfiguration(metricsEnabled []string) (Configuration, []prometheus.C
 				Subsystem: SubsystemTriggers,
 				Name:      "policy_update_call_duration_seconds",
 				Help:      "Duration of policy update trigger",
-			}, []string{"type"})
+			}, []string{LabelType})
 
 			collectors = append(collectors, TriggerPolicyUpdateCallDuration)
 			c.TriggerPolicyUpdateCallDuration = true
@@ -1266,7 +1384,44 @@ func CreateConfiguration(metricsEnabled []string) (Configuration, []prometheus.C
 			collectors = append(collectors, EndpointPropagationDelay)
 			c.EndpointPropagationDelayEnabled = true
 
+		case Namespace + "_node_connectivity_status":
+			NodeConnectivityStatus = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Name:      "node_connectivity_status",
+				Help:      "The last observed status of both ICMP and HTTP connectivity between the current Cilium agent and other Cilium nodes",
+			}, []string{
+				LabelSourceCluster,
+				LabelSourceNodeName,
+				LabelTargetCluster,
+				LabelTargetNodeName,
+				LabelTargetNodeType,
+				LabelType,
+			})
+
+			collectors = append(collectors, NodeConnectivityStatus)
+			c.NodeConnectivityStatusEnabled = true
+
+		case Namespace + "_node_connectivity_latency_seconds":
+			NodeConnectivityLatency = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Name:      "node_connectivity_latency_seconds",
+				Help:      "The last observed latency between the current Cilium agent and other Cilium nodes in seconds",
+			}, []string{
+				LabelSourceCluster,
+				LabelSourceNodeName,
+				LabelTargetCluster,
+				LabelTargetNodeName,
+				LabelTargetNodeIP,
+				LabelTargetNodeType,
+				LabelType,
+				LabelProtocol,
+				LabelAddressType,
+			})
+
+			collectors = append(collectors, NodeConnectivityLatency)
+			c.NodeConnectivityLatencyEnabled = true
 		}
+
 	}
 
 	return c, collectors
@@ -1286,13 +1441,13 @@ func (gwt *GaugeWithThreshold) Set(value float64) {
 	if gwt.active && !overThreshold {
 		gwt.active = !Unregister(gwt.gauge)
 		if gwt.active {
-			log.WithField("metric", gwt.gauge.Desc().String()).Warning("Failed to unregister metric")
+			logrus.WithField("metric", gwt.gauge.Desc().String()).Warning("Failed to unregister metric")
 		}
 	} else if !gwt.active && overThreshold {
 		err := Register(gwt.gauge)
 		gwt.active = err == nil
 		if err != nil {
-			log.WithField("metric", gwt.gauge.Desc().String()).WithError(err).Warning("Failed to register metric")
+			logrus.WithField("metric", gwt.gauge.Desc().String()).WithError(err).Warning("Failed to register metric")
 		}
 	}
 
@@ -1329,9 +1484,8 @@ func NewBPFMapPressureGauge(mapname string, threshold float64) *GaugeWithThresho
 }
 
 func init() {
-	MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{Namespace: Namespace}))
-	// TODO: Figure out how to put this into a Namespace
-	// MustRegister(prometheus.NewGoCollector())
+	MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{Namespace: Namespace}))
+	MustRegister(collectors.NewGoCollector())
 	MustRegister(newStatusCollector())
 	MustRegister(newbpfCollector())
 }
@@ -1468,4 +1622,11 @@ func Error2Outcome(err error) string {
 	}
 
 	return LabelValueOutcomeSuccess
+}
+
+func BoolToFloat64(v bool) float64 {
+	if v {
+		return 1
+	}
+	return 0
 }

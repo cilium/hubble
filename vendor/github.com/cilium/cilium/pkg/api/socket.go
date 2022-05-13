@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2017-2020 Authors of Cilium
+// Copyright Authors of Cilium
 
 package api
 
@@ -9,10 +9,10 @@ import (
 	"os/user"
 	"strconv"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/cilium/cilium/pkg/logging"
 	"github.com/cilium/cilium/pkg/logging/logfields"
-
-	"github.com/sirupsen/logrus"
 )
 
 var log = logging.DefaultLogger.WithField(logfields.LogSubsys, "api")
@@ -34,7 +34,7 @@ func SetDefaultPermissions(socketPath string) error {
 		log.WithError(err).WithFields(logrus.Fields{
 			logfields.Path: socketPath,
 			"group":        CiliumGroupName,
-		}).Info("Group not found")
+		}).Debug("Group not found")
 	} else {
 		if err := os.Chown(socketPath, 0, gid); err != nil {
 			return fmt.Errorf("failed while setting up %s's group ID"+
@@ -42,8 +42,8 @@ func SetDefaultPermissions(socketPath string) error {
 		}
 	}
 	if err := os.Chmod(socketPath, SocketFileMode); err != nil {
-		return fmt.Errorf("failed while setting up %s's file"+
-			" permissions in %q: %s", CiliumGroupName, socketPath, err)
+		return fmt.Errorf("failed while setting up file permissions in %q: %w",
+			socketPath, err)
 	}
 	return nil
 }

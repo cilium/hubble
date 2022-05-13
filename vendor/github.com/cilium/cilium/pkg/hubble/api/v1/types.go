@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2019 Authors of Hubble
+// Copyright Authors of Hubble
 
 package v1
 
 import (
-	pb "github.com/cilium/cilium/api/v1/flow"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	pb "github.com/cilium/cilium/api/v1/flow"
 )
 
 // Event represents a single event observed and stored by Hubble

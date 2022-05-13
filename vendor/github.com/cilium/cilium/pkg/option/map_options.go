@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2016-2017 Authors of Cilium
+// Copyright Authors of Cilium
 
 package option
 
@@ -46,7 +46,11 @@ func NewMapOpts(values map[string]string, validator Validator) *MapOptions {
 }
 
 func (opts *MapOptions) String() string {
-	return fmt.Sprintf("%v", opts.vals)
+	var kvs []string
+	for k, v := range opts.vals {
+		kvs = append(kvs, fmt.Sprintf("%s=%s", k, v))
+	}
+	return strings.Join(kvs, ",")
 }
 
 // Type returns a string name for this Option type
