@@ -38,7 +38,9 @@ func TestUsage(t *testing.T) {
 	flags := pflag.NewFlagSet("bar", pflag.ContinueOnError)
 	flags.String("baz", "", "baz usage")
 	cmd.Flags().AddFlagSet(flags)
-	cmd.SetUsageTemplate(Usage(flags))
+
+	RegisterFlagSets(cmd.Name(), flags)
+	cmd.SetUsageTemplate(Usage)
 
 	subCmd := &cobra.Command{
 		Use: "subcmd",
