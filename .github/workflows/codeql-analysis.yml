@@ -30,8 +30,8 @@ jobs:
       with:
         fetch-depth: 1
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@96bc9c36c68e097cd033777efed25c248ffcf09a
       with:
         languages: go
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@96bc9c36c68e097cd033777efed25c248ffcf09a
