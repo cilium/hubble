@@ -3,6 +3,10 @@
    <img src="https://cdn.jsdelivr.net/gh/cilium/hubble@master/Documentation/images/hubble_logo-dark.png" width="350" alt="Hubble Logo">
 </picture>
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+----
+
 # Network, Service & Security Observability for Kubernetes
 
 - [What is Hubble?](#what-is-hubble)
