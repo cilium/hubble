@@ -1,4 +1,7 @@
-![Hubble logo](Documentation/images/hubble_logo.png)
+ <picture>
+   <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/cilium/hubble@master/Documentation/images/hubble_logo.png" width="350" alt="Hubble Logo">
+   <img src="https://cdn.jsdelivr.net/gh/cilium/hubble@master/Documentation/images/hubble_logo-dark.png" width="350" alt="Hubble Logo">
+</picture>
 
 # Network, Service & Security Observability for Kubernetes
 
