@@ -45,6 +45,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// see protocol filter in Hubble server code (there is unfortunately no
+// list of supported protocols defined anywhere)
+var protocols = []string{
+	// L4
+	"icmp", "icmpv4", "icmpv6",
+	"tcp",
+	"udp",
+	// L7
+	"dns",
+	"http",
+	"kafka",
+}
+
 var verdicts = []string{
 	flowpb.Verdict_FORWARDED.String(),
 	flowpb.Verdict_DROPPED.String(),
@@ -447,6 +460,9 @@ more.`,
 	})
 	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return verdicts, cobra.ShellCompDirectiveDefault
+	})
+	observeCmd.RegisterFlagCompletionFunc("protocol", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return protocols, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		httpStatus := []string{
