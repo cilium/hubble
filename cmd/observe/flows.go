@@ -346,13 +346,13 @@ more.`,
 
 	filterFlags.Var(filterVar(
 		"from-service", ofilter,
-		"Show all flows originating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+		"Shows flows where the source IP address matches the ClusterIP address of the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 	filterFlags.Var(filterVar(
 		"service", ofilter,
-		"Show all flows related to the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+		"Shows flows where either the source or destination IP address matches the ClusterIP address of the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 	filterFlags.Var(filterVar(
 		"to-service", ofilter,
-		"Show all flows terminating in the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
+		"Shows flows where the destination IP address matches the ClusterIP address of the given service ([namespace/]<svc-name>). If namespace is not provided, 'default' is used"))
 
 	filterFlags.Var(filterVar(
 		"from-port", ofilter,
