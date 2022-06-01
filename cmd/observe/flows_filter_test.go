@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
+	"github.com/cilium/cilium/pkg/identity"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 
 	"github.com/google/go-cmp/cmp"
@@ -304,6 +305,26 @@ func TestIdentity(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	assert.Nil(t, f.blacklist)
+
+	// reserved identities
+	for _, id := range identity.GetAllReservedIdentities() {
+		t.Run(id.String(), func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmd(viper.New(), f)
+			require.NoError(t, cmd.Flags().Parse([]string{"--identity", id.String()}))
+			if diff := cmp.Diff(
+				[]*flowpb.FlowFilter{
+					{SourceIdentity: []uint32{id.Uint32()}},
+					{DestinationIdentity: []uint32{id.Uint32()}},
+				},
+				f.whitelist.flowFilters(),
+				cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+			); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+			assert.Nil(t, f.blacklist)
+		})
+	}
 }
 
 func TestFromIdentity(t *testing.T) {
@@ -321,6 +342,25 @@ func TestFromIdentity(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	assert.Nil(t, f.blacklist)
+
+	// reserved identities
+	for _, id := range identity.GetAllReservedIdentities() {
+		t.Run(id.String(), func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmd(viper.New(), f)
+			require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", id.String()}))
+			if diff := cmp.Diff(
+				[]*flowpb.FlowFilter{
+					{SourceIdentity: []uint32{id.Uint32()}},
+				},
+				f.whitelist.flowFilters(),
+				cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+			); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+			assert.Nil(t, f.blacklist)
+		})
+	}
 }
 
 func TestToIdentity(t *testing.T) {
@@ -338,6 +378,25 @@ func TestToIdentity(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	assert.Nil(t, f.blacklist)
+
+	// reserved identities
+	for _, id := range identity.GetAllReservedIdentities() {
+		t.Run(id.String(), func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmd(viper.New(), f)
+			require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", id.String()}))
+			if diff := cmp.Diff(
+				[]*flowpb.FlowFilter{
+					{DestinationIdentity: []uint32{id.Uint32()}},
+				},
+				f.whitelist.flowFilters(),
+				cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+			); diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+			assert.Nil(t, f.blacklist)
+		})
+	}
 }
 
 func TestInvalidIdentity(t *testing.T) {
