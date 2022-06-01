@@ -494,6 +494,15 @@ more.`,
 			http.MethodTrace,
 		}, cobra.ShellCompDirectiveDefault
 	})
+	observeCmd.RegisterFlagCompletionFunc("identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
+	})
+	observeCmd.RegisterFlagCompletionFunc("to-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
+	})
+	observeCmd.RegisterFlagCompletionFunc("from-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
+	})
 	observeCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"compact",

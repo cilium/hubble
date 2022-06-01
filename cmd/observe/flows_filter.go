@@ -491,34 +491,31 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 
 	// identity filters
 	case "identity":
-		i, err := strconv.ParseUint(val, 10, 32)
+		identity, err := parseIdentity(val)
 		if err != nil {
-			return errors.New("invalid security identity")
+			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
-		identity := uint32(i)
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceIdentity = append(f.SourceIdentity, identity)
+			f.SourceIdentity = append(f.SourceIdentity, identity.Uint32())
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationIdentity = append(f.DestinationIdentity, identity)
+			f.DestinationIdentity = append(f.DestinationIdentity, identity.Uint32())
 		})
 	case "from-identity":
-		i, err := strconv.ParseUint(val, 10, 32)
+		identity, err := parseIdentity(val)
 		if err != nil {
-			return errors.New("invalid security identity")
+			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
-		identity := uint32(i)
-		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceIdentity = append(f.SourceIdentity, identity)
+		f.applyLeft(func(f *flowpb.FlowFilter) {
+			f.SourceIdentity = append(f.SourceIdentity, identity.Uint32())
 		})
 	case "to-identity":
-		i, err := strconv.ParseUint(val, 10, 32)
+		identity, err := parseIdentity(val)
 		if err != nil {
-			return errors.New("invalid security identity")
+			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
-		identity := uint32(i)
-		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationIdentity = append(f.DestinationIdentity, identity)
+		f.applyRight(func(f *flowpb.FlowFilter) {
+			f.DestinationIdentity = append(f.DestinationIdentity, identity.Uint32())
 		})
 
 	// node name filters
