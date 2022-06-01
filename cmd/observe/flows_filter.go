@@ -493,7 +493,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "identity":
 		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
-			return fmt.Errorf("invalid security identity: %s: %s", val, err)
+			return errors.New("invalid security identity")
 		}
 		identity := uint32(i)
 		f.applyLeft(func(f *flowpb.FlowFilter) {
@@ -505,7 +505,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "from-identity":
 		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
-			return fmt.Errorf("invalid security identity: %s: %s", val, err)
+			return errors.New("invalid security identity")
 		}
 		identity := uint32(i)
 		f.apply(func(f *flowpb.FlowFilter) {
@@ -514,7 +514,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "to-identity":
 		i, err := strconv.ParseUint(val, 10, 32)
 		if err != nil {
-			return fmt.Errorf("invalid security identity: %s: %s", val, err)
+			return errors.New("invalid security identity")
 		}
 		identity := uint32(i)
 		f.apply(func(f *flowpb.FlowFilter) {
