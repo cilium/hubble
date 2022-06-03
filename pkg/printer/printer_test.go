@@ -118,7 +118,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567: " +
-				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (identity:12345) " +
+				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (ID:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -134,7 +134,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (identity:12345) " +
+				"1.1.1.1:31793 (health) -> 2.2.2.2:8080 (ID:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -150,7 +150,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"2.2.2.2:8080 (identity:12345) <- 1.1.1.1:31793 (health) " +
+				"2.2.2.2:8080 (ID:12345) <- 1.1.1.1:31793 (health) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{
@@ -166,7 +166,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			},
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
-				"1.1.1.1:31793 (health) <> 2.2.2.2:8080 (identity:12345) " +
+				"1.1.1.1:31793 (health) <> 2.2.2.2:8080 (ID:12345) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
 		},
 		{

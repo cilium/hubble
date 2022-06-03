@@ -180,7 +180,7 @@ func (p *Printer) fmtIdentity(i uint32) string {
 		return p.color.identity(fmt.Sprintf("(%s)", numeric))
 	}
 
-	return p.color.identity(fmt.Sprintf("(identity:%d)", i))
+	return p.color.identity(fmt.Sprintf("(ID:%d)", i))
 }
 
 // GetSecurityIdentities returns the source and destination numeric security
