@@ -411,7 +411,7 @@ more.`,
 		`Specify the output format, one of:
   compact:  Compact output
   dict:     Each flow is shown as KEY:VALUE pair
-  json:     JSON encoding
+  json:     JSON encoding (DEPRECATED: use --output=jsonpb instead)
   jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
   table:    Tab-aligned columns
 `)
