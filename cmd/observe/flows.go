@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
@@ -71,11 +72,33 @@ var verdicts = []string{
 // MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
 // message types are not supported by `hubble observe flows` but have separate sub-commands.
 var flowEventTypes = []string{
-	monitorAPI.MessageTypeNameDrop,
 	monitorAPI.MessageTypeNameCapture,
-	monitorAPI.MessageTypeNameTrace,
+	monitorAPI.MessageTypeNameDrop,
 	monitorAPI.MessageTypeNameL7,
 	monitorAPI.MessageTypeNamePolicyVerdict,
+	monitorAPI.MessageTypeNameTrace,
+}
+
+// flowEventTypeSubtypes is a map message types and all their subtypes.
+var flowEventTypeSubtypes = map[string][]string{
+	monitorAPI.MessageTypeNameCapture: nil,
+	monitorAPI.MessageTypeNameDrop:    nil,
+	monitorAPI.MessageTypeNameTrace: {
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromLxc],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromHost],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromNetwork],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromOverlay],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromProxy],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceFromStack],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToLxc],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToHost],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToNetwork],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToOverlay],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToProxy],
+		monitorAPI.TraceObservationPoints[monitorAPI.TraceToStack],
+	},
+	monitorAPI.MessageTypeNameL7:            nil,
+	monitorAPI.MessageTypeNamePolicyVerdict: nil,
 }
 
 const (
@@ -266,7 +289,26 @@ more.`,
 		`Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")`))
 	filterFlags.VarP(filterVarP(
 		"type", "t", ofilter, []string{},
-		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE] (%v)", flowEventTypes)))
+		fmt.Sprintf("Filter by event types TYPE[:SUBTYPE]. Available types and subtypes:\n%s", func() string {
+			var b strings.Builder
+			w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
+			fmt.Fprintln(w, "TYPE", "\t", "SUBTYPE")
+			// we don't iterate the flowEventTypeSubtypes map as we want
+			// consistent ordering
+			for _, k := range flowEventTypes {
+				v := flowEventTypeSubtypes[k]
+				if len(v) > 0 {
+					fmt.Fprintln(w, k, "\t", v[0])
+					for i := 1; i < len(v); i++ {
+						fmt.Fprintln(w, "\t", v[i])
+					}
+				} else {
+					fmt.Fprintln(w, k, "\t", "n/a")
+				}
+			}
+			w.Flush()
+			return strings.TrimSpace(b.String())
+		}())))
 	filterFlags.Var(filterVar(
 		"verdict", ofilter,
 		fmt.Sprintf("Show only flows with this verdict [%s]", strings.Join(verdicts, ", ")),
@@ -457,7 +499,14 @@ more.`,
 		return []string{"none", "v4", "v6"}, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
-		return flowEventTypes, cobra.ShellCompDirectiveDefault
+		var completions []string
+		for _, ftype := range flowEventTypes {
+			completions = append(completions, ftype)
+			for _, subtype := range flowEventTypeSubtypes[ftype] {
+				completions = append(completions, fmt.Sprintf("%s:%s", ftype, subtype))
+			}
+		}
+		return completions, cobra.ShellCompDirectiveDefault
 	})
 	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return verdicts, cobra.ShellCompDirectiveDefault
