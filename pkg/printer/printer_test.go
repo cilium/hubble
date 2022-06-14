@@ -69,6 +69,11 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 	reply.IsReply = &wrapperspb.BoolValue{Value: true}
 	unknown := proto.Clone(&f).(*pb.Flow)
 	unknown.IsReply = nil
+	policyDenied := proto.Clone(&f).(*pb.Flow)
+	policyDenied.EventType = &pb.CiliumEventType{
+		Type: monitorAPI.MessageTypePolicyVerdict,
+	}
+	policyDenied.IsReply = nil
 	type args struct {
 		f *pb.Flow
 	}
@@ -152,6 +157,22 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
 				"2.2.2.2:8080 (ID:12345) <- 1.1.1.1:31793 (health) " +
 				"Policy denied DROPPED (TCP Flags: SYN)\n",
+		},
+		{
+			name: "compact-policy-verdict-denied",
+			options: []Option{
+				Compact(),
+				WithColor("never"),
+				WithNodeName(),
+				Writer(&buf),
+			},
+			args: args{
+				f: policyDenied,
+			},
+			wantErr: false,
+			expected: "Jan  1 00:20:34.567 [k8s1]: " +
+				"1.1.1.1:31793 (health) <> 2.2.2.2:8080 (ID:12345) " +
+				"policy-verdict:none DENIED (TCP Flags: SYN)\n",
 		},
 		{
 			name: "compact-direction-unknown",
@@ -631,7 +652,7 @@ func Test_getFlowType(t *testing.T) {
 					PolicyMatchType: monitorAPI.PolicyMatchL3L4,
 				},
 			},
-			want: "L3-L4",
+			want: "policy-verdict:L3-L4",
 		},
 		{
 			name: "L4",
@@ -644,7 +665,7 @@ func Test_getFlowType(t *testing.T) {
 					DropReason: 153,
 				},
 			},
-			want: "Error while correcting L3 checksum",
+			want: "policy-verdict:none",
 		},
 		{
 			name: "Debug Capture",
