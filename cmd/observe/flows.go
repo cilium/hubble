@@ -650,7 +650,8 @@ func parseRawFilters(filters []string) ([]*flowpb.FlowFilter, error) {
 
 func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string) (*observer.GetFlowsRequest, error) {
 	first := selectorOpts.first > 0
-	if first && selectorOpts.last > 0 {
+	last := selectorOpts.last > 0
+	if first && last {
 		return nil, fmt.Errorf("cannot set both --first and --last")
 	}
 	if first && selectorOpts.all {
@@ -658,6 +659,9 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 	}
 	if first && selectorOpts.follow {
 		return nil, fmt.Errorf("cannot set both --first and --follow")
+	}
+	if last && selectorOpts.all {
+		return nil, fmt.Errorf("cannot set both --last and --all")
 	}
 
 	// convert selectorOpts.since into a param for GetFlows
