@@ -71,15 +71,19 @@ const (
 	// local and remote clusters except for the local node.
 	ReservedIdentityRemoteNode
 
-	// ReservedIdentityRemoteNode is the identity given to remote node(s) which
+	// ReservedIdentityKubeAPIServer is the identity given to remote node(s) which
 	// have backend(s) serving the kube-apiserver running.
 	ReservedIdentityKubeAPIServer
+
+	// ReservedIdentityIngress is the identity given to the IP used as the source
+	// address for connections from Ingress proxies.
+	ReservedIdentityIngress
 )
 
 // Special identities for well-known cluster components
 // Each component has two identities. The first one is used for Kubernetes <1.21
 // or when the NamespaceDefaultLabelName feature gate is disabled. The second
-// one is used for Kubernets >= 1.21 and when the NamespaceDefaultLabelName is
+// one is used for Kubernetes >= 1.21 and when the NamespaceDefaultLabelName is
 // enabled.
 const (
 	// ReservedETCDOperator is the reserved identity used for the etcd-operator
@@ -332,6 +336,7 @@ var (
 		labels.IDNameInit:          ReservedIdentityInit,
 		labels.IDNameRemoteNode:    ReservedIdentityRemoteNode,
 		labels.IDNameKubeAPIServer: ReservedIdentityKubeAPIServer,
+		labels.IDNameIngress:       ReservedIdentityIngress,
 	}
 	reservedIdentityNames = map[NumericIdentity]string{
 		IdentityUnknown:               "unknown",
@@ -342,6 +347,7 @@ var (
 		ReservedIdentityInit:          labels.IDNameInit,
 		ReservedIdentityRemoteNode:    labels.IDNameRemoteNode,
 		ReservedIdentityKubeAPIServer: labels.IDNameKubeAPIServer,
+		ReservedIdentityIngress:       labels.IDNameIngress,
 	}
 	reservedIdentityLabels = map[NumericIdentity]labels.Labels{
 		ReservedIdentityHost:       labels.LabelHost,
@@ -354,6 +360,7 @@ var (
 			labels.LabelKubeAPIServer.String(): "",
 			labels.LabelRemoteNode.String():    "",
 		}, ""),
+		ReservedIdentityIngress: labels.LabelIngress,
 	}
 
 	// WellKnown identities stores global state of all well-known identities.
