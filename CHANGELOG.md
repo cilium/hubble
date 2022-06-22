@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.10.0] - 2022-06-22
+
+The v0.10.0 release of the Hubble CLI coincides with Cilium v1.12.
+It adds a new `--first` option to query for earlier flows and events
+(#716, requires Cilium v1.12 and newer), further improves the default `compact`
+output by displaying security identities and refining policy verdict event output
+(#717, #734, #745), and deprecates the `-o json` option in favor of `-o jsonpb`
+(#738).
+
+This release also contains many quality of life improvements, such as more
+flexible time range filter parsing (#707), extended shell completion for
+various filter flags (#727, #744), support for named identity filters (#732),
+improvements to the command-line usage documentation (#718, #730, #731, #733),
+and an updated version of the Hubble logo (#726).
+
+**Major Changes:**
+* cli: Deprecate `-o json`, recommend `-o jsonpb` instead (#738, @gandro)
+* cmd/observe: Add --first to support querying for earlier flows and events (#719, @chancez)
+* printer: Display security identity in compact output (#717, @gandro)
+
+**Minor Changes:**
+* Add support for less granular time formats (#707, @rolinh)
+* cmd/observe: add flag completion for `--protocol` (#727, @rolinh)
+* cmd/observe: document subtypes and add completion for subtypes (#744, @rolinh)
+* cmd/observe: improve policy verdict output in compact mode (#745, @rolinh)
+
+**Bugfixes:**
+* cmd/config: ensure that the configuration directory exist (#684, @rolinh)
+* cmd/observe: match only Hubble-specific part of error in Test_getFlowsRequestWithInvalidRawFilters (#655, @tklauser)
+
+**CI Changes:**
+* .github: let dependabot ignore Cilium dependency (#675, @tklauser)
+
+**Misc Changes:**
+* build(deps): bump actions/checkout from 2.4.0 to 3 (#693, @dependabot[bot])
+* build(deps): bump actions/checkout from 3.0.0 to 3.0.1 (#705, @dependabot[bot])
+* build(deps): bump actions/checkout from 3.0.1 to 3.0.2 (#709, @dependabot[bot])
+* build(deps): bump actions/download-artifact from 2.0.10 to 2.1.0 (#668, @dependabot[bot])
+* build(deps): bump actions/download-artifact from 2.1.0 to 3 (#688, @dependabot[bot])
+* build(deps): bump actions/setup-go from 2.1.4 to 2.1.5 (#665, @dependabot[bot])
+* build(deps): bump actions/setup-go from 2.1.5 to 2.2.0 (#680, @dependabot[bot])
+* build(deps): bump actions/setup-go from 2.2.0 to 3 (#697, @dependabot[bot])
+* build(deps): bump actions/setup-go from 3.1.0 to 3.2.0 (#746, @dependabot[bot])
+* build(deps): bump actions/upload-artifact from 2.2.4 to 2.3.0 (#662, @dependabot[bot])
+* build(deps): bump actions/upload-artifact from 2.3.0 to 2.3.1 (#663, @dependabot[bot])
+* build(deps): bump actions/upload-artifact from 2.3.1 to 3 (#701, @dependabot[bot])
+* build(deps): bump actions/upload-artifact from 3.0.0 to 3.1.0 (#724, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 2.10.0 to 3 (#728, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 2.7.0 to 2.8.0 (#673, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 2.8.0 to 2.9.0 (#679, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 2.9.0 to 2.10.0 (#699, @dependabot[bot])
+* build(deps): bump docker/login-action from 1.10.0 to 1.12.0 (#669, @dependabot[bot])
+* build(deps): bump docker/login-action from 1.12.0 to 1.13.0 (#683, @dependabot[bot])
+* build(deps): bump docker/login-action from 1.13.0 to 1.14.1 (#704, @dependabot[bot])
+* build(deps): bump docker/login-action from 1.14.1 to 2 (#742, @dependabot[bot])
+* build(deps): bump docker/setup-buildx-action from 1.6.0 to 2 (#714, @dependabot[bot])
+* build(deps): bump github.com/cilium/cilium from 1.11.0 to 1.11.1 (#674, @dependabot[bot])
+* build(deps): bump github.com/google/go-cmp from 0.5.6 to 0.5.7 (#676, @dependabot[bot])
+* build(deps): bump github.com/google/go-cmp from 0.5.7 to 0.5.8 (#712, @dependabot[bot])
+* build(deps): bump github.com/spf13/cast from 1.4.1 to 1.5.0 (#725, @dependabot[bot])
+* build(deps): bump github.com/spf13/cobra from 1.2.1 to 1.3.0 (#664, @dependabot[bot])
+* build(deps): bump github.com/spf13/cobra from 1.3.0 to 1.4.0 (#694, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.10.0 to 1.10.1 (#667, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.10.1 to 1.11.0 (#706, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.11.0 to 1.12.0 (#729, @dependabot[bot])
+* build(deps): bump github.com/stretchr/testify from 1.7.0 to 1.7.1 (#698, @dependabot[bot])
+* build(deps): bump github.com/stretchr/testify from 1.7.1 to 1.7.2 (#743, @dependabot[bot])
+* build(deps): bump github/codeql-action from 1 to 2 (#711, @dependabot[bot])
+* build(deps): bump github/codeql-action from 96bc9c36c68e097cd033777efed25c248ffcf09a to 2.1.12 (#735, @dependabot[bot])
+* build(deps): bump golangci/golangci-lint-action from 2 to 3.1.0 (#685, @dependabot[bot])
+* build(deps): bump golangci/golangci-lint-action from 3.1.0 to 3.2.0 (#720, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.42.0 to 1.43.0 (#666, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.43.0 to 1.44.0 (#678, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.44.0 to 1.45.0 (#702, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.45.0 to 1.46.0 (#710, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.46.0 to 1.46.2 (#721, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.46.2 to 1.47.0 (#736, @dependabot[bot])
+* build(deps): bump google.golang.org/protobuf from 1.27.1 to 1.28.0 (#700, @dependabot[bot])
+* bump Go to v1.18.1, update golangci-lint to v1.45.2 (#708, @rolinh)
+* ci: bump golangci-lint to v1.45.0 (#696, @rolinh)
+* ci: use hashes for all GitHub Action modules (#722, @rolinh)
+* compact: Use "ID" for security identity prefix (#734, @michi-covalent)
+* Dockerfile: fix golang image name to v1.18.2 (#723, @kaworu)
+* docs: Document pod/service filter prefix behavior (#733, @slayer321)
+* docs: update logos and add dark logo (#726, @raphink)
+* docs: update the cli doc with cidr range source/destination ip filter (#731, @slayer321)
+* go.mod, vendor: update cilium to 1.11.0 (#658, @tklauser)
+* improve cli help text for service filtering (#730, @ILLIDOM)
+* named reserved identites support for `--{,from-,to-}identity` (#732, @kaworu)
+* Prepare for v0.10 development cycle (#652, @gandro)
+* Refactor usage template to determine --help flags using a registration pattern (#718, @chancez)
+* release and changelog misc improvements (#659, @kaworu)
+* Update Cobra to v1.5.0 (#747, @rolinh)
+* Update Go to 1.17.4 and alpine to 3.15 (#653, @tklauser)
+* Update Go to 1.17.5 (#660, @tklauser)
+* Update Go to 1.17.6 (#670, @tklauser)
+* Update Go to 1.17.7 (#681, @tklauser)
+* Update Go to 1.17.8 (#689, @tklauser)
+* Update Go to 1.18.2 (#715, @tklauser)
+* Update Go to 1.18.3, alpine to 3.16, golangci-lint to 1.46.2 (#737, @tklauser)
+* Update Go to v1.18 (#695, @rolinh)
+* vendor: Bump Cilium to v1.12 branch (#748, @gandro)
+* vendor: update yaml.v3 to v3.0.1 (#741, @kaworu)
+
 ## [v0.9.0] - 2021-11-30
 
 Hubble v0.9.0 coincides with Cilium v1.11. It brings many improvements to the
