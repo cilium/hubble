@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The v0.10.0 release of the Hubble CLI coincides with Cilium v1.12.
 It adds a new `--first` option to query for earlier flows and events
-(#716, requires Cilium v1.12 and newer), further improves the default `compact`
+(#719, requires Cilium v1.12 and newer), further improves the default `compact`
 output by displaying security identities and refining policy verdict event output
 (#717, #734, #745), and deprecates the `-o json` option in favor of `-o jsonpb`
 (#738).
@@ -22,7 +22,7 @@ and an updated version of the Hubble logo (#726).
 
 **Major Changes:**
 * cli: Deprecate `-o json`, recommend `-o jsonpb` instead (#738, @gandro)
-* cmd/observe: Add --first to support querying for earlier flows and events (#719, @chancez)
+* cmd/observe: Add `--first` to support querying for earlier flows and events (#719, @chancez)
 * printer: Display security identity in compact output (#717, @gandro)
 
 **Minor Changes:**
