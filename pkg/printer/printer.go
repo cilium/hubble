@@ -225,7 +225,11 @@ func GetFlowType(f *pb.Flow) string {
 	case api.MessageTypeDrop:
 		return api.DropReason(uint8(f.GetEventType().GetSubType()))
 	case api.MessageTypePolicyVerdict:
-		return api.MessageTypeNamePolicyVerdict + ":" + api.PolicyMatchType(f.GetPolicyMatchType()).String()
+		return fmt.Sprintf("%s:%s %s",
+			api.MessageTypeNamePolicyVerdict,
+			api.PolicyMatchType(f.GetPolicyMatchType()).String(),
+			f.GetTrafficDirection().String())
+
 	case api.MessageTypeCapture:
 		return f.GetDebugCapturePoint().String()
 	}

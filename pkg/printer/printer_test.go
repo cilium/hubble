@@ -74,6 +74,7 @@ func TestPrinter_WriteProtoFlow(t *testing.T) {
 		Type: monitorAPI.MessageTypePolicyVerdict,
 	}
 	policyDenied.IsReply = nil
+	policyDenied.TrafficDirection = pb.TrafficDirection_EGRESS
 	type args struct {
 		f *pb.Flow
 	}
@@ -172,7 +173,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 			wantErr: false,
 			expected: "Jan  1 00:20:34.567 [k8s1]: " +
 				"1.1.1.1:31793 (health) <> 2.2.2.2:8080 (ID:12345) " +
-				"policy-verdict:none DENIED (TCP Flags: SYN)\n",
+				"policy-verdict:none EGRESS DENIED (TCP Flags: SYN)\n",
 		},
 		{
 			name: "compact-direction-unknown",
@@ -649,10 +650,11 @@ func Test_getFlowType(t *testing.T) {
 					EventType: &pb.CiliumEventType{
 						Type: monitorAPI.MessageTypePolicyVerdict,
 					},
-					PolicyMatchType: monitorAPI.PolicyMatchL3L4,
+					PolicyMatchType:  monitorAPI.PolicyMatchL3L4,
+					TrafficDirection: pb.TrafficDirection_INGRESS,
 				},
 			},
-			want: "policy-verdict:L3-L4",
+			want: "policy-verdict:L3-L4 INGRESS",
 		},
 		{
 			name: "L4",
@@ -662,10 +664,11 @@ func Test_getFlowType(t *testing.T) {
 					EventType: &pb.CiliumEventType{
 						Type: monitorAPI.MessageTypePolicyVerdict,
 					},
-					DropReason: 153,
+					DropReason:       153,
+					TrafficDirection: pb.TrafficDirection_INGRESS,
 				},
 			},
-			want: "policy-verdict:none",
+			want: "policy-verdict:none INGRESS",
 		},
 		{
 			name: "Debug Capture",
