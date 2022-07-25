@@ -26,14 +26,15 @@ import (
 	"time"
 
 	recorderpb "github.com/cilium/cilium/api/v1/recorder"
-	"github.com/cilium/hubble/cmd/common/config"
-	"github.com/cilium/hubble/cmd/common/conn"
-	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/cilium/hubble/cmd/common/config"
+	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 )
 
 const (
@@ -91,7 +92,7 @@ protocols are TCP, UDP and ANY.`,
 	recorderFlags.DurationVar(&timeLimit, "time-limit", 0, "Sets a limit on how long to capture on each node")
 
 	recordCmd.Flags().AddFlagSet(recorderFlags)
-	template.RegisterFlagSets(recordCmd.Name(), config.ServerFlags, recorderFlags)
+	template.RegisterFlagSets(recordCmd, config.ServerFlags, recorderFlags)
 
 	return recordCmd
 }

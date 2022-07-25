@@ -32,7 +32,7 @@ func New(vp *viper.Viper) *cobra.Command {
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
-	template.RegisterFlagSets(peerCmd.Name(), config.ServerFlags)
+	template.RegisterFlagSets(peerCmd, config.ServerFlags)
 
 	peerCmd.AddCommand(
 		newPeerCommand(vp),

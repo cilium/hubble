@@ -578,7 +578,7 @@ more.`,
 
 	formattingFlags.AddFlagSet(observeFormattingFlags)
 
-	template.RegisterFlagSets(observeCmd.Name(), selectorFlags, filterFlags, rawFilterFlags, formattingFlags, config.ServerFlags, otherFlags)
+	template.RegisterFlagSets(observeCmd, selectorFlags, filterFlags, rawFilterFlags, formattingFlags, config.ServerFlags, otherFlags)
 
 	return observeCmd
 }
