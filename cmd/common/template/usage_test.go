@@ -39,7 +39,7 @@ func TestUsage(t *testing.T) {
 	flags.String("baz", "", "baz usage")
 	cmd.Flags().AddFlagSet(flags)
 
-	RegisterFlagSets(cmd.Name(), flags)
+	RegisterFlagSets(cmd, flags)
 	cmd.SetUsageTemplate(Usage)
 
 	subCmd := &cobra.Command{
@@ -49,6 +49,8 @@ func TestUsage(t *testing.T) {
 		},
 	}
 	cmd.AddCommand(subCmd)
+
+	Initialize()
 
 	var out strings.Builder
 	cmd.SetOut(&out)

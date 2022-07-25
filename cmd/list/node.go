@@ -77,7 +77,7 @@ func newNodeCommand(vp *viper.Viper) *cobra.Command {
 		}, cobra.ShellCompDirectiveDefault
 	})
 
-	template.RegisterFlagSets(listCmd.Name(), formattingFlags, config.ServerFlags)
+	template.RegisterFlagSets(listCmd, formattingFlags, config.ServerFlags)
 	return listCmd
 }
 

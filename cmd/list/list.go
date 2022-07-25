@@ -30,7 +30,7 @@ func New(vp *viper.Viper) *cobra.Command {
 
 	// add config.ServerFlags to the help template as these flags are used by
 	// this command
-	template.RegisterFlagSets(listCmd.Name(), config.ServerFlags)
+	template.RegisterFlagSets(listCmd, config.ServerFlags)
 
 	listCmd.AddCommand(
 		newNodeCommand(vp),

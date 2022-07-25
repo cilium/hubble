@@ -73,7 +73,7 @@ func newDebugEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		},
 	}
 
-	template.RegisterFlagSets(debugEventsCmd.Name(), flagSets...)
+	template.RegisterFlagSets(debugEventsCmd, flagSets...)
 
 	return debugEventsCmd
 }

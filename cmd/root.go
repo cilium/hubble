@@ -43,6 +43,9 @@ func New() *cobra.Command {
 
 // NewWithViper creates a new root command with the given viper.
 func NewWithViper(vp *viper.Viper) *cobra.Command {
+	// Initialize must be called after the sub-commands are all added
+	defer template.Initialize()
+
 	rootCmd := &cobra.Command{
 		Use:           "hubble",
 		Short:         "CLI",
@@ -83,7 +86,7 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 	// add it by default in the help template
 	// config.GlobalFlags is always added to the help template as it's global
 	// to all commands
-	template.RegisterFlagSets(rootCmd.Name())
+	template.RegisterFlagSets(rootCmd)
 	rootCmd.SetUsageTemplate(template.Usage)
 
 	rootCmd.SetErr(os.Stderr)
@@ -99,6 +102,7 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 		version.New(),
 		watch.New(vp),
 	)
+
 	return rootCmd
 }
 

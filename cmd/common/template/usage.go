@@ -17,29 +17,47 @@ package template
 import (
 	"strings"
 
-	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"github.com/cilium/hubble/cmd/common/config"
 )
 
-var commandFlagSets = map[string][]*pflag.FlagSet{}
+var (
+	commandFlagSets     = map[*cobra.Command][]*pflag.FlagSet{}
+	commandPathFlagSets = map[string][]*pflag.FlagSet{}
+)
 
 func init() {
 	cobra.AddTemplateFunc("title", strings.Title)
 	cobra.AddTemplateFunc("getFlagSets", getFlagSets)
 }
 
-// RegisterFlagSets registers flags to be included in a commands usage text (--help).
-func RegisterFlagSets(cmdName string, flagsets ...*pflag.FlagSet) {
-	commandFlagSets[cmdName] = append(commandFlagSets[cmdName], flagsets...)
+// Initialize goes through the registered commands, and their flagsets and
+// initializes the help template command registry.
+//
+// This must be called after all commands are added as sub-commands, because
+// cmd.CommandPath relies on the commands having parents.
+func Initialize() {
+	for cmd, fs := range commandFlagSets {
+		commandPathFlagSets[cmd.CommandPath()] = fs
+	}
 }
 
-func getFlagSets(cmdName string) []*pflag.FlagSet {
-	flagsets, ok := commandFlagSets[cmdName]
+// RegisterFlagSets registers flags to be included in a commands usage text (--help).
+func RegisterFlagSets(cmd *cobra.Command, flagsets ...*pflag.FlagSet) {
+	commandFlagSets[cmd] = append(commandFlagSets[cmd], flagsets...)
+}
+
+func getFlagSets(cmd *cobra.Command) []*pflag.FlagSet {
+	flagsets, ok := commandPathFlagSets[cmd.CommandPath()]
 	if !ok {
 		return []*pflag.FlagSet{config.GlobalFlags}
 	}
-	return append(flagsets, config.GlobalFlags)
+	newFlagSet := make([]*pflag.FlagSet, len(flagsets))
+	copy(newFlagSet, flagsets)
+	newFlagSet = append(newFlagSet, config.GlobalFlags)
+	return newFlagSet
 }
 
 const (
@@ -57,7 +75,7 @@ Examples:
 Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
   {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}
 
-{{range getFlagSets .Name }}{{ title .Name}} Flags:
+{{range getFlagSets . }}{{ title .Name}} Flags:
 {{ .FlagUsages }}
 {{end}}Get help:
   -h, --help	Help for any command or subcommand

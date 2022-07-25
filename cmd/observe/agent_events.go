@@ -73,7 +73,7 @@ func newAgentEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		},
 	}
 
-	template.RegisterFlagSets(agentEventsCmd.Name(), flagSets...)
+	template.RegisterFlagSets(agentEventsCmd, flagSets...)
 
 	return agentEventsCmd
 }
