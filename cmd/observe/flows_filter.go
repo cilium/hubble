@@ -150,7 +150,7 @@ func (of *flowFilter) hasChanged(list []string, name string) bool {
 	return false
 }
 
-func (of *flowFilter) checkConflict(t *filterTracker, name, val string) error {
+func (of *flowFilter) checkConflict(t *filterTracker) error {
 	// check for conflicts
 	for _, group := range of.conflicts {
 		for _, flag := range group {
@@ -268,7 +268,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	if track {
 		wipe = f.add(name)
 
-		if err := of.checkConflict(f, name, val); err != nil {
+		if err := of.checkConflict(f); err != nil {
 			return err
 		}
 	}
