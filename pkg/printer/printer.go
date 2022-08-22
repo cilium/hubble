@@ -743,12 +743,13 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetDebugEventsResponse) err
 func (p *Printer) Hostname(ip, port string, ns, pod, svc string, names []string) (host string) {
 	host = ip
 	if p.opts.enableIPTranslation {
-		if pod != "" {
+		switch {
+		case pod != "":
 			// path.Join omits the slash if ns is empty
 			host = path.Join(ns, pod)
-		} else if svc != "" {
+		case svc != "":
 			host = path.Join(ns, svc)
-		} else if len(names) != 0 {
+		case len(names) != 0:
 			host = strings.Join(names, ",")
 		}
 	}

@@ -277,7 +277,7 @@ DESTINATION: 2.2.2.2:8080
 			res := &observerpb.GetFlowsResponse{
 				ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: tt.args.f},
 			}
-			//writes a node status event into the error stream
+			// writes a node status event into the error stream
 			if err := p.WriteProtoFlow(res); (err != nil) != tt.wantErr {
 				t.Errorf("WriteProtoFlow() error = %v, wantErr %v", err, tt.wantErr)
 			}
