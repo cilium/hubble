@@ -31,11 +31,11 @@ linters-settings:
       - fieldalignment
       - shadow
   staticcheck:
-    go: "1.18"
+    go: "1.19"
   stylecheck:
-    go: "1.18"
+    go: "1.19"
   unused:
-    go: "1.18"
+    go: "1.19"
 
 issues:
   # Default rules exclude Go doc comments check, which is rather unfortunate.
