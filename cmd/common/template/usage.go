@@ -54,7 +54,7 @@ func getFlagSets(cmd *cobra.Command) []*pflag.FlagSet {
 	if !ok {
 		return []*pflag.FlagSet{config.GlobalFlags}
 	}
-	newFlagSet := make([]*pflag.FlagSet, len(flagsets))
+	newFlagSet := make([]*pflag.FlagSet, len(flagsets), len(flagsets)+1)
 	copy(newFlagSet, flagsets)
 	newFlagSet = append(newFlagSet, config.GlobalFlags)
 	return newFlagSet
