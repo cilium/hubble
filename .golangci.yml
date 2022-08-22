@@ -6,23 +6,43 @@ run:
 linters:
   disable-all: true
   enable:
+    - asasalint
     - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - deadcode
+    - decorder
+    - durationcheck
+    - errchkjson
+    - errname
+    - gocritic
     - goerr113
     - gofmt
     - goimports
     - gosec
     - gosimple
     - govet
+    - importas
     - ineffassign
     - makezero
     - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nosprintfhostport
+    - predeclared
     - revive
     - staticcheck
     - structcheck
+    - tenv
     - typecheck
+    - unconvert
     - unparam
     - unused
+    - usestdlibvars
     - varcheck
+    - wastedassign
 
 linters-settings:
   gosimple:
