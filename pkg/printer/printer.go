@@ -640,7 +640,7 @@ func fmtEndpointShort(ep *pb.Endpoint) string {
 	str := fmt.Sprintf("ID: %d", ep.GetID())
 	if ns, pod := ep.GetNamespace(), ep.GetPodName(); ns != "" && pod != "" {
 		str = fmt.Sprintf("%s/%s (%s)", ns, pod, str)
-	} else if lbls := ep.GetLabels(); len(lbls) == 1 && strings.HasPrefix("reserved:", lbls[0]) {
+	} else if lbls := ep.GetLabels(); len(lbls) == 1 && strings.HasPrefix(lbls[0], "reserved:") {
 		str = fmt.Sprintf("%s (%s)", lbls[0], str)
 	}
 
