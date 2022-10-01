@@ -71,6 +71,24 @@ func Test_getFlowsRequest(t *testing.T) {
 	}, req)
 }
 
+func Test_getFlowsRequestWithoutSince(t *testing.T) {
+	selectorOpts.since = ""
+	selectorOpts.until = ""
+	filter := newFlowFilter()
+	req, err := getFlowsRequest(filter, nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
+	selectorOpts.until = "2021-03-24T00:00:00Z"
+	req, err = getFlowsRequest(filter, nil, nil)
+	assert.NoError(t, err)
+	until, err := time.Parse(time.RFC3339, selectorOpts.until)
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetFlowsRequest{
+		Number: defaults.FlowPrintCount,
+		Until:  timestamppb.New(until),
+	}, req)
+}
+
 func Test_getFlowsRequestWithRawFilters(t *testing.T) {
 	allowlist := []string{
 		`{"source_label":["k8s:io.kubernetes.pod.namespace=kube-system","reserved:host"]}`,

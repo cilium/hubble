@@ -44,3 +44,20 @@ func Test_getDebugEventsRequest(t *testing.T) {
 		Until:  timestamppb.New(until),
 	}, req)
 }
+
+func Test_getDebugEventsRequestWithoutSince(t *testing.T) {
+	selectorOpts.since = ""
+	selectorOpts.until = ""
+	req, err := getDebugEventsRequest()
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetDebugEventsRequest{Number: defaults.EventsPrintCount}, req)
+	selectorOpts.until = "2021-04-26T01:01:00Z"
+	req, err = getDebugEventsRequest()
+	assert.NoError(t, err)
+	until, err := time.Parse(time.RFC3339, selectorOpts.until)
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetDebugEventsRequest{
+		Number: defaults.EventsPrintCount,
+		Until:  timestamppb.New(until),
+	}, req)
+}
