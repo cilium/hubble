@@ -676,18 +676,18 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		if err := since.CheckValid(); err != nil {
 			return nil, fmt.Errorf("failed to convert `since` timestamp to proto: %v", err)
 		}
-		// Set the until field if both --since and --until options are specified and --follow
-		// is not specified. If --since is specified but --until is not, the server sets the
-		// --until option to the current timestamp.
-		if selectorOpts.until != "" && !selectorOpts.follow {
-			ut, err := hubtime.FromString(selectorOpts.until)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse the until time: %v", err)
-			}
-			until = timestamppb.New(ut)
-			if err := until.CheckValid(); err != nil {
-				return nil, fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
-			}
+	}
+	// Set the until field if --until option is specified and --follow
+	// is not specified. If --since is specified but --until is not, the server sets the
+	// --until option to the current timestamp.
+	if selectorOpts.until != "" && !selectorOpts.follow {
+		ut, err := hubtime.FromString(selectorOpts.until)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse the until time: %v", err)
+		}
+		until = timestamppb.New(ut)
+		if err := until.CheckValid(); err != nil {
+			return nil, fmt.Errorf("failed to convert `until` timestamp to proto: %v", err)
 		}
 	}
 

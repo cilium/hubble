@@ -67,3 +67,21 @@ func Test_getAgentEventsRequest(t *testing.T) {
 		Until:  timestamppb.New(until),
 	}, req)
 }
+
+func Test_getAgentEventsRequestWithoutSince(t *testing.T) {
+	selectorOpts.since = ""
+	selectorOpts.until = ""
+	req, err := getAgentEventsRequest()
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetAgentEventsRequest{Number: defaults.EventsPrintCount}, req)
+	selectorOpts.until = "2021-04-26T00:01:00Z"
+	req, err = getAgentEventsRequest()
+	assert.NoError(t, err)
+	assert.NoError(t, err)
+	until, err := time.Parse(time.RFC3339, selectorOpts.until)
+	assert.NoError(t, err)
+	assert.Equal(t, &observer.GetAgentEventsRequest{
+		Number: defaults.EventsPrintCount,
+		Until:  timestamppb.New(until),
+	}, req)
+}
