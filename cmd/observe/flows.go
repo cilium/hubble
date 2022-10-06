@@ -411,6 +411,16 @@ more.`,
 		"Show only flows with the given destination port (e.g. 8080)"))
 
 	filterFlags.Var(filterVar(
+		"from-workload", ofilter,
+		"Show all flows originating at an endpoint with the given workload"))
+	filterFlags.Var(filterVar(
+		"workload", ofilter,
+		"Show all flows related to an endpoint with the given workload"))
+	filterFlags.Var(filterVar(
+		"to-workload", ofilter,
+		"Show all flows terminating at an endpoint with the given workload"))
+
+	filterFlags.Var(filterVar(
 		"from-identity", ofilter,
 		"Show all flows originating at an endpoint with the given security identity"))
 	filterFlags.Var(filterVar(

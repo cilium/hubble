@@ -135,6 +135,8 @@ func newFlowFilter() *flowFilter {
 			{"port", "from-port"},
 			{"identity", "to-identity"},
 			{"identity", "from-identity"},
+			{"workload", "to-workload"},
+			{"workload", "from-workload"},
 			{"node-name"},
 			{"tcp-flags"},
 		},
@@ -492,6 +494,26 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "protocol":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.Protocol = append(f.Protocol, val)
+		})
+
+	// workload filters
+	case "workload":
+		workload := parseWorkload(val)
+		f.applyLeft(func(f *flowpb.FlowFilter) {
+			f.SourceWorkload = append(f.SourceWorkload, workload)
+		})
+		f.applyRight(func(f *flowpb.FlowFilter) {
+			f.DestinationWorkload = append(f.DestinationWorkload, workload)
+		})
+	case "from-workload":
+		workload := parseWorkload(val)
+		f.applyLeft(func(f *flowpb.FlowFilter) {
+			f.SourceWorkload = append(f.SourceWorkload, workload)
+		})
+	case "to-workload":
+		workload := parseWorkload(val)
+		f.applyRight(func(f *flowpb.FlowFilter) {
+			f.DestinationWorkload = append(f.DestinationWorkload, workload)
 		})
 
 	// identity filters
