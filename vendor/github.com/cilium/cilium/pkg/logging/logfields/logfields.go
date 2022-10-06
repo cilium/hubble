@@ -204,9 +204,6 @@ const (
 	// Interface is an interface id/name on the system
 	Interface = "interface"
 
-	// Ipvlan is a ipvlan object or ID
-	Ipvlan = "ipvlan"
-
 	// Veth is a veth object or ID
 	Veth = "veth"
 
@@ -267,6 +264,9 @@ const (
 
 	// BackendID is the ID of the backend
 	BackendID = "backendID"
+
+	// BackendWeight is a weight of service backend.
+	BackendWeight = "backendWeight"
 
 	// Backends is the list of the service backends
 	Backends = "backends"
@@ -333,9 +333,6 @@ const (
 
 	// DirectRoutingDevice is the name of the direct routing device
 	DirectRoutingDevice = "directRoutingDevice"
-
-	// IpvlanMasterDevice is the ipvlan master device name
-	IpvlanMasterDevice = "ipvlanMasterDevice"
 
 	// DatapathMode is the datapath mode name
 	DatapathMode = "datapathMode"
@@ -631,4 +628,10 @@ const (
 
 	// Chain is an Iptables chain
 	Chain = "chain"
+
+	// IPSec SPI
+	SPI = "spi"
+
+	// IPSec old SPI
+	OldSPI = "oldSPI"
 )

@@ -141,7 +141,12 @@ const DropReason_DENIED_BY_LB_SRC_RANGE_CHECK = flow.DropReason_DENIED_BY_LB_SRC
 const DropReason_SOCKET_LOOKUP_FAILED = flow.DropReason_SOCKET_LOOKUP_FAILED
 const DropReason_SOCKET_ASSIGN_FAILED = flow.DropReason_SOCKET_ASSIGN_FAILED
 const DropReason_PROXY_REDIRECTION_NOT_SUPPORTED_FOR_PROTOCOL = flow.DropReason_PROXY_REDIRECTION_NOT_SUPPORTED_FOR_PROTOCOL
+const DropReason_POLICY_DENY = flow.DropReason_POLICY_DENY
 const DropReason_VLAN_FILTERED = flow.DropReason_VLAN_FILTERED
+const DropReason_INVALID_VNI = flow.DropReason_INVALID_VNI
+const DropReason_INVALID_TC_BUFFER = flow.DropReason_INVALID_TC_BUFFER
+const DropReason_NO_SID = flow.DropReason_NO_SID
+const DropReason_MISSING_SRV6_STATE = flow.DropReason_MISSING_SRV6_STATE
 
 var DropReason_name = flow.DropReason_name
 var DropReason_value = flow.DropReason_value
@@ -284,10 +289,13 @@ type Layer4_TCP = flow.Layer4_TCP
 type Layer4_UDP = flow.Layer4_UDP
 type Layer4_ICMPv4 = flow.Layer4_ICMPv4
 type Layer4_ICMPv6 = flow.Layer4_ICMPv6
+type Layer4_SCTP = flow.Layer4_SCTP
 type Layer7 = flow.Layer7
 type Layer7_Dns = flow.Layer7_Dns
 type Layer7_Http = flow.Layer7_Http
 type Layer7_Kafka = flow.Layer7_Kafka
+type TraceContext = flow.TraceContext
+type TraceParent = flow.TraceParent
 type Endpoint = flow.Endpoint
 type Workload = flow.Workload
 type TCP = flow.TCP
@@ -295,6 +303,7 @@ type IP = flow.IP
 type Ethernet = flow.Ethernet
 type TCPFlags = flow.TCPFlags
 type UDP = flow.UDP
+type SCTP = flow.SCTP
 type ICMPv4 = flow.ICMPv4
 type ICMPv6 = flow.ICMPv6
 type EventTypeFilter = flow.EventTypeFilter
@@ -608,6 +617,7 @@ type GetFlowsResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to ResponseTypes:
+	//
 	//	*GetFlowsResponse_Flow
 	//	*GetFlowsResponse_NodeStatus
 	//	*GetFlowsResponse_LostEvents
@@ -1301,6 +1311,7 @@ type ExportEvent struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to ResponseTypes:
+	//
 	//	*ExportEvent_Flow
 	//	*ExportEvent_NodeStatus
 	//	*ExportEvent_LostEvents
