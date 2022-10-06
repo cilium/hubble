@@ -28,6 +28,7 @@
     - [LostEvent](#flow-LostEvent)
     - [NetworkInterface](#flow-NetworkInterface)
     - [PolicyUpdateNotification](#flow-PolicyUpdateNotification)
+    - [SCTP](#flow-SCTP)
     - [Service](#flow-Service)
     - [ServiceDeleteNotification](#flow-ServiceDeleteNotification)
     - [ServiceUpsertNotification](#flow-ServiceUpsertNotification)
@@ -35,6 +36,8 @@
     - [TCP](#flow-TCP)
     - [TCPFlags](#flow-TCPFlags)
     - [TimeNotification](#flow-TimeNotification)
+    - [TraceContext](#flow-TraceContext)
+    - [TraceParent](#flow-TraceParent)
     - [UDP](#flow-UDP)
     - [Workload](#flow-Workload)
   
@@ -284,6 +287,7 @@ EventTypeFilter is a filter describing a particular event type
 | debug_capture_point | [DebugCapturePoint](#flow-DebugCapturePoint) |  | Only applicable to cilium debug capture events, blank for other types |
 | interface | [NetworkInterface](#flow-NetworkInterface) |  | interface is the network interface on which this flow was observed |
 | proxy_port | [uint32](#uint32) |  | proxy_port indicates the port of the proxy to which the flow was forwarded |
+| trace_context | [TraceContext](#flow-TraceContext) |  | trace_context contains information about a trace related to the flow, if any. |
 | Summary | [string](#string) |  | **Deprecated.** This is a temporary workaround to support summary field for pb.Flow without duplicating logic from the old parser. This field will be removed once we fully migrate to the new parser. |
 
 
@@ -301,15 +305,17 @@ multiple fields are set, then all fields must match for the filter to match.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | source_ip | [string](#string) | repeated | source_ip filters by a list of source ips. Each of the source ips can be specified as an exact match (e.g. &#34;1.1.1.1&#34;) or as a CIDR range (e.g. &#34;1.1.1.0/24&#34;). |
-| source_pod | [string](#string) | repeated | source_pod filters by a list of source pod name prefixes, optionally within a given namespace (e.g. &#34;xwing&#34;, &#34;kube-system/coredns-&#34;). The pod name can be emitted to only filter by namespace (e.g. &#34;kube-system/&#34;) |
+| source_pod | [string](#string) | repeated | source_pod filters by a list of source pod name prefixes, optionally within a given namespace (e.g. &#34;xwing&#34;, &#34;kube-system/coredns-&#34;). The pod name can be omitted to only filter by namespace (e.g. &#34;kube-system/&#34;) |
 | source_fqdn | [string](#string) | repeated | source_fqdn filters by a list of source fully qualified domain names |
 | source_label | [string](#string) | repeated | source_labels filters on a list of source label selectors. Selectors support the full Kubernetes label selector syntax. |
 | source_service | [string](#string) | repeated | source_service filters on a list of source service names. This field supports the same syntax as the source_pod field. |
+| source_workload | [Workload](#flow-Workload) | repeated | source_workload filters by a list of source workload. |
 | destination_ip | [string](#string) | repeated | destination_ip filters by a list of destination ips. Each of the destination ips can be specified as an exact match (e.g. &#34;1.1.1.1&#34;) or as a CIDR range (e.g. &#34;1.1.1.0/24&#34;). |
 | destination_pod | [string](#string) | repeated | destination_pod filters by a list of destination pod names |
 | destination_fqdn | [string](#string) | repeated | destination_fqdn filters by a list of destination fully qualified domain names |
 | destination_label | [string](#string) | repeated | destination_label filters on a list of destination label selectors |
 | destination_service | [string](#string) | repeated | destination_service filters on a list of destination service names |
+| destination_workload | [Workload](#flow-Workload) | repeated | destination_workload filters by a list of destination workload. |
 | verdict | [Verdict](#flow-Verdict) | repeated | only return Flows that were classified with a particular verdict. |
 | event_type | [EventTypeFilter](#flow-EventTypeFilter) | repeated | event_type is the list of event types to filter on |
 | http_status_code | [string](#string) | repeated | http_status_code is a list of string prefixes (e.g. &#34;4&#43;&#34;, &#34;404&#34;, &#34;5&#43;&#34;) to filter on the HTTP status code |
@@ -325,6 +331,7 @@ multiple fields are set, then all fields must match for the filter to match.
 | tcp_flags | [TCPFlags](#flow-TCPFlags) | repeated | tcp_flags filters flows based on TCP header flags |
 | node_name | [string](#string) | repeated | node_name is a list of patterns to filter on the node name, e.g. &#34;k8s*&#34;, &#34;test-cluster/*.domain.com&#34;, &#34;cluster-name/&#34; etc. |
 | ip_version | [IPVersion](#flow-IPVersion) | repeated | filter based on IP version (ipv4 or ipv6) |
+| trace_id | [string](#string) | repeated | trace_id filters flows by trace ID |
 
 
 
@@ -471,6 +478,7 @@ L7 information for Kafka flows. It corresponds to Cilium&#39;s accesslog.LogReco
 | UDP | [UDP](#flow-UDP) |  |  |
 | ICMPv4 | [ICMPv4](#flow-ICMPv4) |  | ICMP is technically not L4, but mutually exclusive with the above |
 | ICMPv6 | [ICMPv6](#flow-ICMPv6) |  |  |
+| SCTP | [SCTP](#flow-SCTP) |  |  |
 
 
 
@@ -542,6 +550,22 @@ that happened before the events were captured by Hubble.
 | labels | [string](#string) | repeated |  |
 | revision | [uint64](#uint64) |  |  |
 | rule_count | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="flow-SCTP"></a>
+
+### SCTP
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source_port | [uint32](#uint32) |  |  |
+| destination_port | [uint32](#uint32) |  |  |
 
 
 
@@ -665,6 +689,39 @@ that happened before the events were captured by Hubble.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | time | [google.protobuf.Timestamp](#google-protobuf-Timestamp) |  |  |
+
+
+
+
+
+
+<a name="flow-TraceContext"></a>
+
+### TraceContext
+TraceContext contains trace context propagation data, ie information about a
+distributed trace.
+For more information about trace context, check the W3C Trace Context
+specification: https://www.w3.org/TR/trace-context/
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| parent | [TraceParent](#flow-TraceParent) |  | parent identifies the incoming request in a tracing system. |
+
+
+
+
+
+
+<a name="flow-TraceParent"></a>
+
+### TraceParent
+TraceParent identifies the incoming request in a tracing system.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| trace_id | [string](#string) |  | trace_id is a unique value that identifies a trace. It is a byte array represented as a hex string. |
 
 
 
@@ -882,7 +939,12 @@ here.
 | SOCKET_LOOKUP_FAILED | 178 |  |
 | SOCKET_ASSIGN_FAILED | 179 |  |
 | PROXY_REDIRECTION_NOT_SUPPORTED_FOR_PROTOCOL | 180 |  |
+| POLICY_DENY | 181 |  |
 | VLAN_FILTERED | 182 |  |
+| INVALID_VNI | 183 |  |
+| INVALID_TC_BUFFER | 184 |  |
+| NO_SID | 185 |  |
+| MISSING_SRV6_STATE | 186 |  |
 
 
 
