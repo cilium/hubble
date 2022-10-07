@@ -325,6 +325,10 @@ more.`,
 		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
 
 	filterFlags.Var(filterVar(
+		"trace-id", ofilter,
+		"Show only flows which match this trace ID"))
+
+	filterFlags.Var(filterVar(
 		"from-fqdn", ofilter,
 		`Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").`))
 	filterFlags.Var(filterVar(
