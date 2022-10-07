@@ -34,6 +34,7 @@ jobs:
         go mod tidy
         go mod vendor
         go mod verify
+        git status
         test -z "$(git status --porcelain)" || (echo "please run 'go mod tidy && go mod vendor', and submit your changes"; exit 1)
     - name: Run unit tests
       run: make test
