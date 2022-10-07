@@ -403,6 +403,11 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			f.DestinationPort = append(f.DestinationPort, val)
 		})
 
+	case "trace-id":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.TraceId = append(f.TraceId, val)
+		})
+
 	case "verdict":
 		if wipe {
 			f.apply(func(f *flowpb.FlowFilter) {
