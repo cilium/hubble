@@ -15,8 +15,6 @@
 package observe
 
 import (
-	"sort"
-
 	"github.com/cilium/cilium/pkg/identity"
 )
 
@@ -24,20 +22,10 @@ import (
 // strings.
 func reservedIdentitiesNames() []string {
 	identities := identity.GetAllReservedIdentities()
-	// NOTE: identity.GetAllReservedIdentities() returned values are sorted in
-	// a random order due to be sourced from a map. We sort them here in
-	// identity order to ensure consistency before converting them to strings.
-	// Once https://github.com/cilium/cilium/pull/20048 is merged and vendored,
-	// we can remove this sort.
-	sort.Slice(identities, func(i, j int) bool {
-		return identities[i].Uint32() < identities[j].Uint32()
-	})
-
 	names := make([]string, len(identities))
 	for i, id := range identities {
 		names[i] = id.String()
 	}
-
 	return names
 }
 
