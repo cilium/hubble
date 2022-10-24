@@ -620,15 +620,17 @@ func Test_getFlowType(t *testing.T) {
 			args: args{
 				f: &pb.Flow{
 					L7: &pb.Layer7{
-						Type:   pb.L7FlowType_REQUEST,
-						Record: &pb.Layer7_Dns{},
+						Type: pb.L7FlowType_REQUEST,
+						Record: &pb.Layer7_Dns{
+							Dns: &pb.DNS{ObservationSource: "proxy"},
+						},
 					},
 					EventType: &pb.CiliumEventType{
 						Type: monitorAPI.MessageTypeAccessLog,
 					},
 				},
 			},
-			want: "dns-request",
+			want: "dns-request proxy",
 		},
 		{
 			name: "L4",
