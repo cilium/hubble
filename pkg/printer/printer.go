@@ -213,6 +213,7 @@ func GetFlowType(f *pb.Flow) string {
 			l7Protocol = "http"
 		case *pb.Layer7_Dns:
 			l7Protocol = "dns"
+			l7Type += " " + l7.GetDns().ObservationSource
 		case *pb.Layer7_Kafka:
 			l7Protocol = "kafka"
 		}
