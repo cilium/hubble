@@ -11,7 +11,6 @@ linters:
     - bidichk
     - bodyclose
     - contextcheck
-    - deadcode
     - decorder
     - durationcheck
     - errchkjson
@@ -34,19 +33,17 @@ linters:
     - predeclared
     - revive
     - staticcheck
-    - structcheck
     - tenv
     - typecheck
     - unconvert
     - unparam
     - unused
     - usestdlibvars
-    - varcheck
     - wastedassign
 
 linters-settings:
   gosimple:
-    go: "1.18"
+    go: "1.19"
   govet:
     enable-all: true
     disable:
@@ -74,3 +71,5 @@ issues:
       text: "do not define dynamic errors, use wrapped static errors instead"
     - linters: [gosec]
       text: "G402" # TLS InsecureSkipVerify may be true
+    - linters: [revive]
+      text: "should have a package comment"

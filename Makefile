@@ -16,7 +16,7 @@ RELEASE_GID ?= $(shell id -g)
 
 TEST_TIMEOUT ?= 5s
 
-GOLANGCILINT_WANT_VERSION = 1.48.0
+GOLANGCILINT_WANT_VERSION = 1.50.1
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 all: hubble

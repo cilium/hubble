@@ -26,7 +26,7 @@ jobs:
     - name: Run static checks
       uses: golangci/golangci-lint-action@07db5389c99593f11ad7b44463c2d4233066a9b1
       with:
-        version: v1.48.0
+        version: v1.50.1
         args: --config=.golangci.yml --verbose
         skip-cache: true
     - name: Check module vendoring
