@@ -41,8 +41,8 @@ func newIOReaderObserver(reader io.Reader) *ioReaderObserver {
 	}
 }
 
-func (o *ioReaderObserver) GetFlows(_ context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
-	return newIOReaderClient(o.scanner, in)
+func (o *ioReaderObserver) GetFlows(ctx context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
+	return newIOReaderClient(ctx, o.scanner, in)
 }
 
 func (o *ioReaderObserver) GetAgentEvents(_ context.Context, _ *observer.GetAgentEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetAgentEventsClient, error) {
@@ -70,12 +70,12 @@ type ioReaderClient struct {
 	grpc.ClientStream
 }
 
-func newIOReaderClient(scanner *bufio.Scanner, request *observer.GetFlowsRequest) (*ioReaderClient, error) {
-	allow, err := filters.BuildFilterList(context.Background(), request.Whitelist, filters.DefaultFilters)
+func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *observer.GetFlowsRequest) (*ioReaderClient, error) {
+	allow, err := filters.BuildFilterList(ctx, request.Whitelist, filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}
-	deny, err := filters.BuildFilterList(context.Background(), request.Blacklist, filters.DefaultFilters)
+	deny, err := filters.BuildFilterList(ctx, request.Blacklist, filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}
