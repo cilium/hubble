@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2019 Authors of Hubble
+// Copyright Authors of Hubble
 
 // Ensure build fails on versions of Go that are not supported by Hubble.
 // This build tag should be kept in sync with the version specified in go.mod.
