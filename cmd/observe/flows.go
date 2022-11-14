@@ -180,7 +180,7 @@ more.`,
 			if err != nil {
 				return err
 			}
-			if fi.Mode()&os.ModeNamedPipe != 0 {
+			if fi.Mode()&os.ModeCharDevice == 0 {
 				// read flows from stdin
 				client = newIOReaderObserver(os.Stdin)
 				logger.Logger.Debug("Reading flows from stdin")
