@@ -59,7 +59,8 @@ var verdicts = []string{
 // flowEventTypes are the valid event types supported by observe. This corresponds
 // to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent,
 // MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
-// message types are not supported by `hubble observe flows` but have separate sub-commands.
+// types are not supported by `hubble observe flows` but have separate
+// sub-commands.
 var flowEventTypes = []string{
 	monitorAPI.MessageTypeNameCapture,
 	monitorAPI.MessageTypeNameDrop,
