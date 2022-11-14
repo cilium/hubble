@@ -192,7 +192,7 @@ func runRecord(ctx context.Context, conn *grpc.ClientConn, filters []*recorderpb
 			},
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to to send stop recording message: %s\n", err)
+			fmt.Fprintf(os.Stderr, "failed to send stop recording message: %s\n", err)
 		}
 	}()
 
