@@ -13,6 +13,7 @@ linters:
     - bodyclose
     - contextcheck
     - decorder
+    - dupword
     - durationcheck
     - errchkjson
     - errname
@@ -21,11 +22,13 @@ linters:
     - gofmt
     - goheader
     - goimports
+    - goprintffuncname
     - gosec
     - gosimple
     - govet
     - importas
     - ineffassign
+    - interfacebloat
     - makezero
     - misspell
     - nakedret
@@ -33,6 +36,7 @@ linters:
     - noctx
     - nosprintfhostport
     - predeclared
+    - reassign
     - revive
     - staticcheck
     - tenv
@@ -74,3 +78,7 @@ issues:
       text: "G402" # TLS InsecureSkipVerify may be true
     - linters: [revive]
       text: "should have a package comment"
+    - linters: [dupword]
+      path: cmd/list/node_test.go # tripping on command output
+    - linters: [dupword]
+      path: pkg/printer/printer_test.go # tripping on command output
