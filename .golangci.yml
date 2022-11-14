@@ -19,6 +19,7 @@ linters:
     - gocritic
     - goerr113
     - gofmt
+    - goheader
     - goimports
     - gosec
     - gosimple
@@ -43,6 +44,13 @@ linters:
     - wastedassign
 
 linters-settings:
+  goheader:
+    values:
+      regexp:
+        PROJECT: 'Cilium|Hubble'
+    template: |-
+      SPDX-License-Identifier: Apache-2.0
+      Copyright Authors of {{ PROJECT }}
   govet:
     enable-all: true
     disable:
