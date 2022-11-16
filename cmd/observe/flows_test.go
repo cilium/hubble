@@ -22,9 +22,8 @@ import (
 func TestEventTypes(t *testing.T) {
 	// Make sure to keep event type slices in sync. Agent events, debug
 	// events and recorder captures have separate subcommands and are not
-	// supported in observe, and trace-sock events aren't supported in the API
-	// yet, thus the 4. See flowEventTypes godoc for details.
-	require.Len(t, flowEventTypes, len(monitorAPI.MessageTypeNames)-4)
+	// supported in observe, thus the 3. See flowEventTypes godoc for details.
+	require.Len(t, flowEventTypes, len(monitorAPI.MessageTypeNames)-3)
 	for _, v := range flowEventTypes {
 		require.Contains(t, monitorAPI.MessageTypeNames, v)
 	}
@@ -32,7 +31,6 @@ func TestEventTypes(t *testing.T) {
 		switch k {
 		case monitorAPI.MessageTypeNameAgent,
 			monitorAPI.MessageTypeNameDebug,
-			monitorAPI.MessageTypeNameTraceSock,
 			monitorAPI.MessageTypeNameRecCapture:
 			continue
 		}
