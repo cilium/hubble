@@ -10,7 +10,7 @@ github.com/blang/semver/v4
 # github.com/cespare/xxhash/v2 v2.1.2
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
-# github.com/cilium/cilium v1.13.0-rc1.0.20221006162552-c8fef6fbddf7
+# github.com/cilium/cilium v1.13.0-rc2.0.20221116111714-7a06e6282025
 ## explicit; go 1.19
 github.com/cilium/cilium/api/v1/client
 github.com/cilium/cilium/api/v1/client/daemon
@@ -249,7 +249,7 @@ github.com/prometheus/procfs/internal/util
 # github.com/sasha-s/go-deadlock v0.3.1
 ## explicit
 github.com/sasha-s/go-deadlock
-# github.com/shirou/gopsutil/v3 v3.22.8
+# github.com/shirou/gopsutil/v3 v3.22.10
 ## explicit; go 1.15
 github.com/shirou/gopsutil/v3/internal/common
 github.com/shirou/gopsutil/v3/mem
@@ -311,40 +311,11 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.uber.org/atomic v1.9.0
-## explicit; go 1.13
-go.uber.org/atomic
-# go.uber.org/dig v1.15.0
-## explicit; go 1.17
-go.uber.org/dig
-go.uber.org/dig/internal/digerror
-go.uber.org/dig/internal/digreflect
-go.uber.org/dig/internal/dot
-go.uber.org/dig/internal/graph
-# go.uber.org/fx v1.18.1
-## explicit; go 1.17
-go.uber.org/fx
-go.uber.org/fx/fxevent
-go.uber.org/fx/internal/fxclock
-go.uber.org/fx/internal/fxlog
-go.uber.org/fx/internal/fxreflect
-go.uber.org/fx/internal/lifecycle
-# go.uber.org/multierr v1.8.0
-## explicit; go 1.14
-go.uber.org/multierr
-# go.uber.org/zap v1.21.0
-## explicit; go 1.13
-go.uber.org/zap
-go.uber.org/zap/buffer
-go.uber.org/zap/internal/bufferpool
-go.uber.org/zap/internal/color
-go.uber.org/zap/internal/exit
-go.uber.org/zap/zapcore
-# golang.org/x/exp v0.0.0-20220602145555-4a0574d9293f
+# golang.org/x/exp v0.0.0-20221106115401-f9659909a136
 ## explicit; go 1.18
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
-# golang.org/x/net v0.0.0-20221014081412-f15817d10f9b
+# golang.org/x/net v0.1.0
 ## explicit; go 1.17
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
@@ -355,7 +326,7 @@ golang.org/x/net/trace
 # golang.org/x/sync v0.1.0
 ## explicit
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
+# golang.org/x/sys v0.2.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -367,7 +338,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.0.0-20220609170525-579cf78fd858
+# golang.org/x/time v0.2.0
 ## explicit
 golang.org/x/time/rate
 # google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
