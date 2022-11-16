@@ -100,3 +100,11 @@ func (c colorer) verdictDropped(a interface{}) string {
 func (c colorer) verdictAudit(a interface{}) string {
 	return c.yellow.Sprint(a)
 }
+
+func (c colorer) verdictTraced(a interface{}) string {
+	return c.yellow.Sprint(a)
+}
+
+func (c colorer) verdictTranslated(a interface{}) string {
+	return c.yellow.Sprint(a)
+}

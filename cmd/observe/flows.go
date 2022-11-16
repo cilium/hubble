@@ -54,6 +54,8 @@ var verdicts = []string{
 	flowpb.Verdict_AUDIT.String(),
 	flowpb.Verdict_REDIRECTED.String(),
 	flowpb.Verdict_ERROR.String(),
+	flowpb.Verdict_TRACED.String(),
+	flowpb.Verdict_TRANSLATED.String(),
 }
 
 // flowEventTypes are the valid event types supported by observe. This corresponds
@@ -67,6 +69,7 @@ var flowEventTypes = []string{
 	monitorAPI.MessageTypeNameL7,
 	monitorAPI.MessageTypeNamePolicyVerdict,
 	monitorAPI.MessageTypeNameTrace,
+	monitorAPI.MessageTypeNameTraceSock,
 }
 
 // flowEventTypeSubtypes is a map message types and all their subtypes.
@@ -89,6 +92,7 @@ var flowEventTypeSubtypes = map[string][]string{
 	},
 	monitorAPI.MessageTypeNameL7:            nil,
 	monitorAPI.MessageTypeNamePolicyVerdict: nil,
+	monitorAPI.MessageTypeNameTraceSock:     nil,
 }
 
 const (

@@ -222,6 +222,18 @@ func GetFlowType(f *pb.Flow) string {
 
 	case api.MessageTypeCapture:
 		return f.GetDebugCapturePoint().String()
+	case api.MessageTypeTraceSock:
+		switch f.GetSockXlatePoint() {
+		case pb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_FWD:
+			return "post-xlate-fwd"
+		case pb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_REV:
+			return "post-xlate-rev"
+		case pb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_FWD:
+			return "pre-xlate-fwd"
+		case pb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_REV:
+			return "pre-xlate-rev"
+		}
+		return f.GetSockXlatePoint().String()
 	}
 
 	return "UNKNOWN"
@@ -246,6 +258,10 @@ func (p Printer) getVerdict(f *pb.Flow) string {
 			msg = "AUDITED"
 		}
 		return p.color.verdictAudit(msg)
+	case pb.Verdict_TRACED:
+		return p.color.verdictTraced(msg)
+	case pb.Verdict_TRANSLATED:
+		return p.color.verdictTranslated(msg)
 	default:
 		return msg
 	}

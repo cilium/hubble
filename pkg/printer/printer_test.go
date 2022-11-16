@@ -662,6 +662,32 @@ func Test_getFlowType(t *testing.T) {
 			want: "policy-verdict:none INGRESS",
 		},
 		{
+			name: "SockLB pre-translate",
+			args: args{
+				f: &pb.Flow{
+					Verdict: pb.Verdict_TRACED,
+					EventType: &pb.CiliumEventType{
+						Type: monitorAPI.MessageTypeTraceSock,
+					},
+					SockXlatePoint: pb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_FWD,
+				},
+			},
+			want: "pre-xlate-fwd",
+		},
+		{
+			name: "SockLB post-translate",
+			args: args{
+				f: &pb.Flow{
+					Verdict: pb.Verdict_TRANSLATED,
+					EventType: &pb.CiliumEventType{
+						Type: monitorAPI.MessageTypeTraceSock,
+					},
+					SockXlatePoint: pb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_FWD,
+				},
+			},
+			want: "post-xlate-fwd",
+		},
+		{
 			name: "Debug Capture",
 			args: args{
 				f: &pb.Flow{
