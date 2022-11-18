@@ -139,6 +139,7 @@ func newFlowFilter() *flowFilter {
 			{"workload", "from-workload"},
 			{"node-name"},
 			{"tcp-flags"},
+			{"http-header"}
 		},
 	}
 }
@@ -428,6 +429,11 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "http-status":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpStatusCode = append(f.HttpStatusCode, val)
+		})
+
+	case "http-header":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.HttpHeader = append(f.HttpHeader, val)
 		})
 
 	case "http-method":
