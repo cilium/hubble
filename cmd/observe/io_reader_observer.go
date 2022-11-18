@@ -1,16 +1,5 @@
-// Copyright 2021 Authors of Hubble
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Hubble
 
 package observe
 
@@ -41,8 +30,8 @@ func newIOReaderObserver(reader io.Reader) *ioReaderObserver {
 	}
 }
 
-func (o *ioReaderObserver) GetFlows(_ context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
-	return newIOReaderClient(o.scanner, in)
+func (o *ioReaderObserver) GetFlows(ctx context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
+	return newIOReaderClient(ctx, o.scanner, in)
 }
 
 func (o *ioReaderObserver) GetAgentEvents(_ context.Context, _ *observer.GetAgentEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetAgentEventsClient, error) {
@@ -70,12 +59,12 @@ type ioReaderClient struct {
 	grpc.ClientStream
 }
 
-func newIOReaderClient(scanner *bufio.Scanner, request *observer.GetFlowsRequest) (*ioReaderClient, error) {
-	allow, err := filters.BuildFilterList(context.Background(), request.Whitelist, filters.DefaultFilters)
+func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *observer.GetFlowsRequest) (*ioReaderClient, error) {
+	allow, err := filters.BuildFilterList(ctx, request.Whitelist, filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}
-	deny, err := filters.BuildFilterList(context.Background(), request.Blacklist, filters.DefaultFilters)
+	deny, err := filters.BuildFilterList(ctx, request.Blacklist, filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}

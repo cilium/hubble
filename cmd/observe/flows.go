@@ -1,16 +1,5 @@
-// Copyright 2019-2021 Authors of Hubble
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of Hubble
 
 package observe
 
@@ -70,7 +59,8 @@ var verdicts = []string{
 // flowEventTypes are the valid event types supported by observe. This corresponds
 // to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent,
 // MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
-// message types are not supported by `hubble observe flows` but have separate sub-commands.
+// types are not supported by `hubble observe flows` but have separate
+// sub-commands.
 var flowEventTypes = []string{
 	monitorAPI.MessageTypeNameCapture,
 	monitorAPI.MessageTypeNameDrop,
@@ -190,7 +180,7 @@ more.`,
 			if err != nil {
 				return err
 			}
-			if fi.Mode()&os.ModeNamedPipe != 0 {
+			if fi.Mode()&os.ModeCharDevice == 0 {
 				// read flows from stdin
 				client = newIOReaderObserver(os.Stdin)
 				logger.Logger.Debug("Reading flows from stdin")

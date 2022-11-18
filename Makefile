@@ -16,7 +16,7 @@ RELEASE_GID ?= $(shell id -g)
 
 TEST_TIMEOUT ?= 5s
 
-GOLANGCILINT_WANT_VERSION = 1.48.0
+GOLANGCILINT_WANT_VERSION = 1.50.1
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 all: hubble
@@ -25,7 +25,7 @@ hubble:
 	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
 release:
-	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.19.0-alpine3.16 \
+	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.19.3-alpine3.16 \
 		sh -c "apk add --no-cache make git && \
 			addgroup -g $(RELEASE_GID) release && \
 			adduser -u $(RELEASE_UID) -D -G release release && \
