@@ -325,6 +325,10 @@ more.`,
 		`Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")`))
 
 	filterFlags.Var(filterVar(
+		"http-header", ofilter,
+		`Show only flows which match this HTTP header`))
+
+	filterFlags.Var(filterVar(
 		"trace-id", ofilter,
 		"Show only flows which match this trace ID"))
 
