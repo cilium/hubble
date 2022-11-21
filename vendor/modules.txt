@@ -373,7 +373,7 @@ golang.org/x/time/rate
 # google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.50.1
+# google.golang.org/grpc v1.51.0
 ## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
