@@ -26,10 +26,8 @@ hubble:
 
 release:
 	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.19.3-alpine3.16 \
-		sh -c "apk add --no-cache make git && \
-			addgroup -g $(RELEASE_GID) release && \
-			adduser -u $(RELEASE_UID) -D -G release release && \
-			su release -c 'make local-release'"
+		sh -c "apk add --no-cache setpriv make git && \
+			/usr/bin/setpriv --reuid=$(RELEASE_UID) --regid=$(RELEASE_GID) --clear-groups make GOCACHE=/tmp/gocache local-release"
 
 local-release: clean
 	set -o errexit; \
