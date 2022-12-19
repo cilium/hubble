@@ -183,7 +183,7 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 		{
 			name: "json",
 			options: []Option{
-				JSON(),
+				JSONPB(),
 				WithColor("never"),
 				Writer(&buf),
 			},
@@ -191,14 +191,14 @@ Jan  1 00:20:34.567   k8s1   1.1.1.1:31793   2.2.2.2:8080   Policy denied   DROP
 				f: &f,
 			},
 			wantErr: false,
-			expected: `{"time":"1970-01-01T00:20:34.567800Z",` +
+			expected: `{"flow":{"time":"1970-01-01T00:20:34.567800Z",` +
 				`"verdict":"DROPPED",` +
 				`"IP":{"source":"1.1.1.1","destination":"2.2.2.2"},` +
 				`"l4":{"TCP":{"source_port":31793,"destination_port":8080}},` +
 				`"source":{"identity":4},"destination":{"identity":12345},` +
 				`"Type":"L3_L4","node_name":"k8s1",` +
 				`"event_type":{"type":1,"sub_type":133},` +
-				`"is_reply":false,"Summary":"TCP Flags: SYN"}`,
+				`"is_reply":false,"Summary":"TCP Flags: SYN"}}`,
 		},
 		{
 			name: "jsonpb",
@@ -1045,7 +1045,7 @@ Jan  1 00:20:34.567   k8s1   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID
 		{
 			name: "json",
 			options: []Option{
-				JSON(),
+				JSONPB(),
 				Writer(&buf),
 			},
 			args: args{
@@ -1054,11 +1054,12 @@ Jan  1 00:20:34.567   k8s1   cilium-test/pod-to-a-denied-cnp-75cb89dfd-vqhd9 (ID
 				ts:   ts,
 			},
 			wantErr: false,
-			expected: `{"type":"DBG_CT_VERDICT","source":{"ID":690,"identity":1332,"namespace":"cilium-test","labels":` +
+			expected: `{"debug_event":{"type":"DBG_CT_VERDICT","source":{"ID":690,"identity":1332,"namespace":"cilium-test","labels":` +
 				`["k8s:io.cilium.k8s.policy.cluster=default","k8s:io.cilium.k8s.policy.serviceaccount=default",` +
 				`"k8s:io.kubernetes.pod.namespace=cilium-test","k8s:name=pod-to-a-denied-cnp"],` +
 				`"pod_name":"pod-to-a-denied-cnp-75cb89dfd-vqhd9"},` +
-				`"hash":180354257,"arg1":0,"arg2":0,"arg3":0,"message":"CT verdict: New, revnat=0","cpu":1}`,
+				`"hash":180354257,"arg1":0,"arg2":0,"arg3":0,"message":"CT verdict: New, revnat=0","cpu":1},` +
+				`"node_name":"k8s1","time":"1970-01-01T00:20:34.567800Z"}`,
 		},
 		{
 			name: "jsonpb",
@@ -1218,7 +1219,7 @@ Connected Nodes: 2/2`,
 		}, {
 			name: "json",
 			options: []Option{
-				JSON(),
+				JSONPB(),
 				WithColor("never"),
 				Writer(&buf),
 			},
@@ -1228,7 +1229,7 @@ Connected Nodes: 2/2`,
 		}, {
 			name: "json-with-nodes",
 			options: []Option{
-				JSON(),
+				JSONPB(),
 				WithColor("never"),
 				Writer(&buf),
 			},

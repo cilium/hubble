@@ -21,9 +21,7 @@ func handleEventsArgs(debug bool) error {
 		opts = append(opts, hubprinter.Compact())
 	case "dict":
 		opts = append(opts, hubprinter.Dict())
-	case "json", "JSON":
-		opts = append(opts, hubprinter.JSON())
-	case "jsonpb":
+	case "json", "JSON", "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
 		if selectorOpts.follow {

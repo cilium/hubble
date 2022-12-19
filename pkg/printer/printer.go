@@ -79,7 +79,7 @@ func New(fopts ...Option) *Printer {
 		// initialize tabwriter since it's going to be needed
 		p.tw = tabwriter.NewWriter(opts.w, 2, 0, 3, ' ', 0)
 		p.color.disable() // the tabwriter is not compatible with colors, thus disable coloring
-	case JSONOutput, JSONPBOutput:
+	case JSONPBOutput:
 		p.jsonEncoder = json.NewEncoder(p.opts.w)
 	}
 
@@ -361,8 +361,6 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
-	case JSONOutput:
-		return p.jsonEncoder.Encode(f)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(res)
 	}
@@ -413,7 +411,7 @@ func (p *Printer) WriteProtoNodeStatusEvent(r *observerpb.GetFlowsResponse) erro
 	}
 
 	switch p.opts.output {
-	case JSONOutput, JSONPBOutput:
+	case JSONPBOutput:
 		return json.NewEncoder(p.opts.werr).Encode(r)
 	case DictOutput:
 		// this is a bit crude, but in case stdout and stderr are interleaved,
@@ -563,8 +561,6 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetAgentEventsResponse) err
 	}
 
 	switch p.opts.output {
-	case JSONOutput:
-		return p.jsonEncoder.Encode(e)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(r)
 	case DictOutput:
@@ -665,8 +661,6 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetDebugEventsResponse) err
 	}
 
 	switch p.opts.output {
-	case JSONOutput:
-		return p.jsonEncoder.Encode(e)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(r)
 	case DictOutput:
@@ -877,7 +871,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 		if ew.err != nil {
 			return fmt.Errorf("failed to write out server status: %v", ew.err)
 		}
-	case JSONOutput, JSONPBOutput:
+	case JSONPBOutput:
 		return p.jsonEncoder.Encode(res)
 	}
 	return nil
