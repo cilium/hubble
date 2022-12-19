@@ -4,9 +4,7 @@
 package printer
 
 import (
-	"fmt"
 	"io"
-	"os"
 )
 
 // Output enum of the printer.
@@ -15,8 +13,6 @@ type Output int
 const (
 	// TabOutput prints flows in even tab-aligned columns.
 	TabOutput Output = iota
-	// JSONOutput prints flows as json.
-	JSONOutput
 	// CompactOutput prints flows as compact as possible (similar to monitor).
 	CompactOutput
 	// DictOutput presents the same information as TabOutput, but each flow is
@@ -40,14 +36,6 @@ type Options struct {
 
 // Option ...
 type Option func(*Options)
-
-// JSON encoded output from the printer.
-func JSON() Option {
-	fmt.Fprintln(os.Stderr, "WARNING: The --output=json option has been deprecated. Use --output=jsonpb instead")
-	return func(opts *Options) {
-		opts.output = JSONOutput
-	}
-}
 
 // JSONPB encodes GetFlowsResponse as JSON according to proto3's JSON mapping.
 func JSONPB() Option {

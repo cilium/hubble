@@ -461,8 +461,8 @@ more.`,
 		`Specify the output format, one of:
   compact:  Compact output
   dict:     Each flow is shown as KEY:VALUE pair
-  json:     JSON encoding (DEPRECATED: use --output=jsonpb instead)
-  jsonpb:   Output each GetFlowResponse according to proto3's JSON mapping
+  jsonpb:   JSON encoded GetFlowResponse according to proto3's JSON mapping
+  json:     Alias for jsonpb
   table:    Tab-aligned columns
 `)
 	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
@@ -607,9 +607,7 @@ func handleFlowArgs(ofilter *flowFilter, debug bool) (err error) {
 		opts = append(opts, hubprinter.Compact())
 	case "dict":
 		opts = append(opts, hubprinter.Dict())
-	case "json", "JSON":
-		opts = append(opts, hubprinter.JSON())
-	case "jsonpb":
+	case "json", "JSON", "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
 		if selectorOpts.follow {

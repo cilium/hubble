@@ -99,9 +99,7 @@ func runStatus(conn *grpc.ClientConn, out io.Writer) error {
 		opts = append(opts, printer.Compact())
 	case "dict":
 		opts = append(opts, printer.Dict())
-	case "json", "JSON":
-		opts = append(opts, printer.JSON())
-	case "jsonpb":
+	case "json", "JSON", "jsonpb":
 		opts = append(opts, printer.JSONPB())
 	case "tab", "table":
 		opts = append(opts, printer.Tab())
