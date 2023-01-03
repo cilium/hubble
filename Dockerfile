@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.19.4-alpine3.16@sha256:4b4f7127b01b372115ed9054abc6de0a0b3fdea224561b354af7bb6e946acaa9 as builder
+FROM docker.io/library/golang:1.19.4-alpine3.17@sha256:a9b24b67dc83b3383d22a14941c2b2b2ca6a103d805cac6820fd1355943beaf1 as builder
 WORKDIR /go/src/github.com/cilium/hubble
 RUN apk add --no-cache git make
 COPY . .
@@ -12,7 +12,7 @@ RUN make clean && make hubble
 # thread[1].
 # [0]: https://bugs.busybox.net/show_bug.cgi?id=12541
 # [1]: https://github.com/gliderlabs/docker-alpine/issues/539
-FROM docker.io/library/alpine:3.16.0@sha256:686d8c9dfa6f3ccfc8230bc3178d23f84eeaf7e457f36f271ab1acc53015037c
+fROM docker.io/library/alpine:3.17.0@sha256:8914eb54f968791faf6a8638949e480fef81e697984fba772b3976835194c6d4
 RUN apk add --no-cache bash curl jq
 COPY --from=builder /go/src/github.com/cilium/hubble/hubble /usr/bin
 CMD ["/usr/bin/hubble"]
