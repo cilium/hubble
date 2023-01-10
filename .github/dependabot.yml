@@ -26,3 +26,15 @@ updates:
     - kind/enhancement
     - release-note/misc
     - priority/release-blocker
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "dockerfile:"
+    open-pull-requests-limit: 1
+    rebase-strategy: disabled
+    labels:
+    - kind/enhancement
+    - release-note/misc
+    - priority/release-blocker
