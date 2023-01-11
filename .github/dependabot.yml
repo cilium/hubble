@@ -3,10 +3,10 @@ updates:
   - package-ecosystem: gomod
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
     commit-message:
       prefix: "vendor:"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 5
     rebase-strategy: disabled
     ignore:
       - dependency-name: "github.com/cilium/cilium"
@@ -17,10 +17,10 @@ updates:
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
     commit-message:
       prefix: "ci:"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 5
     rebase-strategy: disabled
     labels:
     - kind/enhancement
@@ -29,10 +29,10 @@ updates:
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
+      interval: daily
     commit-message:
       prefix: "dockerfile:"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 5
     rebase-strategy: disabled
     labels:
     - kind/enhancement
