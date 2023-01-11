@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.0] - 2023-01-11
+
+This v0.11.0 release of the Hubble CLI adds support for features added in
+Cilium v1.13: Hubble now has visibility into Cilium's SockLB,
+meaning it is possible to observe service address translations performed
+by Cilium on the socket level (#816). Hubble CLI v0.11 also supports the newly
+introduced Cilium v1.13 flow filters for workload and trace ID (#794, #795).
+Another noteworthy change is the newly displayed traffic direction for
+policy verdict events in the `-o compact` output (#759).
+
+*Breaking Changes*
+
+In accordance with semver 0.x releases, this release contains a breaking change
+to the Hubble command-line output:
+
+ - This release also removes the old and deprecated JSON formatter and now always
+   uses to the more flexible proto3-based `jsonpb` output when JSON is selected
+   as the output format. This is a potentially breaking change and requires that
+   e.g. `jq` queries of the form `hubble observe -o json | jq .source` are
+   rewritten as `hubble observe -o json | jq .flow.source` (#826).
+
+**Major Changes:**
+* Add support for SockLB events (#816, @gandro)
+* cmd: Make `-o json` an alias for `-o jsobpb` (#826, @gandro)
+
+**Minor Changes:**
+* Add endpoint workload filters (#794, @chancez)
+* Add traceID filter (#795, @chancez)
+* compact: Add traffic direction to policy verdict events (#759, @michi-covalent)
+
+**Bugfixes:**
+* cmd/observe: fix stdin reading from file redirection (#815, @rolinh)
+
+**CI Changes:**
+* ci: update golangci-lint config, add new linters (#814, @rolinh)
+* dependabot config improvements (#836, @kaworu)
+* Makefile: Fix potential uid/gid collision by using setpriv (#821, @gandro)
+
+**Misc Changes:**
+* Add Code of Conduct (#828, @xmulligan)
+* build(deps): bump actions/checkout from 3.0.2 to 3.1.0 (#799, @dependabot[bot])
+* build(deps): bump actions/download-artifact from 3.0.0 to 3.0.1 (#820, @dependabot[bot])
+* build(deps): bump actions/setup-go from 3.2.0 to 3.2.1 (#765, @dependabot[bot])
+* build(deps): bump actions/setup-go from 3.2.1 to 3.3.0 (#783, @dependabot[bot])
+* build(deps): bump actions/setup-go from 3.3.0 to 3.3.1 (#813, @dependabot[bot])
+* build(deps): bump actions/setup-go from 3.3.1 to 3.5.0 (#829, @dependabot[bot])
+* build(deps): bump actions/upload-artifact from 3.1.0 to 3.1.2 (#834, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 3.0.0 to 3.1.0 (#770, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 3.1.0 to 3.1.1 (#775, @dependabot[bot])
+* build(deps): bump docker/build-push-action from 3.1.1 to 3.2.0 (#801, @dependabot[bot])
+* build(deps): bump docker/login-action from 2.0.0 to 2.1.0 (#805, @dependabot[bot])
+* build(deps): bump github.com/google/go-cmp from 0.5.8 to 0.5.9 (#788, @dependabot[bot])
+* build(deps): bump github.com/sirupsen/logrus from 1.8.1 to 1.9.0 (#766, @dependabot[bot])
+* build(deps): bump github.com/spf13/cobra from 1.5.0 to 1.6.1 (#806, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.12.0 to 1.13.0 (#790, @dependabot[bot])
+* build(deps): bump github.com/spf13/viper from 1.13.0 to 1.14.0 (#808, @dependabot[bot])
+* build(deps): bump github.com/stretchr/testify from 1.7.3 to 1.7.5 (#756, @dependabot[bot])
+* build(deps): bump github.com/stretchr/testify from 1.7.5 to 1.8.0 (#758, @dependabot[bot])
+* build(deps): bump github.com/stretchr/testify from 1.8.0 to 1.8.1 (#802, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.12 to 2.1.14 (#755, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.14 to 2.1.15 (#757, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.15 to 2.1.16 (#762, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.16 to 2.1.18 (#777, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.18 to 2.1.19 (#778, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.19 to 2.1.22 (#785, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.22 to 2.1.24 (#789, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.24 to 2.1.25 (#791, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.25 to 2.1.26 (#793, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.26 to 2.1.27 (#796, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.27 to 2.1.35 (#822, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.35 to 2.1.36 (#824, @dependabot[bot])
+* build(deps): bump github/codeql-action from 2.1.36 to 2.1.37 (#825, @dependabot[bot])
+* build(deps): bump golang.org/x/sys from 0.2.0 to 0.3.0 (#823, @dependabot[bot])
+* build(deps): bump golang.org/x/sys from 0.3.0 to 0.4.0 (#835, @dependabot[bot])
+* build(deps): bump golangci/golangci-lint-action from 3.2.0 to 3.3.0 (#807, @dependabot[bot])
+* build(deps): bump golangci/golangci-lint-action from 3.3.0 to 3.3.1 (#818, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.47.0 to 1.48.0 (#763, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.48.0 to 1.49.0 (#784, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.49.0 to 1.50.0 (#797, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.50.0 to 1.50.1 (#800, @dependabot[bot])
+* build(deps): bump google.golang.org/grpc from 1.50.1 to 1.51.0 (#819, @dependabot[bot])
+* build(deps): bump google.golang.org/protobuf from 1.28.0 to 1.28.1 (#771, @dependabot[bot])
+* CHANGELOG.md: fix PR ref in the v0.10.0 release note (#753, @kaworu)
+* ci: add new linters (#780, @tklauser)
+* ci: bump actions/checkout from 3.1.0 to 3.3.0 (#838, @dependabot[bot])
+* cmd/observe: stop sorting reserved identity names (#798, @kaworu)
+* CODEOWNERS: update teams following removal of non-sig teams (#767, @tklauser)
+* compact: Include DNS observation source (#803, @michi-covalent)
+* Convert to SPDX license headers and remove copyright year (#812, @tklauser)
+* dockerfile: bump library/alpine from 3.17.0 to 3.17.1 (#837, @dependabot[bot])
+* dockerfile: bump library/golang from 1.19.4-alpine3.17 to 1.19.5-alpine3.17 (#840, @dependabot[bot])
+* Fix observe command not supporting --until without --since (#792, @ChrsMark)
+* Link to release v0.10.0 (#750, @gandro)
+* Makefile: Run release build as regular user (#751, @gandro)
+* Update Go to 1.18.4 (#760, @tklauser)
+* Update Go to 1.18.5 (#772, @tklauser)
+* Update Go to 1.19 (#779, @tklauser)
+* Update Go to 1.19.3, golangci-lint to 1.50.1 (#810, @tklauser)
+* Update Go to v1.19.4 and alpine to v3.17.0 (#832, @kaworu)
+* update Go to v1.19.5 (#841, @rolinh)
+* Use command path when registering flagsets (#769, @chancez)
+* vendor: Bump Cilium to v1.13 branch (#843, @gandro)
+* vendor: bump google.golang.org/grpc from 1.51.0 to 1.52.0 (#839, @dependabot[bot])
+
 ## [v0.10.0] - 2022-06-22
 
 The v0.10.0 release of the Hubble CLI coincides with Cilium v1.12.
