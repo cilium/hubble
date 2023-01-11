@@ -139,6 +139,11 @@ const (
 	// still considered alive
 	ToFQDNsIdleConnectionGracePeriod = 0 * time.Second
 
+	// FQDNProxyResponseMaxDelay The maximum time the DNS proxy holds an allowed
+	// DNS response before sending it along. Responses are sent as soon as the
+	//datapath is updated with the new IP information.
+	FQDNProxyResponseMaxDelay = 100 * time.Millisecond
+
 	// ToFQDNsPreCache is a path to a file with DNS cache data to insert into the
 	// global cache on startup.
 	// The file is not re-read after agent start.
@@ -315,9 +320,9 @@ const (
 	LoopbackIPv4 = "169.254.42.1"
 
 	// ForceLocalPolicyEvalAtSource is the default value for
-	// option.ForceLocalPolicyEvalAtSource. It is enabled by default to
-	// provide backwards compatibility, it can be disabled via an option
-	ForceLocalPolicyEvalAtSource = true
+	// option.ForceLocalPolicyEvalAtSource. It can be enabled to provide
+	// backwards compatibility.
+	ForceLocalPolicyEvalAtSource = false
 
 	// EnableEndpointRoutes is the value for option.EnableEndpointRoutes.
 	// It is disabled by default for backwards compatibility.
@@ -521,9 +526,24 @@ var (
 		"cilium_lxc": "enabled,128,0",
 		// cilium_ipcache is the likely the most useful use of this feature, but also has
 		// the highest churn.
-		"cilium_ipcache":         "enabled,1024,0",
-		"cilium_lb4_services_v2": "enabled,128,0",
-		"cilium_lb4_backends_v2": "enabled,128,0",
-		"cilium_lb4_reverse_nat": "enabled,128,0",
+		"cilium_ipcache":           "enabled,1024,0",
+		"cilium_tunnel_map":        "enabled,128,0",
+		"cilium_lb_affinity_match": "enabled,128,0",
+
+		// ip4
+		"cilium_lb4_services_v2":    "enabled,128,0",
+		"cilium_lb4_backends_v2":    "enabled,128,0",
+		"cilium_lb4_reverse_nat":    "enabled,128,0",
+		"cilium_lb4_backends_v3":    "enabled,128,0",
+		"cilium_lb4_source_range":   "enabled,128,0",
+		"cilium_lb4_affinity_match": "enabled,128,0",
+
+		// ip6
+		"cilium_lb6_services_v2":    "enabled,128,0",
+		"cilium_lb6_backends_v2":    "enabled,128,0",
+		"cilium_lb6_reverse_nat":    "enabled,128,0",
+		"cilium_lb6_backends_v3":    "enabled,128,0",
+		"cilium_lb6_source_range":   "enabled,128,0",
+		"cilium_lb6_affinity_match": "enabled,128,0",
 	}
 )
