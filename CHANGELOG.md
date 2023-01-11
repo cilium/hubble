@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v0.11.0] - 2023-01-11
+[v0.11.0]: https://github.com/cilium/hubble/compare/v0.10.0...v0.11.0
 
 This v0.11.0 release of the Hubble CLI adds support for features added in
 Cilium v1.13: Hubble now has visibility into Cilium's SockLB,
@@ -110,6 +111,7 @@ to the Hubble command-line output:
 * vendor: bump google.golang.org/grpc from 1.51.0 to 1.52.0 (#839, @dependabot[bot])
 
 ## [v0.10.0] - 2022-06-22
+[v0.10.0]: https://github.com/cilium/hubble/compare/v0.9.0...v0.10.0
 
 The v0.10.0 release of the Hubble CLI coincides with Cilium v1.12.
 It adds a new `--first` option to query for earlier flows and events
@@ -214,6 +216,7 @@ and an updated version of the Hubble logo (#726).
 * vendor: update yaml.v3 to v3.0.1 (#741, @kaworu)
 
 ## [v0.9.0] - 2021-11-30
+[v0.9.0]: https://github.com/cilium/hubble/compare/v0.8.2...v0.9.0
 
 Hubble v0.9.0 coincides with Cilium v1.11. It brings many improvements to the
 CLI: Colored output (#551), improved readability and alternative output formats
@@ -301,6 +304,7 @@ Windows ARM64 (#618).
 * version: Drop the "v" prefix (#638, @michi-covalent)
 
 ## [v0.8.2] - 2021-09-10
+[v0.8.2]: https://github.com/cilium/hubble/compare/v0.8.1...v0.8.2
 
 This patch release fixes a bug in the dict output where a newline was missing.
 It also removes long-deprecated `--json`, `--compact` and `--dict` flags (use
@@ -323,6 +327,7 @@ updated to the latest v1.16.8 and the Cilium dependency is updated to v1.10.4.
 * v0.8: update Go to v1.16.8, Alpine base image to 3.14.2 (#621, @rolinh)
 
 ## [v0.8.1] - 2021-07-19
+[v0.8.1]: https://github.com/cilium/hubble/compare/v0.8.0...v0.8.1
 
 This patch release updates gRPC and Cilium dependencies to v1.37.1 and v1.10.3
 respectively. The Go version, which is used to create release binaries, is also
@@ -341,6 +346,7 @@ directory is not present.
 * v0.8: vendor: bump grpc to v1.37.1; honnef tools to v0.1.4 (#553, @rolinh)
 
 ## [v0.8.0] - 2021-05-03
+[v0.8.0]: https://github.com/cilium/hubble/compare/v0.7.1...v0.8.0
 
 This release coincides with Cilium 1.10 and has support for new API additions
 added in Cilium. Some of the new API features include support for agent and
@@ -472,7 +478,8 @@ breaking changes to the Hubble command-line interface:
 * vendor: bump honnef.co/go/tools from v0.1.2 to v0.1.3 (#513, @rolinh)
 * vendor: bump honnef.co/go/tools to v0.1.1 (#484, @rolinh)
 
-## [0.7.1] - 2020-10-22
+## [v0.7.1] - 2020-10-22
+[v0.7.1]: https://github.com/cilium/hubble/compare/v0.7.0...v0.7.1
 
 **Bugfixes:**
 * cmd: fix environment variable names for options with dashes (#408, @Rolinh)
@@ -480,7 +487,8 @@ breaking changes to the Hubble command-line interface:
 **Misc Changes:**
 * build: ensure that binaries are always statically built (#402, @Rolinh)
 
-## [0.7.0] - 2020-10-19
+## [v0.7.0] - 2020-10-19
+[v0.7.0]: https://github.com/cilium/hubble/compare/v0.6.1...v0.7.0
 
 **Minor Changes:**
 * Add config subcommand (#380, @Rolinh)
@@ -552,7 +560,8 @@ breaking changes to the Hubble command-line interface:
 * update Go version to v1.14.5 (#319, @Rolinh)
 * vendor: cilium@master (#313, @glibsm)
 
-## [0.6.1] - 2020-06-12
+## [v0.6.1] - 2020-06-12
+[v0.6.1]: https://github.com/cilium/hubble/compare/v0.6.0...v0.6.1
 
 **Bugfixes:**
 * make: fix git hash variable assignments for old make versions (#291, @michi-covalent)
@@ -565,7 +574,8 @@ breaking changes to the Hubble command-line interface:
 * Prepare v0.6.1 release (#289, @michi-covalent)
 * Require Cilium 1.7.x (#287, @michi-covalent)
 
-## [0.6.0] - 2020-05-29
+## [v0.6.0] - 2020-05-29
+[v0.6.0]: https://github.com/cilium/hubble/compare/v0.5.0...v0.6.0
 
 **Bugfixes:**
 * api: fix potential panic in endpoint's EqualsByID (#199, @Rolinh)
@@ -616,4 +626,4 @@ breaking changes to the Hubble command-line interface:
 * vendor: pick up latest cilium (#247, @Rolinh)
 * vendor: update cilium and sync replace directives (#207, @Rolinh)
 
-## [0.5.0] - 2020-03-23
+## v0.5.0 - 2020-03-23
