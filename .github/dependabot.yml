@@ -14,12 +14,57 @@ updates:
     - kind/enhancement
     - release-note/misc
     - priority/release-blocker
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "vendor:"
+    # Setting open-pull-requests-limit to 0 means that dependabot will not
+    # update regular dependencies on this target branch, but still provide
+    # security updates for our gomod dependencies
+    open-pull-requests-limit: 0
+    target-branch: "v0.11"
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "github.com/cilium/cilium"
+    labels:
+      - kind/enhancement
+      - release-note/misc
+      - priority/release-blocker
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
     commit-message:
       prefix: "ci:"
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+    labels:
+    - kind/enhancement
+    - release-note/misc
+    - priority/release-blocker
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "ci:"
+    open-pull-requests-limit: 5
+    rebase-strategy: disabled
+    target-branch: "v0.11"
+    labels:
+      - kind/enhancement
+      - release-note/misc
+      - priority/release-blocker
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: "dockerfile:"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
     labels:
@@ -34,7 +79,12 @@ updates:
       prefix: "dockerfile:"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
+    target-branch: "v0.11"
+    ignore:
+      # Only bump the patch version in stable branches
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     labels:
-    - kind/enhancement
-    - release-note/misc
-    - priority/release-blocker
+      - kind/enhancement
+      - release-note/misc
+      - priority/release-blocker

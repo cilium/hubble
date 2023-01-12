@@ -131,6 +131,12 @@ After `v$MAJOR.$MINOR.$PATCH` is released, the next commit should restore the
 `v$MAJOR.$MINOR` branch to the `v$MAJOR.$MINOR.{$PATCH+1}-dev` to separate
 unreleased hubble versions in a branch from releases.
 
+## Update the `dependabot` configuration
+
+After a new stable `v$MAJOR.$MINOR` release branch has been created, update
+the `.github/dependabot.yml` field for `target-branch` to point to the newly
+created branch, instead of the old stable branch.
+
 ## Announce the release on Slack
 
 Post a release announcement message in the [Cilium Slack #hubble
