@@ -19,14 +19,13 @@ import (
 	"github.com/cilium/hubble/pkg/logger"
 	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func newDebugEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.Command {
+func newDebugEventsCommand(vp *viper.Viper) *cobra.Command {
 	debugEventsCmd := &cobra.Command{
 		Use:   "debug-events",
 		Short: "Observe Cilium debug events",
@@ -62,7 +61,7 @@ func newDebugEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		},
 	}
 
-	template.RegisterFlagSets(debugEventsCmd, flagSets...)
+	template.RegisterFlagSets(debugEventsCmd, selectorFlags, formattingFlags, config.ServerFlags, otherFlags)
 
 	return debugEventsCmd
 }
