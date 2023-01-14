@@ -77,10 +77,10 @@ require (
 	go.opentelemetry.io/otel v1.11.2 // indirect
 	go.opentelemetry.io/otel/trace v1.11.2 // indirect
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136 // indirect
-	golang.org/x/net v0.4.0 // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/text v0.5.0 // indirect
-	golang.org/x/time v0.2.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -88,7 +88,7 @@ require (
 	k8s.io/apimachinery v0.26.0 // indirect
 	k8s.io/client-go v0.26.0 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
-	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
+	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
@@ -100,3 +100,5 @@ replace (
 	go.universe.tf/metallb => github.com/cilium/metallb v0.1.1-0.20220829170633-5d7dfb1129f7
 	sigs.k8s.io/controller-tools => github.com/cilium/controller-tools v0.6.2
 )
+
+replace github.com/cilium/cilium => /Users/chancezibolski/go/src/github.com/cilium/cilium

@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cilium/cilium/pkg/cidr"
+	"github.com/cilium/cilium/pkg/ip"
 	ippkg "github.com/cilium/cilium/pkg/ip"
 )
 
@@ -217,4 +219,54 @@ func (ac AddrCluster) As20() (ac20 [20]byte) {
 // lose the ClusterID information. It should be used with an extra care.
 func (ac AddrCluster) AsNetIP() net.IP {
 	return ac.addr.AsSlice()
+}
+
+// PrefixCluster is a type that holds a pair of prefix and ClusterID.
+// We should use this type as much as possible when we implement
+// prefix + Cluster addressing. We should avoid managing prefix and
+// ClusterID separately. Otherwise, it is very hard for code readers
+// to see where we are using cluster-aware addressing.
+type PrefixCluster struct {
+	prefix    netip.Prefix
+	clusterID uint32
+}
+
+func PrefixClusterFrom(addr netip.Addr, bits int, clusterID uint32) PrefixCluster {
+	return PrefixCluster{
+		prefix:    netip.PrefixFrom(addr, bits),
+		clusterID: clusterID,
+	}
+}
+
+func PrefixClusterFromCIDR(c *cidr.CIDR, clusterID uint32) PrefixCluster {
+	if c == nil {
+		return PrefixCluster{}
+	}
+
+	addr := ip.MustAddrFromIP(c.IP)
+	ones, _ := c.Mask.Size()
+
+	return PrefixCluster{
+		prefix:    netip.PrefixFrom(addr, ones),
+		clusterID: clusterID,
+	}
+}
+
+func (pc0 PrefixCluster) Equal(pc1 PrefixCluster) bool {
+	return pc0.prefix == pc1.prefix && pc0.clusterID == pc1.clusterID
+}
+
+func (pc PrefixCluster) IsValid() bool {
+	return pc.prefix.IsValid()
+}
+
+func (pc PrefixCluster) AddrCluster() AddrCluster {
+	return AddrClusterFrom(pc.prefix.Addr(), pc.clusterID)
+}
+
+func (pc PrefixCluster) String() string {
+	if pc.clusterID == 0 {
+		return pc.prefix.String()
+	}
+	return pc.prefix.String() + "@" + strconv.FormatUint(uint64(pc.clusterID), 10)
 }

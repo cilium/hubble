@@ -482,6 +482,11 @@ message FlowFilter {
 
     // trace_id filters flows by trace ID
     repeated string trace_id = 28;
+
+    // TODO
+    repeated string source_namespace = 29;
+    // TODO
+    repeated string destination_namespace = 30;
 }
 
 // EventType are constants are based on the ones from <linux/perf_event.h>.

@@ -336,6 +336,8 @@ multiple fields are set, then all fields must match for the filter to match.
 | node_name | [string](#string) | repeated | node_name is a list of patterns to filter on the node name, e.g. &#34;k8s*&#34;, &#34;test-cluster/*.domain.com&#34;, &#34;cluster-name/&#34; etc. |
 | ip_version | [IPVersion](#flow-IPVersion) | repeated | filter based on IP version (ipv4 or ipv6) |
 | trace_id | [string](#string) | repeated | trace_id filters flows by trace ID |
+| source_namespace | [string](#string) | repeated | TODO |
+| destination_namespace | [string](#string) | repeated | TODO |
 
 
 

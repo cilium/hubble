@@ -13,14 +13,34 @@ import (
 	"github.com/cilium/cilium/pkg/hubble/k8s"
 )
 
-func sourcePod(ev *v1.Event) (ns, pod string) {
+func sourcePodWithNamespace(ev *v1.Event) (ns, pod string) {
 	ep := ev.GetFlow().GetSource()
 	return ep.GetNamespace(), ep.GetPodName()
 }
 
-func destinationPod(ev *v1.Event) (ns, pod string) {
+func destinationPodWithNamespace(ev *v1.Event) (ns, pod string) {
 	ep := ev.GetFlow().GetDestination()
 	return ep.GetNamespace(), ep.GetPodName()
+}
+
+func sourcePod(ev *v1.Event) (pod string) {
+	ep := ev.GetFlow().GetSource()
+	return ep.GetPodName()
+}
+
+func destinationPod(ev *v1.Event) (pod string) {
+	ep := ev.GetFlow().GetDestination()
+	return ep.GetPodName()
+}
+
+func sourceNamespace(ev *v1.Event) (ns string) {
+	ep := ev.GetFlow().GetSource()
+	return ep.GetNamespace()
+}
+
+func destinationNamespace(ev *v1.Event) (ns string) {
+	ep := ev.GetFlow().GetDestination()
+	return ep.GetNamespace()
 }
 
 func sourceService(ev *v1.Event) (ns, svc string) {
@@ -31,6 +51,36 @@ func sourceService(ev *v1.Event) (ns, svc string) {
 func destinationService(ev *v1.Event) (ns, svc string) {
 	s := ev.GetFlow().GetDestinationService()
 	return s.GetNamespace(), s.GetName()
+}
+
+func filterByNamespace(namespaces []string, getNamespace func(*v1.Event) (ns string)) FilterFunc {
+	return func(ev *v1.Event) bool {
+		eventNs := getNamespace(ev)
+		if eventNs == "" {
+			return false
+		}
+		for _, ns := range namespaces {
+			if ns == eventNs {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func filterByPodName(podNames []string, getPodName func(*v1.Event) (pod string)) FilterFunc {
+	return func(ev *v1.Event) bool {
+		eventPodName := getPodName(ev)
+		if eventPodName == "" {
+			return false
+		}
+		for _, podName := range podNames {
+			if podName == eventPodName {
+				return true
+			}
+		}
+		return false
+	}
 }
 
 func filterByNamespacedName(names []string, getName func(*v1.Event) (ns, name string)) (FilterFunc, error) {
@@ -67,16 +117,24 @@ type PodFilter struct{}
 func (p *PodFilter) OnBuildFilter(ctx context.Context, ff *flowpb.FlowFilter) ([]FilterFunc, error) {
 	var fs []FilterFunc
 
-	if ff.GetSourcePod() != nil {
-		pf, err := filterByNamespacedName(ff.GetSourcePod(), sourcePod)
+	if ff.GetSourcePod() != nil && ff.GetSourceNamespace() != nil {
+		nf := filterByNamespace(ff.GetSourceNamespace(), sourceNamespace)
+		pf := filterByPodName(ff.GetSourcePod(), sourcePod)
+		fs = append(fs, nf, pf)
+	} else if ff.GetSourcePod() != nil {
+		pf, err := filterByNamespacedName(ff.GetSourcePod(), sourcePodWithNamespace)
 		if err != nil {
 			return nil, err
 		}
 		fs = append(fs, pf)
 	}
 
-	if ff.GetDestinationPod() != nil {
-		pf, err := filterByNamespacedName(ff.GetDestinationPod(), destinationPod)
+	if ff.GetDestinationPod() != nil && ff.GetDestinationNamespace() != nil {
+		nf := filterByNamespace(ff.GetDestinationNamespace(), destinationNamespace)
+		pf := filterByPodName(ff.GetDestinationPod(), destinationPod)
+		fs = append(fs, nf, pf)
+	} else if ff.GetDestinationPod() != nil {
+		pf, err := filterByNamespacedName(ff.GetDestinationPod(), destinationPodWithNamespace)
 		if err != nil {
 			return nil, err
 		}

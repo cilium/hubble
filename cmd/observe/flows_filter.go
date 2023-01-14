@@ -108,8 +108,14 @@ type flowFilter struct {
 func newFlowFilter() *flowFilter {
 	return &flowFilter{
 		conflicts: [][]string{
-			{"from-fqdn", "from-ip", "from-namespace", "from-pod", "fqdn", "ip", "namespace", "pod"},
-			{"to-fqdn", "to-ip", "to-namespace", "to-pod", "fqdn", "ip", "namespace", "pod"},
+			{"ip", "from-ip"},
+			{"ip", "to-ip"},
+			{"fqdn", "from-fqdn"},
+			{"fqdn", "to-fqdn"},
+			{"pod", "from-pod"},
+			{"pod", "to-pod"},
+			{"namespace", "from-namespace"},
+			{"namespace", "to-namespace"},
 			{"label", "from-label"},
 			{"label", "to-label"},
 			{"service", "from-service"},
@@ -345,20 +351,27 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		})
 
 	// namespace filters (translated to pod filters)
+	// {source,destination}_pod namespace will be ignored by newer hubble servers
+	// when {source,destination}_namespace is set. On older servers, the new
+	// fields don't exist, so old behavior is retained.
 	case "namespace":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.SourcePod, val+"/")
+			// f.SourcePod = append(f.SourcePod, val+"/")
+			f.SourceNamespace = append(f.SourceNamespace, val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.DestinationPod, val+"/")
+			// f.DestinationPod = append(f.DestinationPod, val+"/")
+			f.DestinationNamespace = append(f.DestinationNamespace, val)
 		})
 	case "from-namespace":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourcePod = append(f.SourcePod, val+"/")
+			f.SourceNamespace = append(f.SourceNamespace, val)
 		})
 	case "to-namespace":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationPod = append(f.DestinationPod, val+"/")
+			f.DestinationNamespace = append(f.DestinationNamespace, val)
 		})
 	// service filters
 	case "service":
