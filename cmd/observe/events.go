@@ -6,6 +6,7 @@ package observe
 import (
 	"fmt"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 )
@@ -21,7 +22,13 @@ func handleEventsArgs(debug bool) error {
 		opts = append(opts, hubprinter.Compact())
 	case "dict":
 		opts = append(opts, hubprinter.Dict())
-	case "json", "JSON", "jsonpb":
+	case "json", "JSON":
+		if config.Compat.LegacyJSONOutput {
+			opts = append(opts, hubprinter.JSONLegacy())
+			break
+		}
+		fallthrough
+	case "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
 		if selectorOpts.follow {

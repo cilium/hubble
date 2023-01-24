@@ -13,6 +13,8 @@ type Output int
 const (
 	// TabOutput prints flows in even tab-aligned columns.
 	TabOutput Output = iota
+	// JSONLegacyOutput prints flows as json in the legacy format
+	JSONLegacyOutput
 	// CompactOutput prints flows as compact as possible (similar to monitor).
 	CompactOutput
 	// DictOutput presents the same information as TabOutput, but each flow is
@@ -36,6 +38,13 @@ type Options struct {
 
 // Option ...
 type Option func(*Options)
+
+// JSONLegacy encoded output from the printer.
+func JSONLegacy() Option {
+	return func(opts *Options) {
+		opts.output = JSONLegacyOutput
+	}
+}
 
 // JSONPB encodes GetFlowsResponse as JSON according to proto3's JSON mapping.
 func JSONPB() Option {
@@ -116,7 +125,7 @@ func WithNodeName() Option {
 }
 
 // WithTimeFormat specifies the time format layout to use when printing out
-// timestamps. This option has no effect if JSON or JSONPB option is used.
+// timestamps. This option has no effect if JSONLegacy or JSONPB option is used.
 // The layout must be a time format layout as specified in the standard
 // library's time package.
 func WithTimeFormat(layout string) Option {

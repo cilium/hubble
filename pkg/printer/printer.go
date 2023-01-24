@@ -79,7 +79,7 @@ func New(fopts ...Option) *Printer {
 		// initialize tabwriter since it's going to be needed
 		p.tw = tabwriter.NewWriter(opts.w, 2, 0, 3, ' ', 0)
 		p.color.disable() // the tabwriter is not compatible with colors, thus disable coloring
-	case JSONPBOutput:
+	case JSONLegacyOutput, JSONPBOutput:
 		p.jsonEncoder = json.NewEncoder(p.opts.w)
 	}
 
@@ -361,6 +361,8 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
+	case JSONLegacyOutput:
+		return p.jsonEncoder.Encode(f)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(res)
 	}
@@ -561,6 +563,8 @@ func (p *Printer) WriteProtoAgentEvent(r *observerpb.GetAgentEventsResponse) err
 	}
 
 	switch p.opts.output {
+	case JSONLegacyOutput:
+		return p.jsonEncoder.Encode(e)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(r)
 	case DictOutput:
@@ -661,6 +665,8 @@ func (p *Printer) WriteProtoDebugEvent(r *observerpb.GetDebugEventsResponse) err
 	}
 
 	switch p.opts.output {
+	case JSONLegacyOutput:
+		return p.jsonEncoder.Encode(e)
 	case JSONPBOutput:
 		return p.jsonEncoder.Encode(r)
 	case DictOutput:
