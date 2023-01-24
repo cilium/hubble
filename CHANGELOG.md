@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.1] - 2023-01-24
+[v0.11.1]: https://github.com/cilium/hubble/compare/v0.11.0...v0.11.1
+
+**Minor Changes:**
+* [v0.11] cmd: Introduce `HUBBLE_COMPAT=legacy-json-output` (#866, @gandro)
+
+**Misc Changes:**
+* ci: bump actions/download-artifact from 3.0.1 to 3.0.2 (#855, @dependabot[bot])
+* ci: bump docker/build-push-action from 3.2.0 to 3.3.0 (#854, @dependabot[bot])
+* ci: bump docker/setup-buildx-action from 2.0.0 to 2.2.1 (#856, @dependabot[bot])
+* ci: bump github/codeql-action from 2.1.37 to 2.1.38 (#853, @dependabot[bot])
+* ci: bump github/codeql-action from 2.1.38 to 2.1.39 (#858, @dependabot[bot])
+* ci: bump golangci/golangci-lint-action from 3.3.1 to 3.4.0 (#864, @dependabot[bot])
+
 ## [v0.11.0] - 2023-01-11
 [v0.11.0]: https://github.com/cilium/hubble/compare/v0.10.0...v0.11.0
 
