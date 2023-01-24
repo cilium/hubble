@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cilium/cilium v1.13.0-rc4.0.20230110194345-b6b7ad6b3ea4
-	github.com/fatih/color v1.14.0
+	github.com/fatih/color v1.14.1
 	github.com/google/go-cmp v0.5.9
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cast v1.5.0
