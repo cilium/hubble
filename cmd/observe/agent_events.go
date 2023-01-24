@@ -19,13 +19,14 @@ import (
 	"github.com/cilium/hubble/pkg/logger"
 	hubtime "github.com/cilium/hubble/pkg/time"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func newAgentEventsCommand(vp *viper.Viper) *cobra.Command {
+func newAgentEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.Command {
 	agentEventsCmd := &cobra.Command{
 		Use:   "agent-events",
 		Short: "Observe Cilium agent events",
@@ -61,7 +62,8 @@ func newAgentEventsCommand(vp *viper.Viper) *cobra.Command {
 		},
 	}
 
-	template.RegisterFlagSets(agentEventsCmd, selectorFlags, formattingFlags, config.ServerFlags, otherFlags)
+	template.RegisterFlagSets(agentEventsCmd, flagSets...)
+
 	return agentEventsCmd
 }
 
