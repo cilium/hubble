@@ -526,7 +526,13 @@ func handleFlowArgs(ofilter *flowFilter, debug bool) (err error) {
 		opts = append(opts, hubprinter.Compact())
 	case "dict":
 		opts = append(opts, hubprinter.Dict())
-	case "json", "JSON", "jsonpb":
+	case "json", "JSON":
+		if config.Compat.LegacyJSONOutput {
+			opts = append(opts, hubprinter.JSONLegacy())
+			break
+		}
+		fallthrough
+	case "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
 	case "tab", "table":
 		if selectorOpts.follow {
