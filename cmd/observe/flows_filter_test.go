@@ -21,7 +21,7 @@ import (
 
 func TestNoBlacklist(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -32,7 +32,7 @@ func TestNoBlacklist(t *testing.T) {
 // The default filter should be empty.
 func TestDefaultFilter(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{}))
 	assert.Nil(t, f.whitelist)
@@ -41,7 +41,7 @@ func TestDefaultFilter(t *testing.T) {
 
 func TestConflicts(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	err := cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -57,7 +57,7 @@ func TestConflicts(t *testing.T) {
 
 func TestTrailingNot(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	err := cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -72,7 +72,7 @@ func TestTrailingNot(t *testing.T) {
 
 func TestFilterDispatch(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--from-ip", "1.2.3.4",
@@ -115,7 +115,7 @@ func TestFilterDispatch(t *testing.T) {
 
 func TestFilterLeftRight(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{
 		"--ip", "1.2.3.4",
@@ -173,7 +173,7 @@ func TestFilterLeftRight(t *testing.T) {
 
 func TestFilterType(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.Error(t, cmd.Flags().Parse([]string{
 		"-t", "some-invalid-type",
@@ -259,7 +259,7 @@ func TestFilterType(t *testing.T) {
 
 func TestLabels(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	err := cmd.Flags().Parse([]string{
 		"--label", "k1=v1,k2=v2",
@@ -281,7 +281,7 @@ func TestLabels(t *testing.T) {
 
 func TestIdentity(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--identity", "1", "--identity", "2"}))
 	if diff := cmp.Diff(
@@ -300,7 +300,7 @@ func TestIdentity(t *testing.T) {
 	for _, id := range identity.GetAllReservedIdentities() {
 		t.Run(id.String(), func(t *testing.T) {
 			f := newFlowFilter()
-			cmd := newFlowsCmd(viper.New(), f)
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
 			require.NoError(t, cmd.Flags().Parse([]string{"--identity", id.String()}))
 			if diff := cmp.Diff(
 				[]*flowpb.FlowFilter{
@@ -319,7 +319,7 @@ func TestIdentity(t *testing.T) {
 
 func TestFromIdentity(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", "1", "--from-identity", "2"}))
 	if diff := cmp.Diff(
@@ -337,7 +337,7 @@ func TestFromIdentity(t *testing.T) {
 	for _, id := range identity.GetAllReservedIdentities() {
 		t.Run(id.String(), func(t *testing.T) {
 			f := newFlowFilter()
-			cmd := newFlowsCmd(viper.New(), f)
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
 			require.NoError(t, cmd.Flags().Parse([]string{"--from-identity", id.String()}))
 			if diff := cmp.Diff(
 				[]*flowpb.FlowFilter{
@@ -355,7 +355,7 @@ func TestFromIdentity(t *testing.T) {
 
 func TestToIdentity(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", "1", "--to-identity", "2"}))
 	if diff := cmp.Diff(
@@ -373,7 +373,7 @@ func TestToIdentity(t *testing.T) {
 	for _, id := range identity.GetAllReservedIdentities() {
 		t.Run(id.String(), func(t *testing.T) {
 			f := newFlowFilter()
-			cmd := newFlowsCmd(viper.New(), f)
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
 			require.NoError(t, cmd.Flags().Parse([]string{"--to-identity", id.String()}))
 			if diff := cmp.Diff(
 				[]*flowpb.FlowFilter{
@@ -391,7 +391,7 @@ func TestToIdentity(t *testing.T) {
 
 func TestInvalidIdentity(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	require.Error(t, cmd.Flags().Parse([]string{"--from-identity", "bad"}))
 	require.Error(t, cmd.Flags().Parse([]string{"--to-identity", "bad"}))
@@ -400,7 +400,7 @@ func TestInvalidIdentity(t *testing.T) {
 
 func TestTcpFlags(t *testing.T) {
 	f := newFlowFilter()
-	cmd := newFlowsCmd(viper.New(), f)
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
 	// valid TCP flags
 	validflags := []string{"SYN", "syn", "FIN", "RST", "PSH", "ACK", "URG", "ECE", "CWR", "NS", "syn,ack"}

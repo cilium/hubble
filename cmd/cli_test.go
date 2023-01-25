@@ -67,7 +67,7 @@ Available Commands:
   config      Modify or view hubble config
   help        Help about any command
   list        List Hubble objects
-  observe     Observe flows of a Hubble server
+  observe     Observe flows and events of a Hubble server
   status      Display status of Hubble server
   version     Display detailed version information
 
