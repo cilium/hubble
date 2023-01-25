@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func newDebugEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.Command {
+func newDebugEventsCommand(vp *viper.Viper) *cobra.Command {
 	debugEventsCmd := &cobra.Command{
 		Use:   "debug-events",
 		Short: "Observe Cilium debug events",
@@ -62,8 +62,11 @@ func newDebugEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		},
 	}
 
+	flagSets := []*pflag.FlagSet{selectorFlags, formattingFlags, config.ServerFlags, otherFlags}
+	for _, fs := range flagSets {
+		debugEventsCmd.Flags().AddFlagSet(fs)
+	}
 	template.RegisterFlagSets(debugEventsCmd, flagSets...)
-
 	return debugEventsCmd
 }
 

@@ -1,31 +1,13 @@
-Observe provides visibility into flow information on the network and
-application level. Rich filtering enable observing specific flows related to
-individual pods, services, TCP connections, DNS queries, HTTP requests and
-more.
+Observe flows and events of a Hubble server
 
 Usage:
   hubble observe [flags]
   hubble observe [command]
 
-Examples:
-* Piping flows to hubble observe
-
-  Save output from 'hubble observe -o jsonpb' command to a file, and pipe it to
-  the observe command later for offline processing. For example:
-
-    hubble observe -o jsonpb --last 1000 > flows.json
-
-  Then,
-
-    cat flows.json | hubble observe
-
-  Note that the observe command ignores --follow, --last, and server flags when it
-  reads flows from stdin. The observe command processes and output flows in the same
-  order they are read from stdin without sorting them by timestamp.
-
 Available Commands:
   agent-events Observe Cilium agent events
   debug-events Observe Cilium debug events
+  flows        Observe flows of a Hubble server
 
 Selectors Flags:
       --all            Get all flows stored in Hubble's buffer
@@ -120,9 +102,6 @@ Raw-Filters Flags:
       --denylist stringArray    Specify denylist as JSON encoded FlowFilters
 
 Formatting Flags:
-      --color string         Colorize the output when the output format is one of 'compact' or 'dict'. The value is one of 'auto' (default), 'always' or 'never' (default "auto")
-      --ip-translation       Translate IP addresses to logical names such as pod name, FQDN, ... (default true)
-      --numeric              Display all information in numeric form
   -o, --output string        Specify the output format, one of:
                                compact:  Compact output
                                dict:     Each flow is shown as KEY:VALUE pair
@@ -142,6 +121,11 @@ Formatting Flags:
                                RFC3339Nano:            2006-01-02T15:04:05.999999999Z07:00
                                RFC1123Z:               Mon, 02 Jan 2006 15:04:05 -0700
                                (default "StampMilli")
+
+Flow Format Flags:
+      --color string     Colorize the output when the output format is one of 'compact' or 'dict'. The value is one of 'auto' (default), 'always' or 'never' (default "auto")
+      --ip-translation   Translate IP addresses to logical names such as pod name, FQDN, ... (default true)
+      --numeric          Display all information in numeric form
 
 Server Flags:
       --server string                 Address of a Hubble server (default "localhost:4245")

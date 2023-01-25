@@ -14,7 +14,6 @@ import (
 	"os/signal"
 	"strings"
 	"text/tabwriter"
-	"time"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
 	"github.com/cilium/cilium/api/v1/observer"
@@ -159,9 +158,30 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 	return client, cleanup, nil
 }
 
-func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
-	observeCmd := &cobra.Command{
-		Example: `* Piping flows to hubble observe
+type cmdUsage struct {
+	use     string
+	short   string
+	long    string
+	example string
+}
+
+func newObserveCmd(vp *viper.Viper) *cobra.Command {
+	ofilter := newFlowFilter()
+	usage := cmdUsage{
+		use:   "observe",
+		short: "Observe flows and events of a Hubble server",
+	}
+	return newFlowsCmdHelper(usage, vp, ofilter)
+}
+
+func newFlowsCmd(vp *viper.Viper) *cobra.Command {
+	ofilter := newFlowFilter()
+	return newFlowsCmdWithFilter(vp, ofilter)
+}
+
+func newFlowsCmdWithFilter(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
+	usage := cmdUsage{
+		example: `* Piping flows to hubble observe
 
   Save output from 'hubble observe -o jsonpb' command to a file, and pipe it to
   the observe command later for offline processing. For example:
@@ -175,12 +195,23 @@ func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
   Note that the observe command ignores --follow, --last, and server flags when it
   reads flows from stdin. The observe command processes and output flows in the same
   order they are read from stdin without sorting them by timestamp.`,
-		Use:   "observe",
-		Short: "Observe flows of a Hubble server",
-		Long: `Observe provides visibility into flow information on the network and
+		use:   "flows",
+		short: "Observe flows of a Hubble server",
+		long: `Observe provides visibility into flow information on the network and
 application level. Rich filtering enable observing specific flows related to
 individual pods, services, TCP connections, DNS queries, HTTP requests and
 more.`,
+	}
+
+	return newFlowsCmdHelper(usage, vp, ofilter)
+}
+
+func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
+	flowsCmd := &cobra.Command{
+		Example: usage.example,
+		Use:     usage.use,
+		Short:   usage.short,
+		Long:    usage.long,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			debug := vp.GetBool(config.KeyDebug)
 			if err := handleFlowArgs(cmd.OutOrStdout(), ofilter, debug); err != nil {
@@ -220,62 +251,6 @@ more.`,
 			return nil
 		},
 	}
-
-	// selector flags
-	selectorFlags := pflag.NewFlagSet("selectors", pflag.ContinueOnError)
-	selectorFlags.BoolVar(&selectorOpts.all, "all", false, "Get all flows stored in Hubble's buffer")
-	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d)", defaults.FlowPrintCount))
-	selectorFlags.Uint64Var(&selectorOpts.first, "first", 0, "Get first N flows stored in Hubble's buffer")
-	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
-	selectorFlags.StringVar(&selectorOpts.since,
-		"since", "",
-		fmt.Sprintf(`Filter flows since a specific date. The format is relative (e.g. 3s, 4m, 1h43,, ...) or one of:
-  StampMilli:             %s
-  YearMonthDay:           %s
-  YearMonthDayHour:       %s
-  YearMonthDayHourMinute: %s
-  RFC3339:                %s
-  RFC3339Milli:           %s
-  RFC3339Micro:           %s
-  RFC3339Nano:            %s
-  RFC1123Z:               %s
- `,
-			time.StampMilli,
-			hubtime.YearMonthDay,
-			hubtime.YearMonthDayHour,
-			hubtime.YearMonthDayHourMinute,
-			time.RFC3339,
-			hubtime.RFC3339Milli,
-			hubtime.RFC3339Micro,
-			time.RFC3339Nano,
-			time.RFC1123Z,
-		),
-	)
-	selectorFlags.StringVar(&selectorOpts.until,
-		"until", "",
-		fmt.Sprintf(`Filter flows until a specific date. The format is relative (e.g. 3s, 4m, 1h43,, ...) or one of:
-  StampMilli:             %s
-  YearMonthDay:           %s
-  YearMonthDayHour:       %s
-  YearMonthDayHourMinute: %s
-  RFC3339:                %s
-  RFC3339Milli:           %s
-  RFC3339Micro:           %s
-  RFC3339Nano:            %s
-  RFC1123Z:               %s
- `,
-			time.StampMilli,
-			hubtime.YearMonthDay,
-			hubtime.YearMonthDayHour,
-			hubtime.YearMonthDayHourMinute,
-			time.RFC3339,
-			hubtime.RFC3339Milli,
-			hubtime.RFC3339Micro,
-			time.RFC3339Nano,
-			time.RFC1123Z,
-		),
-	)
-	observeCmd.PersistentFlags().AddFlagSet(selectorFlags)
 
 	// filter flags
 	filterFlags := pflag.NewFlagSet("filters", pflag.ContinueOnError)
@@ -433,90 +408,38 @@ more.`,
 	filterFlags.Var(filterVar(
 		"to-identity", ofilter,
 		"Show all flows terminating at an endpoint with the given security identity"))
-	observeCmd.Flags().AddFlagSet(filterFlags)
 
 	rawFilterFlags := pflag.NewFlagSet("raw-filters", pflag.ContinueOnError)
 	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
 	rawFilterFlags.StringArray(denylistFlag, []string{}, "Specify denylist as JSON encoded FlowFilters")
-	observeCmd.Flags().AddFlagSet(rawFilterFlags)
 	// bind these flags to viper so that they can be specified as environment variables.
 	vp.BindPFlags(rawFilterFlags)
 
-	// formatting flags only to `hubble observe`, but not sub-commands. Will be added to
-	// generic formatting flags below.
-	observeFormattingFlags := pflag.NewFlagSet("", pflag.ContinueOnError)
-	observeFormattingFlags.BoolVar(
+	// formatting flags specific to flows
+	flowsFormattingFlags := pflag.NewFlagSet("Flow Format", pflag.ContinueOnError)
+	flowsFormattingFlags.BoolVar(
 		&formattingOpts.numeric,
 		"numeric",
 		false,
 		"Display all information in numeric form",
 	)
-	observeFormattingFlags.BoolVar(
+	flowsFormattingFlags.BoolVar(
 		&formattingOpts.enableIPTranslation,
 		"ip-translation",
 		true,
 		"Translate IP addresses to logical names such as pod name, FQDN, ...",
 	)
-	observeFormattingFlags.StringVar(
+	flowsFormattingFlags.StringVar(
 		&formattingOpts.color,
 		"color", "auto",
 		"Colorize the output when the output format is one of 'compact' or 'dict'. The value is one of 'auto' (default), 'always' or 'never'",
 	)
-	observeCmd.Flags().AddFlagSet(observeFormattingFlags)
-
-	// generic formatting flags, available to `hubble observe`, including sub-commands.
-	formattingFlags := pflag.NewFlagSet("Formatting", pflag.ContinueOnError)
-	formattingFlags.StringVarP(
-		&formattingOpts.output, "output", "o", "compact",
-		`Specify the output format, one of:
-  compact:  Compact output
-  dict:     Each flow is shown as KEY:VALUE pair
-  jsonpb:   JSON encoded GetFlowResponse according to proto3's JSON mapping
-  json:     Alias for jsonpb
-  table:    Tab-aligned columns
-`)
-	formattingFlags.BoolVarP(&formattingOpts.nodeName, "print-node-name", "", false, "Print node name in output")
-	formattingFlags.StringVar(
-		&formattingOpts.timeFormat, "time-format", "StampMilli",
-		fmt.Sprintf(`Specify the time format for printing. This option does not apply to the json and jsonpb output type. One of:
-  StampMilli:             %s
-  YearMonthDay:           %s
-  YearMonthDayHour:       %s
-  YearMonthDayHourMinute: %s
-  RFC3339:                %s
-  RFC3339Milli:           %s
-  RFC3339Micro:           %s
-  RFC3339Nano:            %s
-  RFC1123Z:               %s
- `,
-			time.StampMilli,
-			hubtime.YearMonthDay,
-			hubtime.YearMonthDayHour,
-			hubtime.YearMonthDayHourMinute,
-			time.RFC3339,
-			hubtime.RFC3339Milli,
-			hubtime.RFC3339Micro,
-			time.RFC3339Nano,
-			time.RFC1123Z,
-		),
-	)
-	observeCmd.PersistentFlags().AddFlagSet(formattingFlags)
-
-	// other flags
-	otherFlags := pflag.NewFlagSet("other", pflag.ContinueOnError)
-	otherFlags.BoolVarP(&otherOpts.ignoreStderr,
-		"silent-errors", "s", false,
-		"Silently ignores errors and warnings")
-	otherFlags.BoolVar(&otherOpts.printRawFilters,
-		"print-raw-filters", false,
-		"Print allowlist/denylist filters and exit without sending the request to Hubble server")
-	observeCmd.PersistentFlags().AddFlagSet(otherFlags)
 
 	// advanced completion for flags
-	observeCmd.RegisterFlagCompletionFunc("ip-version", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("ip-version", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{"none", "v4", "v6"}, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		var completions []string
 		for _, ftype := range flowEventTypes {
 			completions = append(completions, ftype)
@@ -526,13 +449,13 @@ more.`,
 		}
 		return completions, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("verdict", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return verdicts, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("protocol", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("protocol", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return protocols, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("http-status", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		httpStatus := []string{
 			"100", "101", "102", "103",
 			"200", "201", "202", "203", "204", "205", "206", "207", "208",
@@ -548,7 +471,7 @@ more.`,
 		}
 		return httpStatus, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("http-method", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("http-method", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			http.MethodConnect,
 			http.MethodDelete,
@@ -561,16 +484,16 @@ more.`,
 			http.MethodTrace,
 		}, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("to-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("to-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("from-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("from-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			"compact",
 			"dict",
@@ -579,26 +502,21 @@ more.`,
 			"table",
 		}, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("color", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("color", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{"auto", "always", "never"}, cobra.ShellCompDirectiveDefault
 	})
-	observeCmd.RegisterFlagCompletionFunc("time-format", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+	flowsCmd.RegisterFlagCompletionFunc("time-format", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return hubtime.FormatNames, cobra.ShellCompDirectiveDefault
 	})
 
+	flagSets := []*pflag.FlagSet{selectorFlags, filterFlags, rawFilterFlags, formattingFlags, flowsFormattingFlags, config.ServerFlags, otherFlags}
+	for _, fs := range flagSets {
+		flowsCmd.Flags().AddFlagSet(fs)
+	}
 	// default value for when the flag is on the command line without any options
-	observeCmd.Flags().Lookup("not").NoOptDefVal = "true"
-
-	observeCmd.AddCommand(
-		newAgentEventsCommand(vp, selectorFlags, formattingFlags, config.ServerFlags, otherFlags),
-		newDebugEventsCommand(vp, selectorFlags, formattingFlags, config.ServerFlags, otherFlags),
-	)
-
-	formattingFlags.AddFlagSet(observeFormattingFlags)
-
-	template.RegisterFlagSets(observeCmd, selectorFlags, filterFlags, rawFilterFlags, formattingFlags, config.ServerFlags, otherFlags)
-
-	return observeCmd
+	flowsCmd.Flags().Lookup("not").NoOptDefVal = "true"
+	template.RegisterFlagSets(flowsCmd, flagSets...)
+	return flowsCmd
 }
 
 func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err error) {

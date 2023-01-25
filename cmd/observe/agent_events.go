@@ -26,7 +26,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func newAgentEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.Command {
+func newAgentEventsCommand(vp *viper.Viper) *cobra.Command {
 	agentEventsCmd := &cobra.Command{
 		Use:   "agent-events",
 		Short: "Observe Cilium agent events",
@@ -62,8 +62,11 @@ func newAgentEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		},
 	}
 
+	flagSets := []*pflag.FlagSet{selectorFlags, formattingFlags, config.ServerFlags, otherFlags}
+	for _, fs := range flagSets {
+		agentEventsCmd.Flags().AddFlagSet(fs)
+	}
 	template.RegisterFlagSets(agentEventsCmd, flagSets...)
-
 	return agentEventsCmd
 }
 
