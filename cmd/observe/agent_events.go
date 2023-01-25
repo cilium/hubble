@@ -32,7 +32,7 @@ func newAgentEventsCommand(vp *viper.Viper, flagSets ...*pflag.FlagSet) *cobra.C
 		Short: "Observe Cilium agent events",
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			debug := vp.GetBool(config.KeyDebug)
-			if err := handleEventsArgs(debug); err != nil {
+			if err := handleEventsArgs(cmd.OutOrStdout(), debug); err != nil {
 				return err
 			}
 			req, err := getAgentEventsRequest()
