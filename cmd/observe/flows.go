@@ -136,6 +136,29 @@ func getFlowFiltersYAML(req *observer.GetFlowsRequest) (string, error) {
 	return string(out), nil
 }
 
+// GetHubbleClientFunc is primarily used to mock out the hubble client in some unit tests.
+var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client observer.ObserverClient, cleanup func() error, err error) {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, nil, err
+	}
+	if fi.Mode()&os.ModeCharDevice == 0 {
+		// read flows from stdin
+		client = NewIOReaderObserver(os.Stdin)
+		cleanup = func() error { return nil }
+		logger.Logger.Debug("Reading flows from stdin")
+		return client, cleanup, nil
+	}
+	// read flows from a hubble server
+	hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
+	if err != nil {
+		return nil, nil, err
+	}
+	cleanup = hubbleConn.Close
+	client = observer.NewObserverClient(hubbleConn)
+	return client, cleanup, nil
+}
+
 func newFlowsCmd(vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
 	observeCmd := &cobra.Command{
 		Example: `* Piping flows to hubble observe
@@ -160,7 +183,7 @@ individual pods, services, TCP connections, DNS queries, HTTP requests and
 more.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			debug := vp.GetBool(config.KeyDebug)
-			if err := handleFlowArgs(ofilter, debug); err != nil {
+			if err := handleFlowArgs(cmd.OutOrStdout(), ofilter, debug); err != nil {
 				return err
 			}
 			req, err := getFlowsRequest(ofilter, vp.GetStringSlice(allowlistFlag), vp.GetStringSlice(denylistFlag))
@@ -179,24 +202,11 @@ more.`,
 			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, os.Kill)
 			defer cancel()
 
-			var client observer.ObserverClient
-			fi, err := os.Stdin.Stat()
+			client, cleanup, err := GetHubbleClientFunc(ctx, vp)
 			if err != nil {
 				return err
 			}
-			if fi.Mode()&os.ModeCharDevice == 0 {
-				// read flows from stdin
-				client = newIOReaderObserver(os.Stdin)
-				logger.Logger.Debug("Reading flows from stdin")
-			} else {
-				// read flows from a hubble server
-				hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
-				if err != nil {
-					return err
-				}
-				defer hubbleConn.Close()
-				client = observer.NewObserverClient(hubbleConn)
-			}
+			defer cleanup()
 
 			logger.Logger.WithField("request", req).Debug("Sending GetFlows request")
 			if err := getFlows(ctx, client, req); err != nil {
@@ -591,13 +601,14 @@ more.`,
 	return observeCmd
 }
 
-func handleFlowArgs(ofilter *flowFilter, debug bool) (err error) {
+func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err error) {
 	if ofilter.blacklisting {
 		return errors.New("trailing --not found in the arguments")
 	}
 
 	// initialize the printer with any options that were passed in
 	var opts = []hubprinter.Option{
+		hubprinter.Writer(writer),
 		hubprinter.WithTimeFormat(hubtime.FormatNameToLayout(formattingOpts.timeFormat)),
 		hubprinter.WithColor(formattingOpts.color),
 	}

@@ -4,6 +4,7 @@
 package observe
 
 import (
+	"os"
 	"strconv"
 	"testing"
 
@@ -64,7 +65,7 @@ func TestTrailingNot(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	err = handleFlowArgs(f, false)
+	err = handleFlowArgs(os.Stdout, f, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "trailing --not")
 }
@@ -82,7 +83,7 @@ func TestFilterDispatch(t *testing.T) {
 		"-t", "l7", // int:129 in cilium-land
 	}))
 
-	require.NoError(t, handleFlowArgs(f, false))
+	require.NoError(t, handleFlowArgs(os.Stdout, f, false))
 	if diff := cmp.Diff(
 		[]*flowpb.FlowFilter{
 			{
@@ -127,7 +128,7 @@ func TestFilterLeftRight(t *testing.T) {
 		"--node-name", "k8s*",
 	}))
 
-	require.NoError(t, handleFlowArgs(f, false))
+	require.NoError(t, handleFlowArgs(os.Stdout, f, false))
 
 	if diff := cmp.Diff(
 		[]*flowpb.FlowFilter{
@@ -198,7 +199,7 @@ func TestFilterType(t *testing.T) {
 		"-t", "agent:service-deleted",
 	}))
 
-	require.NoError(t, handleFlowArgs(f, false))
+	require.NoError(t, handleFlowArgs(os.Stdout, f, false))
 	if diff := cmp.Diff(
 		[]*flowpb.FlowFilter{
 			{

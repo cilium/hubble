@@ -42,7 +42,7 @@ connectivity health check.`,
 				return err
 			}
 			defer hubbleConn.Close()
-			return runStatus(hubbleConn, cmd.OutOrStdout())
+			return runStatus(cmd.OutOrStdout(), hubbleConn)
 		},
 	}
 
@@ -74,7 +74,7 @@ connectivity health check.`,
 	return statusCmd
 }
 
-func runStatus(conn *grpc.ClientConn, out io.Writer) error {
+func runStatus(out io.Writer, conn *grpc.ClientConn) error {
 	// get the standard GRPC health check to see if the server is up
 	healthy, status, err := getHC(conn)
 	if err != nil {
@@ -93,7 +93,9 @@ func runStatus(conn *grpc.ClientConn, out io.Writer) error {
 		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
 
-	var opts = []printer.Option{}
+	var opts = []printer.Option{
+		printer.Writer(out),
+	}
 	switch formattingOpts.output {
 	case "compact":
 		opts = append(opts, printer.Compact())

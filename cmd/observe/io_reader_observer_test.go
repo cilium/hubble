@@ -23,7 +23,7 @@ func Test_getFlowsBasic(t *testing.T) {
 		assert.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
-	server := newIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
+	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
 	req := observer.GetFlowsRequest{}
 	client, err := server.GetFlows(context.Background(), &req)
 	assert.NoError(t, err)
@@ -56,7 +56,7 @@ func Test_getFlowsTimeRange(t *testing.T) {
 		assert.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
-	server := newIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
+	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
 	req := observer.GetFlowsRequest{
 		Since: &timestamppb.Timestamp{Seconds: 50},
 		Until: &timestamppb.Timestamp{Seconds: 150},
@@ -91,7 +91,7 @@ func Test_getFlowsFilter(t *testing.T) {
 		assert.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
-	server := newIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
+	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
 	req := observer.GetFlowsRequest{
 		Whitelist: []*flow.FlowFilter{
 			{

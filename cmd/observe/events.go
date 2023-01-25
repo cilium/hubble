@@ -5,15 +5,17 @@ package observe
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/cilium/hubble/cmd/common/config"
 	hubprinter "github.com/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/hubble/pkg/time"
 )
 
-func handleEventsArgs(debug bool) error {
+func handleEventsArgs(writer io.Writer, debug bool) error {
 	// initialize the printer with any options that were passed in
 	var opts = []hubprinter.Option{
+		hubprinter.Writer(writer),
 		hubprinter.WithTimeFormat(hubtime.FormatNameToLayout(formattingOpts.timeFormat)),
 	}
 

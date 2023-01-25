@@ -18,35 +18,42 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-// ioReaderObserver implements ObserverClient interface. It reads flows
+// IOReaderObserver implements ObserverClient interface. It reads flows
 // in jsonpb format from an io.Reader.
-type ioReaderObserver struct {
+type IOReaderObserver struct {
 	scanner *bufio.Scanner
 }
 
-func newIOReaderObserver(reader io.Reader) *ioReaderObserver {
-	return &ioReaderObserver{
+// NewIOReaderObserver reads flows in jsonpb format from an io.Reader and
+// returns a IOReaderObserver that implements the ObserverClient interface.
+func NewIOReaderObserver(reader io.Reader) *IOReaderObserver {
+	return &IOReaderObserver{
 		scanner: bufio.NewScanner(reader),
 	}
 }
 
-func (o *ioReaderObserver) GetFlows(ctx context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
+// GetFlows returns flows
+func (o *IOReaderObserver) GetFlows(ctx context.Context, in *observer.GetFlowsRequest, _ ...grpc.CallOption) (observer.Observer_GetFlowsClient, error) {
 	return newIOReaderClient(ctx, o.scanner, in)
 }
 
-func (o *ioReaderObserver) GetAgentEvents(_ context.Context, _ *observer.GetAgentEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetAgentEventsClient, error) {
+// GetAgentEvents is not implemented, and will throw an error if used.
+func (o *IOReaderObserver) GetAgentEvents(_ context.Context, _ *observer.GetAgentEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetAgentEventsClient, error) {
 	return nil, status.Errorf(codes.Unimplemented, "GetAgentEvents not implemented")
 }
 
-func (o *ioReaderObserver) GetDebugEvents(_ context.Context, _ *observer.GetDebugEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetDebugEventsClient, error) {
+// GetDebugEvents is not implemented, and will throw an error if used.
+func (o *IOReaderObserver) GetDebugEvents(_ context.Context, _ *observer.GetDebugEventsRequest, _ ...grpc.CallOption) (observer.Observer_GetDebugEventsClient, error) {
 	return nil, status.Errorf(codes.Unimplemented, "GetDebugEvents not implemented")
 }
 
-func (o *ioReaderObserver) GetNodes(_ context.Context, _ *observer.GetNodesRequest, _ ...grpc.CallOption) (*observer.GetNodesResponse, error) {
+// GetNodes is not implemented, and will throw an error if used.
+func (o *IOReaderObserver) GetNodes(_ context.Context, _ *observer.GetNodesRequest, _ ...grpc.CallOption) (*observer.GetNodesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "GetNodes not implemented")
 }
 
-func (o *ioReaderObserver) ServerStatus(_ context.Context, _ *observer.ServerStatusRequest, _ ...grpc.CallOption) (*observer.ServerStatusResponse, error) {
+// ServerStatus is not implemented, and will throw an error if used.
+func (o *IOReaderObserver) ServerStatus(_ context.Context, _ *observer.ServerStatusRequest, _ ...grpc.CallOption) (*observer.ServerStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "ServerStatus not implemented")
 }
 
