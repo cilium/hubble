@@ -1,0 +1,117 @@
+name: Run integration tests
+
+# Any change in triggers needs to be reflected in the concurrency group.
+on:
+  push:
+    branches:
+      - master
+      - v*
+  pull_request:
+    branches:
+    - master
+    - v*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.after }}
+  cancel-in-progress: true
+
+env:
+  HELM_VERSION: v3.10.3
+  KIND_VERSION: v0.17.0
+  KIND_CONFIG: .github/kind-config.yaml
+  CILIUM_VERSION: 1.12.5
+  CILIUM_VALUES: .github/cilium-values.yaml
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+      - name: Setup go
+        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568
+        with:
+          go-version: '1.19.5'
+      - name: Build hubble CLI
+        run: make
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Create kind cluster
+        uses: helm/kind-action@d8ccf8fb623ce1bb360ae2f45f323d9d5c5e9f00
+        with:
+          version: ${{ env.KIND_VERSION }}
+          config: ${{ env.KIND_CONFIG }}
+          cluster_name: kind
+      - name: Deploy Cilium
+        run: |
+          # Deploy cilium with KPR
+          MASTER_IP="$(docker inspect kind-control-plane | jq '.[0].NetworkSettings.Networks.kind.IPAddress' -r)"
+          helm repo add cilium https://helm.cilium.io
+          helm repo update
+          helm install cilium cilium/cilium \
+            --wait \
+            --namespace kube-system \
+            --version ${{ env.CILIUM_VERSION }} \
+            --values ${{ env.CILIUM_VALUES }} \
+            --set kubeProxyReplacement=strict \
+            --set k8sServiceHost="${MASTER_IP}" \
+            --set k8sServicePort=6443
+      - name: Wait for hubble-relay to be running
+        run: |
+          kubectl -n kube-system rollout status deployment/hubble-relay
+      - name: Run integration tests
+        timeout-minutes: 5
+        # work around for hubble CLI thinking we're piping something in via
+        # stdin, even though we aren't
+        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+        run: |
+          set -ex
+          ./hubble --version
+
+          kubectl -n kube-system port-forward service/hubble-relay 4245:80 &
+          # wait until the port-forward is running
+          until [ $(pgrep --count --full "kubectl.*port-forward.*service\/hubble-relay.*4245:80") -eq 1 ]; do
+            sleep 1
+          done
+
+          # give relay a little bit more time to actually connect to agent before running commands.
+          sleep 5
+
+          ./hubble status
+
+          # query hubble until we receive flows, or timeout
+          flowCount=0
+          until [ $flowCount -gt 0 ]; do
+            ./hubble observe -n kube-system -o jsonpb  | tee flows.json
+            flowCount=$(jq -r --slurp 'length' flows.json)
+            sleep 5
+          done
+
+          # verify we got some flows
+          test $(jq -r --slurp 'length' flows.json) -gt 0
+          # test piping flows into the CLI
+          test $(./hubble observe < flows.json -o json | jq -r --slurp 'length') -eq $(jq -r --slurp 'length' flows.json)
+      - name: Post-test information gathering
+        if: ${{ !success() }}
+        run: |
+          echo "Gathering information about KIND cluster"
+          function get_logs() {
+            CMD=(kubectl logs --timestamps --since 30m $@)
+            "${CMD[@]}" || "${CMD[@]}" -p || echo "Unable to get logs for $@"
+          }
+          echo "==================== CURRENT TIME ===================="
+          date -u
+          echo "==================== ALL NODES ===================="
+          kubectl get nodes --output wide --show-labels
+          echo "==================== ALL PODS ===================="
+          kubectl get pods --all-namespaces --output wide
+          echo "==================== CILIUM AGENT LOGS ===================="
+          get_logs -l "k8s-app=cilium" -n kube-system -c cilium-agent
+          echo "==================== HUBBLE RELAY LOGS ===================="
+          get_logs -l "k8s-app=hubble-relay" -n kube-system -c hubble-relay
+          echo "==================== CILIUM STATUS ===================="
+          kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium status --verbose
+        shell: bash {0} # Disable default fail-fast behaviour so that all commands run independently

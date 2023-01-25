@@ -1,0 +1,7 @@
+# we're running KIND with a single node
+operator:
+  replicas: 1
+
+hubble:
+  relay:
+    enabled: true
