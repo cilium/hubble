@@ -133,9 +133,9 @@ unreleased hubble versions in a branch from releases.
 
 ## Update the `dependabot` configuration
 
-After a new stable `v$MAJOR.$MINOR` release branch has been created, update
-the `.github/dependabot.yml` field for `target-branch` to point to the newly
-created branch, instead of the old stable branch.
+After a new stable `v$MAJOR.$MINOR` release branch has been created, update the
+`target-branch` and `commit-message.prefix` fields in `.github/dependabot.yml`
+to point to the newly created branch, instead of the old stable branch.
 
 ## Announce the release on Slack
 
