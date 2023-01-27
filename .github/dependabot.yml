@@ -19,7 +19,7 @@ updates:
     schedule:
       interval: daily
     commit-message:
-      prefix: "vendor:"
+      prefix: "[v0.11] vendor:"
     # Setting open-pull-requests-limit to 0 means that dependabot will not
     # update regular dependencies on this target branch, but still provide
     # security updates for our gomod dependencies
@@ -50,7 +50,7 @@ updates:
     schedule:
       interval: daily
     commit-message:
-      prefix: "ci:"
+      prefix: "[v0.11] ci:"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
     target-branch: "v0.11"
@@ -76,7 +76,7 @@ updates:
     schedule:
       interval: daily
     commit-message:
-      prefix: "dockerfile:"
+      prefix: "[v0.11] dockerfile:"
     open-pull-requests-limit: 5
     rebase-strategy: disabled
     target-branch: "v0.11"
