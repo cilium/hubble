@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.2] - 2023-02-15
+[v0.11.2]: https://github.com/cilium/hubble/compare/v0.11.1...v0.11.2
+
+**Misc Changes:**
+* [v0.11] ci: Bump docker/setup-buildx-action from 2.2.1 to 2.3.0 (#883, @dependabot[bot])
+* [v0.11] ci: Bump docker/setup-buildx-action from 2.3.0 to 2.4.0 (#886, @dependabot[bot])
+* [v0.11] ci: Bump docker/setup-buildx-action from 2.4.0 to 2.4.1 (#893, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.0 to 2.2.1 (#880, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.1 to 2.2.2 (#894, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.2 to 2.2.3 (#897, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.3 to 2.2.4 (#899, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/alpine from 3.17.1 to 3.17.2 (#901, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from 1.19.5-alpine3.17 to 1.19.6-alpine3.17 (#905, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `2381c1e` to `a00a03c` (#900, @dependabot[bot])
+* ci: bump github/codeql-action from 2.1.39 to 2.2.0 (#878, @dependabot[bot])
+* Update Go to v1.19.6 (#906, @gandro)
+* v0.11: vendor: bump github/cilium to v1.13.0-rc5 (#872, @rolinh)
+
+**Other Changes:**
+* [v0.11] ci: Bump docker/build-push-action from 3.3.0 to 4.0.0 (#887, @dependabot[bot])
+
+
 ## [v0.11.1] - 2023-01-24
 [v0.11.1]: https://github.com/cilium/hubble/compare/v0.11.0...v0.11.1
 
