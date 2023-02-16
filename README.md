@@ -106,7 +106,7 @@ and have to be used with caution in critical production workloads.
 
 # Getting Started
 
-* [Introduction to Cilium & Hubble](https://docs.cilium.io/en/stable/intro/)
+* [Introduction to Cilium & Hubble](https://docs.cilium.io/en/stable/overview/intro/)
 * [Networking and Security Observability with Hubble](https://docs.cilium.io/en/stable/gettingstarted/hubble/)
 
 # Features
@@ -132,7 +132,7 @@ The metrics and monitoring functionality provides an overview of the state of
 systems and allow to recognize patterns indicating failure and other scenarios
 that require action. The following is a short list of example metrics, for a
 more detailed list of examples, see the
-[Metrics Documentation](https://docs.cilium.io/en/stable/operations/metrics/#hubble-metrics).
+[Metrics Documentation](https://docs.cilium.io/en/stable/observability/metrics/).
 
 ### Networking Behavior
 
@@ -296,5 +296,5 @@ and details of the Code of Conduct.
 [Cilium]: https://github.com/cilium/cilium
 [eBPF]: https://ebpf.io
 [Apache License]: https://www.apache.org/licenses/LICENSE-2.0
-[Governance Rules]: https://docs.cilium.io/en/stable/contributing/contributing/#developer-contributor-guide
+[Governance Rules]: https://docs.cilium.io/en/stable/contributing/development/contributing_guide/
 [CONTRIBUTING]: CONTRIBUTING.md
