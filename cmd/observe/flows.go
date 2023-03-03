@@ -258,6 +258,9 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 		"not", ofilter,
 		"Reverses the next filter to be blacklist i.e. --not --from-ip 2.2.2.2"))
 	filterFlags.Var(filterVar(
+		"uuid", ofilter,
+		"Show the only flow matching this unique flow identifier, if any"))
+	filterFlags.Var(filterVar(
 		"node-name", ofilter,
 		`Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")`))
 	filterFlags.Var(filterVar(

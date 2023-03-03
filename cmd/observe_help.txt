@@ -94,6 +94,7 @@ Filters Flags:
                                                  to-proxy
                                                  to-stack
                                 trace-sock       n/a
+      --uuid filter             Show the only flow matching this unique flow identifier, if any
       --verdict filter          Show only flows with this verdict [FORWARDED, DROPPED, AUDIT, REDIRECTED, ERROR, TRACED, TRANSLATED]
       --workload filter         Show all flows related to an endpoint with the given workload
 
