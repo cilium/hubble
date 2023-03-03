@@ -416,3 +416,20 @@ func TestTcpFlags(t *testing.T) {
 		require.Error(t, cmd.Flags().Parse([]string{"--tcp-flags", f}))
 	}
 }
+
+func TestUuid(t *testing.T) {
+	f := newFlowFilter()
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
+
+	require.NoError(t, cmd.Flags().Parse([]string{"--uuid", "b9fab269-04ae-495c-9d12-b6c36d41de0d"}))
+	if diff := cmp.Diff(
+		[]*flowpb.FlowFilter{
+			{Uuid: []string{"b9fab269-04ae-495c-9d12-b6c36d41de0d"}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+	assert.Nil(t, f.blacklist)
+}

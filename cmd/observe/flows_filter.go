@@ -128,6 +128,7 @@ func newFlowFilter() *flowFilter {
 			{"workload", "from-workload"},
 			{"node-name"},
 			{"tcp-flags"},
+			{"uuid"},
 		},
 	}
 }
@@ -265,6 +266,11 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	}
 
 	switch name {
+	// flow identifier filter
+	case "uuid":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.Uuid = append(f.Uuid, val)
+		})
 	// fqdn filters
 	case "fqdn":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
