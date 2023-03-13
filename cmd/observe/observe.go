@@ -52,8 +52,8 @@ var (
 
 func init() {
 	selectorFlags.BoolVar(&selectorOpts.all, "all", false, "Get all flows stored in Hubble's buffer")
-	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d). When querying against Hubble Relay, this gets N flows per instance of Hubble connected to that Relay", defaults.FlowPrintCount))
-	selectorFlags.Uint64Var(&selectorOpts.first, "first", 0, "Get first N flows stored in Hubble's buffer")
+	selectorFlags.Uint64Var(&selectorOpts.last, "last", 0, fmt.Sprintf("Get last N flows stored in Hubble's buffer (default %d). When querying against Hubble Relay, this gets N flows per instance of Hubble connected to that Relay.", defaults.FlowPrintCount))
+	selectorFlags.Uint64Var(&selectorOpts.first, "first", 0, "Get first N flows stored in Hubble's buffer. When querying against Hubble Relay, this gets N flows per instance of Hubble connected to that Relay.")
 	selectorFlags.BoolVarP(&selectorOpts.follow, "follow", "f", false, "Follow flows output")
 	selectorFlags.StringVar(&selectorOpts.since,
 		"since", "",
