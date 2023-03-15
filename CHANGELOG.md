@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.3] - 2023-03-15
+[v0.11.3]: https://github.com/cilium/hubble/compare/v0.11.2...v0.11.3
+
+**Misc Changes:**
+* [v0.11] ci: Bump docker/setup-buildx-action from 2.4.1 to 2.5.0 (#935, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.4 to 2.2.5 (#916, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.5 to 2.2.6 (#933, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/alpine from `69665d0` to `ff6bdca` (#934, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from 1.19.6-alpine3.17 to 1.19.7-alpine3.17 (#922, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `31c62d9` to `62a2c84` (#918, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `ee42797` to `8b660f4` (#936, @dependabot[bot])
+* [v0.11] Update Golang to v1.19.7 (#930, @gandro)
+
 ## [v0.11.2] - 2023-02-15
 [v0.11.2]: https://github.com/cilium/hubble/compare/v0.11.1...v0.11.2
 
