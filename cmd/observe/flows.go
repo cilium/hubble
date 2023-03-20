@@ -137,15 +137,22 @@ func getFlowFiltersYAML(req *observer.GetFlowsRequest) (string, error) {
 
 // GetHubbleClientFunc is primarily used to mock out the hubble client in some unit tests.
 var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client observer.ObserverClient, cleanup func() error, err error) {
-	fi, err := os.Stdin.Stat()
-	if err != nil {
-		return nil, nil, err
-	}
-	if fi.Mode()&os.ModeCharDevice == 0 {
-		// read flows from stdin
-		client = NewIOReaderObserver(os.Stdin)
-		cleanup = func() error { return nil }
-		logger.Logger.Debug("Reading flows from stdin")
+	if otherOpts.inputFile != "" {
+		var f *os.File
+		if otherOpts.inputFile == "-" {
+			// read flows from stdin
+			f = os.Stdin
+			// noop cleanup
+			cleanup = func() error { return nil }
+		} else {
+			// read flows from the provided file
+			f, err = os.Open(otherOpts.inputFile)
+			if err != nil {
+				return nil, nil, err
+			}
+			cleanup = f.Close
+		}
+		client = NewIOReaderObserver(f)
 		return client, cleanup, nil
 	}
 	// read flows from a hubble server
