@@ -129,7 +129,7 @@ Flow Format Flags:
       --numeric          Display all information in numeric form
 
 Server Flags:
-      --server string                 Address of a Hubble server (default "localhost:4245")
+      --server string                 Address of a Hubble server. Ignored when --input-file is provided. (default "localhost:4245")
       --timeout duration              Hubble server dialing timeout (default 5s)
       --tls                           Specify that TLS must be used when establishing a connection to a Hubble server.
                                       By default, TLS is only enabled if the server address starts with 'tls://'.
@@ -144,6 +144,7 @@ Server Flags:
       --tls-server-name string        Specify a server name to verify the hostname on the returned certificate (eg: 'instance.hubble-relay.cilium.io').
 
 Other Flags:
+      --input-file string   Query flows from this file instead of the server. Use '-' to read from stdin.
       --print-raw-filters   Print allowlist/denylist filters and exit without sending the request to Hubble server
   -s, --silent-errors       Silently ignores errors and warnings
 

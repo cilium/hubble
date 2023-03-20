@@ -38,6 +38,7 @@ var (
 	otherOpts struct {
 		ignoreStderr    bool
 		printRawFilters bool
+		inputFile       string
 	}
 
 	printer *hubprinter.Printer
@@ -145,6 +146,9 @@ func init() {
 	otherFlags.BoolVar(&otherOpts.printRawFilters,
 		"print-raw-filters", false,
 		"Print allowlist/denylist filters and exit without sending the request to Hubble server")
+
+	otherFlags.StringVar(&otherOpts.inputFile, "input-file", "",
+		"Query flows from this file instead of the server. Use '-' to read from stdin.")
 }
 
 // New observer command.
