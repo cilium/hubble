@@ -6,9 +6,12 @@ package observe
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"io"
+	"math"
 
 	observerpb "github.com/cilium/cilium/api/v1/observer"
+	"github.com/cilium/cilium/pkg/container"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/hubble/filters"
 	"github.com/cilium/hubble/pkg/logger"
@@ -59,11 +62,18 @@ func (o *IOReaderObserver) ServerStatus(_ context.Context, _ *observerpb.ServerS
 
 // ioReaderClient implements Observer_GetFlowsClient.
 type ioReaderClient struct {
+	grpc.ClientStream
+
 	scanner *bufio.Scanner
 	request *observerpb.GetFlowsRequest
 	allow   filters.FilterFuncs
 	deny    filters.FilterFuncs
-	grpc.ClientStream
+
+	// Used for --last
+	buffer *container.RingBuffer
+	resps  []*observerpb.GetFlowsResponse
+	// Used for --first/--last
+	flowsReturned uint64
 }
 
 func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *observerpb.GetFlowsRequest) (*ioReaderClient, error) {
@@ -75,36 +85,111 @@ func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *obs
 	if err != nil {
 		return nil, err
 	}
+
+	var buf *container.RingBuffer
+	// last
+	if n := request.GetNumber(); !request.GetFirst() && n != 0 && n != math.MaxUint64 {
+		if n > 1_000_000 {
+			return nil, fmt.Errorf("--last must be <= 1_000_000, got %d", n)
+		}
+		buf = container.NewRingBuffer(int(n))
+	}
 	return &ioReaderClient{
 		scanner: scanner,
 		request: request,
 		allow:   allow,
 		deny:    deny,
+		buffer:  buf,
 	}, nil
 }
 
 func (c *ioReaderClient) Recv() (*observerpb.GetFlowsResponse, error) {
-	for c.scanner.Scan() {
-		line := c.scanner.Text()
-		var res observerpb.GetFlowsResponse
-		err := protojson.Unmarshal(c.scanner.Bytes(), &res)
-		if err != nil {
-			logger.Logger.WithError(err).WithField("line", line).Warn("Failed to unmarshal json to flow")
-			continue
-		}
-		if c.request.Since != nil && c.request.Since.AsTime().After(res.Time.AsTime()) {
-			continue
-		}
-		if c.request.Until != nil && c.request.Until.AsTime().Before(res.Time.AsTime()) {
-			continue
-		}
-		if !filters.Apply(c.allow, c.deny, &v1.Event{Timestamp: res.Time, Event: res.GetFlow()}) {
-			continue
-		}
-		return &res, nil
+	if c.returnedEnoughFlows() {
+		return nil, io.EOF
 	}
+
+	for c.scanner.Scan() {
+		res := c.unmarshalNext()
+		if res == nil {
+			continue
+		}
+
+		switch {
+		case c.isLast():
+			// store flows in a FIFO buffer, effectively keeping the last N flows
+			// until we finish reading from the stream
+			c.buffer.Add(res)
+		case c.isFirst():
+			// track number of flows returned, so we can exit once we've given back N flows
+			c.flowsReturned++
+			return res, nil
+		default: // --all
+			return res, nil
+		}
+	}
+
 	if err := c.scanner.Err(); err != nil {
 		return nil, err
 	}
+
+	if res := c.popFromLastBuffer(); res != nil {
+		return res, nil
+	}
+
 	return nil, io.EOF
+}
+
+func (c *ioReaderClient) isFirst() bool {
+	return c.request.GetFirst() && c.request.GetNumber() != 0 && c.request.GetNumber() != math.MaxUint64
+}
+
+func (c *ioReaderClient) isLast() bool {
+	return c.buffer != nil && c.request.GetNumber() != math.MaxUint64
+}
+
+func (c *ioReaderClient) returnedEnoughFlows() bool {
+	return c.request.GetNumber() > 0 && c.flowsReturned >= c.request.GetNumber()
+}
+
+func (c *ioReaderClient) popFromLastBuffer() *observerpb.GetFlowsResponse {
+	// Handle --last by iterating over our FIFO and returning one item each time.
+	if c.isLast() {
+		if len(c.resps) == 0 {
+			// Iterate over the buffer and store them in a slice, because we cannot
+			// index into the ring buffer itself
+			// TODO: Add the ability to index into the ring buffer and we could avoid
+			// this copy.
+			c.buffer.Iterate(func(i interface{}) {
+				c.resps = append(c.resps, i.(*observerpb.GetFlowsResponse))
+			})
+		}
+
+		// return the next element from the buffered results
+		if len(c.resps) > int(c.flowsReturned) {
+			resp := c.resps[c.flowsReturned]
+			c.flowsReturned++
+			return resp
+		}
+	}
+	return nil
+}
+
+func (c *ioReaderClient) unmarshalNext() *observerpb.GetFlowsResponse {
+	var res observerpb.GetFlowsResponse
+	err := protojson.Unmarshal(c.scanner.Bytes(), &res)
+	if err != nil {
+		line := c.scanner.Text()
+		logger.Logger.WithError(err).WithField("line", line).Warn("Failed to unmarshal json to flow")
+		return nil
+	}
+	if c.request.Since != nil && c.request.Since.AsTime().After(res.Time.AsTime()) {
+		return nil
+	}
+	if c.request.Until != nil && c.request.Until.AsTime().Before(res.Time.AsTime()) {
+		return nil
+	}
+	if !filters.Apply(c.allow, c.deny, &v1.Event{Timestamp: res.Time, Event: res.GetFlow()}) {
+		return nil
+	}
+	return &res
 }

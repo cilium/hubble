@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"os/signal"
 
@@ -102,7 +103,7 @@ func getAgentEventsRequest() (*observerpb.GetAgentEventsRequest, error) {
 		switch {
 		case selectorOpts.all:
 			// all is an alias for last=uint64_max
-			selectorOpts.last = ^uint64(0)
+			selectorOpts.last = math.MaxUint64
 		case selectorOpts.last == 0:
 			// no specific parameters were provided, just a vanilla `hubble events agent`
 			selectorOpts.last = defaults.EventsPrintCount
