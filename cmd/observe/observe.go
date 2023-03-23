@@ -5,6 +5,7 @@ package observe
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cilium/hubble/pkg/defaults"
@@ -70,13 +71,13 @@ func init() {
  `,
 			time.StampMilli,
 			hubtime.YearMonthDay,
-			hubtime.YearMonthDayHour,
-			hubtime.YearMonthDayHourMinute,
-			time.RFC3339,
-			hubtime.RFC3339Milli,
-			hubtime.RFC3339Micro,
-			time.RFC3339Nano,
-			time.RFC1123Z,
+			strings.Replace(hubtime.YearMonthDayHour, "Z", "-", 1),
+			strings.Replace(hubtime.YearMonthDayHourMinute, "Z", "-", 1),
+			strings.Replace(time.RFC3339, "Z", "-", 1),
+			strings.Replace(hubtime.RFC3339Milli, "Z", "-", 1),
+			strings.Replace(hubtime.RFC3339Micro, "Z", "-", 1),
+			strings.Replace(time.RFC3339Nano, "Z", "-", 1),
+			strings.Replace(time.RFC1123Z, "Z", "-", 1),
 		),
 	)
 	selectorFlags.StringVar(&selectorOpts.until,
@@ -94,13 +95,13 @@ func init() {
  `,
 			time.StampMilli,
 			hubtime.YearMonthDay,
-			hubtime.YearMonthDayHour,
-			hubtime.YearMonthDayHourMinute,
-			time.RFC3339,
-			hubtime.RFC3339Milli,
-			hubtime.RFC3339Micro,
-			time.RFC3339Nano,
-			time.RFC1123Z,
+			strings.Replace(hubtime.YearMonthDayHour, "Z", "-", 1),
+			strings.Replace(hubtime.YearMonthDayHourMinute, "Z", "-", 1),
+			strings.Replace(time.RFC3339, "Z", "-", 1),
+			strings.Replace(hubtime.RFC3339Milli, "Z", "-", 1),
+			strings.Replace(hubtime.RFC3339Micro, "Z", "-", 1),
+			strings.Replace(time.RFC3339Nano, "Z", "-", 1),
+			strings.Replace(time.RFC1123Z, "Z", "-", 1),
 		),
 	)
 
