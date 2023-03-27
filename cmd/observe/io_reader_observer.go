@@ -64,10 +64,11 @@ func (o *IOReaderObserver) ServerStatus(_ context.Context, _ *observerpb.ServerS
 type ioReaderClient struct {
 	grpc.ClientStream
 
-	scanner *bufio.Scanner
-	request *observerpb.GetFlowsRequest
-	allow   filters.FilterFuncs
-	deny    filters.FilterFuncs
+	scanner        *bufio.Scanner
+	discardUnknown bool
+	request        *observerpb.GetFlowsRequest
+	allow          filters.FilterFuncs
+	deny           filters.FilterFuncs
 
 	// Used for --last
 	buffer *container.RingBuffer
@@ -176,7 +177,24 @@ func (c *ioReaderClient) popFromLastBuffer() *observerpb.GetFlowsResponse {
 
 func (c *ioReaderClient) unmarshalNext() *observerpb.GetFlowsResponse {
 	var res observerpb.GetFlowsResponse
-	err := protojson.Unmarshal(c.scanner.Bytes(), &res)
+	err := protojson.UnmarshalOptions{DiscardUnknown: c.discardUnknown}.Unmarshal(c.scanner.Bytes(), &res)
+	if err != nil && !c.discardUnknown {
+		prevErr := err
+		// the error might be that the JSON data contains an unknown field.
+		// This can happen we attempting to decode flows generated from a newer
+		// Hubble version than the CLI (having introduced a new field). Retry
+		// parsing discarding unknown fields and see whether the decoding is
+		// successful.
+		err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(c.scanner.Bytes(), &res)
+		if err == nil {
+			// The error was indeed about a unknown field since we were able to
+			// unmarshall without error when discarding unknown fields. Emit a
+			// warning message and continue processing discarding unknown
+			// fields to avoid logging more than once.
+			c.discardUnknown = true
+			logger.Logger.WithError(prevErr).Warn("unknown field detected, upgrade the Hubble CLI to get rid of this warning")
+		}
+	}
 	if err != nil {
 		line := c.scanner.Text()
 		logger.Logger.WithError(err).WithField("line", line).Warn("Failed to unmarshal json to flow")

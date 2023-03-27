@@ -11,7 +11,10 @@ import (
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
+	"github.com/cilium/hubble/pkg/logger"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -185,4 +188,51 @@ func Test_getFlowsFilter(t *testing.T) {
 	assert.Equal(t, flows[2], res)
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
+}
+
+func Test_UnknownField(t *testing.T) {
+	flows := []*observerpb.GetFlowsResponse{
+		{
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_FORWARDED}},
+			Time:          &timestamppb.Timestamp{Seconds: 0},
+		},
+		{
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_DROPPED}},
+			Time:          &timestamppb.Timestamp{Seconds: 100},
+		},
+	}
+
+	var sb strings.Builder
+	for _, f := range flows {
+		b, err := f.MarshalJSON()
+		require.NoError(t, err)
+		s := strings.Replace(string(b), `"flow":{`, `"flow":{"foo":42,`, 1)
+		sb.WriteString(s + "\n")
+	}
+	// server and client setup.
+	server := NewIOReaderObserver(strings.NewReader(sb.String()))
+	client, err := server.GetFlows(context.Background(), &observerpb.GetFlowsRequest{})
+	require.NoError(t, err)
+	// logger setup.
+	logger.Initialize(viper.New())
+	sb.Reset()
+	logger.Logger.SetOutput(&sb)
+
+	// ensure that we see the first flow.
+	res, err := client.Recv()
+	require.NoError(t, err)
+	require.Equal(t, flows[0], res)
+	// check that we logged something the first time we've seen an unknown
+	// field.
+	require.Contains(t, sb.String(), "unknown field detected")
+	sb.Reset()
+	// ensure that we see the second flow.
+	res, err = client.Recv()
+	require.NoError(t, err)
+	require.Equal(t, flows[1], res)
+	// check that we didn't log the second time we've seen an unknown field.
+	require.Empty(t, sb.String())
+	// ensure we're at the end of the stream.
+	_, err = client.Recv()
+	require.Equal(t, io.EOF, err)
 }
