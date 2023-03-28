@@ -12,7 +12,7 @@ jobs:
   build-and-push:
     if: ${{ github.repository == 'cilium/hubble' }}
     environment: release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       # matrix for easier code-sharing with workflows from cilium/cilium
       matrix:
@@ -77,7 +77,7 @@ jobs:
   image-digests:
     if: ${{ github.repository == 'cilium/hubble' }}
     name: Display Digests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build-and-push
     steps:
       - name: Getting image tag
