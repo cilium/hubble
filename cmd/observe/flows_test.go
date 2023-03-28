@@ -11,7 +11,7 @@ import (
 	"time"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
-	"github.com/cilium/cilium/api/v1/observer"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/stretchr/testify/assert"
@@ -44,7 +44,7 @@ func Test_getFlowsRequest(t *testing.T) {
 	filter := newFlowFilter()
 	req, err := getFlowsRequest(filter, nil, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
+	assert.Equal(t, &observerpb.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.since = "2021-03-23T00:00:00Z"
 	selectorOpts.until = "2021-03-24T00:00:00Z"
 	req, err = getFlowsRequest(filter, nil, nil)
@@ -53,7 +53,7 @@ func Test_getFlowsRequest(t *testing.T) {
 	assert.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetFlowsRequest{
+	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: defaults.FlowPrintCount,
 		Since:  timestamppb.New(since),
 		Until:  timestamppb.New(until),
@@ -66,13 +66,13 @@ func Test_getFlowsRequestWithoutSince(t *testing.T) {
 	filter := newFlowFilter()
 	req, err := getFlowsRequest(filter, nil, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
+	assert.Equal(t, &observerpb.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.until = "2021-03-24T00:00:00Z"
 	req, err = getFlowsRequest(filter, nil, nil)
 	assert.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetFlowsRequest{
+	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: defaults.FlowPrintCount,
 		Until:  timestamppb.New(until),
 	}, req)
@@ -112,7 +112,7 @@ func Test_getFlowsRequestWithInvalidRawFilters(t *testing.T) {
 }
 
 func Test_getFlowFiltersYAML(t *testing.T) {
-	req := observer.GetFlowsRequest{
+	req := observerpb.GetFlowsRequest{
 		Whitelist: []*flowpb.FlowFilter{{SourceIp: []string{"1.2.3.4/16"}}},
 		Blacklist: []*flowpb.FlowFilter{{SourcePort: []string{"80"}}},
 	}

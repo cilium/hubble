@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	pb "github.com/cilium/cilium/api/v1/flow"
+	flowpb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/stretchr/testify/assert"
@@ -21,51 +21,51 @@ import (
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
 	buf := bytes.Buffer{}
-	f := pb.Flow{
+	f := flowpb.Flow{
 		Time: &timestamppb.Timestamp{
 			Seconds: 1234,
 			Nanos:   567800000,
 		},
-		Type:     pb.FlowType_L3_L4,
+		Type:     flowpb.FlowType_L3_L4,
 		NodeName: "k8s1",
-		Verdict:  pb.Verdict_DROPPED,
-		IP: &pb.IP{
+		Verdict:  flowpb.Verdict_DROPPED,
+		IP: &flowpb.IP{
 			Source:      "1.1.1.1",
 			Destination: "2.2.2.2",
 		},
-		Source: &pb.Endpoint{
+		Source: &flowpb.Endpoint{
 			Identity: 4,
 		},
-		Destination: &pb.Endpoint{
+		Destination: &flowpb.Endpoint{
 			Identity: 12345,
 		},
-		L4: &pb.Layer4{
-			Protocol: &pb.Layer4_TCP{
-				TCP: &pb.TCP{
+		L4: &flowpb.Layer4{
+			Protocol: &flowpb.Layer4_TCP{
+				TCP: &flowpb.TCP{
 					SourcePort:      31793,
 					DestinationPort: 8080,
 				},
 			},
 		},
-		EventType: &pb.CiliumEventType{
+		EventType: &flowpb.CiliumEventType{
 			Type:    monitorAPI.MessageTypeDrop,
 			SubType: 133,
 		},
 		Summary: "TCP Flags: SYN",
 		IsReply: &wrapperspb.BoolValue{Value: false},
 	}
-	reply := proto.Clone(&f).(*pb.Flow)
+	reply := proto.Clone(&f).(*flowpb.Flow)
 	reply.IsReply = &wrapperspb.BoolValue{Value: true}
-	unknown := proto.Clone(&f).(*pb.Flow)
+	unknown := proto.Clone(&f).(*flowpb.Flow)
 	unknown.IsReply = nil
-	policyDenied := proto.Clone(&f).(*pb.Flow)
-	policyDenied.EventType = &pb.CiliumEventType{
+	policyDenied := proto.Clone(&f).(*flowpb.Flow)
+	policyDenied.EventType = &flowpb.CiliumEventType{
 		Type: monitorAPI.MessageTypePolicyVerdict,
 	}
 	policyDenied.IsReply = nil
-	policyDenied.TrafficDirection = pb.TrafficDirection_EGRESS
+	policyDenied.TrafficDirection = flowpb.TrafficDirection_EGRESS
 	type args struct {
-		f *pb.Flow
+		f *flowpb.Flow
 	}
 	tests := []struct {
 		name     string
@@ -278,7 +278,7 @@ DESTINATION: 2.2.2.2:8080
 
 func Test_getHostNames(t *testing.T) {
 	type args struct {
-		f *pb.Flow
+		f *flowpb.Flow
 	}
 	type want struct {
 		src, dst string
@@ -295,14 +295,14 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "nil ip",
 			args: args{
-				f: &pb.Flow{},
+				f: &flowpb.Flow{},
 			},
 			want: want{},
 		}, {
 			name: "valid ips",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
@@ -315,16 +315,16 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "valid ips/endpoints",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					Source: &pb.Endpoint{
+					Source: &flowpb.Endpoint{
 						Namespace: "srcns",
 						PodName:   "srcpod",
 					},
-					Destination: &pb.Endpoint{
+					Destination: &flowpb.Endpoint{
 						Namespace: "dstns",
 						PodName:   "dstpod",
 					},
@@ -337,14 +337,14 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "valid tcp",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					L4: &pb.Layer4{
-						Protocol: &pb.Layer4_TCP{
-							TCP: &pb.TCP{
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_TCP{
+							TCP: &flowpb.TCP{
 								SourcePort:      55555,
 								DestinationPort: 80,
 							},
@@ -359,14 +359,14 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "valid udp",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					L4: &pb.Layer4{
-						Protocol: &pb.Layer4_UDP{
-							UDP: &pb.UDP{
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_UDP{
+							UDP: &flowpb.UDP{
 								SourcePort:      55555,
 								DestinationPort: 53,
 							},
@@ -381,24 +381,24 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "valid tcp service",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					L4: &pb.Layer4{
-						Protocol: &pb.Layer4_TCP{
-							TCP: &pb.TCP{
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_TCP{
+							TCP: &flowpb.TCP{
 								SourcePort:      55555,
 								DestinationPort: 80,
 							},
 						},
 					},
-					SourceService: &pb.Service{
+					SourceService: &flowpb.Service{
 						Name:      "xwing",
 						Namespace: "default",
 					},
-					DestinationService: &pb.Service{
+					DestinationService: &flowpb.Service{
 						Name:      "tiefighter",
 						Namespace: "deathstar",
 					},
@@ -411,24 +411,24 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "valid udp service",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					L4: &pb.Layer4{
-						Protocol: &pb.Layer4_UDP{
-							UDP: &pb.UDP{
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_UDP{
+							UDP: &flowpb.UDP{
 								SourcePort:      55555,
 								DestinationPort: 53,
 							},
 						},
 					},
-					SourceService: &pb.Service{
+					SourceService: &flowpb.Service{
 						Name:      "xwing",
 						Namespace: "default",
 					},
-					DestinationService: &pb.Service{
+					DestinationService: &flowpb.Service{
 						Name:      "tiefighter",
 						Namespace: "deathstar",
 					},
@@ -441,14 +441,14 @@ func Test_getHostNames(t *testing.T) {
 		}, {
 			name: "dns",
 			args: args{
-				f: &pb.Flow{
-					IP: &pb.IP{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
 						Source:      "1.1.1.1",
 						Destination: "2.2.2.2",
 					},
-					L4: &pb.Layer4{
-						Protocol: &pb.Layer4_TCP{
-							TCP: &pb.TCP{
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_TCP{
+							TCP: &flowpb.TCP{
 								SourcePort:      54321,
 								DestinationPort: 65432,
 							},
@@ -466,8 +466,8 @@ func Test_getHostNames(t *testing.T) {
 		{
 			name: "ethernet",
 			args: args{
-				f: &pb.Flow{
-					Ethernet: &pb.Ethernet{
+				f: &flowpb.Flow{
+					Ethernet: &flowpb.Ethernet{
 						Source:      "00:01:02:03:04:05",
 						Destination: "06:07:08:09:0a:0b",
 					},
@@ -553,7 +553,7 @@ func Test_fmtTimestamp(t *testing.T) {
 
 func Test_getFlowType(t *testing.T) {
 	type args struct {
-		f *pb.Flow
+		f *flowpb.Flow
 	}
 	tests := []struct {
 		name string
@@ -563,11 +563,11 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "L7",
 			args: args{
-				f: &pb.Flow{
-					L7: &pb.Layer7{
-						Type: pb.L7FlowType_REQUEST,
+				f: &flowpb.Flow{
+					L7: &flowpb.Layer7{
+						Type: flowpb.L7FlowType_REQUEST,
 					},
-					EventType: &pb.CiliumEventType{
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeAccessLog,
 					},
 				},
@@ -577,12 +577,12 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "HTTP",
 			args: args{
-				f: &pb.Flow{
-					L7: &pb.Layer7{
-						Type:   pb.L7FlowType_RESPONSE,
-						Record: &pb.Layer7_Http{},
+				f: &flowpb.Flow{
+					L7: &flowpb.Layer7{
+						Type:   flowpb.L7FlowType_RESPONSE,
+						Record: &flowpb.Layer7_Http{},
 					},
-					EventType: &pb.CiliumEventType{
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeAccessLog,
 					},
 				},
@@ -592,12 +592,12 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "Kafka",
 			args: args{
-				f: &pb.Flow{
-					L7: &pb.Layer7{
-						Type:   pb.L7FlowType_REQUEST,
-						Record: &pb.Layer7_Kafka{},
+				f: &flowpb.Flow{
+					L7: &flowpb.Layer7{
+						Type:   flowpb.L7FlowType_REQUEST,
+						Record: &flowpb.Layer7_Kafka{},
 					},
-					EventType: &pb.CiliumEventType{
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeAccessLog,
 					},
 				},
@@ -607,14 +607,14 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "DNS",
 			args: args{
-				f: &pb.Flow{
-					L7: &pb.Layer7{
-						Type: pb.L7FlowType_REQUEST,
-						Record: &pb.Layer7_Dns{
-							Dns: &pb.DNS{ObservationSource: "proxy"},
+				f: &flowpb.Flow{
+					L7: &flowpb.Layer7{
+						Type: flowpb.L7FlowType_REQUEST,
+						Record: &flowpb.Layer7_Dns{
+							Dns: &flowpb.DNS{ObservationSource: "proxy"},
 						},
 					},
-					EventType: &pb.CiliumEventType{
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeAccessLog,
 					},
 				},
@@ -624,8 +624,8 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "L4",
 			args: args{
-				f: &pb.Flow{
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					EventType: &flowpb.CiliumEventType{
 						Type:    monitorAPI.MessageTypeTrace,
 						SubType: monitorAPI.TraceToHost,
 					},
@@ -636,13 +636,13 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "L4",
 			args: args{
-				f: &pb.Flow{
-					Verdict: pb.Verdict_FORWARDED,
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					Verdict: flowpb.Verdict_FORWARDED,
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypePolicyVerdict,
 					},
 					PolicyMatchType:  monitorAPI.PolicyMatchL3L4,
-					TrafficDirection: pb.TrafficDirection_INGRESS,
+					TrafficDirection: flowpb.TrafficDirection_INGRESS,
 				},
 			},
 			want: "policy-verdict:L3-L4 INGRESS",
@@ -650,13 +650,13 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "L4",
 			args: args{
-				f: &pb.Flow{
-					Verdict: pb.Verdict_DROPPED,
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					Verdict: flowpb.Verdict_DROPPED,
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypePolicyVerdict,
 					},
 					DropReason:       153,
-					TrafficDirection: pb.TrafficDirection_INGRESS,
+					TrafficDirection: flowpb.TrafficDirection_INGRESS,
 				},
 			},
 			want: "policy-verdict:none INGRESS",
@@ -664,12 +664,12 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "SockLB pre-translate",
 			args: args{
-				f: &pb.Flow{
-					Verdict: pb.Verdict_TRACED,
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					Verdict: flowpb.Verdict_TRACED,
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeTraceSock,
 					},
-					SockXlatePoint: pb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_FWD,
+					SockXlatePoint: flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_FWD,
 				},
 			},
 			want: "pre-xlate-fwd",
@@ -677,12 +677,12 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "SockLB post-translate",
 			args: args{
-				f: &pb.Flow{
-					Verdict: pb.Verdict_TRANSLATED,
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					Verdict: flowpb.Verdict_TRANSLATED,
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeTraceSock,
 					},
-					SockXlatePoint: pb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_FWD,
+					SockXlatePoint: flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_FWD,
 				},
 			},
 			want: "post-xlate-fwd",
@@ -690,11 +690,11 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "Debug Capture",
 			args: args{
-				f: &pb.Flow{
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					EventType: &flowpb.CiliumEventType{
 						Type: monitorAPI.MessageTypeCapture,
 					},
-					DebugCapturePoint: pb.DebugCapturePoint_DBG_CAPTURE_FROM_LB,
+					DebugCapturePoint: flowpb.DebugCapturePoint_DBG_CAPTURE_FROM_LB,
 				},
 			},
 			want: "DBG_CAPTURE_FROM_LB",
@@ -702,8 +702,8 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "invalid",
 			args: args{
-				f: &pb.Flow{
-					EventType: &pb.CiliumEventType{
+				f: &flowpb.Flow{
+					EventType: &flowpb.CiliumEventType{
 						Type:    monitorAPI.MessageTypeTrace,
 						SubType: 123, // invalid subtype
 					},
@@ -720,7 +720,7 @@ func Test_getFlowType(t *testing.T) {
 		{
 			name: "nil type",
 			args: args{
-				f: &pb.Flow{},
+				f: &flowpb.Flow{},
 			},
 			want: "UNKNOWN",
 		},
@@ -753,7 +753,7 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 
 	tests := []struct {
 		name string
-		ev   *pb.AgentEvent
+		ev   *flowpb.AgentEvent
 		want string
 	}{
 		{
@@ -762,29 +762,29 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "empty",
-			ev:   &pb.AgentEvent{},
+			ev:   &flowpb.AgentEvent{},
 			want: "UNKNOWN",
 		},
 		{
 			name: "unknown without notification",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_AGENT_EVENT_UNKNOWN,
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_AGENT_EVENT_UNKNOWN,
 			},
 			want: "UNKNOWN",
 		},
 		{
 			name: "agent start without notification",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_AGENT_STARTED,
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_AGENT_STARTED,
 			},
 			want: "UNKNOWN",
 		},
 		{
 			name: "agent start with notification",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_AGENT_STARTED,
-				Notification: &pb.AgentEvent_AgentStart{
-					AgentStart: &pb.TimeNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_AGENT_STARTED,
+				Notification: &flowpb.AgentEvent_AgentStart{
+					AgentStart: &flowpb.TimeNotification{
 						Time: startTS,
 					},
 				},
@@ -793,10 +793,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "policy update",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_POLICY_UPDATED,
-				Notification: &pb.AgentEvent_PolicyUpdate{
-					PolicyUpdate: &pb.PolicyUpdateNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_POLICY_UPDATED,
+				Notification: &flowpb.AgentEvent_PolicyUpdate{
+					PolicyUpdate: &flowpb.PolicyUpdateNotification{
 						Labels:    []string{"foo=bar", "baz=foo"},
 						Revision:  1,
 						RuleCount: 2,
@@ -807,10 +807,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "policy delete",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_POLICY_DELETED,
-				Notification: &pb.AgentEvent_PolicyUpdate{
-					PolicyUpdate: &pb.PolicyUpdateNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_POLICY_DELETED,
+				Notification: &flowpb.AgentEvent_PolicyUpdate{
+					PolicyUpdate: &flowpb.PolicyUpdateNotification{
 						Revision:  42,
 						RuleCount: 1,
 					},
@@ -820,10 +820,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "endpoint regenerate success",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_ENDPOINT_REGENERATE_SUCCESS,
-				Notification: &pb.AgentEvent_EndpointRegenerate{
-					EndpointRegenerate: &pb.EndpointRegenNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_ENDPOINT_REGENERATE_SUCCESS,
+				Notification: &flowpb.AgentEvent_EndpointRegenerate{
+					EndpointRegenerate: &flowpb.EndpointRegenNotification{
 						Id:     42,
 						Labels: []string{"baz=bar", "some=label"},
 					},
@@ -833,10 +833,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "endpoint regenerate failure",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_ENDPOINT_REGENERATE_FAILURE,
-				Notification: &pb.AgentEvent_EndpointRegenerate{
-					EndpointRegenerate: &pb.EndpointRegenNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_ENDPOINT_REGENERATE_FAILURE,
+				Notification: &flowpb.AgentEvent_EndpointRegenerate{
+					EndpointRegenerate: &flowpb.EndpointRegenNotification{
 						Id:     42,
 						Labels: []string{"baz=bar", "some=label"},
 						Error:  "some error",
@@ -847,10 +847,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "endpoint created",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_ENDPOINT_CREATED,
-				Notification: &pb.AgentEvent_EndpointUpdate{
-					EndpointUpdate: &pb.EndpointUpdateNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_ENDPOINT_CREATED,
+				Notification: &flowpb.AgentEvent_EndpointUpdate{
+					EndpointUpdate: &flowpb.EndpointUpdateNotification{
 						Id:        1027,
 						Namespace: "kube-system",
 						PodName:   "cilium-xyz",
@@ -861,10 +861,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "ipcache upsert",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_IPCACHE_UPSERTED,
-				Notification: &pb.AgentEvent_IpcacheUpdate{
-					IpcacheUpdate: &pb.IPCacheNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_IPCACHE_UPSERTED,
+				Notification: &flowpb.AgentEvent_IpcacheUpdate{
+					IpcacheUpdate: &flowpb.IPCacheNotification{
 						Cidr:     "10.1.2.3/32",
 						Identity: 42,
 						OldIdentity: &wrapperspb.UInt32Value{
@@ -879,10 +879,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "ipcache delete",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_IPCACHE_DELETED,
-				Notification: &pb.AgentEvent_IpcacheUpdate{
-					IpcacheUpdate: &pb.IPCacheNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_IPCACHE_DELETED,
+				Notification: &flowpb.AgentEvent_IpcacheUpdate{
+					IpcacheUpdate: &flowpb.IPCacheNotification{
 						Cidr:      "10.0.1.2/32",
 						Identity:  42,
 						OldHostIp: "192.168.1.23",
@@ -893,16 +893,16 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "service upsert",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_SERVICE_UPSERTED,
-				Notification: &pb.AgentEvent_ServiceUpsert{
-					ServiceUpsert: &pb.ServiceUpsertNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_SERVICE_UPSERTED,
+				Notification: &flowpb.AgentEvent_ServiceUpsert{
+					ServiceUpsert: &flowpb.ServiceUpsertNotification{
 						Id: 42,
-						FrontendAddress: &pb.ServiceUpsertNotificationAddr{
+						FrontendAddress: &flowpb.ServiceUpsertNotificationAddr{
 							Ip:   "10.0.0.42",
 							Port: 8008,
 						},
-						BackendAddresses: []*pb.ServiceUpsertNotificationAddr{
+						BackendAddresses: []*flowpb.ServiceUpsertNotificationAddr{
 							{
 								Ip:   "192.168.1.23",
 								Port: 80,
@@ -923,10 +923,10 @@ func TestPrinter_AgentEventDetails(t *testing.T) {
 		},
 		{
 			name: "service delete",
-			ev: &pb.AgentEvent{
-				Type: pb.AgentEventType_SERVICE_DELETED,
-				Notification: &pb.AgentEvent_ServiceDelete{
-					ServiceDelete: &pb.ServiceDeleteNotification{
+			ev: &flowpb.AgentEvent{
+				Type: flowpb.AgentEventType_SERVICE_DELETED,
+				Notification: &flowpb.AgentEvent_ServiceDelete{
+					ServiceDelete: &flowpb.ServiceDeleteNotification{
 						Id: 42,
 					},
 				},
@@ -951,9 +951,9 @@ func TestPrinter_WriteProtoDebugEvent(t *testing.T) {
 		Nanos:   567800000,
 	}
 	node := "k8s1"
-	dbg := &pb.DebugEvent{
-		Type: pb.DebugEventType_DBG_CT_VERDICT,
-		Source: &pb.Endpoint{
+	dbg := &flowpb.DebugEvent{
+		Type: flowpb.DebugEventType_DBG_CT_VERDICT,
+		Source: &flowpb.Endpoint{
 			ID:        690,
 			Identity:  1332,
 			Namespace: "cilium-test",
@@ -973,7 +973,7 @@ func TestPrinter_WriteProtoDebugEvent(t *testing.T) {
 		Cpu:     wrapperspb.Int32(1),
 	}
 	type args struct {
-		dbg  *pb.DebugEvent
+		dbg  *flowpb.DebugEvent
 		ts   *timestamppb.Timestamp
 		node string
 	}

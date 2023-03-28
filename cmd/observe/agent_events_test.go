@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cilium/cilium/api/v1/observer"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/pkg/defaults"
 
@@ -41,7 +41,7 @@ func Test_getAgentEventsRequest(t *testing.T) {
 	selectorOpts.until = ""
 	req, err := getAgentEventsRequest()
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetAgentEventsRequest{Number: defaults.EventsPrintCount}, req)
+	assert.Equal(t, &observerpb.GetAgentEventsRequest{Number: defaults.EventsPrintCount}, req)
 	selectorOpts.since = "2021-04-26T00:00:00Z"
 	selectorOpts.until = "2021-04-26T00:01:00Z"
 	req, err = getAgentEventsRequest()
@@ -50,7 +50,7 @@ func Test_getAgentEventsRequest(t *testing.T) {
 	assert.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetAgentEventsRequest{
+	assert.Equal(t, &observerpb.GetAgentEventsRequest{
 		Number: defaults.EventsPrintCount,
 		Since:  timestamppb.New(since),
 		Until:  timestamppb.New(until),
@@ -62,14 +62,14 @@ func Test_getAgentEventsRequestWithoutSince(t *testing.T) {
 	selectorOpts.until = ""
 	req, err := getAgentEventsRequest()
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetAgentEventsRequest{Number: defaults.EventsPrintCount}, req)
+	assert.Equal(t, &observerpb.GetAgentEventsRequest{Number: defaults.EventsPrintCount}, req)
 	selectorOpts.until = "2021-04-26T00:01:00Z"
 	req, err = getAgentEventsRequest()
 	assert.NoError(t, err)
 	assert.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
 	assert.NoError(t, err)
-	assert.Equal(t, &observer.GetAgentEventsRequest{
+	assert.Equal(t, &observerpb.GetAgentEventsRequest{
 		Number: defaults.EventsPrintCount,
 		Until:  timestamppb.New(until),
 	}, req)

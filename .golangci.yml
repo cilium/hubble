@@ -60,7 +60,15 @@ linters-settings:
     disable:
       - fieldalignment
       - shadow
-
+  importas:
+    no-unaliased: true
+    alias:
+      - pkg: github.com/cilium/cilium/api/v1/flow
+        alias: flowpb
+      - pkg: github.com/cilium/cilium/api/v1/observer
+        alias: observerpb
+      - pkg: github.com/cilium/cilium/api/v1/relay
+        alias: relaypb
 issues:
   # Default rules exclude Go doc comments check, which is rather unfortunate.
   # In order to enable Go doc checks, defaults rules have to be disabled.

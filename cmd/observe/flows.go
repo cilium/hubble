@@ -16,7 +16,7 @@ import (
 	"text/tabwriter"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
-	"github.com/cilium/cilium/api/v1/observer"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
@@ -107,7 +107,7 @@ type getFlowsFilters struct {
 
 // getFlowFiltersYAML returns allowlist/denylist filters as a YAML string. This YAML can then be
 // passed to hubble observe command via `--config` flag.
-func getFlowFiltersYAML(req *observer.GetFlowsRequest) (string, error) {
+func getFlowFiltersYAML(req *observerpb.GetFlowsRequest) (string, error) {
 	var allowlist, denylist []string
 	for _, filter := range req.Whitelist {
 		filterJSON, err := json.Marshal(filter)
@@ -136,7 +136,7 @@ func getFlowFiltersYAML(req *observer.GetFlowsRequest) (string, error) {
 }
 
 // GetHubbleClientFunc is primarily used to mock out the hubble client in some unit tests.
-var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client observer.ObserverClient, cleanup func() error, err error) {
+var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client observerpb.ObserverClient, cleanup func() error, err error) {
 	if otherOpts.inputFile != "" {
 		var f *os.File
 		if otherOpts.inputFile == "-" {
@@ -161,7 +161,7 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 		return nil, nil, err
 	}
 	cleanup = hubbleConn.Close
-	client = observer.NewObserverClient(hubbleConn)
+	client = observerpb.NewObserverClient(hubbleConn)
 	return client, cleanup, nil
 }
 
@@ -599,7 +599,7 @@ func parseRawFilters(filters []string) ([]*flowpb.FlowFilter, error) {
 	return results, nil
 }
 
-func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string) (*observer.GetFlowsRequest, error) {
+func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string) (*observerpb.GetFlowsRequest, error) {
 	first := selectorOpts.first > 0
 	last := selectorOpts.last > 0
 	if first && last {
@@ -683,7 +683,7 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		number = selectorOpts.first
 	}
 
-	req := &observer.GetFlowsRequest{
+	req := &observerpb.GetFlowsRequest{
 		Number:    number,
 		Follow:    selectorOpts.follow,
 		Whitelist: wl,
@@ -696,7 +696,7 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 	return req, nil
 }
 
-func getFlows(ctx context.Context, client observer.ObserverClient, req *observer.GetFlowsRequest) error {
+func getFlows(ctx context.Context, client observerpb.ObserverClient, req *observerpb.GetFlowsRequest) error {
 	b, err := client.GetFlows(ctx, req)
 	if err != nil {
 		return err
