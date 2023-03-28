@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/cilium/cilium/api/v1/observer"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
@@ -130,12 +130,12 @@ func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
 	return true, "Ok", nil
 }
 
-func getStatus(conn *grpc.ClientConn) (*observer.ServerStatusResponse, error) {
+func getStatus(conn *grpc.ClientConn) (*observerpb.ServerStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaults.RequestTimeout)
 	defer cancel()
 
-	req := &observer.ServerStatusRequest{}
-	res, err := observer.NewObserverClient(conn).ServerStatus(ctx, req)
+	req := &observerpb.ServerStatusRequest{}
+	res, err := observerpb.NewObserverClient(conn).ServerStatus(ctx, req)
 	if err != nil {
 		return nil, err
 	}

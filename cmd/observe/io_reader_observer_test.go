@@ -9,14 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cilium/cilium/api/v1/flow"
-	"github.com/cilium/cilium/api/v1/observer"
+	flowpb "github.com/cilium/cilium/api/v1/flow"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func Test_getFlowsBasic(t *testing.T) {
-	flows := []*observer.GetFlowsResponse{{}, {}, {}}
+	flows := []*observerpb.GetFlowsResponse{{}, {}, {}}
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
@@ -24,7 +24,7 @@ func Test_getFlowsBasic(t *testing.T) {
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
-	req := observer.GetFlowsRequest{}
+	req := observerpb.GetFlowsRequest{}
 	client, err := server.GetFlows(context.Background(), &req)
 	assert.NoError(t, err)
 	for i := 0; i < len(flows); i++ {
@@ -36,17 +36,17 @@ func Test_getFlowsBasic(t *testing.T) {
 }
 
 func Test_getFlowsTimeRange(t *testing.T) {
-	flows := []*observer.GetFlowsResponse{
+	flows := []*observerpb.GetFlowsResponse{
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_FORWARDED}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_FORWARDED}},
 			Time:          &timestamppb.Timestamp{Seconds: 0},
 		},
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_DROPPED}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_DROPPED}},
 			Time:          &timestamppb.Timestamp{Seconds: 100},
 		},
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_ERROR}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_ERROR}},
 			Time:          &timestamppb.Timestamp{Seconds: 200},
 		},
 	}
@@ -57,7 +57,7 @@ func Test_getFlowsTimeRange(t *testing.T) {
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
-	req := observer.GetFlowsRequest{
+	req := observerpb.GetFlowsRequest{
 		Since: &timestamppb.Timestamp{Seconds: 50},
 		Until: &timestamppb.Timestamp{Seconds: 150},
 	}
@@ -71,17 +71,17 @@ func Test_getFlowsTimeRange(t *testing.T) {
 }
 
 func Test_getFlowsFilter(t *testing.T) {
-	flows := []*observer.GetFlowsResponse{
+	flows := []*observerpb.GetFlowsResponse{
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_FORWARDED}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_FORWARDED}},
 			Time:          &timestamppb.Timestamp{Seconds: 0},
 		},
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_DROPPED}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_DROPPED}},
 			Time:          &timestamppb.Timestamp{Seconds: 100},
 		},
 		{
-			ResponseTypes: &observer.GetFlowsResponse_Flow{Flow: &flow.Flow{Verdict: flow.Verdict_ERROR}},
+			ResponseTypes: &observerpb.GetFlowsResponse_Flow{Flow: &flowpb.Flow{Verdict: flowpb.Verdict_ERROR}},
 			Time:          &timestamppb.Timestamp{Seconds: 200},
 		},
 	}
@@ -92,10 +92,10 @@ func Test_getFlowsFilter(t *testing.T) {
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
-	req := observer.GetFlowsRequest{
-		Whitelist: []*flow.FlowFilter{
+	req := observerpb.GetFlowsRequest{
+		Whitelist: []*flowpb.FlowFilter{
 			{
-				Verdict: []flow.Verdict{flow.Verdict_FORWARDED, flow.Verdict_ERROR},
+				Verdict: []flowpb.Verdict{flowpb.Verdict_FORWARDED, flowpb.Verdict_ERROR},
 			},
 		},
 	}

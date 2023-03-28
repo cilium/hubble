@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cilium/cilium/api/v1/observer"
+	observerpb "github.com/cilium/cilium/api/v1/observer"
 	"github.com/cilium/hubble/cmd/observe"
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/spf13/viper"
@@ -23,7 +23,7 @@ var expectedObserveHelp string
 
 func init() {
 	// Override the client so that it always returns an IOReaderObserver with no flows.
-	observe.GetHubbleClientFunc = func(_ context.Context, _ *viper.Viper) (client observer.ObserverClient, cleanup func() error, err error) {
+	observe.GetHubbleClientFunc = func(_ context.Context, _ *viper.Viper) (client observerpb.ObserverClient, cleanup func() error, err error) {
 		cleanup = func() error { return nil }
 		return observe.NewIOReaderObserver(bytes.NewBuffer([]byte(``))), cleanup, nil
 	}
