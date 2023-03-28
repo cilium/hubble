@@ -17,6 +17,7 @@ linters:
     - durationcheck
     - errchkjson
     - errname
+    - gocheckcompilerdirectives
     - gocritic
     - goerr113
     - gofmt
@@ -31,6 +32,7 @@ linters:
     - interfacebloat
     - makezero
     - misspell
+    - musttag
     - nakedret
     - nilerr
     - noctx
