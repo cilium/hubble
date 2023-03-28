@@ -5,9 +5,7 @@ on:
   push:
     branches:
     - master
-    - v0.7
-    - v0.6
-    - v0.5
+    - v0.11
   pull_request:
     branches:
     - master
@@ -21,7 +19,7 @@ concurrency:
 jobs:
   analyze:
     if: github.repository == 'cilium/hubble'
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
     steps:
