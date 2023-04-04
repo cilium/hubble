@@ -129,6 +129,7 @@ func newFlowFilter() *flowFilter {
 			{"node-name"},
 			{"tcp-flags"},
 			{"uuid"},
+			{"traffic-direction"},
 		},
 	}
 }
@@ -555,6 +556,21 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.TcpFlags = append(f.TcpFlags, flags)
 		})
+
+	// traffic direction filter
+	case "traffic-direction":
+		switch td := strings.ToLower(val); td {
+		case "ingress":
+			f.apply(func(f *flowpb.FlowFilter) {
+				f.TrafficDirection = append(f.TrafficDirection, flowpb.TrafficDirection_INGRESS)
+			})
+		case "egress":
+			f.apply(func(f *flowpb.FlowFilter) {
+				f.TrafficDirection = append(f.TrafficDirection, flowpb.TrafficDirection_EGRESS)
+			})
+		default:
+			return fmt.Errorf("%s: invalid traffic direction, expected ingress or egress", td)
+		}
 	}
 
 	return nil

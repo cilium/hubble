@@ -419,6 +419,9 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	filterFlags.Var(filterVar(
 		"to-identity", ofilter,
 		"Show all flows terminating at an endpoint with the given security identity"))
+	filterFlags.Var(filterVar(
+		"traffic-direction", ofilter,
+		"Show all flows in the given traffic direction (either ingress or egress)"))
 
 	rawFilterFlags := pflag.NewFlagSet("raw-filters", pflag.ContinueOnError)
 	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
@@ -503,6 +506,9 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	})
 	flowsCmd.RegisterFlagCompletionFunc("from-identity", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return reservedIdentitiesNames(), cobra.ShellCompDirectiveDefault
+	})
+	flowsCmd.RegisterFlagCompletionFunc("traffic-direction", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
+		return []string{"ingress", "egress"}, cobra.ShellCompDirectiveDefault
 	})
 	flowsCmd.RegisterFlagCompletionFunc("output", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 		return []string{

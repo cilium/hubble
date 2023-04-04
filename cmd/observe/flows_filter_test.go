@@ -433,3 +433,62 @@ func TestUuid(t *testing.T) {
 	}
 	assert.Nil(t, f.blacklist)
 }
+
+func TestTrafficDirection(t *testing.T) {
+	tt := []struct {
+		name    string
+		flags   []string
+		filters []*flowpb.FlowFilter
+		err     string
+	}{
+		{
+			name:  "ingress",
+			flags: []string{"--traffic-direction", "ingress"},
+			filters: []*flowpb.FlowFilter{
+				{TrafficDirection: []flowpb.TrafficDirection{flowpb.TrafficDirection_INGRESS}},
+			},
+		},
+		{
+			name:  "egress",
+			flags: []string{"--traffic-direction", "egress"},
+			filters: []*flowpb.FlowFilter{
+				{TrafficDirection: []flowpb.TrafficDirection{flowpb.TrafficDirection_EGRESS}},
+			},
+		},
+		{
+			name:  "mixed case",
+			flags: []string{"--traffic-direction", "INGRESS", "--traffic-direction", "EgrEss"},
+			filters: []*flowpb.FlowFilter{
+				{
+					TrafficDirection: []flowpb.TrafficDirection{
+						flowpb.TrafficDirection_INGRESS,
+						flowpb.TrafficDirection_EGRESS,
+					},
+				},
+			},
+		},
+		{
+			name:  "invalid",
+			flags: []string{"--traffic-direction", "to the moon"},
+			err:   "to the moon: invalid traffic direction, expected ingress or egress",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
+			err := cmd.Flags().Parse(tc.flags)
+			diff := cmp.Diff(tc.filters, f.whitelist.flowFilters(), cmpopts.IgnoreUnexported(flowpb.FlowFilter{}))
+			if diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+			if tc.err != "" {
+				assert.Errorf(t, err, tc.err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Nil(t, f.blacklist)
+		})
+	}
+}
