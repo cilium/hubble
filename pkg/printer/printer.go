@@ -122,6 +122,8 @@ func (p *Printer) GetPorts(f *flowpb.Flow) (string, string) {
 		return strconv.Itoa(int(l4.GetTCP().SourcePort)), strconv.Itoa(int(l4.GetTCP().DestinationPort))
 	case *flowpb.Layer4_UDP:
 		return strconv.Itoa(int(l4.GetUDP().SourcePort)), strconv.Itoa(int(l4.GetUDP().DestinationPort))
+	case *flowpb.Layer4_SCTP:
+		return strconv.Itoa(int(l4.GetSCTP().SourcePort)), strconv.Itoa(int(l4.GetSCTP().DestinationPort))
 	default:
 		return "", ""
 	}

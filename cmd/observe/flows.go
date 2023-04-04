@@ -39,6 +39,7 @@ import (
 var protocols = []string{
 	// L4
 	"icmp", "icmpv4", "icmpv6",
+	"sctp",
 	"tcp",
 	"udp",
 	// L7
