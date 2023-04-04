@@ -51,7 +51,7 @@ Record all TCP traffic from 192.168.1.0/24 (any source port) to 10.0.0.0/16 port
 
 Multiple filters may be specified, in which case any matching packet will be recorded.
 The filter syntax is "srcPrefix srcPort dstPrefix dstPort proto". Currently supported
-protocols are TCP, UDP and ANY.`,
+protocols are TCP, UDP, SCTP, and ANY.`,
 		Hidden: true, // this command is experimental
 		RunE: func(cmd *cobra.Command, args []string) error {
 			filters, err := parseFilters(args)
@@ -92,6 +92,8 @@ func parseProto(proto string) (recorderpb.Protocol, error) {
 		return recorderpb.Protocol_PROTOCOL_TCP, nil
 	case "UDP":
 		return recorderpb.Protocol_PROTOCOL_UDP, nil
+	case "SCTP":
+		return recorderpb.Protocol_PROTOCOL_SCTP, nil
 	case "ANY":
 		return recorderpb.Protocol_PROTOCOL_ANY, nil
 	default:
