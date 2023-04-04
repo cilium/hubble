@@ -379,6 +379,28 @@ func Test_getHostNames(t *testing.T) {
 				dst: "2.2.2.2:53",
 			},
 		}, {
+			name: "valid sctp",
+			args: args{
+				f: &flowpb.Flow{
+					IP: &flowpb.IP{
+						Source:      "1.1.1.1",
+						Destination: "2.2.2.2",
+					},
+					L4: &flowpb.Layer4{
+						Protocol: &flowpb.Layer4_SCTP{
+							SCTP: &flowpb.SCTP{
+								SourcePort:      55555,
+								DestinationPort: 5060,
+							},
+						},
+					},
+				},
+			},
+			want: want{
+				src: "1.1.1.1:55555",
+				dst: "2.2.2.2:5060",
+			},
+		}, {
 			name: "valid tcp service",
 			args: args{
 				f: &flowpb.Flow{
