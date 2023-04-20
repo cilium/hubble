@@ -35,15 +35,23 @@ pointing to the latest patch release.
 
     git switch -c v$MAJOR.$MINOR $RELEASE_HASH
 
+If the branch already exists, check it out.
+
+    git switch v$MAJOR.$MINOR
+
 NOTE: Do not directly commit to this branch. Follow the process and open a Pull
 Request from the prep branch.
 
 ## Create a release prep branch
 
+NOTE: Make sure this step is done from `v$MAJOR.$MINOR` branch, not `master`.
+
+    test "$(git rev-parse --abbrev-ref HEAD)" = "v$MAJOR.$MINOR" || git checkout "v$MAJOR.$MINOR"
+
 This branch will be used to prepare all the necessary things to get ready for
 release.
 
-    git switch -c v$MAJOR.$MINOR.$PATCH-prep
+    git switch -c release-v$MAJOR.$MINOR.$PATCH-prep
 
 ## Prepare the release notes
 
