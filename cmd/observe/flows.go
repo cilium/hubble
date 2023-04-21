@@ -161,6 +161,7 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 	if err != nil {
 		return nil, nil, err
 	}
+	logger.Logger.WithField("server", config.KeyServer).Debug("connected to Hubble API")
 	cleanup = hubbleConn.Close
 	client = observerpb.NewObserverClient(hubbleConn)
 	return client, cleanup, nil
