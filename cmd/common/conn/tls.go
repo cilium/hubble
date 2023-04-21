@@ -6,7 +6,6 @@ package conn
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -61,11 +60,10 @@ func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 		}
 		cert = &c
 	}
-	tlsConfig.GetClientCertificate = func(_ *tls.CertificateRequestInfo) (*tls.Certificate, error) {
-		if cert == nil {
-			return nil, errors.New("mTLS client certificate requested, but not provided")
+	if cert != nil {
+		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			return cert, nil
 		}
-		return cert, nil
 	}
 
 	creds := credentials.NewTLS(&tlsConfig)
