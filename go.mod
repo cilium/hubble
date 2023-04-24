@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.19
 
 require (
-	github.com/cilium/cilium v1.13.1
+	github.com/cilium/cilium v1.13.2
 	github.com/fatih/color v1.13.0
 	github.com/google/go-cmp v0.5.9
 	github.com/sirupsen/logrus v1.9.0
@@ -85,8 +85,8 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/apimachinery v0.26.0 // indirect
-	k8s.io/client-go v0.26.0 // indirect
+	k8s.io/apimachinery v0.26.4 // indirect
+	k8s.io/client-go v0.26.4 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
