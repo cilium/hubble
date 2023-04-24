@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.4] - 2023-04-24
+
+**Misc Changes:**
+* [v0.11] ci: Bump actions/checkout from 3.3.0 to 3.4.0 (#947, @dependabot[bot])
+* [v0.11] ci: Bump actions/checkout from 3.4.0 to 3.5.0 (#961, @dependabot[bot])
+* [v0.11] ci: Bump actions/checkout from 3.5.0 to 3.5.1 (#989, @dependabot[bot])
+* [v0.11] ci: Bump actions/checkout from 3.5.1 to 3.5.2 (#992, @dependabot[bot])
+* [v0.11] ci: Bump actions/setup-go from 3.5.0 to 4.0.0 (#946, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.11 to 2.2.12 (#993, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.12 to 2.3.0 (#998, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.6 to 2.2.7 (#948, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.7 to 2.2.8 (#955, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.8 to 2.2.9 (#964, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.2.9 to 2.2.11 (#985, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/alpine from 3.17.2 to 3.17.3 (#969, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from 1.19.7-alpine3.17 to 1.19.8-alpine3.17 (#980, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `30630b1` to `31f980a` (#970, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `31f980a` to `04065e6` (#974, @dependabot[bot])
+* [v0.11] dockerfile: Bump library/golang from `8b660f4` to `30630b1` (#965, @dependabot[bot])
+* v0.11/vendor: bump cilium to v1.13.1 (#975, @rolinh)
+* v0.11: bump Cilium to v1.13.2, update deps to their latest patch release (#999, @rolinh)
+
+
 ## [v0.11.3] - 2023-03-15
 
 **Misc Changes:**
