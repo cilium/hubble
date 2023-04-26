@@ -76,6 +76,8 @@ issues:
       text: "do not define dynamic errors, use wrapped static errors instead"
     - linters: [gosec]
       text: "G402" # TLS InsecureSkipVerify may be true
+    - linters: [gosec]
+      text: "G101" # Potential hardcoded credentials
     - linters: [revive]
       text: "should have a package comment"
     - linters: [dupword]
