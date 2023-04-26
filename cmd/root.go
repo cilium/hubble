@@ -20,6 +20,7 @@ import (
 	"github.com/cilium/hubble/cmd/watch"
 	"github.com/cilium/hubble/pkg"
 	"github.com/cilium/hubble/pkg/logger"
+	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -60,6 +61,15 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 		logger.Initialize(vp)
 		if err == nil {
 			logger.Logger.WithField("config-file", vp.ConfigFileUsed()).Debug("Using config file")
+		}
+
+		username := vp.GetString(config.KeyBasicAuthUsername)
+		password := vp.GetString(config.KeyBasicAuthPassword)
+		if username != "" && password != "" {
+			optFunc := func(*viper.Viper) (grpc.DialOption, error) {
+				return conn.WithBasicAuth(username, password), nil
+			}
+			conn.GRPCOptionFuncs = append(conn.GRPCOptionFuncs, optFunc)
 		}
 	})
 
