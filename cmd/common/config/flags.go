@@ -23,6 +23,8 @@ const (
 	KeyTLSClientCertFile = "tls-client-cert-file" // string
 	KeyTLSClientKeyFile  = "tls-client-key-file"  // string
 	KeyTLSServerName     = "tls-server-name"      // string
+	KeyBasicAuthUsername = "basic-auth-username"  // string
+	KeyBasicAuthPassword = "basic-auth-password"  // string
 	KeyTimeout           = "timeout"              // time.Duration
 )
 
@@ -80,5 +82,15 @@ func initServerFlags() {
 		KeyTLSServerName,
 		"",
 		"Specify a server name to verify the hostname on the returned certificate (eg: 'instance.hubble-relay.cilium.io').",
+	)
+	ServerFlags.String(
+		KeyBasicAuthUsername,
+		"",
+		"Specify a username for basic auth",
+	)
+	ServerFlags.String(
+		KeyBasicAuthPassword,
+		"",
+		"Specify a password for basic auth",
 	)
 }

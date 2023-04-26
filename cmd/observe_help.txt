@@ -130,6 +130,8 @@ Flow Format Flags:
       --numeric          Display all information in numeric form
 
 Server Flags:
+      --basic-auth-password string    Specify a password for basic auth
+      --basic-auth-username string    Specify a username for basic auth
       --server string                 Address of a Hubble server. Ignored when --input-file is provided. (default "localhost:4245")
       --timeout duration              Hubble server dialing timeout (default 5s)
       --tls                           Specify that TLS must be used when establishing a connection to a Hubble server.
