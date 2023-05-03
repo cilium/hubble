@@ -616,9 +616,6 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 	if first && selectorOpts.all {
 		return nil, fmt.Errorf("cannot set both --first and --all")
 	}
-	if first && selectorOpts.follow {
-		return nil, fmt.Errorf("cannot set both --first and --follow")
-	}
 	if last && selectorOpts.all {
 		return nil, fmt.Errorf("cannot set both --last and --all")
 	}
