@@ -1,0 +1,200 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":gitSignOff",
+    "helpers:pinGitHubActionDigests"
+  ],
+  // This ensures that the gitAuthor and gitSignOff fields match
+  "gitAuthor": "renovate[bot] <bot@renovateapp.com>",
+  "includePaths": [
+    ".github/workflows/**",
+    "Dockerfile",
+    "go.mod",
+    "go.sum",
+    "Makefile",
+  ],
+  postUpdateOptions: [
+    "gomodTidy"
+  ],
+  "ignoreDeps": [
+    "github.com/cilium/cilium"
+  ],
+  "pinDigests": true,
+  "ignorePresets": [":prHourlyLimit2"],
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "separateMinorPatch": true,
+  "pruneStaleBranches": true,
+  "baseBranches": [
+    "master",
+    "v0.11"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "labels": [
+    "kind/enhancement",
+    "release-note/misc",
+    "priority/release-blocker"
+  ],
+  // uncomment after renovate onboarding is merged and renovate PRs are merged
+  /* "schedule": [ */
+  /*   "on friday" */
+  /* ], */
+  "stopUpdatingLabel": "renovate/stop-updating",
+  "packageRules": [
+    {
+      "groupName": "all github action dependencies",
+      "groupSlug": "all-github-action",
+      "matchPaths": [
+        ".github/workflows/**"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "digest",
+        "patch",
+        "pin",
+        "pinDigest"
+      ],
+    },
+    {
+      "groupName": "all go dependencies master",
+      "groupSlug": "all-go-deps-master",
+      "matchFiles": [
+        "go.mod",
+        "go.sum"
+      ],
+      "postUpdateOptions": [
+        // update source import paths on major updates
+        "gomodUpdateImportPaths",
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "digest",
+        "patch",
+        "pin",
+        "pinDigest"
+      ],
+      matchBaseBranches: [
+        "master"
+      ]
+    },
+    {
+      // Do not allow any dependency updates into stable branches.
+      "enabled": false,
+      "groupName": "all go dependencies stable",
+      "groupSlug": "all-go-deps-stable",
+      "matchFiles": [
+        "go.mod",
+        "go.sum"
+      ],
+      matchBaseBranches: [
+        "v0.11",
+      ]
+    },
+    {
+      "enabled": false,
+      "matchPackageNames": [
+        // All of these packages are maintained on a Cilium fork. Thus, we don't
+        // want to update them automatically.
+        "go.universe.tf/metallb",
+        "github.com/cilium/metallb",
+        "github.com/miekg/dns",
+        "github.com/cilium/dns",
+        "sigs.k8s.io/controller-tools",
+        "github.com/cilium/controller-tools",
+        // We update this dependency manually together with envoy proxy updates
+        "github.com/cilium/proxy",
+      ],
+      "matchPackagePatterns": [
+        // k8s dependencies will be updated manually along with tests
+        "k8s.io/*",
+        "sigs.k8s.io/*"
+      ]
+    },
+    {
+      // Update Go version used in images, CI, in the same group
+      "groupName": "golang",
+      "matchPackageNames": [
+        "docker.io/library/golang",
+        "go"
+      ],
+    },
+    // Limit versions that are allowed for stable branches to patch version updates
+    {
+      "groupName": "golang stable",
+      "matchPackageNames": [
+        "docker.io/library/golang",
+        "go"
+      ],
+      "allowedVersions": "<=1.19",
+      "matchBaseBranches": [
+        "v0.11"
+      ],
+    },
+    {
+      "groupName": "alpine",
+      // Restrict the alpine version that can be used on stable branches
+      "matchPackageNames": [
+        "docker.io/library/alpine"
+      ],
+    },
+    {
+      "groupName": "alpine-stable",
+      // Restrict the alpine version that can be used on stable branches
+      "matchPackageNames": [
+        "docker.io/library/alpine"
+      ],
+      "allowedVersions": "<=3.17",
+      "matchBaseBranches": [
+        "v0.11"
+      ]
+    },
+    {
+      // Group golangci-lint updates to overrule grouping of version updates in the GHA files.
+      // Without this, golangci-lint updates are not in sync for GHA files and other usages.
+      "groupName": "golangci-lint",
+      "matchDepNames": [
+        "golangci/golangci-lint"
+      ]
+    },
+    {
+      // Do not allow any golangci-lint updates into stable branches.
+      "enabled": false,
+      "groupName": "golangci-lint-stable",
+      "matchDepNames": [
+        "golangci/golangci-lint"
+      ],
+      "matchBaseBranches": [
+        "v0.11",
+      ]
+    }
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": [
+        "^\\.github/workflows/[^/]+\\.ya?ml$"
+      ],
+      // This regex manages version strings in GitHub actions workflow files,
+      // similar to the examples shown here:
+      //   https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+version: +['\"]?(?<currentValue>[^\\s'\"]+)['\"]?"
+      ]
+    },
+    {
+      "fileMatch": [
+        "^Makefile$"
+      ],
+      // This regex manages version strings in the Makefile,
+      // similar to the examples shown here:
+      //   https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+_VERSION = (?<currentValue>.*)\\s+.+_SHA = (?<currentDigest>sha256:[a-f0-9]+)"
+      ]
+    },
+  ]
+}
