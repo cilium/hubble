@@ -1,6 +1,6 @@
 # RELEASE
 
-Release process and checklist for `hubble`. 
+Release process and checklist for `hubble`.
 
 ## Prep the variables
 
@@ -144,6 +144,16 @@ unreleased hubble versions in a branch from releases.
 After a new stable `v$MAJOR.$MINOR` release branch has been created, update the
 `target-branch` and `commit-message.prefix` fields in `.github/dependabot.yml`
 to point to the newly created branch, instead of the old stable branch.
+
+## Update the `renovate` configuration
+
+After a new stable `v$MAJOR.$MINOR` release branch has been created, update `renovate.json5`:
+
+- Add the new branch to the `baseBranches` field and remove the previous release branch (we only maintain the most recent Hubble release).
+- Add the new branch to the `all-go-deps-stable` packageRule in the `matchBaseBranches` field and remove the previous release branch.
+- Update or add a new `golang-stable` packageRule to pin the Go version used to the current minor version for the release. (TODO: Add link to example)
+- Update or add a new `alpine-stable` packageRule to pin the Alpine image version used to the current minor version for the release. (TODO: Add link to example)
+- Add the new branch to the `golangci-lint` packageRule in the `matchBaseBranches` field and remove the previous release release branch.
 
 ## Get the Docker image build for the release approved
 
