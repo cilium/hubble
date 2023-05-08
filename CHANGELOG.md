@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.5] - 2023-05-05
+[v0.11.5]: https://github.com/cilium/hubble/compare/v0.11.4...v0.11.5
+
+**Misc Changes:**
+* [v0.11] ci: Bump github/codeql-action from 2.3.0 to 2.3.2 (#1006, @dependabot[bot])
+* [v0.11] ci: Bump github/codeql-action from 2.3.2 to 2.3.3 (#1016, @dependabot[bot])
+* v0.11/all: bump Go to v1.19.9 (#1007, @dependabot[bot])
+
 ## [v0.11.4] - 2023-04-24
+[v0.11.4]: https://github.com/cilium/hubble/compare/v0.11.3...v0.11.4
 
 **Misc Changes:**
 * [v0.11] ci: Bump actions/checkout from 3.3.0 to 3.4.0 (#947, @dependabot[bot])
