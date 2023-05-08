@@ -145,6 +145,13 @@ After a new stable `v$MAJOR.$MINOR` release branch has been created, update the
 `target-branch` and `commit-message.prefix` fields in `.github/dependabot.yml`
 to point to the newly created branch, instead of the old stable branch.
 
+## Get the Docker image build for the release approved
+
+The
+[Image Release Build workflow](https://github.com/cilium/hubble/actions/workflows/build-images-release.yaml)
+needs to be approved, ping a member of the
+[`hubble-maintainers` team](https://github.com/orgs/cilium/teams/hubble-maintainers) on Slack.
+
 ## Announce the release on Slack
 
 Post a release announcement message in the [Cilium Slack #hubble
