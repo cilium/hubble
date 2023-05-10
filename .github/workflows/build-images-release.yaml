@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c
+        uses: docker/setup-buildx-action@4b4e9c3e2d4531116a6f8ba8e71fc6e2cb6e6c8c # renovate: tag=2.5.0
 
       - name: Login to quay.io
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a # renovate: tag=2.1.0
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME_RELEASE_USERNAME }}
@@ -37,12 +37,12 @@ jobs:
           echo ::set-output name=tag::${GITHUB_REF##*/}
 
       - name: Checkout Source Code
-        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # renovate: tag=3.5.2
         with:
           persist-credentials: false
 
       - name: Release Build ${{ matrix.name }}
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671 # renovate: tag=4.0.0
         id: docker_build_release
         with:
           context: .
@@ -68,7 +68,7 @@ jobs:
 
       # Upload artifact digests
       - name: Upload artifact digests
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # renovate: tag=3.1.2
         with:
           name: image-digest ${{ matrix.name }}
           path: image-digest
@@ -90,7 +90,7 @@ jobs:
           mkdir -p image-digest/
 
       - name: Download digests of all images built
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # renovate: tag=3.0.2
         with:
           path: image-digest/
 
@@ -114,7 +114,7 @@ jobs:
 
       # Upload artifact digests
       - name: Upload artifact digests
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # renovate: tag=3.1.2
         with:
           name: image-digest-output.txt-${{ steps.tag.outputs.tag }}
           path: image-digest-output.txt
@@ -122,7 +122,7 @@ jobs:
 
       # Upload artifact digests
       - name: Upload artifact digests
-        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # renovate: tag=3.1.2
         with:
           name: Makefile.digests-${{ steps.tag.outputs.tag }}
           path: Makefile.digests
