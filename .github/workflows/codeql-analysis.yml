@@ -24,12 +24,12 @@ jobs:
       fail-fast: false
     steps:
     - name: Checkout repo
-      uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+      uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # renovate: tag=3.5.2
       with:
         fetch-depth: 1
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@29b1f65c5e92e24fe6b6647da1eaabe529cec70f
+      uses: github/codeql-action/init@29b1f65c5e92e24fe6b6647da1eaabe529cec70f # renovate: tag=2.3.3
       with:
         languages: go
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@29b1f65c5e92e24fe6b6647da1eaabe529cec70f
+      uses: github/codeql-action/analyze@29b1f65c5e92e24fe6b6647da1eaabe529cec70f # renovate: tag=2.3.3
