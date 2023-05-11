@@ -118,9 +118,9 @@ func Test_getFlowFiltersYAML(t *testing.T) {
 	}
 	out, err := getFlowFiltersYAML(&req)
 	expected := `allowlist:
-- '{"source_ip":["1.2.3.4/16"]}'
+    - '{"source_ip":["1.2.3.4/16"]}'
 denylist:
-- '{"source_port":["80"]}'
+    - '{"source_port":["80"]}'
 `
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out)
