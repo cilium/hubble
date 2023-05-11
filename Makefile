@@ -16,7 +16,9 @@ RELEASE_GID ?= $(shell id -g)
 
 TEST_TIMEOUT ?= 5s
 
-GOLANGCILINT_WANT_VERSION = 1.50.1
+# renovate: datasource=docker depName=golangci/golangci-lint
+GOLANGCILINT_WANT_VERSION = v1.50.1
+GOLANGCILINT_IMAGE_SHA = sha256:858aaf58a607c8d188e96661c55e4585603acbb4e6951018cdfb5a76b75417ad
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 all: hubble
@@ -70,12 +72,12 @@ test:
 bench:
 	$(GO) test -timeout=30s -bench=. $$($(GO) list ./...)
 
-ifneq (,$(findstring $(GOLANGCILINT_WANT_VERSION),$(GOLANGCILINT_VERSION)))
+ifneq (,$(findstring $(GOLANGCILINT_WANT_VERSION:v%=%),$(GOLANGCILINT_VERSION)))
 check:
 	golangci-lint run
 else
 check:
-	docker run --rm -v `pwd`:/app -w /app docker.io/golangci/golangci-lint:v$(GOLANGCILINT_WANT_VERSION) golangci-lint run
+	docker run --rm -v `pwd`:/app -w /app docker.io/golangci/golangci-lint:$(GOLANGCILINT_WANT_VERSION) golangci-lint run
 endif
 
 image:
