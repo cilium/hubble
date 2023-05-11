@@ -19,12 +19,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # renovate: tag=3.5.2
-    - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # renovate: tag=4.0.0
+    - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # renovate: tag=v3.5.2
+    - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # renovate: tag=v4.0.0
       with:
         go-version: '1.19.9'
     - name: Run static checks
-      uses: golangci/golangci-lint-action@08e2f20817b15149a52b5b3ebe7de50aff2ba8c5 # renovate: tag=3.4.0
+      uses: golangci/golangci-lint-action@08e2f20817b15149a52b5b3ebe7de50aff2ba8c5 # renovate: tag=v3.4.0
       with:
         version: v1.50.1
         args: --config=.golangci.yml --verbose
