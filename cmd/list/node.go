@@ -5,7 +5,6 @@ package list
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
@@ -25,10 +24,6 @@ import (
 )
 
 const notAvailable = "N/A"
-
-var listOpts struct {
-	output string
-}
 
 func newNodeCommand(vp *viper.Viper) *cobra.Command {
 	listCmd := &cobra.Command{
@@ -85,13 +80,13 @@ func runListNodes(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn
 	case "json":
 		return jsonOutput(cmd.OutOrStdout(), nodes)
 	case "table", "wide":
-		return tableOutput(cmd.OutOrStdout(), nodes)
+		return nodeTableOutput(cmd.OutOrStdout(), nodes)
 	default:
 		return fmt.Errorf("unknown output format: %s", listOpts.output)
 	}
 }
 
-func tableOutput(buf io.Writer, nodes []*observerpb.Node) error {
+func nodeTableOutput(buf io.Writer, nodes []*observerpb.Node) error {
 	tw := tabwriter.NewWriter(buf, 2, 0, 3, ' ', 0)
 	fmt.Fprint(tw, "NAME\tSTATUS\tAGE\tFLOWS/S\tCURRENT/MAX-FLOWS")
 	if listOpts.output == "wide" {
@@ -128,15 +123,6 @@ func tableOutput(buf io.Writer, nodes []*observerpb.Node) error {
 		fmt.Fprintln(tw)
 	}
 	return tw.Flush()
-}
-
-func jsonOutput(buf io.Writer, nodes []*observerpb.Node) error {
-	bs, err := json.MarshalIndent(nodes, "", "  ")
-	if err != nil {
-		return err
-	}
-	_, err = fmt.Fprintln(buf, string(bs))
-	return err
 }
 
 func nodeStateToString(state relaypb.NodeState) string {

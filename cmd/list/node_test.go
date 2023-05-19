@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOutputs(t *testing.T) {
+func TestNodeOutputs(t *testing.T) {
 	var testCases = []struct {
 		name                    string
 		nodes                   []*observerpb.Node
@@ -186,13 +186,13 @@ foo    Connected   16m40s   0.00      500/1000 ( 50.00%)   1         1.2.3.4   E
 
 			// regular table
 			buf.Reset()
-			require.NoError(t, tableOutput(&buf, tc.nodes), tc.name)
+			require.NoError(t, nodeTableOutput(&buf, tc.nodes), tc.name)
 			assert.Equal(t, tc.expectedTableOutput, buf.String(), "regular table %s", tc.name)
 
 			// wide table
 			listOpts.output = "wide"
 			buf.Reset()
-			require.NoError(t, tableOutput(&buf, tc.nodes), tc.name)
+			require.NoError(t, nodeTableOutput(&buf, tc.nodes), tc.name)
 			assert.Equal(t, tc.expectedWideTableOutput, buf.String(), "wide table %s", tc.name)
 		})
 	}
