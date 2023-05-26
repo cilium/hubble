@@ -39,9 +39,9 @@
     "priority/release-blocker"
   ],
   // uncomment after renovate onboarding is merged and renovate PRs are merged
-  /* "schedule": [ */
-  /*   "on friday" */
-  /* ], */
+  "schedule": [
+    "on friday"
+  ],
   "stopUpdatingLabel": "renovate/stop-updating",
   "packageRules": [
     {
