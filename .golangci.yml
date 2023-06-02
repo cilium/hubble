@@ -1,5 +1,5 @@
 # See https://golangci-lint.run/usage/configuration/ for available options.
-# Also https://github.com/cilium/cilium/blob/master/.golangci.yaml as a
+# Also https://github.com/cilium/cilium/blob/main/.golangci.yaml as a
 # reference.
 run:
   go: '1.20'
@@ -31,6 +31,7 @@ linters:
     - ineffassign
     - interfacebloat
     - makezero
+    - mirror
     - misspell
     - musttag
     - nakedret
@@ -41,6 +42,7 @@ linters:
     - reassign
     - revive
     - staticcheck
+    - tagalign
     - tenv
     - typecheck
     - unconvert
@@ -71,6 +73,10 @@ linters-settings:
         alias: observerpb
       - pkg: github.com/cilium/cilium/api/v1/relay
         alias: relaypb
+  revive:
+    rules:
+      - name: package-comments
+        disabled: true
 issues:
   # Default rules exclude Go doc comments check, which is rather unfortunate.
   # In order to enable Go doc checks, defaults rules have to be disabled.
@@ -88,8 +94,6 @@ issues:
       text: "G402" # TLS InsecureSkipVerify may be true
     - linters: [gosec]
       text: "G101" # Potential hardcoded credentials
-    - linters: [revive]
-      text: "should have a package comment"
     - linters: [dupword]
       path: cmd/list/node_test.go # tripping on command output
     - linters: [dupword]

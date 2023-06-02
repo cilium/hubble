@@ -25,7 +25,7 @@ func init() {
 	// Override the client so that it always returns an IOReaderObserver with no flows.
 	observe.GetHubbleClientFunc = func(_ context.Context, _ *viper.Viper) (client observerpb.ObserverClient, cleanup func() error, err error) {
 		cleanup = func() error { return nil }
-		return observe.NewIOReaderObserver(bytes.NewBuffer([]byte(``))), cleanup, nil
+		return observe.NewIOReaderObserver(new(bytes.Buffer)), cleanup, nil
 	}
 
 	expectedObserveHelp = fmt.Sprintf(expectedObserveHelp, defaults.ConfigFile)
