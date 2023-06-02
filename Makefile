@@ -17,8 +17,8 @@ RELEASE_GID ?= $(shell id -g)
 TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCILINT_WANT_VERSION = v1.52.2
-GOLANGCILINT_IMAGE_SHA = sha256:3d2f4240905054c7efa7f4e98ba145c12a16995bbc3e605300e21400a1665cb6
+GOLANGCILINT_WANT_VERSION = v1.53.1
+GOLANGCILINT_IMAGE_SHA = sha256:1d3e531d92b54c8ee7207d591cfc9c19ef96138ddad4c0103935501d5aca2616
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 all: hubble
