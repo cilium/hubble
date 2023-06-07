@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.6] - 2023-06-07
+[v0.11.6]: https://github.com/cilium/hubble/compare/v0.11.5...v0.11.6
+
+**CI Changes:**
+* [v0.11] .github: Configure renovate tag comment on GHA images (#1028, @chancez)
+* [v0.11] Fix Renovate datasources (#1031, @chancez)
+* [v0.11]: renovate go gha (#1069, @kaworu)
+* make: add renovate anchor to the release target golang image (#1072, @kaworu)
+
+**Misc Changes:**
+* [v0.11] ci: Bump github/codeql-action from 2.3.3 to 2.3.4 (#1053, @dependabot[bot])
+* chore(deps): update actions/setup-go action to v4.0.1 (v0.11) (#1035, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.3.5 (v0.11) (#1051, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.3.6 (v0.11) (#1060, @renovate[bot])
+* chore(deps): update golang docker tag to v1.19.10 (v0.11) (#1073, @renovate[bot])
+* chore(deps): update golang stable to v1.19.10 (v0.11) (patch) (#1067, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v3.5.0 (v0.11) (#1063, @renovate[bot])
+* chore(deps): update skx/github-action-publish-binaries digest to 44887b2 (v0.11) (#1026, @renovate[bot])
+
 ## [v0.11.5] - 2023-05-05
 [v0.11.5]: https://github.com/cilium/hubble/compare/v0.11.4...v0.11.5
 
