@@ -98,13 +98,13 @@ Identify the right commit and tag the release.
 
 Example:
 
-    git tag -a v0.7.1 -m 'v0.7.1' <commit-sha>
+    git tag -a "v$MAJOR.$MINOR.$PATCH" -m "v$MAJOR.$MINOR.$PATCH" <commit-sha>
 
 Then push the tag.
 
 Example:
 
-    git push origin v0.7.1
+    git push origin "v$MAJOR.$MINOR.$PATCH"
 
 ## Modify the version constant on the master branch, if needed
 
