@@ -5,7 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.11.6] - 2023-06-07
+[v0.11.6]: https://github.com/cilium/hubble/compare/v0.11.5...v0.11.6
+
+**CI Changes:**
+* [v0.11] .github: Configure renovate tag comment on GHA images (#1028, @chancez)
+* [v0.11] Fix Renovate datasources (#1031, @chancez)
+* [v0.11]: renovate go gha (#1069, @kaworu)
+* make: add renovate anchor to the release target golang image (#1072, @kaworu)
+
+**Misc Changes:**
+* [v0.11] ci: Bump github/codeql-action from 2.3.3 to 2.3.4 (#1053, @dependabot[bot])
+* chore(deps): update actions/setup-go action to v4.0.1 (v0.11) (#1035, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.3.5 (v0.11) (#1051, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.3.6 (v0.11) (#1060, @renovate[bot])
+* chore(deps): update golang docker tag to v1.19.10 (v0.11) (#1073, @renovate[bot])
+* chore(deps): update golang stable to v1.19.10 (v0.11) (patch) (#1067, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v3.5.0 (v0.11) (#1063, @renovate[bot])
+* chore(deps): update skx/github-action-publish-binaries digest to 44887b2 (v0.11) (#1026, @renovate[bot])
+
 ## [v0.11.5] - 2023-05-05
+[v0.11.5]: https://github.com/cilium/hubble/compare/v0.11.4...v0.11.5
 
 **Misc Changes:**
 * [v0.11] ci: Bump github/codeql-action from 2.3.0 to 2.3.2 (#1006, @dependabot[bot])
@@ -13,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * v0.11/all: bump Go to v1.19.9 (#1007, @dependabot[bot])
 
 ## [v0.11.4] - 2023-04-24
+[v0.11.4]: https://github.com/cilium/hubble/compare/v0.11.3...v0.11.4
 
 **Misc Changes:**
 * [v0.11] ci: Bump actions/checkout from 3.3.0 to 3.4.0 (#947, @dependabot[bot])
@@ -34,8 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * v0.11/vendor: bump cilium to v1.13.1 (#975, @rolinh)
 * v0.11: bump Cilium to v1.13.2, update deps to their latest patch release (#999, @rolinh)
 
-
 ## [v0.11.3] - 2023-03-15
+[v0.11.3]: https://github.com/cilium/hubble/compare/v0.11.2...v0.11.3
 
 **Misc Changes:**
 * [v0.11] ci: Bump docker/setup-buildx-action from 2.4.1 to 2.5.0 (#935, @dependabot[bot])
@@ -47,8 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * [v0.11] dockerfile: Bump library/golang from `ee42797` to `8b660f4` (#936, @dependabot[bot])
 * [v0.11] Update Golang to v1.19.7 (#930, @gandro)
 
-
 ## [v0.11.2] - 2023-02-15
+[v0.11.2]: https://github.com/cilium/hubble/compare/v0.11.1...v0.11.2
 
 **Misc Changes:**
 * [v0.11] ci: Bump docker/setup-buildx-action from 2.2.1 to 2.3.0 (#883, @dependabot[bot])
@@ -70,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [v0.11.1] - 2023-01-24
+[v0.11.1]: https://github.com/cilium/hubble/compare/v0.11.0...v0.11.1
 
 **Minor Changes:**
 * [v0.11] cmd: Introduce `HUBBLE_COMPAT=legacy-json-output` (#866, @gandro)
@@ -83,6 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * ci: bump golangci/golangci-lint-action from 3.3.1 to 3.4.0 (#864, @dependabot[bot])
 
 ## [v0.11.0] - 2023-01-11
+[v0.11.0]: https://github.com/cilium/hubble/compare/v0.10.0...v0.11.0
 
 This v0.11.0 release of the Hubble CLI adds support for features added in
 Cilium v1.13: Hubble now has visibility into Cilium's SockLB,
@@ -187,6 +210,7 @@ to the Hubble command-line output:
 * vendor: bump google.golang.org/grpc from 1.51.0 to 1.52.0 (#839, @dependabot[bot])
 
 ## [v0.10.0] - 2022-06-22
+[v0.10.0]: https://github.com/cilium/hubble/compare/v0.9.0...v0.10.0
 
 The v0.10.0 release of the Hubble CLI coincides with Cilium v1.12.
 It adds a new `--first` option to query for earlier flows and events
@@ -291,6 +315,7 @@ and an updated version of the Hubble logo (#726).
 * vendor: update yaml.v3 to v3.0.1 (#741, @kaworu)
 
 ## [v0.9.0] - 2021-11-30
+[v0.9.0]: https://github.com/cilium/hubble/compare/v0.8.2...v0.9.0
 
 Hubble v0.9.0 coincides with Cilium v1.11. It brings many improvements to the
 CLI: Colored output (#551), improved readability and alternative output formats
@@ -378,6 +403,7 @@ Windows ARM64 (#618).
 * version: Drop the "v" prefix (#638, @michi-covalent)
 
 ## [v0.8.2] - 2021-09-10
+[v0.8.2]: https://github.com/cilium/hubble/compare/v0.8.1...v0.8.2
 
 This patch release fixes a bug in the dict output where a newline was missing.
 It also removes long-deprecated `--json`, `--compact` and `--dict` flags (use
@@ -400,6 +426,7 @@ updated to the latest v1.16.8 and the Cilium dependency is updated to v1.10.4.
 * v0.8: update Go to v1.16.8, Alpine base image to 3.14.2 (#621, @rolinh)
 
 ## [v0.8.1] - 2021-07-19
+[v0.8.1]: https://github.com/cilium/hubble/compare/v0.8.0...v0.8.1
 
 This patch release updates gRPC and Cilium dependencies to v1.37.1 and v1.10.3
 respectively. The Go version, which is used to create release binaries, is also
@@ -418,6 +445,7 @@ directory is not present.
 * v0.8: vendor: bump grpc to v1.37.1; honnef tools to v0.1.4 (#553, @rolinh)
 
 ## [v0.8.0] - 2021-05-03
+[v0.8.0]: https://github.com/cilium/hubble/compare/v0.7.1...v0.8.0
 
 This release coincides with Cilium 1.10 and has support for new API additions
 added in Cilium. Some of the new API features include support for agent and
@@ -549,7 +577,8 @@ breaking changes to the Hubble command-line interface:
 * vendor: bump honnef.co/go/tools from v0.1.2 to v0.1.3 (#513, @rolinh)
 * vendor: bump honnef.co/go/tools to v0.1.1 (#484, @rolinh)
 
-## [0.7.1] - 2020-10-22
+## [v0.7.1] - 2020-10-22
+[v0.7.1]: https://github.com/cilium/hubble/compare/v0.7.0...v0.7.1
 
 **Bugfixes:**
 * cmd: fix environment variable names for options with dashes (#408, @Rolinh)
@@ -557,7 +586,8 @@ breaking changes to the Hubble command-line interface:
 **Misc Changes:**
 * build: ensure that binaries are always statically built (#402, @Rolinh)
 
-## [0.7.0] - 2020-10-19
+## [v0.7.0] - 2020-10-19
+[v0.7.0]: https://github.com/cilium/hubble/compare/v0.6.1...v0.7.0
 
 **Minor Changes:**
 * Add config subcommand (#380, @Rolinh)
@@ -629,7 +659,8 @@ breaking changes to the Hubble command-line interface:
 * update Go version to v1.14.5 (#319, @Rolinh)
 * vendor: cilium@master (#313, @glibsm)
 
-## [0.6.1] - 2020-06-12
+## [v0.6.1] - 2020-06-12
+[v0.6.1]: https://github.com/cilium/hubble/compare/v0.6.0...v0.6.1
 
 **Bugfixes:**
 * make: fix git hash variable assignments for old make versions (#291, @michi-covalent)
@@ -642,7 +673,8 @@ breaking changes to the Hubble command-line interface:
 * Prepare v0.6.1 release (#289, @michi-covalent)
 * Require Cilium 1.7.x (#287, @michi-covalent)
 
-## [0.6.0] - 2020-05-29
+## [v0.6.0] - 2020-05-29
+[v0.6.0]: https://github.com/cilium/hubble/compare/v0.5.0...v0.6.0
 
 **Bugfixes:**
 * api: fix potential panic in endpoint's EqualsByID (#199, @Rolinh)
@@ -693,4 +725,4 @@ breaking changes to the Hubble command-line interface:
 * vendor: pick up latest cilium (#247, @Rolinh)
 * vendor: update cilium and sync replace directives (#207, @Rolinh)
 
-## [0.5.0] - 2020-03-23
+## v0.5.0 - 2020-03-23
