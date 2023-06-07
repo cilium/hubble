@@ -21,13 +21,17 @@ GOLANGCILINT_WANT_VERSION = v1.50.1
 GOLANGCILINT_IMAGE_SHA = sha256:858aaf58a607c8d188e96661c55e4585603acbb4e6951018cdfb5a76b75417ad
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
+# renovate: datasource=docker depName=golang
+GOLANG_IMAGE_VERSION = 1.19.9-alpine3.17
+GOLANG_IMAGE_SHA = sha256:9668643a2e62d8bd298ef3663a96de4a70ceb2865b9b7cadd1d5e08387745103
+
 all: hubble
 
 hubble:
 	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
 
 release:
-	docker run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:1.19.9-alpine3.17@sha256:9668643a2e62d8bd298ef3663a96de4a70ceb2865b9b7cadd1d5e08387745103 \
+	$(CONTAINER_ENGINE) run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:$(GOLANG_IMAGE_VERSION)@$(GOLANG_IMAGE_SHA) \
 		sh -c "apk add --no-cache setpriv make git && \
 			/usr/bin/setpriv --reuid=$(RELEASE_UID) --regid=$(RELEASE_GID) --clear-groups make GOCACHE=/tmp/gocache local-release"
 
@@ -77,7 +81,7 @@ check:
 	golangci-lint run
 else
 check:
-	docker run --rm -v `pwd`:/app -w /app docker.io/golangci/golangci-lint:$(GOLANGCILINT_WANT_VERSION) golangci-lint run
+	$(CONTAINER_ENGINE) run --rm -v `pwd`:/app -w /app docker.io/golangci/golangci-lint:$(GOLANGCILINT_WANT_VERSION)@$(GOLANGCILINT_IMAGE_SHA) golangci-lint run
 endif
 
 image:
