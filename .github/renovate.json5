@@ -191,6 +191,21 @@
     },
     {
       "fileMatch": [
+        "^\\.github/workflows/[^/]+\\.ya?ml$"
+      ],
+      // This regex manages version strings in GitHub actions workflow files,
+      // similar to the examples shown here:
+      //   https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+version: +['\"]?(?<currentValue>[^\\s'\"]+)['\"]?"
+      ],
+      "allowedVersions": "<=1.19",
+      "matchBaseBranches": [
+        "v0.11"
+      ]
+    },
+    {
+      "fileMatch": [
         "^Makefile$"
       ],
       // This regex manages version strings in the Makefile,
