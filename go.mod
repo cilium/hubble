@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.19
 
 require (
-	github.com/cilium/cilium v1.13.2
+	github.com/cilium/cilium v1.13.3
 	github.com/fatih/color v1.13.0
 	github.com/google/go-cmp v0.5.9
 	github.com/sirupsen/logrus v1.9.0
