@@ -124,7 +124,8 @@
       "groupName": "golang",
       "matchPackageNames": [
         "docker.io/library/golang",
-        "go"
+        "go",
+        "golang"
       ],
     },
     // Limit versions that are allowed for stable branches to patch version updates
@@ -132,7 +133,8 @@
       "groupName": "golang stable",
       "matchPackageNames": [
         "docker.io/library/golang",
-        "go"
+        "go",
+        "golang"
       ],
       "allowedVersions": "<=1.19",
       "matchBaseBranches": [
