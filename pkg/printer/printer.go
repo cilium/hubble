@@ -269,6 +269,29 @@ func (p Printer) getVerdict(f *flowpb.Flow) string {
 	}
 }
 
+func (p Printer) getSummary(f *flowpb.Flow) string {
+	auth := p.getAuth(f)
+	if auth == "" {
+		return f.GetSummary()
+	}
+
+	return fmt.Sprintf("%s; Auth: %s", f.GetSummary(), auth)
+}
+
+func (p Printer) getAuth(f *flowpb.Flow) string {
+	auth := f.GetAuthType()
+	msg := auth.String()
+	switch auth {
+	case flowpb.AuthType_DISABLED:
+		// if auth is disabled we do not want to display anything
+		return ""
+	case flowpb.AuthType_TEST_ALWAYS_FAIL:
+		return p.color.authTestAlwaysFail(msg)
+	default:
+		return p.color.authIsEnabled(msg)
+	}
+}
+
 // WriteProtoFlow writes v1.Flow into the output writer.
 func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 	f := res.GetFlow()
@@ -300,7 +323,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			dst, tab,
 			GetFlowType(f), tab,
 			p.getVerdict(f), tab,
-			f.GetSummary(), newline,
+			p.getSummary(f), newline,
 		)
 		if ew.err != nil {
 			return fmt.Errorf("failed to write out packet: %v", ew.err)
@@ -359,7 +382,7 @@ func (p *Printer) WriteProtoFlow(res *observerpb.GetFlowsResponse) error {
 			dstIdentity,
 			GetFlowType(f),
 			p.getVerdict(f),
-			f.GetSummary())
+			p.getSummary(f))
 		if err != nil {
 			return fmt.Errorf("failed to write out packet: %v", err)
 		}
