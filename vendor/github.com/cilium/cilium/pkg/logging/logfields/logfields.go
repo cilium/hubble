@@ -47,6 +47,9 @@ const (
 	// Labels are any label, they may not be relevant to the security identity.
 	Labels = "labels"
 
+	// Source is the label or node information source
+	Source = "source"
+
 	// Controller is the name of the controller to log it.
 	Controller = "controller"
 
@@ -117,6 +120,9 @@ const (
 
 	// NextHop is an IPV4 or IPv6 address for the next hop
 	NextHop = "nextHop"
+
+	// Address is an IPV4, IPv6 or FQDN address
+	Address = "address"
 
 	// IPAddr is an IPV4 or IPv6 address
 	IPAddr = "ipAddr"
@@ -232,6 +238,9 @@ const (
 	// Hash is a hash of something
 	Hash = "hash"
 
+	// ServerNames is the list of TLS SNIs
+	ServerNames = "serverNames"
+
 	// ServiceName is the orchestration framework name for a service
 	ServiceName = "serviceName"
 
@@ -250,6 +259,9 @@ const (
 
 	// ClusterName is the name of the cluster
 	ClusterName = "clusterName"
+
+	// ClusterID is the ID of the cluster
+	ClusterID = "clusterID"
 
 	// AddrCluster is a pair of IP address and ClusterID
 	AddrCluster = "addrCluster"
@@ -358,6 +370,16 @@ const (
 
 	// Tunnel is the tunnel name
 	Tunnel = "tunnel"
+
+	// TunnelPeer is the tunnel peer address
+	TunnelPeer = "tunnelPeer"
+
+	// ConflictingTunnelPeer is the address of a tunnel peer which conflicts
+	// with TunnelPeer
+	ConflictingTunnelPeer = "conflictingTunnelPeer"
+
+	// Type is the address type
+	Type = "type"
 
 	// Selector is a selector of any sort: endpoint, CIDR, toFQDNs
 	Selector = "Selector"
@@ -539,6 +561,10 @@ const (
 	// Key is the identity of the encryption key
 	Key = "key"
 
+	// ConflictingKey is the identity of the encryption key which conflicts with
+	// Key
+	ConflictingKey = "conflictingKey"
+
 	// URL represents a Uniform Resource Locator.
 	URL = "url"
 
@@ -630,6 +656,10 @@ const (
 	// SourceIP is a source IP
 	SourceIP = "sourceIP"
 
+	DestinationIP = "destinationIP"
+
+	SourceCIDR = "sourceCIDR"
+
 	// DestinationCIDR is a destination CIDR
 	DestinationCIDR = "destinationCIDR"
 
@@ -644,6 +674,13 @@ const (
 
 	// Number of Backends failed while restoration.
 	FailedBackends = "failedBackends"
+
+	// SkippedBackends is the number of Backends that were skipped during restore
+	// as duplicates.
+	SkippedBackends = "skippedBackends"
+
+	// OrphanBackends is the number Backends that are not associated with any services.
+	OrphanBackends = "orphanBackends"
 
 	// Number of Services failed while restoration.
 	RestoredSVCs = "restoredServices"
@@ -677,4 +714,19 @@ const (
 
 	// User identifies a given user
 	User = "user"
+
+	// CIDRGroupRef is a references to a CiliumCIDRGroup object.
+	CIDRGroupRef = "cidrGroupRef"
+
+	// Workers represents the number of workers.
+	Workers = "workers"
+
+	// Event identifies the type of an event.
+	Event = "event"
+
+	// Prefix identifies a given prefix.
+	Prefix = "prefix"
+
+	// Value identifies a generic value (e.g., of a key/value pair).
+	Value = "value"
 )

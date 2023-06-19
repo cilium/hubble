@@ -4,6 +4,7 @@
 package identity
 
 import (
+	"encoding/json"
 	"net"
 	"strconv"
 
@@ -64,6 +65,23 @@ type IPIdentityPair struct {
 	NamedPorts   []NamedPort     `json:"NamedPorts,omitempty"`
 }
 
+// GetKeyName returns the kvstore key to be used for the IPIdentityPair
+func (pair *IPIdentityPair) GetKeyName() string { return pair.PrefixString() }
+
+// Marshal returns the IPIdentityPair object as JSON byte slice
+func (pair *IPIdentityPair) Marshal() ([]byte, error) { return json.Marshal(pair) }
+
+// Unmarshal parses the JSON byte slice and updates the IPIdentityPair receiver
+func (pair *IPIdentityPair) Unmarshal(_ string, data []byte) error {
+	newPair := IPIdentityPair{}
+	if err := json.Unmarshal(data, &newPair); err != nil {
+		return err
+	}
+
+	*pair = newPair
+	return nil
+}
+
 // NamedPort is a mapping from a port name to a port number and protocol.
 //
 // WARNING - STABLE API
@@ -111,6 +129,12 @@ func (id *Identity) IsFixed() bool {
 // (true), or not (false).
 func (id *Identity) IsWellKnown() bool {
 	return WellKnown.lookupByNumericIdentity(id.ID) != nil
+}
+
+// IsWellKnownIdentity returns true if the identity represents a well-known
+// identity, false otherwise.
+func IsWellKnownIdentity(id NumericIdentity) bool {
+	return WellKnown.lookupByNumericIdentity(id) != nil
 }
 
 // NewIdentityFromLabelArray creates a new identity
