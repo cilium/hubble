@@ -30,6 +30,7 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
 )
@@ -699,6 +700,16 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		Since:     since,
 		Until:     until,
 		First:     first,
+	}
+
+	if len(experimentalOpts.fieldMask) > 0 {
+		fm, err := fieldmaskpb.New(&flowpb.Flow{}, experimentalOpts.fieldMask...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to construct field mask: %w", err)
+		}
+		req.Experimental = &observerpb.GetFlowsRequest_Experimental{
+			FieldMask: fm,
+		}
 	}
 
 	return req, nil

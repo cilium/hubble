@@ -42,6 +42,10 @@ var (
 		inputFile       string
 	}
 
+	experimentalOpts struct {
+		fieldMask []string
+	}
+
 	printer *hubprinter.Printer
 
 	// selector flags
@@ -150,6 +154,9 @@ func init() {
 
 	otherFlags.StringVar(&otherOpts.inputFile, "input-file", "",
 		"Query flows from this file instead of the server. Use '-' to read from stdin.")
+
+	otherFlags.StringSliceVar(&experimentalOpts.fieldMask, "experimental-field-mask", nil,
+		"Experimental: Comma-separated list of fields for mask. Fields not in the mask will be removed from server response.")
 }
 
 // New observer command.
