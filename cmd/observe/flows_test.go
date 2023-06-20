@@ -16,6 +16,7 @@ import (
 	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -124,4 +125,25 @@ denylist:
 `
 	assert.NoError(t, err)
 	assert.Equal(t, expected, out)
+}
+
+func Test_getFlowsRequest_ExperimentalFieldMask_valid(t *testing.T) {
+	selectorOpts.until = ""
+	experimentalOpts.fieldMask = []string{"time", "verdict"}
+	filter := newFlowFilter()
+	req, err := getFlowsRequest(filter, nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, &observerpb.GetFlowsRequest{
+		Number: 20,
+		Experimental: &observerpb.GetFlowsRequest_Experimental{
+			FieldMask: &fieldmaskpb.FieldMask{Paths: []string{"time", "verdict"}},
+		},
+	}, req)
+}
+
+func Test_getFlowsRequest_ExperimentalFieldMask_invalid(t *testing.T) {
+	experimentalOpts.fieldMask = []string{"time", "verdict", "invalid-field"}
+	filter := newFlowFilter()
+	_, err := getFlowsRequest(filter, nil, nil)
+	assert.ErrorContains(t, err, "invalid-field")
 }
