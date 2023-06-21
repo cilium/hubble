@@ -60,6 +60,11 @@ func (o *IOReaderObserver) ServerStatus(_ context.Context, _ *observerpb.ServerS
 	return nil, status.Errorf(codes.Unimplemented, "ServerStatus not implemented")
 }
 
+// GetNamespaces is not implemented, and will throw an error if used.
+func (o *IOReaderObserver) GetNamespaces(_ context.Context, _ *observerpb.GetNamespacesRequest, _ ...grpc.CallOption) (*observerpb.GetNamespacesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "GetNamespaces not implemented")
+}
+
 // ioReaderClient implements Observer_GetFlowsClient.
 type ioReaderClient struct {
 	grpc.ClientStream
