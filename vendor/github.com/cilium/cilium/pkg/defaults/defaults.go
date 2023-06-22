@@ -98,6 +98,17 @@ const (
 	// HubbleRedactKafkaApiKey controls if the Kafka API key will be redacted from flows
 	HubbleRedactKafkaApiKey = false
 
+	// HubbleDropEventsEnabled controls whether Hubble should create v1.Events
+	// for packet drops related to pods
+	HubbleDropEventsEnabled = false
+
+	// HubbleDropEventsInterval controls the minimum time between emitting events
+	// with the same source and destination IP
+	HubbleDropEventsInterval = 2 * time.Minute
+
+	// HubbleDropEventsReasons controls which drop reasons to emit events for
+	HubbleDropEventsReasons = "auth_required,policy_denied"
+
 	// MonitorSockPath1_2 is the path to the UNIX domain socket used to
 	// distribute BPF and agent events to listeners.
 	// This is the 1.2 protocol version.
@@ -113,10 +124,6 @@ const (
 	// DeleteQueueLockfile is the file used to synchronize access of the queue directory between
 	// the agent and the CNI plugin processes
 	DeleteQueueLockfile = DeleteQueueDir + "/lockfile"
-
-	// EnableHostIPRestore controls whether the host IP should be restored
-	// from previous state automatically
-	EnableHostIPRestore = true
 
 	// BPFFSRoot is the default path where BPFFS should be mounted
 	BPFFSRoot = "/sys/fs/bpf"
@@ -220,9 +227,6 @@ const (
 	// EnableL7Proxy is the default value for L7 proxy enablement
 	EnableL7Proxy = true
 
-	// EnvoyConfigTimeout determines how long to wait Envoy to N/ACK resources
-	EnvoyConfigTimeout = 2 * time.Minute
-
 	// EnableHostLegacyRouting is the default value for using the old routing path via stack.
 	EnableHostLegacyRouting = false
 
@@ -239,6 +243,11 @@ const (
 	// Enable watcher for IPsec key. If disabled, a restart of the agent will
 	// be necessary on key rotations.
 	EnableIPsecKeyWatcher = true
+
+	// Enable IPSec encrypted overlay
+	//
+	// This feature will encrypt overlay traffic before it leaves the cluster.
+	EnableIPSecEncryptedOverlay = false
 
 	// EncryptNode enables encrypting traffic from host networking applications
 	// which are not part of Cilium manged pods.
@@ -307,9 +316,6 @@ const (
 	// a kvstore path for too long.
 	KVStoreStaleLockTimeout = 30 * time.Second
 
-	// IPAllocationTimeout is the timeout when allocating CIDRs
-	IPAllocationTimeout = 2 * time.Minute
-
 	// PolicyQueueSize is the default queue size for policy-related events.
 	PolicyQueueSize = 100
 
@@ -340,8 +346,6 @@ const (
 	// ConntrackGCStartingInterval is the default starting interval for
 	// connection tracking garbage collection
 	ConntrackGCStartingInterval = 5 * time.Minute
-
-	LegacyTurnOffK8sEventHandover = false
 
 	// LoopbackIPv4 is the default address for service loopback
 	LoopbackIPv4 = "169.254.42.1"
@@ -437,11 +441,11 @@ const (
 	// policy updates are invoked.
 	PolicyTriggerInterval = 1 * time.Second
 
-	// K8sClientQPSLimit is the default qps for the k8s client. It is set to 0 because the the k8s client
+	// K8sClientQPSLimit is the default qps for the k8s client. It is set to 0 because the k8s client
 	// has its own default.
 	K8sClientQPSLimit float32 = 0.0
 
-	// K8sClientBurst is the default burst for the k8s client. It is set to 0 because the the k8s client
+	// K8sClientBurst is the default burst for the k8s client. It is set to 0 because the k8s client
 	// has its own default.
 	K8sClientBurst = 0
 
@@ -467,9 +471,6 @@ const (
 	// CertsDirectory is the default directory used to find certificates
 	// specified in the L7 policies.
 	CertsDirectory = RuntimePath + "/certs"
-
-	// EnableRemoteNodeIdentity is the default value for option.EnableRemoteNodeIdentity
-	EnableRemoteNodeIdentity = true
 
 	// IPAMExpiration is the timeout after which an IP subject to expiratio
 	// is being released again if no endpoint is being created in time.
@@ -556,6 +557,18 @@ const (
 	// identity in a numeric identity. Values > 255 will decrease the number of
 	// allocatable identities.
 	MaxConnectedClusters = 255
+
+	// EnableNodeSelectorLabels is the default value for option.EnableNodeSelectorLabels
+	EnableNodeSelectorLabels = false
+
+	// BPFEventsDropEnabled controls whether the Cilium datapath exposes "drop" events to Cilium monitor and Hubble.
+	BPFEventsDropEnabled = true
+
+	// BPFEventsPolicyVerdictEnabled controls whether the Cilium datapath exposes "policy verdict" events to Cilium monitor and Hubble.
+	BPFEventsPolicyVerdictEnabled = true
+
+	// BPFEventsTraceEnabled controls whether the Cilium datapath exposes "trace" events to Cilium monitor and Hubble.
+	BPFEventsTraceEnabled = true
 )
 
 var (

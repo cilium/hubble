@@ -94,10 +94,13 @@ var errors = map[uint8]string{
 	196: "TTL exceeded",
 	197: "No node ID found",
 	198: "Rate limited",
+	199: "IGMP handled",
+	200: "IGMP subscribed",
+	201: "Multicast handled",
 	202: "Host datapath not ready",
 }
 
-func extendedReason(reason uint8, extError int8) string {
+func extendedReason(extError int8) string {
 	if extError == int8(0) {
 		return ""
 	}
@@ -106,7 +109,7 @@ func extendedReason(reason uint8, extError int8) string {
 
 func DropReasonExt(reason uint8, extError int8) string {
 	if err, ok := errors[reason]; ok {
-		if ext := extendedReason(reason, extError); ext == "" {
+		if ext := extendedReason(extError); ext == "" {
 			return err
 		} else {
 			return err + ", " + ext

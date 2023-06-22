@@ -14,6 +14,8 @@ import (
 	"github.com/cilium/cilium/pkg/container"
 	v1 "github.com/cilium/cilium/pkg/hubble/api/v1"
 	"github.com/cilium/cilium/pkg/hubble/filters"
+	"github.com/cilium/cilium/pkg/logging"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/hubble/pkg/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -83,11 +85,12 @@ type ioReaderClient struct {
 }
 
 func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *observerpb.GetFlowsRequest) (*ioReaderClient, error) {
-	allow, err := filters.BuildFilterList(ctx, request.GetWhitelist(), filters.DefaultFilters)
+	logger := logging.DefaultLogger.WithField(logfields.LogSubsys, "hubble")
+	allow, err := filters.BuildFilterList(ctx, request.GetWhitelist(), filters.DefaultFilters(logger))
 	if err != nil {
 		return nil, err
 	}
-	deny, err := filters.BuildFilterList(ctx, request.GetBlacklist(), filters.DefaultFilters)
+	deny, err := filters.BuildFilterList(ctx, request.GetBlacklist(), filters.DefaultFilters(logger))
 	if err != nil {
 		return nil, err
 	}

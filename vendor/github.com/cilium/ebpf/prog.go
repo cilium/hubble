@@ -15,6 +15,7 @@ import (
 	"github.com/cilium/ebpf/asm"
 	"github.com/cilium/ebpf/btf"
 	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/internal/kallsyms"
 	"github.com/cilium/ebpf/internal/sys"
 	"github.com/cilium/ebpf/internal/sysenc"
 	"github.com/cilium/ebpf/internal/unix"
@@ -53,7 +54,7 @@ type ProgramOptions struct {
 	// verifier output enabled. Upon error, the program load will be repeated
 	// with LogLevelBranch and the given (or default) LogSize value.
 	//
-	// Setting this to a non-zero value will unconditionally enable the verifier
+	// Unless LogDisabled is set, setting this to a non-zero value will enable the verifier
 	// log, populating the [ebpf.Program.VerifierLog] field on successful loads
 	// and including detailed verifier errors if the program is rejected. This
 	// will always allocate an output buffer, but will result in only a single
@@ -80,6 +81,14 @@ type ProgramOptions struct {
 	// (containers) or where it is in a non-standard location. Defaults to
 	// use the kernel BTF from a well-known location if nil.
 	KernelTypes *btf.Spec
+
+	// Type information used for CO-RE relocations of kernel modules,
+	// indexed by module name.
+	//
+	// This is useful in environments where the kernel BTF is not available
+	// (containers) or where it is in a non-standard location. Defaults to
+	// use the kernel module BTF from a well-known location if nil.
+	KernelModuleTypes map[string]*btf.Spec
 }
 
 // ProgramSpec defines a Program.
@@ -146,6 +155,28 @@ func (ps *ProgramSpec) Copy() *ProgramSpec {
 // Use asm.Instructions.Tag if you need to calculate for non-native endianness.
 func (ps *ProgramSpec) Tag() (string, error) {
 	return ps.Instructions.Tag(internal.NativeEndian)
+}
+
+// KernelModule returns the kernel module, if any, the AttachTo function is contained in.
+func (ps *ProgramSpec) KernelModule() (string, error) {
+	if ps.AttachTo == "" {
+		return "", nil
+	}
+
+	switch ps.Type {
+	default:
+		return "", nil
+	case Tracing:
+		switch ps.AttachType {
+		default:
+			return "", nil
+		case AttachTraceFEntry:
+		case AttachTraceFExit:
+		}
+		fallthrough
+	case Kprobe:
+		return kallsyms.KernelModule(ps.AttachTo)
+	}
 }
 
 // VerifierError is returned by [NewProgram] and [NewProgramWithOptions] if a
@@ -242,14 +273,41 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions) (*Program, er
 	insns := make(asm.Instructions, len(spec.Instructions))
 	copy(insns, spec.Instructions)
 
-	handle, fib, lib, err := btf.MarshalExtInfos(insns)
-	if err != nil && !errors.Is(err, btf.ErrNotSupported) {
-		return nil, fmt.Errorf("load ext_infos: %w", err)
+	kmodName, err := spec.KernelModule()
+	if err != nil {
+		return nil, fmt.Errorf("kernel module search: %w", err)
 	}
-	if handle != nil {
-		defer handle.Close()
 
-		attr.ProgBtfFd = uint32(handle.FD())
+	var targets []*btf.Spec
+	if opts.KernelTypes != nil {
+		targets = append(targets, opts.KernelTypes)
+	}
+	if kmodName != "" && opts.KernelModuleTypes != nil {
+		if modBTF, ok := opts.KernelModuleTypes[kmodName]; ok {
+			targets = append(targets, modBTF)
+		}
+	}
+
+	var b btf.Builder
+	if err := applyRelocations(insns, targets, kmodName, spec.ByteOrder, &b); err != nil {
+		return nil, fmt.Errorf("apply CO-RE relocations: %w", err)
+	}
+
+	errExtInfos := haveProgramExtInfos()
+	if !b.Empty() && errors.Is(errExtInfos, ErrNotSupported) {
+		// There is at least one CO-RE relocation which relies on a stable local
+		// type ID.
+		// Return ErrNotSupported instead of E2BIG if there is no BTF support.
+		return nil, errExtInfos
+	}
+
+	if errExtInfos == nil {
+		// Only add func and line info if the kernel supports it. This allows
+		// BPF compiled with modern toolchains to work on old kernels.
+		fib, lib, err := btf.MarshalExtInfos(insns, &b)
+		if err != nil {
+			return nil, fmt.Errorf("marshal ext_infos: %w", err)
+		}
 
 		attr.FuncInfoRecSize = btf.FuncInfoSize
 		attr.FuncInfoCnt = uint32(len(fib)) / btf.FuncInfoSize
@@ -260,8 +318,14 @@ func newProgramWithOptions(spec *ProgramSpec, opts ProgramOptions) (*Program, er
 		attr.LineInfo = sys.NewSlicePointer(lib)
 	}
 
-	if err := applyRelocations(insns, opts.KernelTypes, spec.ByteOrder); err != nil {
-		return nil, fmt.Errorf("apply CO-RE relocations: %w", err)
+	if !b.Empty() {
+		handle, err := btf.NewHandle(&b)
+		if err != nil {
+			return nil, fmt.Errorf("load BTF: %w", err)
+		}
+		defer handle.Close()
+
+		attr.ProgBtfFd = uint32(handle.FD())
 	}
 
 	kconfig, err := resolveKconfigReferences(insns)
@@ -703,10 +767,6 @@ func (p *Program) run(opts *RunOptions) (uint32, time.Duration, error) {
 		Cpu:         opts.CPU,
 	}
 
-	if attr.Repeat == 0 {
-		attr.Repeat = 1
-	}
-
 retry:
 	for {
 		err := sys.ProgRun(&attr)
@@ -715,7 +775,7 @@ retry:
 		}
 
 		if errors.Is(err, unix.EINTR) {
-			if attr.Repeat == 1 {
+			if attr.Repeat <= 1 {
 				// Older kernels check whether enough repetitions have been
 				// executed only after checking for pending signals.
 				//

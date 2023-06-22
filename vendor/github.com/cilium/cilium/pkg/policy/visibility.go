@@ -67,7 +67,7 @@ func NewVisibilityPolicy(anno string) (*VisibilityPolicy, error) {
 
 		portInt, err := strconv.ParseUint(port, 10, 16)
 		if err != nil {
-			return nil, fmt.Errorf("unable to parse port: %s", err)
+			return nil, fmt.Errorf("unable to parse port: %w", err)
 		}
 
 		// Don't need to validate, regex already did that.
@@ -210,6 +210,11 @@ func (v *VisibilityMetadata) GetIngress() bool {
 // GetPort returns at which port the VisibilityMetadata applies.
 func (v *VisibilityMetadata) GetPort() uint16 {
 	return v.Port
+}
+
+// GetProtocol returns the protocol where the VisibilityMetadata applies.
+func (v *VisibilityMetadata) GetProtocol() uint8 {
+	return uint8(v.Proto)
 }
 
 // GetListener returns the optional listener name.

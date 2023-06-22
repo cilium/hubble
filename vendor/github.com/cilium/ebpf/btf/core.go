@@ -43,7 +43,15 @@ func (f *COREFixup) Apply(ins *asm.Instruction) error {
 	if f.poison {
 		const badRelo = 0xbad2310
 
-		*ins = asm.BuiltinFunc(badRelo).Call()
+		// Relocation is poisoned, replace the instruction with an invalid one.
+
+		if ins.OpCode.IsDWordLoad() {
+			// Replace a dword load with a invalid dword load to preserve instruction size.
+			*ins = asm.LoadImm(asm.R10, badRelo, asm.DWord)
+		} else {
+			// Replace all single size instruction with a invalid call instruction.
+			*ins = asm.BuiltinFunc(badRelo).Call()
+		}
 		return nil
 	}
 
@@ -156,25 +164,56 @@ func (k coreKind) String() string {
 	}
 }
 
+type mergedSpec []*Spec
+
+func (s mergedSpec) TypeByID(id TypeID) (Type, error) {
+	for _, sp := range s {
+		t, err := sp.TypeByID(id)
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		return t, nil
+	}
+	return nil, fmt.Errorf("look up type with ID %d (first ID is %d): %w", id, s[0].imm.firstTypeID, ErrNotFound)
+}
+
+func (s mergedSpec) NamedTypes(name essentialName) []TypeID {
+	var typeIDs []TypeID
+	for _, sp := range s {
+		namedTypes := sp.imm.namedTypes[name]
+		if len(namedTypes) > 0 {
+			typeIDs = append(typeIDs, namedTypes...)
+		}
+	}
+	return typeIDs
+}
+
 // CORERelocate calculates changes needed to adjust eBPF instructions for differences
 // in types.
+//
+// resolveLocalTypeID is called for each local type which requires a stable TypeID.
+// Calling the function with the same type multiple times must produce the same
+// result. It is the callers responsibility to ensure that the relocated instructions
+// are loaded with matching BTF.
 //
 // Returns a list of fixups which can be applied to instructions to make them
 // match the target type(s).
 //
 // Fixups are returned in the order of relos, e.g. fixup[i] is the solution
 // for relos[i].
-func CORERelocate(relos []*CORERelocation, target *Spec, bo binary.ByteOrder) ([]COREFixup, error) {
-	if target == nil {
-		var err error
-		target, _, err = kernelSpec()
-		if err != nil {
-			return nil, fmt.Errorf("load kernel spec: %w", err)
-		}
+func CORERelocate(relos []*CORERelocation, targets []*Spec, bo binary.ByteOrder, resolveLocalTypeID func(Type) (TypeID, error)) ([]COREFixup, error) {
+	if len(targets) == 0 {
+		// Explicitly check for nil here since the argument used to be optional.
+		return nil, fmt.Errorf("targets must be provided")
 	}
 
-	if bo != target.byteOrder {
-		return nil, fmt.Errorf("can't relocate %s against %s", bo, target.byteOrder)
+	for _, target := range targets {
+		if bo != target.imm.byteOrder {
+			return nil, fmt.Errorf("can't relocate %s against %s", bo, target.imm.byteOrder)
+		}
 	}
 
 	type reloGroup struct {
@@ -194,14 +233,15 @@ func CORERelocate(relos []*CORERelocation, target *Spec, bo binary.ByteOrder) ([
 				return nil, fmt.Errorf("%s: unexpected accessor %v", relo.kind, relo.accessor)
 			}
 
+			id, err := resolveLocalTypeID(relo.typ)
+			if err != nil {
+				return nil, fmt.Errorf("%s: get type id: %w", relo.kind, err)
+			}
+
 			result[i] = COREFixup{
-				kind:  relo.kind,
-				local: uint64(relo.id),
-				// NB: Using relo.id as the target here is incorrect, since
-				// it doesn't match the BTF we generate on the fly. This isn't
-				// too bad for now since there are no uses of the local type ID
-				// in the kernel, yet.
-				target: uint64(relo.id),
+				kind:   relo.kind,
+				local:  uint64(relo.id),
+				target: uint64(id),
 			}
 			continue
 		}
@@ -215,14 +255,15 @@ func CORERelocate(relos []*CORERelocation, target *Spec, bo binary.ByteOrder) ([
 		group.indices = append(group.indices, i)
 	}
 
+	mergeTarget := mergedSpec(targets)
 	for localType, group := range relosByType {
 		localTypeName := localType.TypeName()
 		if localTypeName == "" {
 			return nil, fmt.Errorf("relocate unnamed or anonymous type %s: %w", localType, ErrNotSupported)
 		}
 
-		targets := target.namedTypes[newEssentialName(localTypeName)]
-		fixups, err := coreCalculateFixups(group.relos, target, targets, bo)
+		targets := mergeTarget.NamedTypes(newEssentialName(localTypeName))
+		fixups, err := coreCalculateFixups(group.relos, &mergeTarget, targets, bo)
 		if err != nil {
 			return nil, fmt.Errorf("relocate %s: %w", localType, err)
 		}
@@ -245,13 +286,13 @@ var errIncompatibleTypes = errors.New("incompatible types")
 //
 // The best target is determined by scoring: the less poisoning we have to do
 // the better the target is.
-func coreCalculateFixups(relos []*CORERelocation, targetSpec *Spec, targets []Type, bo binary.ByteOrder) ([]COREFixup, error) {
+func coreCalculateFixups(relos []*CORERelocation, targetSpec *mergedSpec, targets []TypeID, bo binary.ByteOrder) ([]COREFixup, error) {
 	bestScore := len(relos)
 	var bestFixups []COREFixup
-	for _, target := range targets {
-		targetID, err := targetSpec.TypeID(target)
+	for _, targetID := range targets {
+		target, err := targetSpec.TypeByID(targetID)
 		if err != nil {
-			return nil, fmt.Errorf("target type ID: %w", err)
+			return nil, fmt.Errorf("look up target: %w", err)
 		}
 
 		score := 0 // lower is better
@@ -333,7 +374,7 @@ func coreCalculateFixup(relo *CORERelocation, target Type, targetID TypeID, bo b
 			return zero, fmt.Errorf("unexpected accessor %v", relo.accessor)
 		}
 
-		err := coreAreTypesCompatible(local, target)
+		err := CheckTypeCompatibility(local, target)
 		if errors.Is(err, errIncompatibleTypes) {
 			return poison()
 		}
@@ -860,7 +901,11 @@ func coreFindEnumValue(local Type, localAcc coreAccessor, target Type) (localVal
 //
 // Only layout compatibility is checked, ignoring names of the root type.
 func CheckTypeCompatibility(localType Type, targetType Type) error {
-	return coreAreTypesCompatible(localType, targetType)
+	return coreAreTypesCompatible(localType, targetType, nil)
+}
+
+type pair struct {
+	A, B Type
 }
 
 /* The comment below is from bpf_core_types_are_compat in libbpf.c:
@@ -886,59 +931,60 @@ func CheckTypeCompatibility(localType Type, targetType Type) error {
  *
  * Returns errIncompatibleTypes if types are not compatible.
  */
-func coreAreTypesCompatible(localType Type, targetType Type) error {
+func coreAreTypesCompatible(localType Type, targetType Type, visited map[pair]struct{}) error {
+	localType = UnderlyingType(localType)
+	targetType = UnderlyingType(targetType)
 
-	var (
-		localTs, targetTs typeDeque
-		l, t              = &localType, &targetType
-		depth             = 0
-	)
+	if reflect.TypeOf(localType) != reflect.TypeOf(targetType) {
+		return fmt.Errorf("type mismatch between %v and %v: %w", localType, targetType, errIncompatibleTypes)
+	}
 
-	for ; l != nil && t != nil; l, t = localTs.Shift(), targetTs.Shift() {
-		if depth >= maxResolveDepth {
-			return errors.New("types are nested too deep")
+	if _, ok := visited[pair{localType, targetType}]; ok {
+		return nil
+	}
+	if visited == nil {
+		visited = make(map[pair]struct{})
+	}
+	visited[pair{localType, targetType}] = struct{}{}
+
+	switch lv := localType.(type) {
+	case *Void, *Struct, *Union, *Enum, *Fwd, *Int:
+		return nil
+
+	case *Pointer:
+		tv := targetType.(*Pointer)
+		return coreAreTypesCompatible(lv.Target, tv.Target, visited)
+
+	case *Array:
+		tv := targetType.(*Array)
+		if err := coreAreTypesCompatible(lv.Index, tv.Index, visited); err != nil {
+			return err
 		}
 
-		localType = UnderlyingType(*l)
-		targetType = UnderlyingType(*t)
+		return coreAreTypesCompatible(lv.Type, tv.Type, visited)
 
-		if reflect.TypeOf(localType) != reflect.TypeOf(targetType) {
-			return fmt.Errorf("type mismatch: %w", errIncompatibleTypes)
+	case *FuncProto:
+		tv := targetType.(*FuncProto)
+		if err := coreAreTypesCompatible(lv.Return, tv.Return, visited); err != nil {
+			return err
 		}
 
-		switch lv := (localType).(type) {
-		case *Void, *Struct, *Union, *Enum, *Fwd, *Int:
-			// Nothing to do here
+		if len(lv.Params) != len(tv.Params) {
+			return fmt.Errorf("function param mismatch: %w", errIncompatibleTypes)
+		}
 
-		case *Pointer, *Array:
-			depth++
-			walkType(localType, localTs.Push)
-			walkType(targetType, targetTs.Push)
-
-		case *FuncProto:
-			tv := targetType.(*FuncProto)
-			if len(lv.Params) != len(tv.Params) {
-				return fmt.Errorf("function param mismatch: %w", errIncompatibleTypes)
+		for i, localParam := range lv.Params {
+			targetParam := tv.Params[i]
+			if err := coreAreTypesCompatible(localParam.Type, targetParam.Type, visited); err != nil {
+				return err
 			}
-
-			depth++
-			walkType(localType, localTs.Push)
-			walkType(targetType, targetTs.Push)
-
-		default:
-			return fmt.Errorf("unsupported type %T", localType)
 		}
-	}
 
-	if l != nil {
-		return fmt.Errorf("dangling local type %T", *l)
-	}
+		return nil
 
-	if t != nil {
-		return fmt.Errorf("dangling target type %T", *t)
+	default:
+		return fmt.Errorf("unsupported type %T", localType)
 	}
-
-	return nil
 }
 
 /* coreAreMembersCompatible checks two types for field-based relocation compatibility.

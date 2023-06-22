@@ -111,6 +111,13 @@ func parseToCiliumIngressCommonRule(namespace string, es api.EndpointSelector, i
 		}
 	}
 
+	if ing.FromNodes != nil {
+		retRule.FromNodes = make([]api.EndpointSelector, len(ing.FromNodes))
+		for j, node := range ing.FromNodes {
+			retRule.FromNodes[j] = api.NewESFromK8sLabelSelector("", node.LabelSelector)
+		}
+	}
+
 	if ing.FromCIDR != nil {
 		retRule.FromCIDR = make([]api.CIDR, len(ing.FromCIDR))
 		copy(retRule.FromCIDR, ing.FromCIDR)
@@ -216,8 +223,15 @@ func parseToCiliumEgressCommonRule(namespace string, es api.EndpointSelector, eg
 		copy(retRule.ToEntities, egr.ToEntities)
 	}
 
+	if egr.ToNodes != nil {
+		retRule.ToNodes = make([]api.EndpointSelector, len(egr.ToNodes))
+		for j, node := range egr.ToNodes {
+			retRule.ToNodes[j] = api.NewESFromK8sLabelSelector("", node.LabelSelector)
+		}
+	}
+
 	if egr.ToGroups != nil {
-		retRule.ToGroups = make([]api.ToGroups, len(egr.ToGroups))
+		retRule.ToGroups = make([]api.Groups, len(egr.ToGroups))
 		copy(retRule.ToGroups, egr.ToGroups)
 	}
 
@@ -331,6 +345,7 @@ func ParseToCiliumRule(namespace, name string, uid types.UID, r *api.Rule) *api.
 	retRule.Labels = ParseToCiliumLabels(namespace, name, uid, r.Labels)
 
 	retRule.Description = r.Description
+	retRule.EnableDefaultDeny = r.EnableDefaultDeny
 
 	return retRule
 }

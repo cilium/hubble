@@ -7,6 +7,7 @@ import (
 	"context"
 	"io"
 	"net"
+	"net/netip"
 
 	"github.com/cilium/cilium/pkg/datapath/loader/metrics"
 	"github.com/cilium/cilium/pkg/datapath/tunnel"
@@ -17,13 +18,15 @@ import (
 type Loader interface {
 	CallsMapPath(id uint16) string
 	CustomCallsMapPath(id uint16) string
-	CompileAndLoad(ctx context.Context, ep Endpoint, stats *metrics.SpanStat) error
 	CompileOrLoad(ctx context.Context, ep Endpoint, stats *metrics.SpanStat) error
 	ReloadDatapath(ctx context.Context, ep Endpoint, stats *metrics.SpanStat) error
+	ReinitializeXDP(ctx context.Context, o BaseProgramOwner, extraCArgs []string) error
 	EndpointHash(cfg EndpointConfiguration) (string, error)
 	Unload(ep Endpoint)
 	Reinitialize(ctx context.Context, o BaseProgramOwner, tunnelConfig tunnel.Config, deviceMTU int, iptMgr IptablesManager, p Proxy) error
 	HostDatapathInitialized() <-chan struct{}
+	RestoreTemplates(stateDir string) error
+	DeviceHasTCProgramLoaded(hostInterface string, checkEgress bool) (bool, error)
 }
 
 // BaseProgramOwner is any type for which a loader is building base programs.
@@ -47,20 +50,18 @@ type PreFilter interface {
 // a proxy.
 type Proxy interface {
 	ReinstallRoutingRules() error
-	ReinstallIPTablesRules(ctx context.Context) error
 }
 
 // IptablesManager manages iptables rules.
 type IptablesManager interface {
 	// InstallProxyRules creates the necessary datapath config (e.g., iptables
 	// rules for redirecting host proxy traffic on a specific ProxyPort)
-	InstallProxyRules(ctx context.Context, proxyPort uint16, ingress, localOnly bool, name string) error
+	InstallProxyRules(proxyPort uint16, localOnly bool, name string)
 
 	// SupportsOriginalSourceAddr tells if the datapath supports
 	// use of original source addresses in proxy upstream
 	// connections.
 	SupportsOriginalSourceAddr() bool
-	InstallRules(ctx context.Context, ifName string, quiet, install bool) error
 
 	// GetProxyPort fetches the existing proxy port configured for the
 	// specified listener. Used early in bootstrap to reopen proxy ports.
@@ -75,8 +76,8 @@ type IptablesManager interface {
 	// will be executed to install NOTRACK rules.  The rules installed by
 	// this function is very specific, for now, the only user is
 	// node-local-dns pods.
-	InstallNoTrackRules(IP string, port uint16, ipv6 bool) error
+	InstallNoTrackRules(ip netip.Addr, port uint16)
 
 	// See comments for InstallNoTrackRules.
-	RemoveNoTrackRules(IP string, port uint16, ipv6 bool) error
+	RemoveNoTrackRules(ip netip.Addr, port uint16)
 }
