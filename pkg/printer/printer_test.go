@@ -12,48 +12,76 @@ import (
 	flowpb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
+	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-func TestPrinter_WriteProtoFlow(t *testing.T) {
-	buf := bytes.Buffer{}
-	f := flowpb.Flow{
-		Time: &timestamppb.Timestamp{
-			Seconds: 1234,
-			Nanos:   567800000,
-		},
-		Type:     flowpb.FlowType_L3_L4,
-		NodeName: "k8s1",
-		Verdict:  flowpb.Verdict_DROPPED,
-		IP: &flowpb.IP{
-			Source:      "1.1.1.1",
-			Destination: "2.2.2.2",
-		},
-		Source: &flowpb.Endpoint{
-			Identity: 4,
-		},
-		Destination: &flowpb.Endpoint{
-			Identity: 12345,
-		},
-		L4: &flowpb.Layer4{
-			Protocol: &flowpb.Layer4_TCP{
-				TCP: &flowpb.TCP{
-					SourcePort:      31793,
-					DestinationPort: 8080,
-				},
+var f = flowpb.Flow{
+	Time: &timestamppb.Timestamp{
+		Seconds: 1234,
+		Nanos:   567800000,
+	},
+	Type:     flowpb.FlowType_L3_L4,
+	NodeName: "k8s1",
+	Verdict:  flowpb.Verdict_DROPPED,
+	IP: &flowpb.IP{
+		Source:      "1.1.1.1",
+		Destination: "2.2.2.2",
+	},
+	Source: &flowpb.Endpoint{
+		Identity: 4,
+	},
+	Destination: &flowpb.Endpoint{
+		Identity: 12345,
+	},
+	L4: &flowpb.Layer4{
+		Protocol: &flowpb.Layer4_TCP{
+			TCP: &flowpb.TCP{
+				SourcePort:      31793,
+				DestinationPort: 8080,
 			},
 		},
-		EventType: &flowpb.CiliumEventType{
-			Type:    monitorAPI.MessageTypeDrop,
-			SubType: 133,
-		},
-		Summary: "TCP Flags: SYN",
-		IsReply: &wrapperspb.BoolValue{Value: false},
+	},
+	EventType: &flowpb.CiliumEventType{
+		Type:    monitorAPI.MessageTypeDrop,
+		SubType: 133,
+	},
+	Summary: "TCP Flags: SYN",
+	IsReply: &wrapperspb.BoolValue{Value: false},
+}
+
+func TestPrinter_AllFieldsInMask(t *testing.T) {
+	fm := make(map[string]bool)
+	for _, field := range defaults.FieldMask {
+		fm[field] = true
 	}
+	check := func(msg protoreflect.Message, prefix string) {
+		fds := msg.Descriptor().Fields()
+		for i := 0; i < fds.Len(); i++ {
+			fd := fds.Get(i)
+			if !msg.Has(fd) {
+				continue
+			}
+			name := prefix + string(fd.Name())
+			if name == "source" || name == "destination" {
+				// Skip compound fields.
+				continue
+			}
+			assert.True(t, fm[name], name)
+		}
+	}
+	check(f.ProtoReflect(), "")
+	check(f.Source.ProtoReflect(), "source.")
+	check(f.Destination.ProtoReflect(), "destination.")
+}
+
+func TestPrinter_WriteProtoFlow(t *testing.T) {
+	buf := bytes.Buffer{}
 	reply := proto.Clone(&f).(*flowpb.Flow)
 	reply.IsReply = &wrapperspb.BoolValue{Value: true}
 	unknown := proto.Clone(&f).(*flowpb.Flow)

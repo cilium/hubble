@@ -6,6 +6,7 @@ package observe
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -146,4 +147,30 @@ func Test_getFlowsRequest_ExperimentalFieldMask_invalid(t *testing.T) {
 	filter := newFlowFilter()
 	_, err := getFlowsRequest(filter, nil, nil)
 	assert.ErrorContains(t, err, "invalid-field")
+}
+
+func Test_getFlowsRequest_ExperimentalUseDefaultFieldMask(t *testing.T) {
+	selectorOpts.until = ""
+	formattingOpts.output = "dict"
+	experimentalOpts.fieldMask = nil
+	experimentalOpts.useDefaultMasks = true
+	filter := newFlowFilter()
+	require.NoError(t, handleFlowArgs(os.Stdout, filter, false))
+	req, err := getFlowsRequest(filter, nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, &observerpb.GetFlowsRequest{
+		Number: 20,
+		Experimental: &observerpb.GetFlowsRequest_Experimental{
+			FieldMask: &fieldmaskpb.FieldMask{Paths: defaults.FieldMask},
+		},
+	}, req)
+}
+
+func Test_getFlowsRequest_ExperimentalFieldMask_non_json_output(t *testing.T) {
+	selectorOpts.until = ""
+	formattingOpts.output = "compact"
+	experimentalOpts.fieldMask = []string{"time", "verdict"}
+	filter := newFlowFilter()
+	err := handleFlowArgs(os.Stdout, filter, false)
+	assert.ErrorContains(t, err, "not compatible")
 }
