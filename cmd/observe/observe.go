@@ -43,7 +43,8 @@ var (
 	}
 
 	experimentalOpts struct {
-		fieldMask []string
+		fieldMask       []string
+		useDefaultMasks bool
 	}
 
 	printer *hubprinter.Printer
@@ -157,6 +158,9 @@ func init() {
 
 	otherFlags.StringSliceVar(&experimentalOpts.fieldMask, "experimental-field-mask", nil,
 		"Experimental: Comma-separated list of fields for mask. Fields not in the mask will be removed from server response.")
+
+	otherFlags.BoolVar(&experimentalOpts.useDefaultMasks, "experimental-use-default-field-masks", false,
+		"Experimental: request only visible fields when the output format is compact, tab, or dict.")
 }
 
 // New observer command.

@@ -550,6 +550,7 @@ func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err erro
 		hubprinter.WithColor(formattingOpts.color),
 	}
 
+	jsonOut := false
 	switch formattingOpts.output {
 	case "compact":
 		opts = append(opts, hubprinter.Compact())
@@ -563,6 +564,7 @@ func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err erro
 		fallthrough
 	case "jsonpb":
 		opts = append(opts, hubprinter.JSONPB())
+		jsonOut = true
 	case "tab", "table":
 		if selectorOpts.follow {
 			return fmt.Errorf("table output format is not compatible with follow mode")
@@ -571,6 +573,15 @@ func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err erro
 	default:
 		return fmt.Errorf("invalid output format: %s", formattingOpts.output)
 	}
+	if !jsonOut {
+		if len(experimentalOpts.fieldMask) > 0 {
+			return fmt.Errorf("%s output format is not compatible with custom field mask", formattingOpts.output)
+		}
+		if experimentalOpts.useDefaultMasks {
+			experimentalOpts.fieldMask = defaults.FieldMask
+		}
+	}
+
 	if otherOpts.ignoreStderr {
 		opts = append(opts, hubprinter.IgnoreStderr())
 	}

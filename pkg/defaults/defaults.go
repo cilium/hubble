@@ -50,6 +50,10 @@ var (
 	// ConfigFile is the path to an optional configuration file.
 	// It may be unset.
 	ConfigFile string
+
+	// FieldMask is a list of requested fields when using "dict", "tab", or "compact"
+	// output format and no custom mask is specified.
+	FieldMask = []string{"time", "source.identity", "source.namespace", "source.pod_name", "destination.identity", "destination.namespace", "destination.pod_name", "source_service", "destination_service", "l4", "IP", "ethernet", "l7", "Type", "node_name", "is_reply", "event_type", "verdict", "Summary"}
 )
 
 func init() {
