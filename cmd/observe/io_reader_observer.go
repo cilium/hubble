@@ -197,12 +197,12 @@ func (c *ioReaderClient) unmarshalNext() *observerpb.GetFlowsResponse {
 			// warning message and continue processing discarding unknown
 			// fields to avoid logging more than once.
 			c.discardUnknown = true
-			logger.Logger.WithError(prevErr).Warn("unknown field detected, upgrade the Hubble CLI to get rid of this warning")
+			logger.Logger.Warn("unknown field detected, upgrade the Hubble CLI to get rid of this warning", "error", prevErr)
 		}
 	}
 	if err != nil {
 		line := c.scanner.Text()
-		logger.Logger.WithError(err).WithField("line", line).Warn("Failed to unmarshal json to flow")
+		logger.Logger.Warn("Failed to unmarshal json to flow", "error", err, "line", line)
 		return nil
 	}
 	if c.request.Since != nil && c.request.Since.AsTime().After(res.Time.AsTime()) {

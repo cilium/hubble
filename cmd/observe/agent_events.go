@@ -50,7 +50,7 @@ func newAgentEventsCommand(vp *viper.Viper) *cobra.Command {
 			}
 			defer hubbleConn.Close()
 			client := observerpb.NewObserverClient(hubbleConn)
-			logger.Logger.WithField("request", req).Debug("Sending GetAgentEvents request")
+			logger.Logger.Debug("Sending GetAgentEvents request", "request", req)
 			if err := getAgentEvents(ctx, client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call

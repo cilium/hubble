@@ -49,7 +49,7 @@ func newDebugEventsCommand(vp *viper.Viper) *cobra.Command {
 			}
 			defer hubbleConn.Close()
 			client := observerpb.NewObserverClient(hubbleConn)
-			logger.Logger.WithField("request", req).Debug("Sending GetDebugEvents request")
+			logger.Logger.Debug("Sending GetDebugEvents request", "request", req)
 			if err := getDebugEvents(ctx, client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call

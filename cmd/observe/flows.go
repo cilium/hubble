@@ -162,7 +162,7 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 	if err != nil {
 		return nil, nil, err
 	}
-	logger.Logger.WithField("server", config.KeyServer).Debug("connected to Hubble API")
+	logger.Logger.Debug("connected to Hubble API", "server", config.KeyServer)
 	cleanup = hubbleConn.Close
 	client = observerpb.NewObserverClient(hubbleConn)
 	return client, cleanup, nil
@@ -249,7 +249,7 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 			}
 			defer cleanup()
 
-			logger.Logger.WithField("request", req).Debug("Sending GetFlows request")
+			logger.Logger.Debug("Sending GetFlows request", "request", req)
 			if err := getFlows(ctx, client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
