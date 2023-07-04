@@ -20,6 +20,7 @@ import (
 	"github.com/cilium/hubble/cmd/watch"
 	"github.com/cilium/hubble/pkg"
 	"github.com/cilium/hubble/pkg/logger"
+	"golang.org/x/exp/slog"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"
@@ -58,9 +59,9 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 		// if a config file is found, read it in.
 		err := vp.ReadInConfig()
 		// initialize the logger after all the config parameters get loaded to viper.
-		logger.Initialize(vp)
+		logger.Initialize(newLogHandler(vp))
 		if err == nil {
-			logger.Logger.WithField("config-file", vp.ConfigFileUsed()).Debug("Using config file")
+			logger.Logger.Debug("Using config file", "config-file", vp.ConfigFileUsed())
 		}
 
 		username := vp.GetString(config.KeyBasicAuthUsername)
@@ -108,4 +109,17 @@ func NewWithViper(vp *viper.Viper) *cobra.Command {
 // Execute creates the root command and executes it.
 func Execute() error {
 	return New().Execute()
+}
+
+func newLogHandler(vp *viper.Viper) slog.Handler {
+	level := slog.LevelInfo
+	if vp.GetBool(config.KeyDebug) {
+		level = slog.LevelDebug
+	}
+	return slog.NewTextHandler(
+		os.Stderr,
+		&slog.HandlerOptions{
+			Level: level,
+		},
+	)
 }

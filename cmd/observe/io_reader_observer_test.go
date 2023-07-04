@@ -12,9 +12,9 @@ import (
 	flowpb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
 	"github.com/cilium/hubble/pkg/logger"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -214,9 +214,8 @@ func Test_UnknownField(t *testing.T) {
 	client, err := server.GetFlows(context.Background(), &observerpb.GetFlowsRequest{})
 	require.NoError(t, err)
 	// logger setup.
-	logger.Initialize(viper.New())
+	logger.Initialize(slog.NewTextHandler(&sb, nil))
 	sb.Reset()
-	logger.Logger.SetOutput(&sb)
 
 	// ensure that we see the first flow.
 	res, err := client.Recv()

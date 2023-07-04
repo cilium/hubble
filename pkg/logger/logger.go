@@ -6,30 +6,19 @@ package logger
 import (
 	"sync"
 
-	"github.com/cilium/hubble/cmd/common/config"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
+	"golang.org/x/exp/slog" // TODO use std library once Go v1.21 is out
 )
 
 var (
 	// Logger is a logger that is configured based on viper parameters.
 	// Initialize() must be called before accessing it.
-	Logger *logrus.Logger
+	Logger *slog.Logger
 	once   sync.Once
 )
 
 // Initialize initializes Logger based on config values in viper.
-func Initialize(vp *viper.Viper) {
+func Initialize(handler slog.Handler) {
 	once.Do(func() {
-		Logger = logrus.New()
-		Logger.SetFormatter(&logrus.TextFormatter{
-			DisableColors: true,
-			FullTimestamp: true,
-		})
-		if vp.GetBool(config.KeyDebug) {
-			Logger.SetLevel(logrus.DebugLevel)
-		} else {
-			Logger.SetLevel(logrus.InfoLevel)
-		}
+		Logger = slog.New(handler)
 	})
 }
