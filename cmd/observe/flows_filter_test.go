@@ -435,6 +435,43 @@ func TestToIdentity(t *testing.T) {
 	}
 }
 
+func TestFromToIdentityCombined(t *testing.T) {
+	t.Run("single filter", func(t *testing.T) {
+		f := newFlowFilter()
+		cmd := newFlowsCmdWithFilter(viper.New(), f)
+
+		require.NoError(t, cmd.Flags().Parse([]string{"--from-pod", "cilium", "--to-identity", "42"}))
+		if diff := cmp.Diff(
+			[]*flowpb.FlowFilter{
+				{SourcePod: []string{"cilium"}, DestinationIdentity: []uint32{42}},
+			},
+			f.whitelist.flowFilters(),
+			cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+		); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+		assert.Nil(t, f.blacklist)
+	})
+
+	t.Run("two filters", func(t *testing.T) {
+		f := newFlowFilter()
+		cmd := newFlowsCmdWithFilter(viper.New(), f)
+
+		require.NoError(t, cmd.Flags().Parse([]string{"--pod", "cilium", "--to-identity", "42"}))
+		if diff := cmp.Diff(
+			[]*flowpb.FlowFilter{
+				{SourcePod: []string{"cilium"}, DestinationIdentity: []uint32{42}},
+				{DestinationPod: []string{"cilium"}, DestinationIdentity: []uint32{42}},
+			},
+			f.whitelist.flowFilters(),
+			cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+		); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+		assert.Nil(t, f.blacklist)
+	})
+}
+
 func TestInvalidIdentity(t *testing.T) {
 	f := newFlowFilter()
 	cmd := newFlowsCmdWithFilter(viper.New(), f)
