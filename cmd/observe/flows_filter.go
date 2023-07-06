@@ -496,12 +496,12 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		})
 	case "from-workload":
 		workload := parseWorkload(val)
-		f.applyLeft(func(f *flowpb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceWorkload = append(f.SourceWorkload, workload)
 		})
 	case "to-workload":
 		workload := parseWorkload(val)
-		f.applyRight(func(f *flowpb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationWorkload = append(f.DestinationWorkload, workload)
 		})
 
