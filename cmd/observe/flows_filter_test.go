@@ -278,6 +278,52 @@ func TestLabels(t *testing.T) {
 	assert.Nil(t, f.blacklist)
 }
 
+func TestFromToWorkloadCombined(t *testing.T) {
+	t.Run("single filter", func(t *testing.T) {
+		f := newFlowFilter()
+		cmd := newFlowsCmd(viper.New(), f)
+
+		require.NoError(t, cmd.Flags().Parse([]string{"--from-pod", "cilium", "--to-workload", "app"}))
+		if diff := cmp.Diff(
+			[]*flowpb.FlowFilter{
+				{
+					SourcePod:           []string{"cilium"},
+					DestinationWorkload: []*flowpb.Workload{{Name: "app"}},
+				},
+			},
+			f.whitelist.flowFilters(),
+			cmpopts.IgnoreUnexported(flowpb.FlowFilter{}, flowpb.Workload{}),
+		); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+		assert.Nil(t, f.blacklist)
+	})
+
+	t.Run("two filters", func(t *testing.T) {
+		f := newFlowFilter()
+		cmd := newFlowsCmd(viper.New(), f)
+
+		require.NoError(t, cmd.Flags().Parse([]string{"--pod", "cilium", "--to-workload", "app"}))
+		if diff := cmp.Diff(
+			[]*flowpb.FlowFilter{
+				{
+					SourcePod:           []string{"cilium"},
+					DestinationWorkload: []*flowpb.Workload{{Name: "app"}},
+				},
+				{
+					DestinationPod:      []string{"cilium"},
+					DestinationWorkload: []*flowpb.Workload{{Name: "app"}},
+				},
+			},
+			f.whitelist.flowFilters(),
+			cmpopts.IgnoreUnexported(flowpb.FlowFilter{}, flowpb.Workload{}),
+		); diff != "" {
+			t.Errorf("mismatch (-want +got):\n%s", diff)
+		}
+		assert.Nil(t, f.blacklist)
+	})
+}
+
 func TestIdentity(t *testing.T) {
 	f := newFlowFilter()
 	cmd := newFlowsCmd(viper.New(), f)
