@@ -522,7 +522,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		if err != nil {
 			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
-		f.applyLeft(func(f *flowpb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.SourceIdentity = append(f.SourceIdentity, identity.Uint32())
 		})
 	case "to-identity":
@@ -530,7 +530,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		if err != nil {
 			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
-		f.applyRight(func(f *flowpb.FlowFilter) {
+		f.apply(func(f *flowpb.FlowFilter) {
 			f.DestinationIdentity = append(f.DestinationIdentity, identity.Uint32())
 		})
 
