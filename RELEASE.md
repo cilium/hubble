@@ -139,12 +139,6 @@ After `v$MAJOR.$MINOR.$PATCH` is released, the next commit should restore the
 `v$MAJOR.$MINOR` branch to the `v$MAJOR.$MINOR.{$PATCH+1}-dev` to separate
 unreleased hubble versions in a branch from releases.
 
-## Update the `dependabot` configuration
-
-After a new stable `v$MAJOR.$MINOR` release branch has been created, update the
-`target-branch` and `commit-message.prefix` fields in `.github/dependabot.yml`
-to point to the newly created branch, instead of the old stable branch.
-
 ## Update the `renovate` configuration
 
 After a new stable `v$MAJOR.$MINOR` release branch has been created, update `renovate.json5`:
