@@ -28,7 +28,7 @@
   "pruneStaleBranches": true,
   "baseBranches": [
     "master",
-    "v0.11"
+    "v0.12"
   ],
   "vulnerabilityAlerts": {
     "enabled": true
@@ -92,7 +92,7 @@
         "go.sum"
       ],
       matchBaseBranches: [
-        "v0.11",
+        "v0.12",
       ]
     },
     {
@@ -136,9 +136,9 @@
         "go",
         "golang"
       ],
-      "allowedVersions": "<=1.19",
+      "allowedVersions": "<=1.20",
       "matchBaseBranches": [
-        "v0.11"
+        "v0.12"
       ],
     },
     {
@@ -154,9 +154,9 @@
       "matchPackageNames": [
         "docker.io/library/alpine"
       ],
-      "allowedVersions": "<=3.17",
+      "allowedVersions": "<=3.18",
       "matchBaseBranches": [
-        "v0.11"
+        "v0.12"
       ]
     },
     {
@@ -175,7 +175,7 @@
         "golangci/golangci-lint"
       ],
       "matchBaseBranches": [
-        "v0.11",
+        "v0.12",
       ]
     }
   ],
