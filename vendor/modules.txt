@@ -4,7 +4,7 @@ github.com/asaskevich/govalidator
 # github.com/blang/semver/v4 v4.0.0
 ## explicit; go 1.14
 github.com/blang/semver/v4
-# github.com/cilium/cilium v1.14.0-snapshot.4
+# github.com/cilium/cilium v1.14.0-snapshot.5
 ## explicit; go 1.20
 github.com/cilium/cilium/api/v1/flow
 github.com/cilium/cilium/api/v1/models
@@ -64,7 +64,7 @@ github.com/go-openapi/analysis/internal/flatten/operations
 github.com/go-openapi/analysis/internal/flatten/replace
 github.com/go-openapi/analysis/internal/flatten/schutils
 github.com/go-openapi/analysis/internal/flatten/sortref
-# github.com/go-openapi/errors v0.20.3
+# github.com/go-openapi/errors v0.20.4
 ## explicit; go 1.14
 github.com/go-openapi/errors
 # github.com/go-openapi/jsonpointer v0.19.6
@@ -83,7 +83,7 @@ github.com/go-openapi/spec
 # github.com/go-openapi/strfmt v0.21.7
 ## explicit; go 1.19
 github.com/go-openapi/strfmt
-# github.com/go-openapi/swag v0.22.3
+# github.com/go-openapi/swag v0.22.4
 ## explicit; go 1.18
 github.com/go-openapi/swag
 # github.com/go-openapi/validate v0.22.1
@@ -231,7 +231,7 @@ github.com/tklauser/go-sysconf
 # github.com/tklauser/numcpus v0.6.0
 ## explicit; go 1.13
 github.com/tklauser/numcpus
-# github.com/vishvananda/netlink v1.2.1-beta.2.0.20230420174744-55c8b9515a01
+# github.com/vishvananda/netlink v1.2.1-beta.2.0.20230621221334-77712cff8739
 ## explicit; go 1.12
 github.com/vishvananda/netlink
 github.com/vishvananda/netlink/nl
@@ -406,7 +406,7 @@ k8s.io/apimachinery/pkg/util/validation
 k8s.io/apimachinery/pkg/util/validation/field
 k8s.io/apimachinery/pkg/watch
 k8s.io/apimachinery/third_party/forked/golang/reflect
-# k8s.io/client-go v0.27.2
+# k8s.io/client-go v0.27.2 => github.com/cilium/client-go v0.27.2-fix
 ## explicit; go 1.20
 k8s.io/client-go/third_party/forked/golang/template
 k8s.io/client-go/util/jsonpath
@@ -432,4 +432,5 @@ sigs.k8s.io/json/internal/golang/encoding/json
 sigs.k8s.io/structured-merge-diff/v4/value
 # github.com/miekg/dns => github.com/cilium/dns v1.1.51-0.20220729113855-5b94b11b46fc
 # go.universe.tf/metallb => github.com/cilium/metallb v0.1.1-0.20220829170633-5d7dfb1129f7
+# k8s.io/client-go => github.com/cilium/client-go v0.27.2-fix
 # sigs.k8s.io/controller-tools => github.com/cilium/controller-tools v0.6.2
