@@ -67,9 +67,8 @@ powers.
 
 ## Releases
 
-Since the release of v0.8, the Hubble CLI is backward compatible with all
-supported Cilium releases. For this reason, only the latest Hubble CLI version
-is maintained.
+The Hubble CLI is backward compatible with all supported Cilium releases. For
+this reason, only the latest Hubble CLI version is maintained.
 
 | Version                                              | Release Date         | Maintained | Supported Cilium Version | Artifacts                                                               |
 |------------------------------------------------------|----------------------|------------|--------------------------|-------------------------------------------------------------------------|
@@ -77,10 +76,6 @@ is maintained.
 | [v0.11](https://github.com/cilium/hubble/tree/v0.11) | 2023-06-07 (v0.11.6) | No         | Cilium 1.13 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.11.6) |
 | [v0.10](https://github.com/cilium/hubble/tree/v0.10) | 2022-06-22 (v0.10.0) | No         | Cilium 1.12 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.10.0) |
 | [v0.9](https://github.com/cilium/hubble/tree/v0.9)   | 2021-11-30 (v0.9.0)  | No         | Cilium 1.11 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.9.0)  |
-| [v0.8](https://github.com/cilium/hubble/tree/v0.8)   | 2021-09-10 (v0.8.2)  | No         | Cilium 1.10 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.8.2)  |
-| [v0.7](https://github.com/cilium/hubble/tree/v0.7)   | 2020-10-22 (v0.7.1)  | No         | Cilium 1.9 and older     | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.7.1)  |
-| [v0.6](https://github.com/cilium/hubble/tree/v0.6)   | 2020-05-29 (v0.6.1)  | No         | Cilium 1.8               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.6.1)  |
-| [v0.5](https://github.com/cilium/hubble/tree/v0.5)   | 2020-07-28 (v0.5.2)  | No         | Cilium 1.7               | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.5.2)  |
 
 ## Component Stability
 
