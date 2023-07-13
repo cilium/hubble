@@ -52,17 +52,13 @@ func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 	// optional mTLS
 	clientCertFile := vp.GetString(config.KeyTLSClientCertFile)
 	clientKeyFile := vp.GetString(config.KeyTLSClientKeyFile)
-	var cert *tls.Certificate
 	if clientCertFile != "" && clientKeyFile != "" {
 		c, err := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
 		if err != nil {
 			return nil, err
 		}
-		cert = &c
-	}
-	if cert != nil {
 		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-			return cert, nil
+			return &c, nil
 		}
 	}
 
