@@ -59,11 +59,12 @@ func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 			return nil, err
 		}
 		cert = &c
+	} else {
+		// GetClientCertificate must return an non-nil certificate
+		cert = &tls.Certificate{}
 	}
-	if cert != nil {
-		tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
-			return cert, nil
-		}
+	tlsConfig.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+		return cert, nil
 	}
 
 	creds := credentials.NewTLS(&tlsConfig)
