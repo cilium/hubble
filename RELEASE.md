@@ -11,7 +11,7 @@ copy-pasting.
 
 Identify which commit will serve as the release point.
 
-New major and minor version with `.0` patch have to stem from the master
+New major and minor version with `.0` patch have to stem from the `main`
 branch, while new patch releases have to stem from their respective minor
 branches.
 
@@ -44,7 +44,7 @@ Request from the prep branch.
 
 ## Create a release prep branch
 
-NOTE: Make sure this step is done from `v$MAJOR.$MINOR` branch, not `master`.
+NOTE: Make sure this step is done from `v$MAJOR.$MINOR` branch, not `main`.
 
     test "$(git rev-parse --abbrev-ref HEAD)" = "v$MAJOR.$MINOR" || git checkout "v$MAJOR.$MINOR"
 
@@ -106,18 +106,17 @@ Example:
 
     git push origin "v$MAJOR.$MINOR.$PATCH"
 
-## Modify the version constant on the master branch, if needed
+## Modify the version constant on the main branch, if needed
 
 After branching out from the tree for release, the version need to be updated
 to reflect the next planned release, i.e.
 
     VERSION="$MAJOR.<$MINOR+1>.0-dev"
 
-## Update the changelog in the master branch
+## Update the changelog in the main branch
 
-Once the release PR has been merged, the changelog in the master branch needs to
-be updated as well. Make sure to copy the generated release notes to the
-changelog in the master.
+Once the release PR has been merged, copy the generated releases notes into the
+CHANGELOG.md file in the `main` branch.
 
 ## Update the README.md
 
@@ -175,11 +174,12 @@ Example:
       - Change 2
       - ...
 
-## (OPTIONAL) Update `stable.txt` in the master branch
+## (OPTIONAL) Update `stable.txt` in the main branch
 
-Hubble's installation instruction in the Cilium documentation uses the version specified in
-`stable.txt` in the master branch. There are a couple of things to consider when deciding
-whether to update `stable.txt`. Let's say `stable.txt` is currently pointing to `v0.6.1`:
+Hubble's installation instruction in the Cilium documentation uses the version
+specified in `stable.txt` in the `main` branch. There are a couple of things to
+consider when deciding whether to update `stable.txt`. Let's say `stable.txt`
+is currently pointing to `v0.6.1`:
 
 - If this is a minor or patch release relative to the current stable version (i.e. `v0.7.0`
   or `v0.6.2`), update `stable.txt` so that people start picking up the new features / bug
@@ -193,13 +193,13 @@ whether to update `stable.txt`. Let's say `stable.txt` is currently pointing to 
 
 To update `stable.txt`, do:
 
-    git switch -c update-stable-txt master
+    git switch -c update-stable-txt main
     echo v$MAJOR.$MINOR.$PATCH > stable.txt
     git add stable.txt
     git commit -as -m "Point stable.txt to $MAJOR.$MINOR.$PATCH"
     git push
 
-and then open a pull request against the master branch.
+and then open a pull request against the `main` branch.
 
 ## (OPTIONAL) Update the Homebrew formula
 
