@@ -4,11 +4,11 @@ name: Run integration tests
 on:
   push:
     branches:
-      - master
+      - main
       - v*
   pull_request:
     branches:
-    - master
+    - main
     - v*
 
 concurrency:

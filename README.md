@@ -1,6 +1,6 @@
  <picture>
-   <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/cilium/hubble@master/Documentation/images/hubble_logo.png" width="350" alt="Hubble Logo">
-   <img src="https://cdn.jsdelivr.net/gh/cilium/hubble@master/Documentation/images/hubble_logo-dark.png" width="350" alt="Hubble Logo">
+   <source media="(prefers-color-scheme: light)" srcset="https://cdn.jsdelivr.net/gh/cilium/hubble@main/Documentation/images/hubble_logo.png" width="350" alt="Hubble Logo">
+   <img src="https://cdn.jsdelivr.net/gh/cilium/hubble@main/Documentation/images/hubble_logo-dark.png" width="350" alt="Hubble Logo">
 </picture>
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
