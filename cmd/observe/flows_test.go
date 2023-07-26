@@ -174,3 +174,18 @@ func Test_getFlowsRequest_ExperimentalFieldMask_non_json_output(t *testing.T) {
 	err := handleFlowArgs(os.Stdout, filter, false)
 	assert.ErrorContains(t, err, "not compatible")
 }
+
+func Test_getFlowsRequestWithInputFile(t *testing.T) {
+	// Don't set the number flag in GetFlowsRequest by default if --input-file is specified
+	selectorOpts.last = 0
+	otherOpts.inputFile = "myfile"
+	req, err := getFlowsRequest(newFlowFilter(), nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(0), req.Number)
+
+	// .. but you can explicitly specify --last flag
+	selectorOpts.last = 42
+	req, err = getFlowsRequest(newFlowFilter(), nil, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(42), req.Number)
+}
