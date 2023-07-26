@@ -667,7 +667,7 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		case selectorOpts.all:
 			// all is an alias for last=uint64_max
 			selectorOpts.last = ^uint64(0)
-		case selectorOpts.last == 0 && !selectorOpts.follow:
+		case selectorOpts.last == 0 && !selectorOpts.follow && otherOpts.inputFile == "":
 			// no specific parameters were provided, just a vanilla
 			// `hubble observe` in non-follow mode
 			selectorOpts.last = defaults.FlowPrintCount
