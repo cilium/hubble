@@ -22,7 +22,7 @@ env:
   KIND_VERSION: v0.20.0
   KIND_CONFIG: .github/kind-config.yaml
   # renovate: datasource=github-releases depName=cilium/cilium
-  CILIUM_VERSION: v1.13.4
+  CILIUM_VERSION: v1.13.5
   CILIUM_VALUES: .github/cilium-values.yaml
 
 jobs:
