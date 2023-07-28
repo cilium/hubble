@@ -250,7 +250,7 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
+# golang.org/x/exp v0.0.0-20230728194245-b0cb94b80691
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
@@ -286,7 +286,7 @@ golang.org/x/time/rate
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.56.2
+# google.golang.org/grpc v1.57.0
 ## explicit; go 1.17
 google.golang.org/grpc
 google.golang.org/grpc/attributes
