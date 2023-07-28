@@ -17,7 +17,6 @@ limitations under the License.
 package jsonpath
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -37,16 +36,11 @@ type Parser struct {
 	Name  string
 	Root  *ListNode
 	input string
+	cur   *ListNode
 	pos   int
 	start int
 	width int
 }
-
-var (
-	ErrSyntax        = errors.New("invalid syntax")
-	dictKeyRex       = regexp.MustCompile(`^'([^']*)'$`)
-	sliceOperatorRex = regexp.MustCompile(`^(-?[\d]*)(:-?[\d]*)?(:-?[\d]*)?$`)
-)
 
 // Parse parsed the given text and return a node Parser.
 // If an error is encountered, parsing stops and an empty
@@ -93,7 +87,7 @@ func (p *Parser) consumeText() string {
 
 // next returns the next rune in the input.
 func (p *Parser) next() rune {
-	if p.pos >= len(p.input) {
+	if int(p.pos) >= len(p.input) {
 		p.width = 0
 		return eof
 	}
@@ -165,8 +159,8 @@ func (p *Parser) parseInsideAction(cur *ListNode) error {
 		p.consumeText()
 	case r == '[':
 		return p.parseArray(cur)
-	case r == '"' || r == '\'':
-		return p.parseQuote(cur, r)
+	case r == '"':
+		return p.parseQuote(cur)
 	case r == '.':
 		return p.parseField(cur)
 	case r == '+' || r == '-' || unicode.IsDigit(r):
@@ -185,7 +179,8 @@ func (p *Parser) parseInsideAction(cur *ListNode) error {
 func (p *Parser) parseRightDelim(cur *ListNode) error {
 	p.pos += len(rightDelim)
 	p.consumeText()
-	return p.parseText(p.Root)
+	cur = p.Root
+	return p.parseText(cur)
 }
 
 // parseIdentifier scans build-in keywords, like "range" "end"
@@ -214,11 +209,8 @@ func (p *Parser) parseIdentifier(cur *ListNode) error {
 	return p.parseInsideAction(cur)
 }
 
-// parseRecursive scans the recursive descent operator ..
+// parseRecursive scans the recursive desent operator ..
 func (p *Parser) parseRecursive(cur *ListNode) error {
-	if lastIndex := len(cur.Nodes) - 1; lastIndex >= 0 && cur.Nodes[lastIndex].Type() == NodeRecursive {
-		return fmt.Errorf("invalid multiple recursive descent")
-	}
 	p.pos += len("..")
 	p.consumeText()
 	cur.append(newRecursive())
@@ -232,7 +224,7 @@ func (p *Parser) parseRecursive(cur *ListNode) error {
 func (p *Parser) parseNumber(cur *ListNode) error {
 	r := p.peek()
 	if r == '+' || r == '-' {
-		p.next()
+		r = p.next()
 	}
 	for {
 		r = p.next()
@@ -267,7 +259,7 @@ Loop:
 		}
 	}
 	text := p.consumeText()
-	text = text[1 : len(text)-1]
+	text = string(text[1 : len(text)-1])
 	if text == "*" {
 		text = ":"
 	}
@@ -288,7 +280,8 @@ Loop:
 	}
 
 	// dict key
-	value := dictKeyRex.FindStringSubmatch(text)
+	reg := regexp.MustCompile(`^'([^']*)'$`)
+	value := reg.FindStringSubmatch(text)
 	if value != nil {
 		parser, err := parseAction("arraydict", fmt.Sprintf(".%s", value[1]))
 		if err != nil {
@@ -301,7 +294,8 @@ Loop:
 	}
 
 	//slice operator
-	value = sliceOperatorRex.FindStringSubmatch(text)
+	reg = regexp.MustCompile(`^(-?[\d]*)(:-?[\d]*)?(:[\d]*)?$`)
+	value = reg.FindStringSubmatch(text)
 	if value == nil {
 		return fmt.Errorf("invalid array index %s", text)
 	}
@@ -326,7 +320,6 @@ Loop:
 			if i == 1 {
 				params[i].Known = true
 				params[i].Value = params[0].Value + 1
-				params[i].Derived = true
 			} else {
 				params[i].Known = false
 				params[i].Value = 0
@@ -341,33 +334,13 @@ Loop:
 func (p *Parser) parseFilter(cur *ListNode) error {
 	p.pos += len("[?(")
 	p.consumeText()
-	begin := false
-	end := false
-	var pair rune
-
 Loop:
 	for {
-		r := p.next()
-		switch r {
+		switch p.next() {
 		case eof, '\n':
 			return fmt.Errorf("unterminated filter")
-		case '"', '\'':
-			if begin == false {
-				//save the paired rune
-				begin = true
-				pair = r
-				continue
-			}
-			//only add when met paired rune
-			if p.input[p.pos-2] != '\\' && r == pair {
-				end = true
-			}
 		case ')':
-			//in rightParser below quotes only appear zero or once
-			//and must be paired at the beginning and end
-			if begin == end {
-				break Loop
-			}
+			break Loop
 		}
 	}
 	if p.next() != ']' {
@@ -375,7 +348,7 @@ Loop:
 	}
 	reg := regexp.MustCompile(`^([^!<>=]+)([!<>=]+)(.+?)$`)
 	text := p.consumeText()
-	text = text[:len(text)-2]
+	text = string(text[:len(text)-2])
 	value := reg.FindStringSubmatch(text)
 	if value == nil {
 		parser, err := parseAction("text", text)
@@ -397,22 +370,19 @@ Loop:
 	return p.parseInsideAction(cur)
 }
 
-// parseQuote unquotes string inside double or single quote
-func (p *Parser) parseQuote(cur *ListNode, end rune) error {
+// parseQuote unquotes string inside double quote
+func (p *Parser) parseQuote(cur *ListNode) error {
 Loop:
 	for {
 		switch p.next() {
 		case eof, '\n':
 			return fmt.Errorf("unterminated quoted string")
-		case end:
-			//if it's not escape break the Loop
-			if p.input[p.pos-2] != '\\' {
-				break Loop
-			}
+		case '"':
+			break Loop
 		}
 	}
 	value := p.consumeText()
-	s, err := UnquoteExtend(value)
+	s, err := strconv.Unquote(value)
 	if err != nil {
 		return fmt.Errorf("unquote string %s error %v", value, err)
 	}
@@ -476,52 +446,4 @@ func isAlphaNumeric(r rune) bool {
 // isBool reports whether s is a boolean value.
 func isBool(s string) bool {
 	return s == "true" || s == "false"
-}
-
-// UnquoteExtend is almost same as strconv.Unquote(), but it support parse single quotes as a string
-func UnquoteExtend(s string) (string, error) {
-	n := len(s)
-	if n < 2 {
-		return "", ErrSyntax
-	}
-	quote := s[0]
-	if quote != s[n-1] {
-		return "", ErrSyntax
-	}
-	s = s[1 : n-1]
-
-	if quote != '"' && quote != '\'' {
-		return "", ErrSyntax
-	}
-
-	// Is it trivial?  Avoid allocation.
-	if !contains(s, '\\') && !contains(s, quote) {
-		return s, nil
-	}
-
-	var runeTmp [utf8.UTFMax]byte
-	buf := make([]byte, 0, 3*len(s)/2) // Try to avoid more allocations.
-	for len(s) > 0 {
-		c, multibyte, ss, err := strconv.UnquoteChar(s, quote)
-		if err != nil {
-			return "", err
-		}
-		s = ss
-		if c < utf8.RuneSelf || !multibyte {
-			buf = append(buf, byte(c))
-		} else {
-			n := utf8.EncodeRune(runeTmp[:], c)
-			buf = append(buf, runeTmp[:n]...)
-		}
-	}
-	return string(buf), nil
-}
-
-func contains(s string, c byte) bool {
-	for i := 0; i < len(s); i++ {
-		if s[i] == c {
-			return true
-		}
-	}
-	return false
 }
