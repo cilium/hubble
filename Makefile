@@ -1,7 +1,11 @@
 GO := go
-GO_BUILD = CGO_ENABLED=0 $(GO) build
+GO_BUILD_FLAGS =
+GO_TEST_FLAGS =
+GO_BUILD = CGO_ENABLED=0 $(GO) build $(GO_BUILD_FLAGS)
+GO_TEST = $(GO) test $(GO_TEST_FLAGS) -timeout=$(TEST_TIMEOUT)
 INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
+SUBDIRS_HUBBLE_CLI := .
 TARGET=hubble
 VERSION=$(shell cat VERSION)
 # homebrew uses the github release's tarball of the source that does not contain the '.git' directory.
@@ -25,10 +29,16 @@ GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 GOLANG_IMAGE_VERSION = 1.21.3-alpine3.18
 GOLANG_IMAGE_SHA = sha256:96a8a701943e7eabd81ebd0963540ad660e29c3b2dc7fb9d7e06af34409e9ba6
 
+# Add the ability to override variables
+-include Makefile.override
+
 all: hubble
 
 hubble:
-	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET)
+	$(MAKE) -C $(SUBDIRS_HUBBLE_CLI) hubble-bin
+
+hubble-bin:
+	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET) $(SUBDIRS_HUBBLE_CLI)
 
 release:
 	$(CONTAINER_ENGINE) run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:$(GOLANG_IMAGE_VERSION)@$(GOLANG_IMAGE_SHA) \
@@ -71,10 +81,11 @@ clean:
 	rm -rf ./release
 
 test:
-	$(GO) test -timeout=$(TEST_TIMEOUT) -race -cover $$($(GO) list ./...)
+	$(GO_TEST) -race -cover $$($(GO) list ./...)
 
+bench: TEST_TIMEOUT=30s
 bench:
-	$(GO) test -timeout=30s -bench=. $$($(GO) list ./...)
+	$(GO_TEST) -bench=. $$($(GO) list ./...)
 
 ifneq (,$(findstring $(GOLANGCILINT_WANT_VERSION:v%=%),$(GOLANGCILINT_VERSION)))
 check:
