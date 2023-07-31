@@ -106,6 +106,8 @@
         "github.com/cilium/dns",
         "sigs.k8s.io/controller-tools",
         "github.com/cilium/controller-tools",
+        "k8s.io/client-go",
+        "github.com/cilium/client-go",
         // We update this dependency manually together with envoy proxy updates
         "github.com/cilium/proxy",
         // We need v1.0.6-0.20210604193023-d5e0c0615ace from pflag, but
