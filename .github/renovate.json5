@@ -126,6 +126,7 @@
       "groupName": "golang",
       "matchPackageNames": [
         "docker.io/library/golang",
+        "library/golang",
         "go",
         "golang"
       ],
@@ -135,6 +136,7 @@
       "groupName": "golang stable",
       "matchPackageNames": [
         "docker.io/library/golang",
+        "library/golang",
         "go",
         "golang"
       ],
