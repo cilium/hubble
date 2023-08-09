@@ -4,9 +4,8 @@
 package logger
 
 import (
+	"log/slog"
 	"sync"
-
-	"golang.org/x/exp/slog" // TODO use std library once Go v1.21 is out
 )
 
 var (

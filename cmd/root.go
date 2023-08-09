@@ -4,6 +4,7 @@
 package cmd
 
 import (
+	"log/slog"
 	"os"
 
 	"github.com/cilium/hubble/cmd/common/config"
@@ -20,7 +21,6 @@ import (
 	"github.com/cilium/hubble/cmd/watch"
 	"github.com/cilium/hubble/pkg"
 	"github.com/cilium/hubble/pkg/logger"
-	"golang.org/x/exp/slog"
 	"google.golang.org/grpc"
 
 	"github.com/spf13/cobra"

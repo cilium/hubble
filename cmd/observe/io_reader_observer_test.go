@@ -6,6 +6,7 @@ package observe
 import (
 	"context"
 	"io"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/cilium/hubble/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
