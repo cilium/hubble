@@ -31,6 +31,10 @@ jobs:
         version: v1.53.3
         args: --config=.golangci.yml --verbose
         skip-cache: true
+    - name: Run slowg analyzer
+      run: | # TODO: remove once slowg is integrated in golangci-lint
+        go install github.com/cilium/linters@latest
+        linters -slowg ./...
     - name: Check module vendoring
       run: |
         go mod tidy
