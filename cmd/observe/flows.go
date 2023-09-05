@@ -217,11 +217,22 @@ more.`,
 }
 
 func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *cobra.Command {
+
+	filterFlags := pflag.NewFlagSet("filters", pflag.ContinueOnError)
+	rawFilterFlags := pflag.NewFlagSet("raw-filters", pflag.ContinueOnError)
+	flowsFormattingFlags := pflag.NewFlagSet("Flow Format", pflag.ContinueOnError)
+	flagSets := []*pflag.FlagSet{selectorFlags, filterFlags, rawFilterFlags, formattingFlags, flowsFormattingFlags, config.ServerFlags, otherFlags}
+
 	flowsCmd := &cobra.Command{
 		Example: usage.example,
 		Use:     usage.use,
 		Short:   usage.short,
 		Long:    usage.long,
+		PreRunE: func(cmd *cobra.Command, _ []string) error {
+			// bind these flags to viper so that they can be specified as environment variables.
+			// We bind these flags during PreRun so that only the running command binds them to the configuration.
+			return vp.BindPFlags(rawFilterFlags)
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			debug := vp.GetBool(config.KeyDebug)
 			if err := handleFlowArgs(cmd.OutOrStdout(), ofilter, debug); err != nil {
@@ -236,7 +247,7 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 				if err != nil {
 					return err
 				}
-				fmt.Print(filterYAML)
+				fmt.Fprint(cmd.OutOrStdout(), filterYAML)
 				return nil
 			}
 
@@ -263,7 +274,6 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	}
 
 	// filter flags
-	filterFlags := pflag.NewFlagSet("filters", pflag.ContinueOnError)
 	filterFlags.Var(filterVar(
 		"not", ofilter,
 		"Reverses the next filter to be blacklist i.e. --not --from-ip 2.2.2.2"))
@@ -425,14 +435,10 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 		"traffic-direction", ofilter,
 		"Show all flows in the given traffic direction (either ingress or egress)"))
 
-	rawFilterFlags := pflag.NewFlagSet("raw-filters", pflag.ContinueOnError)
 	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
 	rawFilterFlags.StringArray(denylistFlag, []string{}, "Specify denylist as JSON encoded FlowFilters")
-	// bind these flags to viper so that they can be specified as environment variables.
-	vp.BindPFlags(rawFilterFlags)
 
 	// formatting flags specific to flows
-	flowsFormattingFlags := pflag.NewFlagSet("Flow Format", pflag.ContinueOnError)
 	flowsFormattingFlags.BoolVar(
 		&formattingOpts.numeric,
 		"numeric",
@@ -528,7 +534,6 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 		return hubtime.FormatNames, cobra.ShellCompDirectiveDefault
 	})
 
-	flagSets := []*pflag.FlagSet{selectorFlags, filterFlags, rawFilterFlags, formattingFlags, flowsFormattingFlags, config.ServerFlags, otherFlags}
 	for _, fs := range flagSets {
 		flowsCmd.Flags().AddFlagSet(fs)
 	}
