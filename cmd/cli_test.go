@@ -31,6 +31,13 @@ func init() {
 	expectedObserveHelp = fmt.Sprintf(expectedObserveHelp, defaults.ConfigFile)
 }
 
+var observeRawFilterArgs = []string{"--allowlist", `{"source_pod":["kube-system/"]}`, "--denylist", `{"source_ip":["1.1.1.1"]}`, "--print-raw-filters"}
+var observeRawFilterOut = `allowlist:
+    - '{"source_pod":["kube-system/"]}'
+denylist:
+    - '{"source_ip":["1.1.1.1"]}'
+`
+
 func TestTestHubbleObserve(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -85,6 +92,16 @@ Use "hubble [command] --help" for more information about a command.
 			name:           "observe help",
 			args:           []string{"observe", "--help"},
 			expectedOutput: expectedObserveHelp,
+		},
+		{
+			name:           "observe raw filters",
+			args:           append([]string{"observe"}, observeRawFilterArgs...),
+			expectedOutput: observeRawFilterOut,
+		},
+		{
+			name:           "observe flows raw filters",
+			args:           append([]string{"observe", "flows"}, observeRawFilterArgs...),
+			expectedOutput: observeRawFilterOut,
 		},
 	}
 
