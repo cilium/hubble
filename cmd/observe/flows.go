@@ -200,7 +200,7 @@ func newFlowsCmdWithFilter(vp *viper.Viper, ofilter *flowFilter) *cobra.Command 
 
   Then,
 
-    cat flows.json | hubble observe
+    cat flows.json | hubble observe --input-file -
 
   Note that the observe command ignores --follow, --last, and server flags when it
   reads flows from stdin. The observe command processes and output flows in the same
