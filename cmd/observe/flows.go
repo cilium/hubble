@@ -204,13 +204,77 @@ func newFlowsCmdWithFilter(vp *viper.Viper, ofilter *flowFilter) *cobra.Command 
 
   Note that the observe command ignores --follow, --last, and server flags when it
   reads flows from stdin. The observe command processes and output flows in the same
-  order they are read from stdin without sorting them by timestamp.`,
+  order they are read from stdin without sorting them by timestamp.
+
+* Filtering flows
+
+  Observe provides a long list of filter options. These options let you, for example,
+  filter for the used HTTP method using the '--http-method' flag. The following
+  command shows all flows that use the HTTP PUT method.
+
+    hubble observe --http-method put
+
+  You can also provide multiple values for a flag, in which case a flow matches the
+  filter if it matches any of the provided values. If you add a second '--http-method'
+  flag matching GET requests to the previous example, the command will show any flow
+  using either a PUT or GET method.
+
+    hubble observe --http-method put --http-method get
+
+  If you add a different flag, a flow is only returned if it matches for both of the
+  different flags. For example, you can add a '--to-namespace' flag to the previous
+  command so only flows using GET or PUT requests to endpoints in namespace 'foo' are
+  returned.
+
+    hubble observe --http-method put --http-method get --to-namespace foo
+
+  And by adding another '--to-namespace' flag, it will return flows using GET or PUT
+  requests to endpoints in namespace 'foo' or 'bar'
+
+    hubble observe --http-method put --http-method get --to-namespace foo --to-namespace bar
+
+* Using negations on filters
+
+  Observe can also return all flows that don't match a certain filter by using the
+  '--not' flag. The following command returns all flows that don't use the HTTP PUT
+  method.
+
+    hubble observe --not --http-method put
+
+  To filter out multiple values, you can combine negative flags by prefixing each of
+  them with '--not'. The following command will return all flows that neither use a
+  GET nor PUT method.
+
+    hubble observe --not --http-method put --not --http-method get
+
+  You can also filter using multiple different negative flags. The following example
+  filters out all flows that match both of the flags. For example, by adding a
+  '--not --to-namespace foo' flag, the example command will show all flows that
+  don't use a GET or PUT method to endpoints in the 'foo' namespace.
+
+    hubble observe --not --http-method put --not --http-method get --not --to-namespace foo
+
+  This means the command will still return flows to the 'foo' namespace that don't
+  use HTTP PUT or GET methods, and it will return flows using HTTP PUT and GET
+  methods that end in other namespaces.
+  `,
 		use:   "flows",
 		short: "Observe flows of a Hubble server",
 		long: `Observe provides visibility into flow information on the network and
 application level. Rich filtering enable observing specific flows related to
 individual pods, services, TCP connections, DNS queries, HTTP requests and
-more.`,
+more.
+
+Observe can filter flows using multiple different flags, such as filtering for
+the source namespace or the protocol used. To match a filter flag, a flow must
+match at least one of the provided values for that flag. A flow must match all
+the provided filter flags to be returned.
+
+Observe can also show all flows that do not match a provided filter, by adding
+the '--not' flag in front of a filter flag. To match a negated filter
+flag, a flow must not match any of the provided values for that flag. A returned
+flow does not match any of the negated filter flags.
+`,
 	}
 
 	return newFlowsCmdHelper(usage, vp, ofilter)
