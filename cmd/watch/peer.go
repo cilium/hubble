@@ -12,6 +12,7 @@ import (
 	peerpb "github.com/cilium/cilium/api/v1/peer"
 	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
+	"github.com/cilium/hubble/cmd/common/template"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc/codes"
@@ -19,7 +20,7 @@ import (
 )
 
 func newPeerCommand(vp *viper.Viper) *cobra.Command {
-	return &cobra.Command{
+	peerCmd := &cobra.Command{
 		Use:     "peers",
 		Aliases: []string{"peer"},
 		Short:   "Watch for Hubble peers updates",
@@ -34,6 +35,10 @@ func newPeerCommand(vp *viper.Viper) *cobra.Command {
 			return runPeer(ctx, peerpb.NewPeerClient(hubbleConn))
 		},
 	}
+	// add config.ServerFlags to the help template as these flags are used by
+	// this command
+	template.RegisterFlagSets(peerCmd, config.ServerFlags)
+	return peerCmd
 }
 
 func runPeer(ctx context.Context, client peerpb.PeerClient) error {
