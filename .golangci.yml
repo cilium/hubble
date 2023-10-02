@@ -3,7 +3,7 @@
 # reference.
 run:
   go: '1.21'
-  timeout: 3m  # default is 1m
+  timeout: 5m  # default is 1m
 linters:
   disable-all: true
   enable:
