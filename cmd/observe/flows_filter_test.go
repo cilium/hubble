@@ -575,3 +575,20 @@ func TestTrafficDirection(t *testing.T) {
 		})
 	}
 }
+
+func TestHTTPURL(t *testing.T) {
+	f := newFlowFilter()
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
+
+	require.NoError(t, cmd.Flags().Parse([]string{"--http-url", `http://.*cilium\.io/foo`, "--http-url", `http://www\.cilium\.io/bar`}))
+	if diff := cmp.Diff(
+		[]*flowpb.FlowFilter{
+			{HttpUrl: []string{`http://.*cilium\.io/foo`, `http://www\.cilium\.io/bar`}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+	assert.Nil(t, f.blacklist)
+}
