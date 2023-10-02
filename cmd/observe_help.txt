@@ -51,6 +51,7 @@ Filters Flags:
       --http-method filter         Show only flows which match this HTTP method (e.g. "get", "post")
       --http-path filter           Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")
       --http-status filter         Show only flows which match this HTTP status code prefix (e.g. "404", "5+")
+      --http-url filter            Show only flows which match this HTTP URL regular expressions (e.g. "http://.*cilium\.io/page/\\d+")
       --identity filter            Show all flows related to an endpoint with the given security identity
       --ip filter                  Show all flows related to the given IP address. Each of the IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
       --ip-version filter          Show only IPv4, IPv6 flows or non IP flows (e.g. ARP packets) (ie: "none", "v4", "v6")

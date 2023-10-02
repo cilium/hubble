@@ -119,6 +119,7 @@ func newFlowFilter() *flowFilter {
 			{"http-status"},
 			{"http-method"},
 			{"http-path"},
+			{"http-url"},
 			{"protocol"},
 			{"port", "to-port"},
 			{"port", "from-port"},
@@ -434,6 +435,10 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "http-path":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpPath = append(f.HttpPath, val)
+		})
+	case "http-url":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.HttpUrl = append(f.HttpUrl, val)
 		})
 
 	case "type":
