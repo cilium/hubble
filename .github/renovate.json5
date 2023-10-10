@@ -140,12 +140,7 @@
         "go",
         "golang"
       ],
-      "matchUpdateTypes": [
-        "patch",
-        "digest",
-        "pin",
-        "pinDigest"
-      ],
+      "allowedVersions": "<=1.20",
       "matchBaseBranches": [
         "v0.12"
       ],
@@ -163,12 +158,7 @@
       "matchPackageNames": [
         "docker.io/library/alpine"
       ],
-      "matchUpdateTypes": [
-        "patch",
-        "digest",
-        "pin",
-        "pinDigest"
-      ],
+      "allowedVersions": "<=3.18",
       "matchBaseBranches": [
         "v0.12"
       ]
