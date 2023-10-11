@@ -1006,10 +1006,6 @@ const (
 	// By default, Hubble observes all monitor events.
 	HubbleMonitorEvents = "hubble-monitor-events"
 
-	// HubbleRedact controls which values Hubble will redact in network flows.
-	// By default, Hubble does not redact any values.
-	HubbleRedact = "hubble-redact"
-
 	// DisableIptablesFeederRules specifies which chains will be excluded
 	// when installing the feeder rules
 	DisableIptablesFeederRules = "disable-iptables-feeder-rules"
@@ -2220,10 +2216,6 @@ type DaemonConfig struct {
 	// By default, Hubble observes all monitor events.
 	HubbleMonitorEvents []string
 
-	// HubbleRedact controls which values Hubble will redact in network flows.
-	// By default, Hubble does not redact any values.
-	HubbleRedact []string
-
 	// EndpointStatus enables population of information in the
 	// CiliumEndpoint.Status resource
 	EndpointStatus map[string]struct{}
@@ -3282,6 +3274,7 @@ func (c *DaemonConfig) Populate(vp *viper.Viper) {
 	c.DNSProxyConcurrencyProcessingGracePeriod = vp.GetDuration(DNSProxyConcurrencyProcessingGracePeriod)
 	c.DNSProxyLockCount = vp.GetInt(DNSProxyLockCount)
 	c.DNSProxyLockTimeout = vp.GetDuration(DNSProxyLockTimeout)
+	c.FQDNRejectResponse = vp.GetString(FQDNRejectResponseCode)
 
 	// Convert IP strings into net.IPNet types
 	subnets, invalid := ip.ParseCIDRs(vp.GetStringSlice(IPv4PodSubnets))
@@ -3448,7 +3441,6 @@ func (c *DaemonConfig) Populate(vp *viper.Viper) {
 	c.HubbleRecorderSinkQueueSize = vp.GetInt(HubbleRecorderSinkQueueSize)
 	c.HubbleSkipUnknownCGroupIDs = vp.GetBool(HubbleSkipUnknownCGroupIDs)
 	c.HubbleMonitorEvents = vp.GetStringSlice(HubbleMonitorEvents)
-	c.HubbleRedact = vp.GetStringSlice(HubbleRedact)
 
 	c.DisableIptablesFeederRules = vp.GetStringSlice(DisableIptablesFeederRules)
 
@@ -3701,6 +3693,15 @@ func (c *DaemonConfig) checkIPAMDelegatedPlugin() error {
 		}
 		if c.EnableEndpointHealthChecking {
 			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableEndpointHealthChecking, IPAM, ipamOption.IPAMDelegatedPlugin)
+		}
+		// Ingress controller and envoy config require cilium-agent to create an IP address
+		// specifically for differentiating ingress and envoy traffic, which is not possible
+		// with delegated IPAM.
+		if c.EnableIngressController {
+			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableIngressController, IPAM, ipamOption.IPAMDelegatedPlugin)
+		}
+		if c.EnableEnvoyConfig {
+			return fmt.Errorf("--%s must be disabled with --%s=%s", EnableEnvoyConfig, IPAM, ipamOption.IPAMDelegatedPlugin)
 		}
 	}
 	return nil
