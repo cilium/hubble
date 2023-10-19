@@ -44,6 +44,12 @@
   ],
   "stopUpdatingLabel": "renovate/stop-updating",
   "packageRules": [
+    // https://docs.renovatebot.com/key-concepts/automerge/#automerge-non-major-updates
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true
+    },
     {
       "groupName": "all github action dependencies",
       "groupSlug": "all-github-action",
