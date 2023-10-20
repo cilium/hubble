@@ -22,7 +22,7 @@ env:
   KIND_VERSION: v0.20.0
   KIND_CONFIG: .github/kind-config.yaml
   # renovate: datasource=github-releases depName=cilium/cilium
-  CILIUM_VERSION: v1.14.2
+  CILIUM_VERSION: v1.14.3
   CILIUM_VALUES: .github/cilium-values.yaml
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Setup go
         uses: actions/setup-go@93397bea11091df50f3d7e59dc26a7711a8bcfbe # v4.1.0
         with:
