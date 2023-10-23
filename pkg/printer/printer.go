@@ -825,6 +825,10 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 	if n := res.GetNumUnavailableNodes(); n != nil {
 		numUnavailableNodes = fmt.Sprintf("%d", n.Value)
 	}
+	flowsPerSec := "N/A"
+	if fr := res.GetFlowsRate(); fr > 0 {
+		flowsPerSec = fmt.Sprintf("%.2f", fr)
+	}
 
 	switch p.opts.output {
 	case TabOutput:
@@ -833,6 +837,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 			"NUM FLOWS", tab,
 			"MAX FLOWS", tab,
 			"SEEN FLOWS", tab,
+			"FLOWS PER SECOND", tab,
 			"UPTIME", tab,
 			"NUM CONNECTED NODES", tab,
 			"NUM UNAVAILABLE NODES", tab,
@@ -840,6 +845,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 			uint64Grouping(res.GetNumFlows()), tab,
 			uint64Grouping(res.GetMaxFlows()), tab,
 			uint64Grouping(res.GetSeenFlows()), tab,
+			flowsPerSec, tab,
 			formatDurationNS(res.GetUptimeNs()), tab,
 			numConnectedNodes, tab,
 			numUnavailableNodes, tab,
@@ -854,6 +860,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 			"          NUM FLOWS: ", uint64Grouping(res.GetNumFlows()), newline,
 			"          MAX FLOWS: ", uint64Grouping(res.GetMaxFlows()), newline,
 			"         SEEN FLOWS: ", uint64Grouping(res.GetSeenFlows()), newline,
+			"   FLOWS PER SECOND: ", flowsPerSec, newline,
 			"             UPTIME: ", formatDurationNS(res.GetUptimeNs()), newline,
 			"NUM CONNECTED NODES: ", numConnectedNodes, newline,
 			" NUM UNAVAIL. NODES: ", numUnavailableNodes, newline,
@@ -870,8 +877,7 @@ func (p *Printer) WriteServerStatusResponse(res *observerpb.ServerStatusResponse
 		}
 		ew.writef("Current/Max Flows: %v/%v%s\n", uint64Grouping(res.NumFlows), uint64Grouping(res.MaxFlows), flowsRatio)
 
-		flowsPerSec := "N/A"
-		if uptime := time.Duration(res.UptimeNs).Seconds(); uptime > 0 {
+		if uptime := time.Duration(res.UptimeNs).Seconds(); flowsPerSec == "N/A" && uptime > 0 {
 			flowsPerSec = fmt.Sprintf("%.2f", float64(res.SeenFlows)/uptime)
 		}
 		ew.writef("Flows/s: %s\n", flowsPerSec)
