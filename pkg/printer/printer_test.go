@@ -1197,6 +1197,14 @@ func TestPrinter_WriteServerStatusResponse(t *testing.T) {
 		NumFlows:  2031,
 		MaxFlows:  4095,
 		SeenFlows: 2348885,
+		FlowsRate: 23.456,
+		UptimeNs:  301515181665,
+		Version:   "cilium v1.15.0+g4145278",
+	}
+	sso := &observerpb.ServerStatusResponse{
+		NumFlows:  2031,
+		MaxFlows:  4095,
+		SeenFlows: 2348885,
 		UptimeNs:  301515181665,
 		Version:   "cilium v1.10.3+g4145278",
 	}
@@ -1204,8 +1212,9 @@ func TestPrinter_WriteServerStatusResponse(t *testing.T) {
 		NumFlows:            2771,
 		MaxFlows:            8190,
 		SeenFlows:           2771,
+		FlowsRate:           23.456,
 		UptimeNs:            301515181665,
-		Version:             "hubble-relay v1.10.3+g4145278",
+		Version:             "hubble-relay v1.15.0+g4145278",
 		NumConnectedNodes:   &wrapperspb.UInt32Value{Value: 2},
 		NumUnavailableNodes: &wrapperspb.UInt32Value{Value: 0},
 	}
@@ -1228,8 +1237,8 @@ func TestPrinter_WriteServerStatusResponse(t *testing.T) {
 			args:    args{ss},
 			wantErr: false,
 			expected: `
-NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
-2,031       4,095       2,348,885    5m1.515181665s   N/A                   N/A                     cilium v1.10.3+g4145278`,
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   FLOWS PER SECOND   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2,031       4,095       2,348,885    23.46              5m1.515181665s   N/A                   N/A                     cilium v1.15.0+g4145278`,
 		}, {
 			name: "tabular-with-nodes",
 			options: []Option{
@@ -1239,8 +1248,19 @@ NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM 
 			args:    args{ssn},
 			wantErr: false,
 			expected: `
-NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
-2,771       8,190       2,771        5m1.515181665s   2                     0                       hubble-relay v1.10.3+g4145278`,
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   FLOWS PER SECOND   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2,771       8,190       2,771        23.46              5m1.515181665s   2                     0                       hubble-relay v1.15.0+g4145278`,
+		}, {
+			name: "tabular-without-flow-rate",
+			options: []Option{
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{sso},
+			wantErr: false,
+			expected: `
+NUM FLOWS   MAX FLOWS   SEEN FLOWS   FLOWS PER SECOND   UPTIME           NUM CONNECTED NODES   NUM UNAVAILABLE NODES   VERSION
+2,031       4,095       2,348,885    N/A                5m1.515181665s   N/A                   N/A                     cilium v1.10.3+g4145278`,
 		}, {
 			name: "compact",
 			options: []Option{
@@ -1252,7 +1272,7 @@ NUM FLOWS   MAX FLOWS   SEEN FLOWS   UPTIME           NUM CONNECTED NODES   NUM 
 			wantErr: false,
 			expected: `
 Current/Max Flows: 2,031/4,095 (49.60%)
-Flows/s: 7790.27`,
+Flows/s: 23.46`,
 		}, {
 			name: "compact-with-nodes",
 			options: []Option{
@@ -1264,8 +1284,20 @@ Flows/s: 7790.27`,
 			wantErr: false,
 			expected: `
 Current/Max Flows: 2,771/8,190 (33.83%)
-Flows/s: 9.19
+Flows/s: 23.46
 Connected Nodes: 2/2`,
+		}, {
+			name: "compact-without-flow-rate",
+			options: []Option{
+				Compact(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{sso},
+			wantErr: false,
+			expected: `
+Current/Max Flows: 2,031/4,095 (49.60%)
+Flows/s: 7790.27`,
 		}, {
 			name: "json",
 			options: []Option{
@@ -1275,7 +1307,7 @@ Connected Nodes: 2/2`,
 			},
 			args:     args{ss},
 			wantErr:  false,
-			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.10.3+g4145278"}`,
+			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.15.0+g4145278","flows_rate":23.456}`,
 		}, {
 			name: "json-with-nodes",
 			options: []Option{
@@ -1285,7 +1317,17 @@ Connected Nodes: 2/2`,
 			},
 			args:     args{ssn},
 			wantErr:  false,
-			expected: `{"num_flows":"2771","max_flows":"8190","seen_flows":"2771","uptime_ns":"301515181665","num_connected_nodes":2,"num_unavailable_nodes":0,"version":"hubble-relay v1.10.3+g4145278"}`,
+			expected: `{"num_flows":"2771","max_flows":"8190","seen_flows":"2771","uptime_ns":"301515181665","num_connected_nodes":2,"num_unavailable_nodes":0,"version":"hubble-relay v1.15.0+g4145278","flows_rate":23.456}`,
+		}, {
+			name: "json-without-flow-rate",
+			options: []Option{
+				JSONPB(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:     args{sso},
+			wantErr:  false,
+			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.10.3+g4145278"}`,
 		}, {
 			name: "jsonpb",
 			options: []Option{
@@ -1295,7 +1337,7 @@ Connected Nodes: 2/2`,
 			},
 			args:     args{ss},
 			wantErr:  false,
-			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.10.3+g4145278"}`,
+			expected: `{"num_flows":"2031","max_flows":"4095","seen_flows":"2348885","uptime_ns":"301515181665","version":"cilium v1.15.0+g4145278","flows_rate":23.456}`,
 		}, {
 			name: "dict",
 			options: []Option{
@@ -1309,10 +1351,11 @@ Connected Nodes: 2/2`,
           NUM FLOWS: 2,031
           MAX FLOWS: 4,095
          SEEN FLOWS: 2,348,885
+   FLOWS PER SECOND: 23.46
              UPTIME: 5m1.515181665s
 NUM CONNECTED NODES: N/A
  NUM UNAVAIL. NODES: N/A
-            VERSION: cilium v1.10.3+g4145278`,
+            VERSION: cilium v1.15.0+g4145278`,
 		}, {
 			name: "dict-with-nodes",
 			options: []Option{
@@ -1326,10 +1369,29 @@ NUM CONNECTED NODES: N/A
           NUM FLOWS: 2,771
           MAX FLOWS: 8,190
          SEEN FLOWS: 2,771
+   FLOWS PER SECOND: 23.46
              UPTIME: 5m1.515181665s
 NUM CONNECTED NODES: 2
  NUM UNAVAIL. NODES: 0
-            VERSION: hubble-relay v1.10.3+g4145278`,
+            VERSION: hubble-relay v1.15.0+g4145278`,
+		}, {
+			name: "dict",
+			options: []Option{
+				Dict(),
+				WithColor("never"),
+				Writer(&buf),
+			},
+			args:    args{sso},
+			wantErr: false,
+			expected: `
+          NUM FLOWS: 2,031
+          MAX FLOWS: 4,095
+         SEEN FLOWS: 2,348,885
+   FLOWS PER SECOND: N/A
+             UPTIME: 5m1.515181665s
+NUM CONNECTED NODES: N/A
+ NUM UNAVAIL. NODES: N/A
+            VERSION: cilium v1.10.3+g4145278`,
 		},
 	}
 	for _, tt := range tests {
