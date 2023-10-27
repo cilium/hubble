@@ -27,6 +27,9 @@ type filterTracker struct {
 	// the resulting filter will be `left OR right`
 	left, right *flowpb.FlowFilter
 
+	// namespaces set through flags, will be applied to the pod and/or service
+	// filter when the flow filters are materialized.
+	ns, srcNs, dstNs namespaceModifier
 	// which values were touched by the user. This is important because all of
 	// the defaults need to be wiped the first time user touches a []string
 	// value.
@@ -74,21 +77,71 @@ func (f *filterTracker) applyRight(update func(*flowpb.FlowFilter)) {
 	update(f.right)
 }
 
-func (f *filterTracker) flowFilters() []*flowpb.FlowFilter {
-	if f.left == nil && f.right == nil {
-		return nil
-	} else if proto.Equal(f.left, f.right) {
-		return []*flowpb.FlowFilter{f.left}
+type namespaceModifier []string
+
+func (nm namespaceModifier) applySrc(ff *flowpb.FlowFilter) {
+	if len(ff.GetSourcePod()) == 0 && len(ff.GetSourceService()) == 0 {
+		ff.SourcePod = []string{""}
+	}
+	ff.SourcePod = addNamespacesToFilter(ff.GetSourcePod(), nm)
+	ff.SourceService = addNamespacesToFilter(ff.GetSourceService(), nm)
+}
+
+func (nm namespaceModifier) applyDest(ff *flowpb.FlowFilter) {
+	if len(ff.GetDestinationPod()) == 0 && len(ff.GetDestinationService()) == 0 {
+		ff.DestinationPod = []string{""}
+	}
+	ff.DestinationPod = addNamespacesToFilter(ff.GetDestinationPod(), nm)
+	ff.DestinationService = addNamespacesToFilter(ff.GetDestinationService(), nm)
+}
+
+func addNamespacesToFilter(filter []string, ns []string) []string {
+	if len(ns) == 0 || len(filter) == 0 {
+		return filter
 	}
 
-	filters := []*flowpb.FlowFilter{}
-	if f.left != nil {
-		filters = append(filters, f.left)
+	res := []string{}
+	for i := range filter {
+		if strings.Contains(filter[i], "/") {
+			res = append(res, filter[i])
+			continue
+		}
+		for j := range ns {
+			res = append(res, fmt.Sprintf("%s/%s", ns[j], filter[i]))
+		}
 	}
-	if f.right != nil {
-		filters = append(filters, f.right)
+	return res
+}
+
+func (f *filterTracker) flowFilters() []*flowpb.FlowFilter {
+	if f.left == nil && f.right == nil &&
+		len(f.ns) == 0 && len(f.dstNs) == 0 && len(f.srcNs) == 0 {
+		return nil
 	}
-	return filters
+	if f.left == nil {
+		f.left = &flowpb.FlowFilter{}
+	}
+	if f.right == nil {
+		f.right = &flowpb.FlowFilter{}
+	}
+
+	if len(f.dstNs) > 0 {
+		f.dstNs.applyDest(f.left)
+		f.dstNs.applyDest(f.right)
+	}
+	if len(f.srcNs) > 0 {
+		f.srcNs.applySrc(f.left)
+		f.srcNs.applySrc(f.right)
+	}
+	if len(f.ns) > 0 {
+		f.ns.applySrc(f.left)
+		f.ns.applyDest(f.right)
+	}
+
+	if proto.Equal(f.left, f.right) {
+		return []*flowpb.FlowFilter{f.left}
+	}
+	return []*flowpb.FlowFilter{f.left, f.right}
 }
 
 // Implements pflag.Value
@@ -108,8 +161,10 @@ type flowFilter struct {
 func newFlowFilter() *flowFilter {
 	return &flowFilter{
 		conflicts: [][]string{
-			{"from-fqdn", "from-ip", "from-namespace", "from-pod", "fqdn", "ip", "namespace", "pod"},
-			{"to-fqdn", "to-ip", "to-namespace", "to-pod", "fqdn", "ip", "namespace", "pod"},
+			{"from-fqdn", "from-ip", "ip", "fqdn", "from-namespace", "namespace"},
+			{"from-fqdn", "from-ip", "ip", "fqdn", "from-pod", "pod"},
+			{"to-fqdn", "to-ip", "ip", "fqdn", "to-namespace", "namespace"},
+			{"to-fqdn", "to-ip", "ip", "fqdn", "to-pod", "pod"},
 			{"label", "from-label"},
 			{"label", "to-label"},
 			{"service", "from-service"},
@@ -352,22 +407,14 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			f.DestinationLabel = append(f.GetDestinationLabel(), val)
 		})
 
-	// namespace filters (translated to pod filters)
+	// namespace filters (will be applied to pods and/or service filters)
 	case "namespace":
-		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.GetSourcePod(), val+"/")
-		})
-		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.GetDestinationPod(), val+"/")
-		})
+		f.ns = append(f.ns, val)
 	case "from-namespace":
-		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.GetSourcePod(), val+"/")
-		})
+		f.srcNs = append(f.srcNs, val)
 	case "to-namespace":
-		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.GetDestinationPod(), val+"/")
-		})
+		f.dstNs = append(f.dstNs, val)
+
 	// service filters
 	case "service":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
