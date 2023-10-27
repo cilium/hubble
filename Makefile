@@ -17,8 +17,8 @@ RELEASE_GID ?= $(shell id -g)
 TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCILINT_WANT_VERSION = v1.55.0
-GOLANGCILINT_IMAGE_SHA = sha256:6d35004e5b67de36dbdde54a5062d51eb51a076e291f2a71870ea8c980027c47
+GOLANGCILINT_WANT_VERSION = v1.55.1
+GOLANGCILINT_IMAGE_SHA = sha256:c4e67eb904109ade78e2f38d98a424502f016db5676409390469bcdafea0f57d
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 # renovate: datasource=docker depName=library/golang
