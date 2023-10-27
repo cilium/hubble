@@ -4,6 +4,7 @@
 package observe
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -40,19 +41,180 @@ func TestDefaultFilter(t *testing.T) {
 }
 
 func TestConflicts(t *testing.T) {
-	f := newFlowFilter()
-	cmd := newFlowsCmdWithFilter(viper.New(), f)
 
-	err := cmd.Flags().Parse([]string{
-		"--from-ip", "1.2.3.4",
-		"--from-fqdn", "doesnt.work",
-	})
-	require.Error(t, err)
+	tcs := map[string]struct {
+		flags    []string
+		conflict bool
+		msg      string
+	}{
+		"ip fqdn conflict": {
+			flags: []string{
+				"--from-ip", "1.2.3.4",
+				"--from-fqdn", "doesnt.work",
+			},
+			conflict: true,
+			msg:      "filters --from-fqdn and --from-ip cannot be combined",
+		},
+		"svc from-svc conflict": {
+			flags: []string{
+				"--from-service", "foo",
+				"--service", "bar",
+			},
+			conflict: true,
+			msg:      "filters --service and --from-service cannot be combined",
+		},
+		"from-svc to-svc ok": {
+			flags: []string{
+				"--to-service", "foo",
+				"--from-service", "bar",
+			},
+		},
+		"complex ok": {
+			flags: []string{
+				"--to-service", "foo",
+				"--from-service", "bar",
+				"--from-identity", "world",
+				"--to-identity", "world",
+				"--to-ip", "1.2.3.4",
+				"--from-pod", "blib",
+				"--from-port", "1172",
+				"--to-port", "11245",
+				"--workload", "buzz",
+			},
+		},
+		"complex fqdn ok": {
+			flags: []string{
+				"--to-service", "foo",
+				"--from-service", "bar",
+				"--from-identity", "world",
+				"--to-identity", "world",
+				"--to-ip", "1.2.3.4",
+				"--from-fqdn", "blib.example.com",
+				"--from-port", "1172",
+				"--to-port", "11245",
+				"--workload", "buzz",
+			},
+		},
+		"complex with namespace ok": {
+			flags: []string{
+				"--to-service", "foo",
+				"--from-service", "bar",
+				"--from-identity", "world",
+				"--to-identity", "world",
+				"--to-fqdn", "example.com",
+				"--from-pod", "blib",
+				"--from-namespace", "test",
+				"--from-port", "1172",
+				"--to-port", "11245",
+				"--workload", "buzz",
+			},
+		},
+		"complex with namespace and service ok": {
+			flags: []string{
+				"--service", "bar",
+				"--from-identity", "world",
+				"--to-identity", "world",
+				"--pod", "blib",
+				"--namespace", "test",
+				"--from-port", "1172",
+				"--to-port", "11245",
+				"--workload", "buzz",
+			},
+		},
+	}
 
-	assert.Contains(t,
-		err.Error(),
-		"filters --from-fqdn and --from-ip cannot be combined",
-	)
+	for name, tc := range tcs {
+		t.Run(name, func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
+			err := cmd.Flags().Parse(tc.flags)
+			if tc.conflict {
+				require.Error(t, err)
+				if tc.msg != "" {
+					assert.Contains(t,
+						err.Error(),
+						tc.msg,
+					)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestConflicts_Table(t *testing.T) {
+
+	conflicts := [][]string{
+		{"--port", "--to-port"},
+		{"--port", "--from-port"},
+		{"--identity", "--to-identity"},
+		{"--identity", "--from-identity"},
+		{"--workload", "--to-workload"},
+		{"--workload", "--from-workload"},
+		{"--fqdn", "--from-fqdn"},
+		{"--fqdn", "--to-fqdn"},
+		{"--ip", "--from-ip"},
+		{"--ip", "--to-ip"},
+		{"--label", "--from-label"},
+		{"--label", "--to-label"},
+		{"--service", "--from-service"},
+		{"--service", "--to-service"},
+		{"--pod", "--from-pod"},
+		{"--pod", "--to-pod"},
+		{"--namespace", "--from-namespace"},
+		{"--namespace", "--to-namespace"},
+
+		{"--ip", "--fqdn"},
+		{"--ip", "--from-fqdn"},
+		{"--ip", "--to-fqdn"},
+		{"--from-ip", "--from-fqdn"},
+		{"--from-ip", "--fqdn"},
+		{"--to-ip", "--fqdn"},
+		{"--to-ip", "--to-fqdn"},
+		{"--ip", "--pod"},
+		{"--ip", "--from-pod"},
+		{"--ip", "--to-pod"},
+		{"--from-ip", "--from-pod"},
+		{"--from-ip", "--pod"},
+		{"--to-ip", "--pod"},
+		{"--to-ip", "--to-pod"},
+		{"--ip", "--namespace"},
+		{"--ip", "--from-namespace"},
+		{"--ip", "--to-namespace"},
+		{"--from-ip", "--from-namespace"},
+		{"--from-ip", "--namespace"},
+		{"--to-ip", "--namespace"},
+		{"--to-ip", "--to-namespace"},
+
+		{"--pod", "--fqdn"},
+		{"--pod", "--from-fqdn"},
+		{"--pod", "--to-fqdn"},
+		{"--from-pod", "--from-fqdn"},
+		{"--from-pod", "--fqdn"},
+		{"--from-pod", "--namepace"},
+		{"--to-pod", "--fqdn"},
+		{"--to-pod", "--to-fqdn"},
+		{"--to-pod", "--namepace"},
+
+		{"--namespace", "--fqdn"},
+		{"--namespace", "--from-fqdn"},
+		{"--namespace", "--to-fqdn"},
+		{"--namespace", "--from-service"},
+		{"--namespace", "--to-service"},
+		{"--from-namespace", "--from-fqdn"},
+		{"--from-namespace", "--fqdn"},
+		{"--to-namespace", "--fqdn"},
+		{"--to-namespace", "--to-fqdn"},
+	}
+
+	for _, con := range conflicts {
+		t.Run(fmt.Sprintf("conflict %s - %s", con[0], con[1]), func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
+			require.Error(t, cmd.Flags().Parse([]string{con[0], "foo", con[1], "bar"}))
+		})
+	}
 }
 
 func TestTrailingNot(t *testing.T) {
@@ -591,4 +753,100 @@ func TestHTTPURL(t *testing.T) {
 		t.Errorf("mismatch (-want +got):\n%s", diff)
 	}
 	assert.Nil(t, f.blacklist)
+}
+
+func TestNamespace(t *testing.T) {
+
+	tt := []struct {
+		name    string
+		flags   []string
+		filters []*flowpb.FlowFilter
+		err     string
+	}{
+		{
+			name:  "Any request from or to namespace with port",
+			flags: []string{"--namespace", "cilium", "--port", "443"},
+			filters: []*flowpb.FlowFilter{
+				{SourcePod: []string{"cilium/"}, SourcePort: []string{"443"}},
+				{DestinationPod: []string{"cilium/"}, DestinationPort: []string{"443"}},
+			},
+		},
+		{
+			name:  "Any request from namespace with port",
+			flags: []string{"--from-namespace", "cilium", "--from-port", "443"},
+			filters: []*flowpb.FlowFilter{
+				{SourcePod: []string{"cilium/"}, SourcePort: []string{"443"}},
+			},
+		},
+		{
+			name:  "Any request to namespace",
+			flags: []string{"--to-namespace", "cilium"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationPod: []string{"cilium/"}},
+			},
+		},
+		{
+			name:  "Any request to namespace with port",
+			flags: []string{"--to-namespace", "cilium", "--port", "443"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationPod: []string{"cilium/"}, SourcePort: []string{"443"}},
+				{DestinationPod: []string{"cilium/"}, DestinationPort: []string{"443"}},
+			},
+		},
+		{
+			name:  "Any request from or to namespace and pod",
+			flags: []string{"--namespace", "cilium", "--pod", "foo-9c76d6c95-tf788"},
+			filters: []*flowpb.FlowFilter{
+				{SourcePod: []string{"cilium/foo-9c76d6c95-tf788"}},
+				{DestinationPod: []string{"cilium/foo-9c76d6c95-tf788"}},
+			},
+		},
+		{
+			name:  "Any request from or to namespace and svc",
+			flags: []string{"--namespace", "cilium", "--service", "foo"},
+			filters: []*flowpb.FlowFilter{
+				{SourceService: []string{"cilium/foo"}},
+				{DestinationService: []string{"cilium/foo"}},
+			},
+		},
+		{
+			name:  "Any request from or to one of namespaces and svcs",
+			flags: []string{"--namespace", "cilium", "--namespace", "kube-system", "--service", "foo", "--service", "bar"},
+			filters: []*flowpb.FlowFilter{
+				{SourceService: []string{"cilium/foo", "kube-system/foo", "cilium/bar", "kube-system/bar"}},
+				{DestinationService: []string{"cilium/foo", "kube-system/foo", "cilium/bar", "kube-system/bar"}},
+			},
+		},
+		{
+			name:  "Any request to namespace and pod with namespace",
+			flags: []string{"--to-namespace", "cilium", "--to-pod", "cilium/foo-9c76d6c95-tf788"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationPod: []string{"cilium/foo-9c76d6c95-tf788"}},
+			},
+		},
+		{
+			name:  "Any request from namespace to pod with namespace",
+			flags: []string{"--from-namespace", "kube-system", "--to-pod", "cilium/foo-9c76d6c95-tf788"},
+			filters: []*flowpb.FlowFilter{
+				{SourcePod: []string{"kube-system/"}, DestinationPod: []string{"cilium/foo-9c76d6c95-tf788"}},
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
+			err := cmd.Flags().Parse(tc.flags)
+			diff := cmp.Diff(tc.filters, f.whitelist.flowFilters(), cmpopts.IgnoreUnexported(flowpb.FlowFilter{}))
+			if diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+			if tc.err != "" {
+				require.Errorf(t, err, tc.err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Nil(t, f.blacklist)
+		})
+	}
 }
