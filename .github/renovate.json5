@@ -44,10 +44,29 @@
   ],
   "stopUpdatingLabel": "renovate/stop-updating",
   "packageRules": [
-    // https://docs.renovatebot.com/key-concepts/automerge/#automerge-non-major-updates
+    // Based on https://docs.renovatebot.com/key-concepts/automerge/#automerge-non-major-updates
+    // and tetragon's automerge config.
     {
-      "matchUpdateTypes": ["minor", "patch"],
-      "matchCurrentVersion": "!/^0/",
+      "matchPackageNames": [
+        "go", // golang version directive upgrade in go.mod
+      ],
+      // list of trusted packages that can automerge
+      "matchPackagePrefixes": [
+        "docker.io/library/", // official Docker images
+        "github.com/golang/", // Golang official org
+        "golang.org/x/", // Golang official experimental org
+        "google.golang.org/", // Google official repo for api/genproto/grpc/protobuf
+        "github.com/google/", // Google official github org
+        "k8s.io/", // Kubernetes official repo
+        "sigs.k8s.io/", // Kubernetes official SIG repo
+      ],
+      // auto merge non-major updates
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest"
+      ],
       "automerge": true
     },
     {
