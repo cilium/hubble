@@ -831,22 +831,41 @@ func TestNamespace(t *testing.T) {
 				{SourcePod: []string{"kube-system/"}, DestinationPod: []string{"cilium/foo-9c76d6c95-tf788"}},
 			},
 		},
+		{
+			name:    "conflicting pod and namespace",
+			flags:   []string{"--to-namespace", "kube-system", "--to-pod", "cilium/foo-9c76d6c95-tf788"},
+			filters: []*flowpb.FlowFilter{},
+			err:     `conflicting namepace: "kube-system" does not contain "cilium/foo-9c76d6c95-tf788"`,
+		},
+		{
+			name:    "conflicting svc and namespace",
+			flags:   []string{"--from-namespace", "kube-system", "--from-service", "cilium/foo"},
+			filters: []*flowpb.FlowFilter{},
+			err:     `conflicting namepace: "kube-system" does not contain "cilium/foo"`,
+		},
+		{
+			name:    "conflicting svc and pod",
+			flags:   []string{"--from-service", "cilium/foo", "--from-pod", "kube-system/hubble"},
+			filters: []*flowpb.FlowFilter{},
+			err:     `conflicting namepace: namespace of service "cilium/foo" conflict with pod "kube-system/hubble"`,
+		},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			f := newFlowFilter()
 			cmd := newFlowsCmdWithFilter(viper.New(), f)
 			err := cmd.Flags().Parse(tc.flags)
-			diff := cmp.Diff(tc.filters, f.whitelist.flowFilters(), cmpopts.IgnoreUnexported(flowpb.FlowFilter{}))
-			if diff != "" {
-				t.Errorf("mismatch (-want +got):\n%s", diff)
-			}
 			if tc.err != "" {
 				require.Errorf(t, err, tc.err)
+				return
 			} else {
 				require.NoError(t, err)
 			}
 			assert.Nil(t, f.blacklist)
+			diff := cmp.Diff(tc.filters, f.whitelist.flowFilters(), cmpopts.IgnoreUnexported(flowpb.FlowFilter{}))
+			if diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
