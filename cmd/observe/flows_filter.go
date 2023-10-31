@@ -95,6 +95,25 @@ func (nm namespaceModifier) applyDest(ff *flowpb.FlowFilter) {
 	ff.DestinationService = addNamespacesToFilter(ff.GetDestinationService(), nm)
 }
 
+func (nm namespaceModifier) conflicts(names []string) error {
+	for _, ns := range nm {
+		for _, name := range names {
+			if nn := namespaceFromName(name); nn != "" && nn != ns {
+				return fmt.Errorf("namespace conflict: %q does not contain %q", ns, name)
+			}
+		}
+	}
+	return nil
+}
+
+func namespaceFromName(name string) string {
+	namespacedName := strings.Split(name, "/")
+	if len(namespacedName) > 1 {
+		return namespacedName[0]
+	}
+	return ""
+}
+
 func addNamespacesToFilter(filter []string, ns []string) []string {
 	if len(ns) == 0 || len(filter) == 0 {
 		return filter
@@ -165,6 +184,10 @@ func newFlowFilter() *flowFilter {
 			{"from-fqdn", "from-ip", "ip", "fqdn", "from-pod", "pod"},
 			{"to-fqdn", "to-ip", "ip", "fqdn", "to-namespace", "namespace"},
 			{"to-fqdn", "to-ip", "ip", "fqdn", "to-pod", "pod"},
+			{"to-pod", "namespace"},
+			{"from-pod", "namespace"},
+			{"to-service", "namespace"},
+			{"from-service", "namespace"},
 			{"label", "from-label"},
 			{"label", "to-label"},
 			{"service", "from-service"},
@@ -216,6 +239,41 @@ func (of *flowFilter) checkConflict(t *filterTracker) error {
 		}
 	}
 	return nil
+}
+
+// checkInconsistentNamespaces checks if the namespaces in pods and services make sense
+// i.e. it checks that we don't request a service in one namespace with pods in another namespace
+func checkInconsistentNamespaces(pods, services []string) error {
+	for _, pod := range pods {
+		podNs := namespaceFromName(pod)
+		if podNs == "" {
+			continue
+		}
+		for _, svc := range services {
+			if ns := namespaceFromName(svc); podNs != ns {
+				return fmt.Errorf("namespace of service %q conflict with pod %q", svc, podNs)
+			}
+		}
+	}
+	return nil
+}
+
+// checkNamespaceConflicts checks for conflicts in namespaces, pods and services
+func (t *filterTracker) checkNamespaceConflicts(ff *flowpb.FlowFilter) error {
+	if ff == nil {
+		return nil
+	}
+	return errors.Join(t.ns.conflicts(ff.GetSourcePod()),
+		t.ns.conflicts(ff.GetSourceService()),
+		t.ns.conflicts(ff.GetDestinationPod()),
+		t.ns.conflicts(ff.GetDestinationService()),
+		t.srcNs.conflicts(ff.GetSourcePod()),
+		t.srcNs.conflicts(ff.GetSourceService()),
+		t.dstNs.conflicts(ff.GetDestinationPod()),
+		t.dstNs.conflicts(ff.GetDestinationService()),
+		checkInconsistentNamespaces(ff.GetSourcePod(), ff.GetSourceService()),
+		checkInconsistentNamespaces(ff.GetDestinationPod(), ff.GetDestinationService()),
+	)
 }
 
 func parseTCPFlags(val string) (*flowpb.TCPFlags, error) {
@@ -625,7 +683,10 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		}
 	}
 
-	return nil
+	if err := f.checkNamespaceConflicts(f.left); err != nil {
+		return err
+	}
+	return f.checkNamespaceConflicts(f.right)
 }
 
 func (of flowFilter) Type() string {
