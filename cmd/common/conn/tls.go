@@ -18,10 +18,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func init() {
-	GRPCOptionFuncs = append(GRPCOptionFuncs, grpcOptionTLS)
-}
-
 func grpcOptionTLS(vp *viper.Viper) (grpc.DialOption, error) {
 	target := vp.GetString(config.KeyServer)
 	if !(vp.GetBool(config.KeyTLS) || strings.HasPrefix(target, defaults.TargetTLSPrefix)) {

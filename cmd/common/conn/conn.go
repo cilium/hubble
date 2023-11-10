@@ -29,6 +29,7 @@ func init() {
 		grpcOptionFailOnNonTempDialError,
 		grpcOptionConnError,
 		grpcInterceptors,
+		grpcOptionTLS,
 	)
 }
 
