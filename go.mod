@@ -6,6 +6,7 @@ require (
 	github.com/cilium/cilium v1.15.0-pre.1.0.20231016085253-84f5b169c565
 	github.com/fatih/color v1.15.0
 	github.com/google/go-cmp v0.6.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace

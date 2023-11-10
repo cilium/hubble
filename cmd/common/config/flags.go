@@ -26,6 +26,7 @@ const (
 	KeyBasicAuthUsername = "basic-auth-username"  // string
 	KeyBasicAuthPassword = "basic-auth-password"  // string
 	KeyTimeout           = "timeout"              // time.Duration
+	KeyRequestTimeout    = "request-timeout"      // time.Duration
 )
 
 // GlobalFlags are flags that apply to any command.
@@ -47,6 +48,7 @@ func initGlobalFlags() {
 func initServerFlags() {
 	ServerFlags.String(KeyServer, defaults.ServerAddress, "Address of a Hubble server. Ignored when --input-file is provided.")
 	ServerFlags.Duration(KeyTimeout, defaults.DialTimeout, "Hubble server dialing timeout")
+	ServerFlags.Duration(KeyRequestTimeout, defaults.RequestTimeout, "Unary Request timeout. Only applies to non-streaming RPCs (ServerStatus, ListNodes, ListNamespaces).")
 	ServerFlags.Bool(
 		KeyTLS,
 		false,

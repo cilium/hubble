@@ -324,6 +324,9 @@ github.com/google/gofuzz/bytesource
 # github.com/google/uuid v1.3.1
 ## explicit
 github.com/google/uuid
+# github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
+## explicit; go 1.19
+github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout
 # github.com/hashicorp/consul/api v1.25.1
 ## explicit; go 1.19
 github.com/hashicorp/consul/api

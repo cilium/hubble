@@ -14,7 +14,6 @@ import (
 	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/cmd/common/conn"
 	"github.com/cilium/hubble/cmd/common/template"
-	"github.com/cilium/hubble/pkg/defaults"
 	"github.com/cilium/hubble/pkg/printer"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -35,14 +34,14 @@ func New(vp *viper.Viper) *cobra.Command {
 		Long: `Display shows the status of the Hubble server. This is intended as a basic
 connectivity health check.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+			ctx := cmd.Context()
 			hubbleConn, err := conn.New(ctx, vp.GetString(config.KeyServer), vp.GetDuration(config.KeyTimeout))
 			if err != nil {
 				return err
 			}
 			defer hubbleConn.Close()
-			return runStatus(cmd.OutOrStdout(), hubbleConn)
+
+			return runStatus(ctx, cmd.OutOrStdout(), hubbleConn)
 		},
 	}
 
@@ -74,9 +73,9 @@ connectivity health check.`,
 	return statusCmd
 }
 
-func runStatus(out io.Writer, conn *grpc.ClientConn) error {
+func runStatus(ctx context.Context, out io.Writer, conn *grpc.ClientConn) error {
 	// get the standard GRPC health check to see if the server is up
-	healthy, status, err := getHC(conn)
+	healthy, status, err := getHC(ctx, conn)
 	if err != nil {
 		return fmt.Errorf("failed getting status: %v", err)
 	}
@@ -88,7 +87,7 @@ func runStatus(out io.Writer, conn *grpc.ClientConn) error {
 	}
 
 	// if the server is up, lets try to get hubble specific status
-	ss, err := getStatus(conn)
+	ss, err := getStatus(ctx, conn)
 	if err != nil {
 		return fmt.Errorf("failed to get hubble server status: %v", err)
 	}
@@ -115,10 +114,7 @@ func runStatus(out io.Writer, conn *grpc.ClientConn) error {
 	return p.Close()
 }
 
-func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaults.RequestTimeout)
-	defer cancel()
-
+func getHC(ctx context.Context, conn *grpc.ClientConn) (healthy bool, status string, err error) {
 	req := &healthpb.HealthCheckRequest{Service: v1.ObserverServiceName}
 	resp, err := healthpb.NewHealthClient(conn).Check(ctx, req)
 	if err != nil {
@@ -130,10 +126,7 @@ func getHC(conn *grpc.ClientConn) (healthy bool, status string, err error) {
 	return true, "Ok", nil
 }
 
-func getStatus(conn *grpc.ClientConn) (*observerpb.ServerStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaults.RequestTimeout)
-	defer cancel()
-
+func getStatus(ctx context.Context, conn *grpc.ClientConn) (*observerpb.ServerStatusResponse, error) {
 	req := &observerpb.ServerStatusRequest{}
 	res, err := observerpb.NewObserverClient(conn).ServerStatus(ctx, req)
 	if err != nil {
