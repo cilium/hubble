@@ -22,8 +22,8 @@ GOLANGCILINT_IMAGE_SHA = sha256:c4e67eb904109ade78e2f38d98a424502f016db567640939
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 # renovate: datasource=docker depName=library/golang
-GOLANG_IMAGE_VERSION = 1.21.3-alpine3.18
-GOLANG_IMAGE_SHA = sha256:96a8a701943e7eabd81ebd0963540ad660e29c3b2dc7fb9d7e06af34409e9ba6
+GOLANG_IMAGE_VERSION = 1.21.4-alpine3.18
+GOLANG_IMAGE_SHA = sha256:110b07af87238fbdc5f1df52b00927cf58ce3de358eeeb1854f10a8b5e5e1411
 
 all: hubble
 
