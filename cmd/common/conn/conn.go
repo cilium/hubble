@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cilium/hubble/cmd/common/config"
 	"github.com/cilium/hubble/pkg/defaults"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
@@ -26,6 +28,7 @@ func init() {
 		grpcOptionBlock,
 		grpcOptionFailOnNonTempDialError,
 		grpcOptionConnError,
+		grpcInterceptors,
 	)
 }
 
@@ -39,6 +42,10 @@ func grpcOptionFailOnNonTempDialError(_ *viper.Viper) (grpc.DialOption, error) {
 
 func grpcOptionConnError(_ *viper.Viper) (grpc.DialOption, error) {
 	return grpc.WithReturnConnectionError(), nil
+}
+
+func grpcInterceptors(vp *viper.Viper) (grpc.DialOption, error) {
+	return grpc.WithUnaryInterceptor(timeout.UnaryClientInterceptor(vp.GetDuration(config.KeyRequestTimeout))), nil
 }
 
 var grpcDialOptions []grpc.DialOption
