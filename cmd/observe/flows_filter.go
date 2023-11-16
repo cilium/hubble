@@ -271,140 +271,140 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	// flow identifier filter
 	case "uuid":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.Uuid = append(f.Uuid, val)
+			f.Uuid = append(f.GetUuid(), val)
 		})
 	// fqdn filters
 	case "fqdn":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceFqdn = append(f.SourceFqdn, val)
+			f.SourceFqdn = append(f.GetSourceFqdn(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationFqdn = append(f.DestinationFqdn, val)
+			f.DestinationFqdn = append(f.GetDestinationFqdn(), val)
 		})
 	case "from-fqdn":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceFqdn = append(f.SourceFqdn, val)
+			f.SourceFqdn = append(f.GetSourceFqdn(), val)
 		})
 	case "to-fqdn":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationFqdn = append(f.DestinationFqdn, val)
+			f.DestinationFqdn = append(f.GetDestinationFqdn(), val)
 		})
 
 	// pod filters
 	case "pod":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.SourcePod, val)
+			f.SourcePod = append(f.GetSourcePod(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.DestinationPod, val)
+			f.DestinationPod = append(f.GetDestinationPod(), val)
 		})
 	case "from-pod":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.SourcePod, val)
+			f.SourcePod = append(f.GetSourcePod(), val)
 		})
 	case "to-pod":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.DestinationPod, val)
+			f.DestinationPod = append(f.GetDestinationPod(), val)
 		})
 	// ip filters
 	case "ip":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceIp = append(f.SourceIp, val)
+			f.SourceIp = append(f.GetSourceIp(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationIp = append(f.DestinationIp, val)
+			f.DestinationIp = append(f.GetDestinationIp(), val)
 		})
 	case "from-ip":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceIp = append(f.SourceIp, val)
+			f.SourceIp = append(f.GetSourceIp(), val)
 		})
 	case "to-ip":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationIp = append(f.DestinationIp, val)
+			f.DestinationIp = append(f.GetDestinationIp(), val)
 		})
 	// ip version filters
 	case "ipv4":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.IpVersion = append(f.IpVersion, flowpb.IPVersion_IPv4)
+			f.IpVersion = append(f.GetIpVersion(), flowpb.IPVersion_IPv4)
 		})
 	case "ipv6":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.IpVersion = append(f.IpVersion, flowpb.IPVersion_IPv6)
+			f.IpVersion = append(f.GetIpVersion(), flowpb.IPVersion_IPv6)
 		})
 	case "ip-version":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.IpVersion = append(f.IpVersion, ipVersion(val))
+			f.IpVersion = append(f.GetIpVersion(), ipVersion(val))
 		})
 	// label filters
 	case "label":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceLabel = append(f.SourceLabel, val)
+			f.SourceLabel = append(f.GetSourceLabel(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationLabel = append(f.DestinationLabel, val)
+			f.DestinationLabel = append(f.GetDestinationLabel(), val)
 		})
 	case "from-label":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceLabel = append(f.SourceLabel, val)
+			f.SourceLabel = append(f.GetSourceLabel(), val)
 		})
 	case "to-label":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationLabel = append(f.DestinationLabel, val)
+			f.DestinationLabel = append(f.GetDestinationLabel(), val)
 		})
 
 	// namespace filters (translated to pod filters)
 	case "namespace":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.SourcePod, val+"/")
+			f.SourcePod = append(f.GetSourcePod(), val+"/")
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.DestinationPod, val+"/")
+			f.DestinationPod = append(f.GetDestinationPod(), val+"/")
 		})
 	case "from-namespace":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourcePod = append(f.SourcePod, val+"/")
+			f.SourcePod = append(f.GetSourcePod(), val+"/")
 		})
 	case "to-namespace":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationPod = append(f.DestinationPod, val+"/")
+			f.DestinationPod = append(f.GetDestinationPod(), val+"/")
 		})
 	// service filters
 	case "service":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceService = append(f.SourceService, val)
+			f.SourceService = append(f.GetSourceService(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationService = append(f.DestinationService, val)
+			f.DestinationService = append(f.GetDestinationService(), val)
 		})
 	case "from-service":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceService = append(f.SourceService, val)
+			f.SourceService = append(f.GetSourceService(), val)
 		})
 	case "to-service":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationService = append(f.DestinationService, val)
+			f.DestinationService = append(f.GetDestinationService(), val)
 		})
 
 	// port filters
 	case "port":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourcePort = append(f.SourcePort, val)
+			f.SourcePort = append(f.GetSourcePort(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationPort = append(f.DestinationPort, val)
+			f.DestinationPort = append(f.GetDestinationPort(), val)
 		})
 	case "from-port":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourcePort = append(f.SourcePort, val)
+			f.SourcePort = append(f.GetSourcePort(), val)
 		})
 	case "to-port":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationPort = append(f.DestinationPort, val)
+			f.DestinationPort = append(f.GetDestinationPort(), val)
 		})
 
 	case "trace-id":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.TraceId = append(f.TraceId, val)
+			f.TraceId = append(f.GetTraceId(), val)
 		})
 
 	case "verdict":
@@ -419,26 +419,26 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid --verdict value: %v", val)
 		}
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.Verdict = append(f.Verdict, flowpb.Verdict(vv))
+			f.Verdict = append(f.GetVerdict(), flowpb.Verdict(vv))
 		})
 
 	case "http-status":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.HttpStatusCode = append(f.HttpStatusCode, val)
+			f.HttpStatusCode = append(f.GetHttpStatusCode(), val)
 		})
 
 	case "http-method":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.HttpMethod = append(f.HttpMethod, val)
+			f.HttpMethod = append(f.GetHttpMethod(), val)
 		})
 
 	case "http-path":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.HttpPath = append(f.HttpPath, val)
+			f.HttpPath = append(f.GetHttpPath(), val)
 		})
 	case "http-url":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.HttpUrl = append(f.HttpUrl, val)
+			f.HttpUrl = append(f.GetHttpUrl(), val)
 		})
 
 	case "type":
@@ -480,7 +480,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 					typeFilter.SubType = int32(st)
 				}
 			}
-			if !typeFilter.MatchSubType {
+			if !typeFilter.GetMatchSubType() {
 				t, err := strconv.ParseUint(s[1], 10, 32)
 				if err != nil {
 					return fmt.Errorf("unable to parse event sub-type '%s', not a known sub-type name and unable to parse as numeric value: %s", s[1], err)
@@ -490,31 +490,31 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			}
 		}
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.EventType = append(f.EventType, typeFilter)
+			f.EventType = append(f.GetEventType(), typeFilter)
 		})
 	case "protocol":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.Protocol = append(f.Protocol, val)
+			f.Protocol = append(f.GetProtocol(), val)
 		})
 
 	// workload filters
 	case "workload":
 		workload := parseWorkload(val)
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceWorkload = append(f.SourceWorkload, workload)
+			f.SourceWorkload = append(f.GetSourceWorkload(), workload)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationWorkload = append(f.DestinationWorkload, workload)
+			f.DestinationWorkload = append(f.GetDestinationWorkload(), workload)
 		})
 	case "from-workload":
 		workload := parseWorkload(val)
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceWorkload = append(f.SourceWorkload, workload)
+			f.SourceWorkload = append(f.GetSourceWorkload(), workload)
 		})
 	case "to-workload":
 		workload := parseWorkload(val)
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationWorkload = append(f.DestinationWorkload, workload)
+			f.DestinationWorkload = append(f.GetDestinationWorkload(), workload)
 		})
 
 	// identity filters
@@ -524,10 +524,10 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
 		f.applyLeft(func(f *flowpb.FlowFilter) {
-			f.SourceIdentity = append(f.SourceIdentity, identity.Uint32())
+			f.SourceIdentity = append(f.GetSourceIdentity(), identity.Uint32())
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
-			f.DestinationIdentity = append(f.DestinationIdentity, identity.Uint32())
+			f.DestinationIdentity = append(f.GetDestinationIdentity(), identity.Uint32())
 		})
 	case "from-identity":
 		identity, err := parseIdentity(val)
@@ -535,7 +535,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceIdentity = append(f.SourceIdentity, identity.Uint32())
+			f.SourceIdentity = append(f.GetSourceIdentity(), identity.Uint32())
 		})
 	case "to-identity":
 		identity, err := parseIdentity(val)
@@ -543,13 +543,13 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return fmt.Errorf("invalid security identity, expected one of %v or a numeric value", reservedIdentitiesNames())
 		}
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.DestinationIdentity = append(f.DestinationIdentity, identity.Uint32())
+			f.DestinationIdentity = append(f.GetDestinationIdentity(), identity.Uint32())
 		})
 
 	// node name filters
 	case "node-name":
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.NodeName = append(f.NodeName, val)
+			f.NodeName = append(f.GetNodeName(), val)
 		})
 
 	// TCP Flags filter
@@ -559,7 +559,7 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			return err
 		}
 		f.apply(func(f *flowpb.FlowFilter) {
-			f.TcpFlags = append(f.TcpFlags, flags)
+			f.TcpFlags = append(f.GetTcpFlags(), flags)
 		})
 
 	// traffic direction filter
@@ -567,11 +567,11 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		switch td := strings.ToLower(val); td {
 		case "ingress":
 			f.apply(func(f *flowpb.FlowFilter) {
-				f.TrafficDirection = append(f.TrafficDirection, flowpb.TrafficDirection_INGRESS)
+				f.TrafficDirection = append(f.GetTrafficDirection(), flowpb.TrafficDirection_INGRESS)
 			})
 		case "egress":
 			f.apply(func(f *flowpb.FlowFilter) {
-				f.TrafficDirection = append(f.TrafficDirection, flowpb.TrafficDirection_EGRESS)
+				f.TrafficDirection = append(f.GetTrafficDirection(), flowpb.TrafficDirection_EGRESS)
 			})
 		default:
 			return fmt.Errorf("%s: invalid traffic direction, expected ingress or egress", td)

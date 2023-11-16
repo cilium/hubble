@@ -94,11 +94,11 @@ func Test_getFlowsRequestWithRawFilters(t *testing.T) {
 
 	// convert filters in the request back to JSON and check if it matches the original allowlist/denylist.
 	var b strings.Builder
-	err = json.NewEncoder(&b).Encode(req.Whitelist)
+	err = json.NewEncoder(&b).Encode(req.GetWhitelist())
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(allowlist, ",")), b.String())
 	b.Reset()
-	err = json.NewEncoder(&b).Encode(req.Blacklist)
+	err = json.NewEncoder(&b).Encode(req.GetBlacklist())
 	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(denylist, ",")), b.String())
 }
@@ -181,11 +181,11 @@ func Test_getFlowsRequestWithInputFile(t *testing.T) {
 	otherOpts.inputFile = "myfile"
 	req, err := getFlowsRequest(newFlowFilter(), nil, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, uint64(0), req.Number)
+	assert.Equal(t, uint64(0), req.GetNumber())
 
 	// .. but you can explicitly specify --last flag
 	selectorOpts.last = 42
 	req, err = getFlowsRequest(newFlowFilter(), nil, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, uint64(42), req.Number)
+	assert.Equal(t, uint64(42), req.GetNumber())
 }

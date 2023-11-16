@@ -74,7 +74,7 @@ func runListNodes(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn
 
 	nodes := res.GetNodes()
 	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].Name < nodes[j].Name
+		return nodes[i].GetName() < nodes[j].GetName()
 	})
 	switch listOpts.output {
 	case "json":
@@ -114,7 +114,7 @@ func nodeTableOutput(buf io.Writer, nodes []*observerpb.Node) error {
 			tls := notAvailable
 			if t := n.GetTls(); t != nil {
 				tls = "Disabled"
-				if t.Enabled {
+				if t.GetEnabled() {
 					tls = "Enabled"
 				}
 			}

@@ -83,11 +83,11 @@ type ioReaderClient struct {
 }
 
 func newIOReaderClient(ctx context.Context, scanner *bufio.Scanner, request *observerpb.GetFlowsRequest) (*ioReaderClient, error) {
-	allow, err := filters.BuildFilterList(ctx, request.Whitelist, filters.DefaultFilters)
+	allow, err := filters.BuildFilterList(ctx, request.GetWhitelist(), filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}
-	deny, err := filters.BuildFilterList(ctx, request.Blacklist, filters.DefaultFilters)
+	deny, err := filters.BuildFilterList(ctx, request.GetBlacklist(), filters.DefaultFilters)
 	if err != nil {
 		return nil, err
 	}
@@ -205,13 +205,13 @@ func (c *ioReaderClient) unmarshalNext() *observerpb.GetFlowsResponse {
 		logger.Logger.Warn("Failed to unmarshal json to flow", "error", err, "line", line)
 		return nil
 	}
-	if c.request.Since != nil && c.request.Since.AsTime().After(res.Time.AsTime()) {
+	if c.request.GetSince() != nil && c.request.GetSince().AsTime().After(res.GetTime().AsTime()) {
 		return nil
 	}
-	if c.request.Until != nil && c.request.Until.AsTime().Before(res.Time.AsTime()) {
+	if c.request.GetUntil() != nil && c.request.GetUntil().AsTime().Before(res.GetTime().AsTime()) {
 		return nil
 	}
-	if !filters.Apply(c.allow, c.deny, &v1.Event{Timestamp: res.Time, Event: res.GetFlow()}) {
+	if !filters.Apply(c.allow, c.deny, &v1.Event{Timestamp: res.GetTime(), Event: res.GetFlow()}) {
 		return nil
 	}
 	return &res

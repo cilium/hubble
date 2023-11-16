@@ -67,13 +67,13 @@ func runReflect(ctx context.Context, cmd *cobra.Command, conn *grpc.ClientConn) 
 	// so that we don't print them multiple times.
 	visited := make(map[string]struct{})
 	encoder := json.NewEncoder(cmd.OutOrStdout())
-	for _, svc := range services.ListServicesResponse.Service {
-		if svc.Name == "grpc.reflection.v1alpha.ServerReflection" || svc.Name == "grpc.health.v1.Health" {
+	for _, svc := range services.ListServicesResponse.GetService() {
+		if svc.GetName() == "grpc.reflection.v1alpha.ServerReflection" || svc.GetName() == "grpc.health.v1.Health" {
 			continue
 		}
 		err = client.Send(&rpb.ServerReflectionRequest{
 			MessageRequest: &rpb.ServerReflectionRequest_FileContainingSymbol{
-				FileContainingSymbol: svc.Name,
+				FileContainingSymbol: svc.GetName(),
 			},
 		})
 		if err != nil {
@@ -101,7 +101,7 @@ func handleDescriptorResponse(
 	resp *rpb.ServerReflectionResponse_FileDescriptorResponse,
 	encoder *json.Encoder,
 ) error {
-	for _, r := range resp.FileDescriptorResponse.FileDescriptorProto {
+	for _, r := range resp.FileDescriptorResponse.GetFileDescriptorProto() {
 		desc := descriptorpb.FileDescriptorProto{}
 		if err := proto.Unmarshal(r, &desc); err != nil {
 			return err
@@ -112,7 +112,7 @@ func handleDescriptorResponse(
 				return err
 			}
 		}
-		for _, dep := range desc.Dependency {
+		for _, dep := range desc.GetDependency() {
 			if err := resolveDependency(visited, client, dep, encoder); err != nil {
 				return err
 			}

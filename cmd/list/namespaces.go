@@ -86,9 +86,9 @@ func namespaceTableOutput(buf io.Writer, namespaces []*observerpb.Namespace) err
 
 	// contents
 	for _, ns := range namespaces {
-		fmt.Fprint(tw, ns.Namespace)
-		if listOpts.output == "wide" && ns.Cluster != "" {
-			fmt.Fprint(tw, "\t", ns.Cluster)
+		fmt.Fprint(tw, ns.GetNamespace())
+		if listOpts.output == "wide" && ns.GetCluster() != "" {
+			fmt.Fprint(tw, "\t", ns.GetCluster())
 		}
 		fmt.Fprintln(tw)
 	}
