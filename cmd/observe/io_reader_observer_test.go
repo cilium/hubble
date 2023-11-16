@@ -23,16 +23,16 @@ func Test_getFlowsBasic(t *testing.T) {
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
 	req := observerpb.GetFlowsRequest{}
 	client, err := server.GetFlows(context.Background(), &req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	for i := 0; i < len(flows); i++ {
 		_, err = client.Recv()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
@@ -56,7 +56,7 @@ func Test_getFlowsTimeRange(t *testing.T) {
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
@@ -65,9 +65,9 @@ func Test_getFlowsTimeRange(t *testing.T) {
 		Until: &timestamppb.Timestamp{Seconds: 150},
 	}
 	client, err := server.GetFlows(context.Background(), &req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	res, err := client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[1], res)
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
@@ -91,7 +91,7 @@ func Test_getFlowsLast(t *testing.T) {
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
@@ -100,12 +100,12 @@ func Test_getFlowsLast(t *testing.T) {
 		First:  false,
 	}
 	client, err := server.GetFlows(context.Background(), &req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	res, err := client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[1], res)
 	res, err = client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[2], res)
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
@@ -129,7 +129,7 @@ func Test_getFlowsFirst(t *testing.T) {
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
@@ -138,12 +138,12 @@ func Test_getFlowsFirst(t *testing.T) {
 		First:  true,
 	}
 	client, err := server.GetFlows(context.Background(), &req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	res, err := client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[0], res)
 	res, err = client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[1], res)
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
@@ -167,7 +167,7 @@ func Test_getFlowsFilter(t *testing.T) {
 	var flowStrings []string
 	for _, f := range flows {
 		b, err := f.MarshalJSON()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		flowStrings = append(flowStrings, string(b))
 	}
 	server := NewIOReaderObserver(strings.NewReader(strings.Join(flowStrings, "\n") + "\n"))
@@ -179,12 +179,12 @@ func Test_getFlowsFilter(t *testing.T) {
 		},
 	}
 	client, err := server.GetFlows(context.Background(), &req)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	res, err := client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[0], res)
 	res, err = client.Recv()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, flows[2], res)
 	_, err = client.Recv()
 	assert.Equal(t, io.EOF, err)
