@@ -799,7 +799,7 @@ func TestHostname(t *testing.T) {
 
 func TestPrinter_AgentEventDetails(t *testing.T) {
 	startTS := timestamppb.New(time.Now())
-	assert.NoError(t, startTS.CheckValid())
+	require.NoError(t, startTS.CheckValid())
 
 	tests := []struct {
 		name string

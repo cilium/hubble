@@ -45,16 +45,16 @@ func Test_getFlowsRequest(t *testing.T) {
 	selectorOpts.until = ""
 	filter := newFlowFilter()
 	req, err := getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.since = "2021-03-23T00:00:00Z"
 	selectorOpts.until = "2021-03-24T00:00:00Z"
 	req, err = getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	since, err := time.Parse(time.RFC3339, selectorOpts.since)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: defaults.FlowPrintCount,
 		Since:  timestamppb.New(since),
@@ -67,13 +67,13 @@ func Test_getFlowsRequestWithoutSince(t *testing.T) {
 	selectorOpts.until = ""
 	filter := newFlowFilter()
 	req, err := getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{Number: defaults.FlowPrintCount}, req)
 	selectorOpts.until = "2021-03-24T00:00:00Z"
 	req, err = getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	until, err := time.Parse(time.RFC3339, selectorOpts.until)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: defaults.FlowPrintCount,
 		Until:  timestamppb.New(until),
@@ -90,16 +90,16 @@ func Test_getFlowsRequestWithRawFilters(t *testing.T) {
 		`{"destination_label":["k8s:k8s-app=kube-dns"]}`,
 	}
 	req, err := getFlowsRequest(newFlowFilter(), allowlist, denylist)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// convert filters in the request back to JSON and check if it matches the original allowlist/denylist.
 	var b strings.Builder
 	err = json.NewEncoder(&b).Encode(req.GetWhitelist())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(allowlist, ",")), b.String())
 	b.Reset()
 	err = json.NewEncoder(&b).Encode(req.GetBlacklist())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("[%s]\n", strings.Join(denylist, ",")), b.String())
 }
 
@@ -124,7 +124,7 @@ func Test_getFlowFiltersYAML(t *testing.T) {
 denylist:
     - '{"source_port":["80"]}'
 `
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, out)
 }
 
@@ -133,7 +133,7 @@ func Test_getFlowsRequest_ExperimentalFieldMask_valid(t *testing.T) {
 	experimentalOpts.fieldMask = []string{"time", "verdict"}
 	filter := newFlowFilter()
 	req, err := getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: 20,
 		Experimental: &observerpb.GetFlowsRequest_Experimental{
@@ -146,7 +146,7 @@ func Test_getFlowsRequest_ExperimentalFieldMask_invalid(t *testing.T) {
 	experimentalOpts.fieldMask = []string{"time", "verdict", "invalid-field"}
 	filter := newFlowFilter()
 	_, err := getFlowsRequest(filter, nil, nil)
-	assert.ErrorContains(t, err, "invalid-field")
+	require.ErrorContains(t, err, "invalid-field")
 }
 
 func Test_getFlowsRequest_ExperimentalUseDefaultFieldMask(t *testing.T) {
@@ -157,7 +157,7 @@ func Test_getFlowsRequest_ExperimentalUseDefaultFieldMask(t *testing.T) {
 	filter := newFlowFilter()
 	require.NoError(t, handleFlowArgs(os.Stdout, filter, false))
 	req, err := getFlowsRequest(filter, nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, &observerpb.GetFlowsRequest{
 		Number: 20,
 		Experimental: &observerpb.GetFlowsRequest_Experimental{
@@ -172,7 +172,7 @@ func Test_getFlowsRequest_ExperimentalFieldMask_non_json_output(t *testing.T) {
 	experimentalOpts.fieldMask = []string{"time", "verdict"}
 	filter := newFlowFilter()
 	err := handleFlowArgs(os.Stdout, filter, false)
-	assert.ErrorContains(t, err, "not compatible")
+	require.ErrorContains(t, err, "not compatible")
 }
 
 func Test_getFlowsRequestWithInputFile(t *testing.T) {
@@ -180,12 +180,12 @@ func Test_getFlowsRequestWithInputFile(t *testing.T) {
 	selectorOpts.last = 0
 	otherOpts.inputFile = "myfile"
 	req, err := getFlowsRequest(newFlowFilter(), nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(0), req.GetNumber())
 
 	// .. but you can explicitly specify --last flag
 	selectorOpts.last = 42
 	req, err = getFlowsRequest(newFlowFilter(), nil, nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, uint64(42), req.GetNumber())
 }

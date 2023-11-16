@@ -567,9 +567,9 @@ func TestTrafficDirection(t *testing.T) {
 				t.Errorf("mismatch (-want +got):\n%s", diff)
 			}
 			if tc.err != "" {
-				assert.Errorf(t, err, tc.err)
+				require.Errorf(t, err, tc.err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 			assert.Nil(t, f.blacklist)
 		})
