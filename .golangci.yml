@@ -39,11 +39,14 @@ linters:
     - noctx
     - nosprintfhostport
     - predeclared
+    - protogetter
     - reassign
     - revive
+    - sloglint
     - staticcheck
     - tagalign
     - tenv
+    - testifylint
     - typecheck
     - unconvert
     - unparam
