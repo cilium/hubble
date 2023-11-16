@@ -111,7 +111,7 @@ type getFlowsFilters struct {
 // passed to hubble observe command via `--config` flag.
 func getFlowFiltersYAML(req *observerpb.GetFlowsRequest) (string, error) {
 	var allowlist, denylist []string
-	for _, filter := range req.Whitelist {
+	for _, filter := range req.GetWhitelist() {
 		filterJSON, err := json.Marshal(filter)
 		if err != nil {
 			return "", err
@@ -119,7 +119,7 @@ func getFlowFiltersYAML(req *observerpb.GetFlowsRequest) (string, error) {
 		allowlist = append(allowlist, string(filterJSON))
 
 	}
-	for _, filter := range req.Blacklist {
+	for _, filter := range req.GetBlacklist() {
 		filterJSON, err := json.Marshal(filter)
 		if err != nil {
 			return "", err

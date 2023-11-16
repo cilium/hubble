@@ -76,8 +76,8 @@ func TestPrinter_AllFieldsInMask(t *testing.T) {
 		}
 	}
 	check(f.ProtoReflect(), "")
-	check(f.Source.ProtoReflect(), "source.")
-	check(f.Destination.ProtoReflect(), "destination.")
+	check(f.GetSource().ProtoReflect(), "source.")
+	check(f.GetDestination().ProtoReflect(), "destination.")
 }
 
 func TestPrinter_WriteProtoFlow(t *testing.T) {
