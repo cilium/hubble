@@ -316,7 +316,7 @@ func GetsockoptString(fd, level, opt int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return ByteSliceToString(buf[:vallen]), nil
+	return string(buf[:vallen-1]), nil
 }
 
 //sys	recvfrom(fd int, p []byte, flags int, from *RawSockaddrAny, fromlen *_Socklen) (n int, err error)

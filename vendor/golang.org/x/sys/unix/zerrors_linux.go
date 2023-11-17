@@ -486,6 +486,7 @@ const (
 	BPF_F_ANY_ALIGNMENT                         = 0x2
 	BPF_F_BEFORE                                = 0x8
 	BPF_F_ID                                    = 0x20
+	BPF_F_LINK                                  = 0x2000
 	BPF_F_NETFILTER_IP_DEFRAG                   = 0x1
 	BPF_F_QUERY_EFFECTIVE                       = 0x1
 	BPF_F_REPLACE                               = 0x4

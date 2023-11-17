@@ -1104,7 +1104,7 @@ func GetsockoptString(fd, level, opt int) (string, error) {
 		return "", err
 	}
 
-	return ByteSliceToString(buf[:vallen]), nil
+	return string(buf[:vallen-1]), nil
 }
 
 func Recvmsg(fd int, p, oob []byte, flags int) (n, oobn int, recvflags int, from Sockaddr, err error) {
