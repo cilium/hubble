@@ -12,7 +12,7 @@ require (
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/sys v0.14.1-0.20231113162313-11eadc05e9bf
+	golang.org/x/sys v0.14.1-0.20231118010836-13b15b780d90
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
