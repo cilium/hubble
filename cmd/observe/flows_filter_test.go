@@ -755,6 +755,26 @@ func TestHTTPURL(t *testing.T) {
 	assert.Nil(t, f.blacklist)
 }
 
+func TestHTTPHeader(t *testing.T) {
+	f := newFlowFilter()
+	cmd := newFlowsCmdWithFilter(viper.New(), f)
+
+	require.NoError(t, cmd.Flags().Parse([]string{"--http-header", `foo:bar`, "--http-header", `Foo:coco:bar`}))
+	if diff := cmp.Diff(
+		[]*flowpb.FlowFilter{
+			{HttpHeader: []*flowpb.HTTPHeader{{Key: "foo", Value: "bar"}, {Key: "Foo", Value: "coco:bar"}}},
+		},
+		f.whitelist.flowFilters(),
+		cmpopts.IgnoreUnexported(flowpb.FlowFilter{}, flowpb.HTTPHeader{}),
+	); diff != "" {
+		t.Errorf("mismatch (-want +got):\n%s", diff)
+	}
+	assert.Nil(t, f.blacklist)
+
+	// test with invalid value
+	require.Error(t, cmd.Flags().Parse([]string{"--http-header", `foobar`}))
+}
+
 func TestNamespace(t *testing.T) {
 
 	tt := []struct {

@@ -198,6 +198,7 @@ func newFlowFilter() *flowFilter {
 			{"http-method"},
 			{"http-path"},
 			{"http-url"},
+			{"http-header"},
 			{"protocol"},
 			{"port", "to-port"},
 			{"port", "from-port"},
@@ -544,6 +545,16 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "http-url":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.HttpUrl = append(f.GetHttpUrl(), val)
+		})
+
+	case "http-header":
+		key, hVal, found := strings.Cut(val, ":")
+		if !found {
+			return fmt.Errorf("invalid http-header value %q, expected name:value", val)
+		}
+		f.apply(func(f *flowpb.FlowFilter) {
+			header := &flowpb.HTTPHeader{Key: key, Value: hVal}
+			f.HttpHeader = append(f.GetHttpHeader(), header)
 		})
 
 	case "type":

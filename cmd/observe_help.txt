@@ -48,6 +48,7 @@ Filters Flags:
       --from-port filter           Show only flows with the given source port (e.g. 8080)
       --from-service filter        Shows flows where the source IP address matches the ClusterIP address of the given service name prefix([namespace/]<svc-name>). If namespace is not provided, 'default' is used
       --from-workload filter       Show all flows originating at an endpoint with the given workload
+      --http-header filter         Show only flows which match this HTTP header key:value pairs (e.g. "foo:bar")
       --http-method filter         Show only flows which match this HTTP method (e.g. "get", "post")
       --http-path filter           Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")
       --http-status filter         Show only flows which match this HTTP status code prefix (e.g. "404", "5+")

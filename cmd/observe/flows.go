@@ -392,6 +392,9 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	filterFlags.Var(filterVar(
 		"http-url", ofilter,
 		`Show only flows which match this HTTP URL regular expressions (e.g. "http://.*cilium\.io/page/\\d+")`))
+	filterFlags.Var(filterVar(
+		"http-header", ofilter,
+		`Show only flows which match this HTTP header key:value pairs (e.g. "foo:bar")`))
 
 	filterFlags.Var(filterVar(
 		"trace-id", ofilter,
