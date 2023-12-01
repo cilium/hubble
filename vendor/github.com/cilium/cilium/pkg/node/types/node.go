@@ -203,6 +203,16 @@ func (n *RegisterNode) DeepKeyCopy() store.LocalKey {
 	return n.DeepCopy()
 }
 
+func (n *RegisterNode) Unmarshal(_ string, data []byte) error {
+	newNode := Node{}
+	if err := json.Unmarshal(data, &newNode); err != nil {
+		return err
+	}
+
+	n.Node = newNode
+	return nil
+}
+
 // Node contains the nodes name, the list of addresses to this address
 //
 // +k8s:deepcopy-gen=true
@@ -287,38 +297,23 @@ type Address struct {
 	IP   net.IP
 }
 
+func (a Address) ToString() string {
+	return a.IP.String()
+}
+
+func (a Address) AddrType() addressing.AddressType {
+	return a.Type
+}
+
 // GetNodeIP returns one of the node's IP addresses available with the
 // following priority:
 // - NodeInternalIP
 // - NodeExternalIP
 // - other IP address type
+// Nil is returned if GetNodeIP fails to extract an IP from the Node based
+// on the provided address family.
 func (n *Node) GetNodeIP(ipv6 bool) net.IP {
-	var backupIP net.IP
-	for _, addr := range n.IPAddresses {
-		if (ipv6 && addr.IP.To4() != nil) ||
-			(!ipv6 && addr.IP.To4() == nil) {
-			continue
-		}
-		switch addr.Type {
-		// Ignore CiliumInternalIPs
-		case addressing.NodeCiliumInternalIP:
-			continue
-		// Always prefer a cluster internal IP
-		case addressing.NodeInternalIP:
-			return addr.IP
-		case addressing.NodeExternalIP:
-			// Fall back to external Node IP
-			// if no internal IP could be found
-			backupIP = addr.IP
-		default:
-			// As a last resort, if no internal or external
-			// IP was found, use any node address available
-			if backupIP == nil {
-				backupIP = addr.IP
-			}
-		}
-	}
-	return backupIP
+	return addressing.ExtractNodeIP[Address](n.IPAddresses, ipv6)
 }
 
 // GetExternalIP returns ExternalIP of k8s Node. If not present, then it
@@ -572,6 +567,7 @@ func (n *Node) GetModel() *models.NodeElement {
 		SecondaryAddresses:    n.getSecondaryAddresses(),
 		HealthEndpointAddress: n.getHealthAddresses(),
 		IngressAddress:        n.getIngressAddresses(),
+		Source:                string(n.Source),
 	}
 }
 
