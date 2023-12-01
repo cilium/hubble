@@ -180,14 +180,14 @@ type flowFilter struct {
 func newFlowFilter() *flowFilter {
 	return &flowFilter{
 		conflicts: [][]string{
-			{"from-fqdn", "from-ip", "ip", "fqdn", "from-namespace", "namespace"},
+			{"from-fqdn", "from-ip", "ip", "fqdn", "from-namespace", "namespace", "from-all-namespaces", "all-namespaces"},
 			{"from-fqdn", "from-ip", "ip", "fqdn", "from-pod", "pod"},
-			{"to-fqdn", "to-ip", "ip", "fqdn", "to-namespace", "namespace"},
+			{"to-fqdn", "to-ip", "ip", "fqdn", "to-namespace", "namespace", "to-all-namespaces", "all-namespaces"},
 			{"to-fqdn", "to-ip", "ip", "fqdn", "to-pod", "pod"},
-			{"to-pod", "namespace"},
-			{"from-pod", "namespace"},
-			{"to-service", "namespace"},
-			{"from-service", "namespace"},
+			{"to-pod", "namespace", "all-namespaces"},
+			{"from-pod", "namespace", "all-namespaces"},
+			{"to-service", "namespace", "all-namespaces"},
+			{"from-service", "namespace", "all-namespaces"},
 			{"label", "from-label"},
 			{"label", "to-label"},
 			{"service", "from-service"},
@@ -473,6 +473,14 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		f.srcNs = append(f.srcNs, val)
 	case "to-namespace":
 		f.dstNs = append(f.dstNs, val)
+
+	// namespace filters (will be applied to pods and/or service filters)
+	case "all-namespaces":
+		f.ns = append(f.ns, "")
+	case "from-all-namespaces":
+		f.srcNs = append(f.srcNs, "")
+	case "to-all-namespaces":
+		f.dstNs = append(f.dstNs, "")
 
 	// service filters
 	case "service":

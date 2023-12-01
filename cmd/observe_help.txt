@@ -38,69 +38,72 @@ Selectors Flags:
                         
 
 Filters Flags:
-      --cluster filter             Show all flows which match the cluster names (e.g. "test-cluster", "prod-*")
-      --fqdn filter                Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").
-      --from-fqdn filter           Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").
-      --from-identity filter       Show all flows originating at an endpoint with the given security identity
-      --from-ip filter             Show all flows originating at the given IP address. Each of the source IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
-      --from-label filter          Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")
-      --from-namespace filter      Show all flows originating in the given Kubernetes namespace.
-      --from-pod filter            Show all flows originating in the given pod name prefix([namespace/]<pod-name>). If namespace is not provided, 'default' is used
-      --from-port filter           Show only flows with the given source port (e.g. 8080)
-      --from-service filter        Shows flows where the source IP address matches the ClusterIP address of the given service name prefix([namespace/]<svc-name>). If namespace is not provided, 'default' is used
-      --from-workload filter       Show all flows originating at an endpoint with the given workload
-      --http-header filter         Show only flows which match this HTTP header key:value pairs (e.g. "foo:bar")
-      --http-method filter         Show only flows which match this HTTP method (e.g. "get", "post")
-      --http-path filter           Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")
-      --http-status filter         Show only flows which match this HTTP status code prefix (e.g. "404", "5+")
-      --http-url filter            Show only flows which match this HTTP URL regular expressions (e.g. "http://.*cilium\.io/page/\\d+")
-      --identity filter            Show all flows related to an endpoint with the given security identity
-      --ip filter                  Show all flows related to the given IP address. Each of the IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
-      --ip-version filter          Show only IPv4, IPv6 flows or non IP flows (e.g. ARP packets) (ie: "none", "v4", "v6")
-  -4, --ipv4 filter[=v4]           Show only IPv4 flows
-  -6, --ipv6 filter[=v6]           Show only IPv6 flows
-  -l, --label filter               Show only flows related to an endpoint with the given labels (e.g. "key1=value1", "reserved:world")
-  -n, --namespace filter           Show all flows related to the given Kubernetes namespace.
-      --node-name filter           Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")
-      --not filter[=true]          Reverses the next filter to be blacklist i.e. --not --from-ip 2.2.2.2
-      --pod filter                 Show all flows related to the given pod name prefix ([namespace/]<pod-name>). If namespace is not provided, 'default' is used.
-      --port filter                Show only flows with given port in either source or destination (e.g. 8080)
-      --protocol filter            Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")
-      --service filter             Shows flows where either the source or destination IP address matches the ClusterIP address of the given service name prefix ([namespace/]<svc-name>). If namespace is not provided, 'default' is used. 
-      --tcp-flags filter           Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")
-      --to-fqdn filter             Show all flows terminating at the given fully qualified domain name (e.g. "*.cilium.io").
-      --to-identity filter         Show all flows terminating at an endpoint with the given security identity
-      --to-ip filter               Show all flows terminating at the given IP address. Each of the destination IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
-      --to-label filter            Show only flows terminating in an endpoint with given labels (e.g. "key1=value1", "reserved:world")
-      --to-namespace filter        Show all flows terminating in the given Kubernetes namespace.
-      --to-pod filter              Show all flows terminating in the given pod name prefix([namespace/]<pod-name>). If namespace is not provided, 'default' is used
-      --to-port filter             Show only flows with the given destination port (e.g. 8080)
-      --to-service filter          Shows flows where the destination IP address matches the ClusterIP address of the given service name prefix ([namespace/]<svc-name>). If namespace is not provided, 'default' is used
-      --to-workload filter         Show all flows terminating at an endpoint with the given workload
-      --trace-id filter            Show only flows which match this trace ID
-      --traffic-direction filter   Show all flows in the given traffic direction (either ingress or egress)
-  -t, --type filter                Filter by event types TYPE[:SUBTYPE]. Available types and subtypes:
-                                   TYPE             SUBTYPE
-                                   capture          n/a
-                                   drop             n/a
-                                   l7               n/a
-                                   policy-verdict   n/a
-                                   trace            from-endpoint
-                                                    from-host
-                                                    from-network
-                                                    from-overlay
-                                                    from-proxy
-                                                    from-stack
-                                                    to-endpoint
-                                                    to-host
-                                                    to-network
-                                                    to-overlay
-                                                    to-proxy
-                                                    to-stack
-                                   trace-sock       n/a
-      --uuid filter                Show the only flow matching this unique flow identifier, if any
-      --verdict filter             Show only flows with this verdict [FORWARDED, DROPPED, AUDIT, REDIRECTED, ERROR, TRACED, TRANSLATED]
-      --workload filter            Show all flows related to an endpoint with the given workload
+  -A, --all-namespaces filter[=true]        Show all flows in any Kubernetes namespace.
+      --cluster filter                      Show all flows which match the cluster names (e.g. "test-cluster", "prod-*")
+      --fqdn filter                         Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").
+      --from-all-namespaces filter[=true]   Show flows originating in any Kubernetes namespace.
+      --from-fqdn filter                    Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").
+      --from-identity filter                Show all flows originating at an endpoint with the given security identity
+      --from-ip filter                      Show all flows originating at the given IP address. Each of the source IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
+      --from-label filter                   Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")
+      --from-namespace filter               Show all flows originating in the given Kubernetes namespace.
+      --from-pod filter                     Show all flows originating in the given pod name prefix([namespace/]<pod-name>). If namespace is not provided, 'default' is used
+      --from-port filter                    Show only flows with the given source port (e.g. 8080)
+      --from-service filter                 Shows flows where the source IP address matches the ClusterIP address of the given service name prefix([namespace/]<svc-name>). If namespace is not provided, 'default' is used
+      --from-workload filter                Show all flows originating at an endpoint with the given workload
+      --http-header filter                  Show only flows which match this HTTP header key:value pairs (e.g. "foo:bar")
+      --http-method filter                  Show only flows which match this HTTP method (e.g. "get", "post")
+      --http-path filter                    Show only flows which match this HTTP path regular expressions (e.g. "/page/\\d+")
+      --http-status filter                  Show only flows which match this HTTP status code prefix (e.g. "404", "5+")
+      --http-url filter                     Show only flows which match this HTTP URL regular expressions (e.g. "http://.*cilium\.io/page/\\d+")
+      --identity filter                     Show all flows related to an endpoint with the given security identity
+      --ip filter                           Show all flows related to the given IP address. Each of the IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
+      --ip-version filter                   Show only IPv4, IPv6 flows or non IP flows (e.g. ARP packets) (ie: "none", "v4", "v6")
+  -4, --ipv4 filter[=v4]                    Show only IPv4 flows
+  -6, --ipv6 filter[=v6]                    Show only IPv6 flows
+  -l, --label filter                        Show only flows related to an endpoint with the given labels (e.g. "key1=value1", "reserved:world")
+  -n, --namespace filter                    Show all flows related to the given Kubernetes namespace.
+      --node-name filter                    Show all flows which match the given node names (e.g. "k8s*", "test-cluster/*.company.com")
+      --not filter[=true]                   Reverses the next filter to be blacklist i.e. --not --from-ip 2.2.2.2
+      --pod filter                          Show all flows related to the given pod name prefix ([namespace/]<pod-name>). If namespace is not provided, 'default' is used.
+      --port filter                         Show only flows with given port in either source or destination (e.g. 8080)
+      --protocol filter                     Show only flows which match the given L4/L7 flow protocol (e.g. "udp", "http")
+      --service filter                      Shows flows where either the source or destination IP address matches the ClusterIP address of the given service name prefix ([namespace/]<svc-name>). If namespace is not provided, 'default' is used. 
+      --tcp-flags filter                    Show only flows which match the given TCP flags (e.g. "syn", "ack", "fin")
+      --to-all-namespaces filter[=true]     Show flows terminating in any Kubernetes namespace.
+      --to-fqdn filter                      Show all flows terminating at the given fully qualified domain name (e.g. "*.cilium.io").
+      --to-identity filter                  Show all flows terminating at an endpoint with the given security identity
+      --to-ip filter                        Show all flows terminating at the given IP address. Each of the destination IPs can be specified as an exact match (e.g. '1.1.1.1') or as a CIDR range (e.g.'1.1.1.0/24').
+      --to-label filter                     Show only flows terminating in an endpoint with given labels (e.g. "key1=value1", "reserved:world")
+      --to-namespace filter                 Show all flows terminating in the given Kubernetes namespace.
+      --to-pod filter                       Show all flows terminating in the given pod name prefix([namespace/]<pod-name>). If namespace is not provided, 'default' is used
+      --to-port filter                      Show only flows with the given destination port (e.g. 8080)
+      --to-service filter                   Shows flows where the destination IP address matches the ClusterIP address of the given service name prefix ([namespace/]<svc-name>). If namespace is not provided, 'default' is used
+      --to-workload filter                  Show all flows terminating at an endpoint with the given workload
+      --trace-id filter                     Show only flows which match this trace ID
+      --traffic-direction filter            Show all flows in the given traffic direction (either ingress or egress)
+  -t, --type filter                         Filter by event types TYPE[:SUBTYPE]. Available types and subtypes:
+                                            TYPE             SUBTYPE
+                                            capture          n/a
+                                            drop             n/a
+                                            l7               n/a
+                                            policy-verdict   n/a
+                                            trace            from-endpoint
+                                                             from-host
+                                                             from-network
+                                                             from-overlay
+                                                             from-proxy
+                                                             from-stack
+                                                             to-endpoint
+                                                             to-host
+                                                             to-network
+                                                             to-overlay
+                                                             to-proxy
+                                                             to-stack
+                                            trace-sock       n/a
+      --uuid filter                         Show the only flow matching this unique flow identifier, if any
+      --verdict filter                      Show only flows with this verdict [FORWARDED, DROPPED, AUDIT, REDIRECTED, ERROR, TRACED, TRANSLATED]
+      --workload filter                     Show all flows related to an endpoint with the given workload
 
 Raw-Filters Flags:
       --allowlist stringArray   Specify allowlist as JSON encoded FlowFilters
