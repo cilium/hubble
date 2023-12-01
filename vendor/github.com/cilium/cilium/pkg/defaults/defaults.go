@@ -92,6 +92,9 @@ const (
 	// HubbleRedactHttpURLQuery controls if the URL query will be redacted from flows
 	HubbleRedactHttpURLQuery = false
 
+	// HubbleRedactHttpUserInfo controls if the user info will be redacted from flows
+	HubbleRedactHttpUserInfo = true
+
 	// HubbleRedactKafkaApiKey controls if the Kafka API key will be redacted from flows
 	HubbleRedactKafkaApiKey = false
 
@@ -177,6 +180,10 @@ const (
 
 	// ExecTimeout is a timeout for executing commands.
 	ExecTimeout = 300 * time.Second
+
+	// MaxInternalTimerDelay does not enforce a maximum on timer values in
+	// the agent by default.
+	MaxInternalTimerDelay = 0 * time.Second
 
 	// StatusCollectorInterval is the interval between a probe invocations
 	StatusCollectorInterval = 5 * time.Second
@@ -380,9 +387,8 @@ const (
 	// CiliumNode.Spec.IPAM.PreAllocate if no value is set
 	IPAMPreAllocation = 8
 
-	// IPAMMultiPoolPreAllocation is the default value for multi-pool IPAM
-	// pre-allocations
-	IPAMMultiPoolPreAllocation = "default=8"
+	// IPAMDefaultIPPool is the default value for the multi-pool default pool name.
+	IPAMDefaultIPPool = "default"
 
 	// ENIFirstInterfaceIndex is the default value for
 	// CiliumNode.Spec.ENI.FirstInterfaceIndex if no value is set.
@@ -521,13 +527,16 @@ const (
 	// TunnelProtocol is the default tunneling protocol
 	TunnelProtocol = "vxlan"
 
+	// ServiceNoBackendResponse is the default response for services without backends
+	ServiceNoBackendResponse = "reject"
+
 	// Use the CiliumInternalIPs (vs. NodeInternalIPs) for IPsec encapsulation.
 	UseCiliumInternalIPForIPsec = false
 
 	// TunnelPortVXLAN is the default VXLAN port
-	TunnelPortVXLAN = 8472
+	TunnelPortVXLAN uint16 = 8472
 	// TunnelPortGeneve is the default Geneve port
-	TunnelPortGeneve = 6081
+	TunnelPortGeneve uint16 = 6081
 
 	// ARPBaseReachableTime resembles the kernel's NEIGH_VAR_BASE_REACHABLE_TIME which defaults to 30 seconds.
 	ARPBaseReachableTime = 30 * time.Second
@@ -541,6 +550,13 @@ const (
 
 	// EnableK8sNetworkPolicy enables support for K8s NetworkPolicy.
 	EnableK8sNetworkPolicy = true
+
+	// MaxConnectedClusters sets the maximum number of clusters that can be
+	// connected in a clustermesh.
+	// The value is used to determine the bit allocation for cluster ID and
+	// identity in a numeric identity. Values > 255 will decrease the number of
+	// allocatable identities.
+	MaxConnectedClusters = 255
 )
 
 var (
