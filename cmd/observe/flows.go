@@ -456,6 +456,19 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 		"Show all flows terminating in the given Kubernetes namespace."))
 
 	filterFlags.Var(filterVar(
+		"from-all-namespaces", ofilter,
+		"Show flows originating in any Kubernetes namespace."))
+	filterFlags.Lookup("from-all-namespaces").NoOptDefVal = "true" // add default val so none is required to be provided
+	filterFlags.VarP(filterVarP(
+		"all-namespaces", "A", ofilter, nil,
+		"Show all flows in any Kubernetes namespace."))
+	filterFlags.Lookup("all-namespaces").NoOptDefVal = "true" // add default val so none is required to be provided
+	filterFlags.Var(filterVar(
+		"to-all-namespaces", ofilter,
+		"Show flows terminating in any Kubernetes namespace."))
+	filterFlags.Lookup("to-all-namespaces").NoOptDefVal = "true" // add default val so none is required to be provided
+
+	filterFlags.Var(filterVar(
 		"from-label", ofilter,
 		`Show only flows originating in an endpoint with the given labels (e.g. "key1=value1", "reserved:world")`))
 	filterFlags.VarP(filterVarP(

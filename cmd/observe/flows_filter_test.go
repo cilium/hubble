@@ -164,6 +164,8 @@ func TestConflicts_Table(t *testing.T) {
 		{"--pod", "--to-pod"},
 		{"--namespace", "--from-namespace"},
 		{"--namespace", "--to-namespace"},
+		{"--all-namespaces", "--from-all-namespaces"},
+		{"--all-namespaces", "--to-all-namespaces"},
 
 		{"--ip", "--fqdn"},
 		{"--ip", "--from-fqdn"},
@@ -180,12 +182,19 @@ func TestConflicts_Table(t *testing.T) {
 		{"--to-ip", "--pod"},
 		{"--to-ip", "--to-pod"},
 		{"--ip", "--namespace"},
+		{"--ip", "--all-namespaces"},
 		{"--ip", "--from-namespace"},
+		{"--ip", "--from-all-namespaces"},
 		{"--ip", "--to-namespace"},
+		{"--ip", "--to-all-namespaces"},
 		{"--from-ip", "--from-namespace"},
+		{"--from-ip", "--from-all-namespaces"},
 		{"--from-ip", "--namespace"},
+		{"--from-ip", "--all-namespaces"},
 		{"--to-ip", "--namespace"},
+		{"--to-ip", "--all-namespaces"},
 		{"--to-ip", "--to-namespace"},
+		{"--to-ip", "--to-all-namespaces"},
 
 		{"--pod", "--fqdn"},
 		{"--pod", "--from-fqdn"},
@@ -193,19 +202,38 @@ func TestConflicts_Table(t *testing.T) {
 		{"--from-pod", "--from-fqdn"},
 		{"--from-pod", "--fqdn"},
 		{"--from-pod", "--namepace"},
+		{"--from-pod", "--all-namepaces"},
 		{"--to-pod", "--fqdn"},
 		{"--to-pod", "--to-fqdn"},
 		{"--to-pod", "--namepace"},
+		{"--to-pod", "--all-namepaces"},
 
 		{"--namespace", "--fqdn"},
 		{"--namespace", "--from-fqdn"},
 		{"--namespace", "--to-fqdn"},
 		{"--namespace", "--from-service"},
 		{"--namespace", "--to-service"},
+		{"--namespace", "--all-namepaces"},
+		{"--namespace", "--from-all-namepaces"},
+		{"--namespace", "--to-all-namepaces"},
 		{"--from-namespace", "--from-fqdn"},
 		{"--from-namespace", "--fqdn"},
+		{"--from-namespace", "--from-all-namespaces"},
+		{"--from-namespace", "--all-namespaces"},
 		{"--to-namespace", "--fqdn"},
 		{"--to-namespace", "--to-fqdn"},
+		{"--to-namespace", "--to-all-namespaces"},
+		{"--to-namespace", "--all-namespaces"},
+
+		{"--all-namespaces", "--fqdn"},
+		{"--all-namespaces", "--from-fqdn"},
+		{"--all-namespaces", "--to-fqdn"},
+		{"--all-namespaces", "--from-service"},
+		{"--all-namespaces", "--to-service"},
+		{"--from-all-namespaces", "--from-fqdn"},
+		{"--from-all-namespaces", "--fqdn"},
+		{"--to-all-namespaces", "--fqdn"},
+		{"--to-all-namespaces", "--to-fqdn"},
 	}
 
 	for _, con := range conflicts {
@@ -868,6 +896,44 @@ func TestNamespace(t *testing.T) {
 			flags:   []string{"--from-service", "cilium/foo", "--from-pod", "kube-system/hubble"},
 			filters: []*flowpb.FlowFilter{},
 			err:     `conflicting namepace: namespace of service "cilium/foo" conflict with pod "kube-system/hubble"`,
+		},
+		{
+			name:  "Any request to any namespace with port",
+			flags: []string{"--to-all-namespaces", "--port", "443"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationPod: []string{"/"}, SourcePort: []string{"443"}},
+				{DestinationPod: []string{"/"}, DestinationPort: []string{"443"}},
+			},
+		},
+		{
+			name:  "Any request to pod foo in any namespace",
+			flags: []string{"--to-all-namespaces", "--to-pod", "foo"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationPod: []string{"/foo"}},
+			},
+		},
+		{
+			name:  "Any request to service bar in any namespace",
+			flags: []string{"--to-all-namespaces", "--to-service", "bar"},
+			filters: []*flowpb.FlowFilter{
+				{DestinationService: []string{"/bar"}},
+			},
+		},
+		{
+			name:  "Any request to and from pod foo in any namespace",
+			flags: []string{"--all-namespaces", "--pod", "foo"},
+			filters: []*flowpb.FlowFilter{
+				{SourcePod: []string{"/foo"}},
+				{DestinationPod: []string{"/foo"}},
+			},
+		},
+		{
+			name:  "Any request to and from service bar in any namespace",
+			flags: []string{"--all-namespaces", "--service", "bar"},
+			filters: []*flowpb.FlowFilter{
+				{SourceService: []string{"/bar"}},
+				{DestinationService: []string{"/bar"}},
+			},
 		},
 	}
 	for _, tc := range tt {
