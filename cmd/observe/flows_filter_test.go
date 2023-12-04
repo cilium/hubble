@@ -889,3 +889,51 @@ func TestNamespace(t *testing.T) {
 		})
 	}
 }
+
+func TestCluster(t *testing.T) {
+	tt := []struct {
+		name    string
+		flags   []string
+		filters []*flowpb.FlowFilter
+		err     string
+	}{
+		{
+			name:  "Single cluster filter",
+			flags: []string{"--cluster", "foo"},
+			filters: []*flowpb.FlowFilter{
+				{NodeName: []string{"foo/"}},
+			},
+		},
+		{
+			name:  "Multiple cluster filter",
+			flags: []string{"--cluster", "foo", "--cluster", "bar"},
+			filters: []*flowpb.FlowFilter{
+				{NodeName: []string{"foo/", "bar/"}},
+			},
+		},
+		{
+			name:    "Cluster and node-name conflict",
+			flags:   []string{"--cluster", "foo", "--node-name", "baz"},
+			filters: []*flowpb.FlowFilter{},
+			err:     `invalid argument "baz" for "--node-name" flag: filters --node-name and --cluster cannot be combined`,
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFlowFilter()
+			cmd := newFlowsCmdWithFilter(viper.New(), f)
+			err := cmd.Flags().Parse(tc.flags)
+			if tc.err != "" {
+				require.Errorf(t, err, tc.err)
+				return
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Nil(t, f.blacklist)
+			diff := cmp.Diff(tc.filters, f.whitelist.flowFilters(), cmpopts.IgnoreUnexported(flowpb.FlowFilter{}))
+			if diff != "" {
+				t.Errorf("mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
