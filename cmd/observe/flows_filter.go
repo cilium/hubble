@@ -205,7 +205,7 @@ func newFlowFilter() *flowFilter {
 			{"identity", "from-identity"},
 			{"workload", "to-workload"},
 			{"workload", "from-workload"},
-			{"node-name"},
+			{"node-name", "cluster"},
 			{"tcp-flags"},
 			{"uuid"},
 			{"traffic-direction"},
@@ -655,6 +655,12 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "node-name":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.NodeName = append(f.GetNodeName(), val)
+		})
+
+		// cluster Name filters
+	case "cluster":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.NodeName = append(f.GetNodeName(), val+"/")
 		})
 
 	// TCP Flags filter

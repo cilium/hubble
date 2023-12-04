@@ -38,6 +38,7 @@ Selectors Flags:
                         
 
 Filters Flags:
+      --cluster filter             Show all flows which match the cluster names (e.g. "test-cluster", "prod-*")
       --fqdn filter                Show all flows related to the given fully qualified domain name (e.g. "*.cilium.io").
       --from-fqdn filter           Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").
       --from-identity filter       Show all flows originating at an endpoint with the given security identity
