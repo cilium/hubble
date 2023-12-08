@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.12.3] - 2023-12-08
+[v0.12.3]: https://github.com/cilium/hubble/compare/v0.12.2...v0.12.3
+
+**Misc Changes:**
+
+* chore(deps): update actions/checkout action to v4.1.1 (v0.12) (#1266, @renovate[bot])
+* chore(deps): update actions/setup-go action to v5 (v0.12) (#1316, @renovate[bot])
+* chore(deps): update dependency go to v1.20.11 (v0.12) (#1289, @renovate[bot])
+* chore(deps): update dependency go to v1.20.12 (v0.12) (#1314, @renovate[bot])
+* chore(deps): update docker.io/library/alpine docker tag to v3.18.5 (v0.12) (#1306, @renovate[bot])
+* chore(deps): update docker/build-push-action action to v5.1.0 (v0.12) (#1298, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.2 (v0.12) (#1259, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.3 (v0.12) (#1261, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.4 (v0.12) (#1271, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.5 (v0.12) (#1276, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.8 (v0.12) (#1293, @renovate[bot])
+* chore(deps): update github/codeql-action action to v2.22.9 (v0.12) (#1315, @renovate[bot])
+* chore(deps): update golang stable (v0.12) (#1282, @renovate[bot])
+* deps: Update Go images to v1.20.12 (#1317, @lambdanis)
+
 ## [v0.12.2] - 2023-10-12
 [v0.12.2]: https://github.com/cilium/hubble/compare/v0.12.1...v0.12.2
 
