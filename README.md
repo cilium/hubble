@@ -72,9 +72,9 @@ this reason, only the latest Hubble CLI version is maintained.
 
 | Version                                              | Release Date         | Maintained | Supported Cilium Version | Artifacts                                                               |
 |------------------------------------------------------|----------------------|------------|--------------------------|-------------------------------------------------------------------------|
-| [v0.12](https://github.com/cilium/hubble/tree/v0.12) | 2023-12-08 (v0.12.3) | Yes        | Cilium 1.14 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.12.3) |
+| [v0.13](https://github.com/cilium/hubble/tree/v0.13) | 2023-01-15 (v0.13.0) | Yes        | Cilium 1.15 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.13.0) |
+| [v0.12](https://github.com/cilium/hubble/tree/v0.12) | 2023-12-08 (v0.12.3) | No         | Cilium 1.14 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.12.3) |
 | [v0.11](https://github.com/cilium/hubble/tree/v0.11) | 2023-06-07 (v0.11.6) | No         | Cilium 1.13 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.11.6) |
-| [v0.10](https://github.com/cilium/hubble/tree/v0.10) | 2022-06-22 (v0.10.0) | No         | Cilium 1.12 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v0.10.0) |
 
 ## Component Stability
 
