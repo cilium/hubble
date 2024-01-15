@@ -28,7 +28,7 @@
   "pruneStaleBranches": true,
   "baseBranches": [
     "main",
-    "v0.12"
+    "v0.13"
   ],
   "vulnerabilityAlerts": {
     "enabled": true
@@ -117,7 +117,7 @@
         "go.sum"
       ],
       matchBaseBranches: [
-        "v0.12",
+        "v0.13",
       ]
     },
     {
@@ -159,6 +159,7 @@
     // Limit versions that are allowed for stable branches to patch version updates
     {
       "groupName": "golang stable",
+      "groupSlug": "golang-stable",
       "matchPackageNames": [
         "docker.io/library/golang",
         "library/golang",
@@ -167,7 +168,7 @@
       ],
       "allowedVersions": "<=1.20",
       "matchBaseBranches": [
-        "v0.12"
+        "v0.13"
       ],
     },
     {
@@ -178,14 +179,15 @@
       ],
     },
     {
-      "groupName": "alpine-stable",
+      "groupName": "alpine stable",
+      "groupSlug": "alpine-stable",
       // Restrict the alpine version that can be used on stable branches
       "matchPackageNames": [
         "docker.io/library/alpine"
       ],
       "allowedVersions": "<=3.18",
       "matchBaseBranches": [
-        "v0.12"
+        "v0.13"
       ]
     },
     {
@@ -199,12 +201,13 @@
     {
       // Do not allow any golangci-lint updates into stable branches.
       "enabled": false,
-      "groupName": "golangci-lint-stable",
+      "groupName": "golangci-lint stable",
+      "groupSlug": "golangci-lint-stable",
       "matchDepNames": [
         "golangci/golangci-lint"
       ],
       "matchBaseBranches": [
-        "v0.12",
+        "v0.13",
       ]
     }
   ],

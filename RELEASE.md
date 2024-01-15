@@ -140,13 +140,13 @@ unreleased hubble versions in a branch from releases.
 
 ## Update the `renovate` configuration
 
-After a new stable `v$MAJOR.$MINOR` release branch has been created, update `renovate.json5`:
+After a new stable `v$MAJOR.$MINOR` release branch has been created, update `.github/renovate.json5`:
 
 - Add the new branch to the `baseBranches` field and remove the previous release branch (we only maintain the most recent Hubble release). [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L31).
 - Add the new branch to the `all-go-deps-stable` packageRule in the `matchBaseBranches` field and remove the previous release branch. [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L85-L97).
 - Add the new branch to the `golang-stable` packageRule to pin the Go version used to the current minor version for the release and remove the previous release branch. [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L127-L137).
 - Add the new branch to the `alpine-stable` packageRule to pin the Alpine image version used to the current minor version for the release and remove the previous release branch. [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L146-L155).
-- Add the new branch to the `golangci-lint` packageRule in the `matchBaseBranches` field and remove the previous release release branch. [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L164-L174).
+- Add the new branch to the `golangci-lint-stable` packageRule in the `matchBaseBranches` field and remove the previous release release branch. [Example](https://github.com/cilium/hubble/blob/3680a3193ac35e962bb9806c00bd481932a18725/.github/renovate.json5#L164-L174).
 
 ## Update the `CodeQL workflow`
 
