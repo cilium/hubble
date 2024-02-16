@@ -21,7 +21,9 @@
     "github.com/cilium/cilium"
   ],
   "pinDigests": true,
-  "ignorePresets": [":prHourlyLimit2"],
+  "prHourlyLimit": 2, // do not open more than two pull requests an hour
+  "prConcurrentLimit": 5, // do not open more than five PRs per branch at a time
+  "schedule": ["before 6am on tuesday"], // only run renovate part of the day tuesday
   "separateMajorMinor": true,
   "separateMultipleMajor": true,
   "separateMinorPatch": true,
