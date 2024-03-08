@@ -11,10 +11,10 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.8.4
-	golang.org/x/sys v0.17.0
+	github.com/stretchr/testify v1.9.0
+	golang.org/x/sys v0.18.0
 	google.golang.org/grpc v1.62.1
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
