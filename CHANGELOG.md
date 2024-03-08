@@ -5,11 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.1] - 2023-03-08
+[v0.13.1]: https://github.com/cilium/hubble/compare/v0.13.0...v0.13.1
+
+**Misc Changes:**
+* [v0.13] Prepare for v0.13.1 (#1351, @kaworu)
+* chore(deps): update all github action dependencies (v0.13) (minor) (#1364, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (minor) (#1375, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1363, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1382, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1389, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1394, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.15.0 (v0.13) (#1373, @renovate[bot])
+* chore(deps): update dependency kubernetes-sigs/kind to v0.22.0 (v0.13) (#1390, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.23.2 (v0.13) (#1367, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.24.5 (v0.13) (#1396, @renovate[bot])
+* chore(deps): update golang stable (v0.13) (#1362, @renovate[bot])
+* chore(deps): update golang stable (v0.13) (#1372, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v4 (v0.13) (#1384, @renovate[bot])
+
 ## [v0.13.0] - 2023-01-15
 [v0.13.0]: https://github.com/cilium/hubble/compare/v0.12.3...v0.13.0
-
-Summary of Changes
-------------------
 
 **Minor Changes:**
 * Add --cluster flag for filtering by cluster (#1309, @chancez)
