@@ -18,6 +18,9 @@ CONTAINER_ENGINE ?= docker
 RELEASE_UID ?= $(shell id -u)
 RELEASE_GID ?= $(shell id -g)
 
+RENOVATE_GITHUB_USER ?= renovate
+RENOVATE_GITHUB_COM_TOKEN ?= $(shell gh auth token)
+
 TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=golangci/golangci-lint
@@ -98,4 +101,8 @@ endif
 image:
 	$(CONTAINER_ENGINE) build $(DOCKER_FLAGS) -t $(IMAGE_REPOSITORY)$(if $(IMAGE_TAG),:$(IMAGE_TAG)) .
 
-.PHONY: all hubble release install clean test bench check image
+renovate-local:
+	@echo "Running renovate --platform=local"
+	@docker run --rm -ti -e LOG_LEVEL=debug -e GITHUB_COM_TOKEN="$(RENOVATE_GITHUB_COM_TOKEN)" -v /tmp:/tmp -v $(PWD):/usr/src/app docker.io/renovate/renovate:full renovate --platform=local | tee renovate.log
+
+.PHONY: all hubble release install clean test bench check image renovate-local
