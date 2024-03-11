@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.2] - 2023-03-11
+[v0.13.2]: https://github.com/cilium/hubble/compare/v0.13.1...v0.13.2
+
+**Minor Changes:**
+* Dockerfile: Update to Go 1.21.8 and Alpine 3.19.1 (#1412, @chancez)
+
+**Misc Changes:**
+* Prepare for v0.13.2 (#1408, @chancez)
+
 ## [v0.13.1] - 2023-03-08
 [v0.13.1]: https://github.com/cilium/hubble/compare/v0.13.0...v0.13.1
 
