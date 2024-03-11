@@ -168,7 +168,7 @@
         "go",
         "golang"
       ],
-      "allowedVersions": "<=1.20",
+      "allowedVersions": "<1.22",
       "matchBaseBranches": [
         "v0.13"
       ],
@@ -187,7 +187,7 @@
       "matchPackageNames": [
         "docker.io/library/alpine"
       ],
-      "allowedVersions": "<=3.18",
+      "allowedVersions": "<3.20",
       "matchBaseBranches": [
         "v0.13"
       ]
