@@ -1,18 +1,43 @@
 name: Image Release Build
 
+# Any change in triggers needs to be reflected in the concurrency group.
 on:
   push:
+    branches:
+      - main
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
       - v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+
+  pull_request:
+    branches:
+      - main
+      - v*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.after }}
+  cancel-in-progress: true
 
 permissions: read-all
 
 jobs:
+  determine-deployment:
+    if: ${{ github.repository == 'cilium/hubble' }}
+    name: Determine Deployment
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Determine deployment environment
+        id: environment
+        # use 'release' deployment if the workflow was triggered on a pushed tag starting with "v"
+        run: |
+          echo "deployment=${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) && 'release' || '' }}" >> $GITHUB_OUTPUT
+    outputs:
+      name: ${{ steps.environment.outputs.deployment }}
+
   build-and-push:
     if: ${{ github.repository == 'cilium/hubble' }}
-    environment: release
+    environment: ${{ needs.determine-deployment.outputs.name }}
     runs-on: ubuntu-22.04
+    needs: determine-deployment
     strategy:
       # matrix for easier code-sharing with workflows from cilium/cilium
       matrix:
@@ -25,6 +50,7 @@ jobs:
         uses: docker/setup-buildx-action@0d103c3126aa41d772a8362f6aa67afac040f80c # v3.1.0
 
       - name: Login to quay.io
+        if: ${{ needs.determine-deployment.outputs.name == 'release' }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
         with:
           registry: quay.io
@@ -47,7 +73,7 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          push: true
+          push: ${{ needs.determine-deployment.outputs.name == 'release' }}
           platforms: linux/amd64,linux/arm64
           tags: |
             quay.io/${{ github.repository_owner }}/${{ matrix.name }}:${{ steps.tag.outputs.tag }}
