@@ -155,7 +155,7 @@ connections, DNS queries, HTTP requests, Kafka communication, and much more.
 
 Identifying pods which have received DNS response indicating failure:
 
-    hubble observe --since=1m -t l7 -j \
+    hubble observe --since=1m -t l7 -o json \
        | jq 'select(.l7.dns.rcode==3) | .destination.namespace + "/" + .destination.pod_name' \
        | sort | uniq -c | sort -r
       42 "starwars/jar-jar-binks-6f5847c97c-qmggv"
