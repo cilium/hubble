@@ -5,9 +5,10 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"path"
-	"strings"
+	"slices"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -101,23 +102,6 @@ func ParseCiliumNode(n *ciliumv2.CiliumNode) (node Node) {
 	return
 }
 
-// GetCiliumAnnotations returns the node annotations that should be set on the CiliumNode
-func (n *Node) GetCiliumAnnotations() map[string]string {
-	annotations := map[string]string{}
-	if n.WireguardPubKey != "" {
-		annotations[annotation.WireguardPubKey] = n.WireguardPubKey
-	}
-
-	// if we use a cilium node instead of a node, we also need the BGP Control Plane annotations in the cilium node instead of the main node
-	for k, a := range n.Annotations {
-		if strings.HasPrefix(k, annotation.BGPVRouterAnnoPrefix) {
-			annotations[k] = a
-		}
-	}
-
-	return annotations
-}
-
 // ToCiliumNode converts the node to a CiliumNode
 func (n *Node) ToCiliumNode() *ciliumv2.CiliumNode {
 	var (
@@ -163,7 +147,7 @@ func (n *Node) ToCiliumNode() *ciliumv2.CiliumNode {
 		ObjectMeta: v1.ObjectMeta{
 			Name:        n.Name,
 			Labels:      n.Labels,
-			Annotations: n.GetCiliumAnnotations(),
+			Annotations: n.Annotations,
 		},
 		Spec: ciliumv2.NodeSpec{
 			Addresses: ipAddrs,
@@ -424,6 +408,10 @@ func (n *Node) setAddress(typ addressing.AddressType, newIP net.IP) {
 		return
 	}
 
+	// Create a copy of the slice, so that we don't modify the
+	// current one, which may be captured by any of the observers.
+	n.IPAddresses = slices.Clone(n.IPAddresses)
+
 	ipv6 := newIP.To4() == nil
 	// Try first to replace an existing address with same type
 	for i, addr := range n.IPAddresses {
@@ -647,6 +635,15 @@ func (n *Node) Unmarshal(_ string, data []byte) error {
 	*n = newNode
 
 	return nil
+}
+
+// LogRepr returns a representation of the node to be used for logging
+func (n *Node) LogRepr() string {
+	b, err := n.Marshal()
+	if err != nil {
+		return fmt.Sprintf("%#v", n)
+	}
+	return string(b)
 }
 
 func (n *Node) validate() error {

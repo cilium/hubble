@@ -7,8 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"net/netip"
 	"path"
 
 	"github.com/sirupsen/logrus"
@@ -117,24 +115,6 @@ type IdentityAllocator interface {
 
 	// GetIdentities returns a copy of the current cache of identities.
 	GetIdentities() IdentitiesModel
-
-	// AllocateCIDRsForIPs attempts to allocate identities for a list of
-	// CIDRs. If any allocation fails, all allocations are rolled back and
-	// the error is returned. When an identity is freshly allocated for a
-	// CIDR, it is added to the ipcache if 'newlyAllocatedIdentities' is
-	// 'nil', otherwise the newly allocated identities are placed in
-	// 'newlyAllocatedIdentities' and it is the caller's responsibility to
-	// upsert them into ipcache by calling UpsertGeneratedIdentities().
-	//
-	// Upon success, the caller must also arrange for the resulting identities to
-	// be released via a subsequent call to ReleaseCIDRIdentitiesByID().
-	//
-	// The implementation for this function currently lives in pkg/ipcache.
-	AllocateCIDRsForIPs(ips []net.IP, newlyAllocatedIdentities map[netip.Prefix]*identity.Identity) ([]*identity.Identity, error)
-
-	// ReleaseCIDRIdentitiesByID() is a wrapper for ReleaseSlice() that
-	// also handles ipcache entries.
-	ReleaseCIDRIdentitiesByID(context.Context, []identity.NumericIdentity)
 
 	// WithholdLocalIdentities holds a set of numeric identities out of the local
 	// allocation pool(s). Once withheld, a numeric identity can only be used
@@ -367,9 +347,9 @@ func (m *CachingIdentityAllocator) AllocateIdentity(ctx context.Context, lbls la
 	// then allocate with the appropriate local allocator and return.
 	switch identity.ScopeForLabels(lbls) {
 	case identity.IdentityScopeLocal:
-		return m.localIdentities.lookupOrCreate(lbls, oldNID)
+		return m.localIdentities.lookupOrCreate(lbls, oldNID, notifyOwner)
 	case identity.IdentityScopeRemoteNode:
-		return m.localNodeIdentities.lookupOrCreate(lbls, oldNID)
+		return m.localNodeIdentities.lookupOrCreate(lbls, oldNID, notifyOwner)
 	}
 
 	// This will block until the kvstore can be accessed and all identities
@@ -453,9 +433,9 @@ func (m *CachingIdentityAllocator) Release(ctx context.Context, id *identity.Ide
 
 	switch identity.ScopeForLabels(id.Labels) {
 	case identity.IdentityScopeLocal:
-		return m.localIdentities.release(id), nil
+		return m.localIdentities.release(id, notifyOwner), nil
 	case identity.IdentityScopeRemoteNode:
-		return m.localNodeIdentities.release(id), nil
+		return m.localNodeIdentities.release(id, notifyOwner), nil
 	}
 
 	// This will block until the kvstore can be accessed and all identities
