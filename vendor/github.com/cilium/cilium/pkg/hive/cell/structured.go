@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"runtime"
@@ -212,9 +213,7 @@ type scope struct {
 func (s *scope) Close() {
 	s.base.Lock()
 	s.base.removeRefLocked(s.id)
-	if s.base.canRemoveTreeLocked(s.id) {
-		s.base.removeTreeLocked(s.id)
-	}
+	s.base.removeTreeLocked(s.id)
 	s.base.Unlock()
 	s.scheduleRealize()
 }
@@ -364,6 +363,8 @@ func (s *subreporterBase) addChild(pid string, name string, isReporter bool) str
 	return id
 }
 
+var errReporterStopped = errors.New("reporter has been stopped")
+
 func (s *subreporterBase) setStatus(id string, level Level, message string, err error) error {
 	s.Lock()
 	defer s.Unlock()
@@ -373,7 +374,7 @@ func (s *subreporterBase) setStatus(id string, level Level, message string, err 
 	}
 
 	if _, ok := s.nodes[id]; !ok {
-		return fmt.Errorf("reporter %s has been stopped", id)
+		return fmt.Errorf("could not set status for reporter %s: %w", id, errReporterStopped)
 	}
 
 	n := s.nodes[id]
@@ -559,17 +560,28 @@ type subReporter struct {
 	name            string
 }
 
+const logReporterID = "reporterID"
+
 func (s *subReporter) OK(message string) {
 	if err := s.base.setStatus(s.id, StatusOK, message, nil); err != nil {
-		log.WithError(err).Warnf("could not set OK status on subreporter %q", s.id)
+		if errors.Is(err, errReporterStopped) {
+			log.WithError(err).WithField(logReporterID, s.id).Debug("could not set OK status on subreporter")
+		} else {
+			log.WithError(err).WithField(logReporterID, s.id).Warn("could not set OK status on subreporter")
+		}
 		return
 	}
+
 	s.scheduleRealize()
 }
 
 func (s *subReporter) Degraded(message string, err error) {
 	if err := s.base.setStatus(s.id, StatusDegraded, message, err); err != nil {
-		log.WithError(err).Warnf("could not set degraded status on subreporter %q", s.id)
+		if errors.Is(err, errReporterStopped) {
+			log.WithError(err).WithField(logReporterID, s.id).Debug("could not set degraded status on subreporter")
+		} else {
+			log.WithError(err).WithField(logReporterID, s.id).Warn("could not set degraded status on subreporter")
+		}
 		return
 	}
 	s.scheduleRealize()

@@ -77,8 +77,20 @@ type MapState interface {
 
 // mapState is a state of a policy map.
 type mapState struct {
-	allows map[Key]MapStateEntry
-	denies map[Key]MapStateEntry
+	allows mapStateMap
+	denies mapStateMap
+}
+
+// mapStateMap is a convience type representing the actual structure mapping
+// policymap keys to policymap entries.
+type mapStateMap map[Key]MapStateEntry
+
+func (m mapStateMap) insert(k Key, e MapStateEntry) {
+	if m == nil {
+		n := make(mapStateMap)
+		m = n
+	}
+	m[k] = e
 }
 
 type Identities interface {
@@ -282,10 +294,10 @@ func (ms *mapState) Get(k Key) (MapStateEntry, bool) {
 func (ms *mapState) Insert(k Key, v MapStateEntry) {
 	if v.IsDeny {
 		delete(ms.allows, k)
-		ms.denies[k] = v
+		ms.denies.insert(k, v)
 	} else {
 		delete(ms.denies, k)
-		ms.allows[k] = v
+		ms.allows.insert(k, v)
 	}
 }
 
@@ -339,16 +351,11 @@ func (msA *mapState) Equals(msB MapState) bool {
 		return false
 	}
 
-	return msB.ForEach(func(kA Key, vA MapStateEntry) bool {
+	return msA.ForEach(func(kA Key, vA MapStateEntry) bool {
 		if vB, ok := msB.Get(kA); ok {
-			if !(&vB).DatapathEqual(&vA) {
-				return false
-			}
-		} else {
-			return false
+			return (&vB).DatapathEqual(&vA)
 		}
-
-		return true
+		return false
 	})
 }
 
@@ -392,13 +399,7 @@ func (ms *mapState) addDependentOnEntry(owner Key, e MapStateEntry, dependent Ke
 			changes.Old[owner] = e
 		}
 		e.AddDependent(dependent)
-		if e.IsDeny {
-			delete(ms.allows, owner)
-			ms.denies[owner] = e
-		} else {
-			delete(ms.denies, owner)
-			ms.allows[owner] = e
-		}
+		ms.Insert(owner, e)
 	}
 }
 
@@ -410,7 +411,7 @@ func (ms *mapState) RemoveDependent(owner Key, dependent Key, changes ChangeStat
 		changes.insertOldIfNotExists(owner, e)
 		e.RemoveDependent(dependent)
 		delete(ms.denies, owner)
-		ms.allows[owner] = e
+		ms.allows.insert(owner, e)
 		return
 	}
 
@@ -418,7 +419,7 @@ func (ms *mapState) RemoveDependent(owner Key, dependent Key, changes ChangeStat
 		changes.insertOldIfNotExists(owner, e)
 		e.RemoveDependent(dependent)
 		delete(ms.allows, owner)
-		ms.denies[owner] = e
+		ms.denies.insert(owner, e)
 	}
 }
 
@@ -553,6 +554,7 @@ func (ms *mapState) denyPreferredInsert(newKey Key, newEntry MapStateEntry, iden
 // addKeyWithChanges adds a 'key' with value 'entry' to 'keys' keeping track of incremental changes in 'adds' and 'deletes', and any changed or removed old values in 'old', if not nil.
 func (ms *mapState) addKeyWithChanges(key Key, entry MapStateEntry, changes ChangeState) {
 	// Keep all owners that need this entry so that it is deleted only if all the owners delete their contribution
+	var datapathEqual bool
 	oldEntry, exists := ms.Get(key)
 	if exists {
 		// Deny entry can only be overridden by another deny entry
@@ -569,6 +571,9 @@ func (ms *mapState) addKeyWithChanges(key Key, entry MapStateEntry, changes Chan
 			changes.insertOldIfNotExists(key, oldEntry)
 		}
 
+		// Compare for datapath equalness before merging, as the old entry is updated in
+		// place!
+		datapathEqual = oldEntry.DatapathEqual(&entry)
 		oldEntry.Merge(&entry)
 		ms.Insert(key, oldEntry)
 	} else {
@@ -581,7 +586,7 @@ func (ms *mapState) addKeyWithChanges(key Key, entry MapStateEntry, changes Chan
 	}
 
 	// Record an incremental Add if desired and entry is new or changed
-	if changes.Adds != nil && (!exists || !oldEntry.DatapathEqual(&entry)) {
+	if changes.Adds != nil && (!exists || !datapathEqual) {
 		changes.Adds[key] = struct{}{}
 		// Key add overrides any previous delete of the same key
 		if changes.Deletes != nil {
