@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/cilium/cilium/pkg/datapath/linux/config/defines"
-	"github.com/cilium/cilium/pkg/hive"
 	"github.com/cilium/cilium/pkg/hive/cell"
 	"github.com/cilium/cilium/pkg/option"
 )
@@ -39,13 +38,17 @@ func (def Config) Flags(flags *pflag.FlagSet) {
 	flags.Bool(EnableBBR, def.EnableBBR, "Enable BBR for the bandwidth manager")
 }
 
-func newBandwidthManager(lc hive.Lifecycle, p bandwidthManagerParams) (Manager, defines.NodeFnOut) {
+func newBandwidthManager(lc cell.Lifecycle, p bandwidthManagerParams) (Manager, defines.NodeFnOut) {
 	m := &manager{params: p}
-	lc.Append(m)
+
+	if !option.Config.DryMode {
+		lc.Append(m)
+	}
+
 	return m, defines.NewNodeFnOut(m.defines)
 }
 
-func (m *manager) Start(hive.HookContext) error {
+func (m *manager) Start(cell.HookContext) error {
 	err := m.probe()
 	if err != nil {
 		return err
@@ -56,7 +59,7 @@ func (m *manager) Start(hive.HookContext) error {
 	return m.init()
 }
 
-func (*manager) Stop(hive.HookContext) error {
+func (*manager) Stop(cell.HookContext) error {
 	return nil
 }
 
