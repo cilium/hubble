@@ -7,7 +7,7 @@ INSTALL = $(QUIET)install
 BINDIR ?= /usr/local/bin
 SUBDIRS_HUBBLE_CLI := .
 TARGET=hubble
-VERSION=$(shell cat VERSION)
+VERSION=$(shell go list -f {{.Version}} -m github.com/cilium/cilium)
 # homebrew uses the github release's tarball of the source that does not contain the '.git' directory.
 GIT_BRANCH = $(shell command -v git >/dev/null 2>&1 && git rev-parse --abbrev-ref HEAD 2> /dev/null)
 GIT_HASH = $(shell command -v git >/dev/null 2>&1 && git rev-parse --short HEAD 2> /dev/null)
@@ -41,7 +41,7 @@ hubble:
 	$(MAKE) -C $(SUBDIRS_HUBBLE_CLI) hubble-bin
 
 hubble-bin:
-	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET) $(SUBDIRS_HUBBLE_CLI)
+	$(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/cilium/hubble/pkg.GitBranch=${GIT_BRANCH}' -X 'github.com/cilium/cilium/hubble/pkg.GitHash=$(GIT_HASH)' -X 'github.com/cilium/cilium/hubble/pkg.Version=${VERSION}'" -o $(TARGET) $(SUBDIRS_HUBBLE_CLI)
 
 release:
 	$(CONTAINER_ENGINE) run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:$(GOLANG_IMAGE_VERSION)@$(GOLANG_IMAGE_SHA) \
@@ -68,7 +68,7 @@ local-release: clean
 		for ARCH in $$ARCHS; do \
 			echo Building release binary for $$OS/$$ARCH...; \
 			test -d release/$$OS/$$ARCH|| mkdir -p release/$$OS/$$ARCH; \
-			env GOOS=$$OS GOARCH=$$ARCH $(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/hubble/pkg.Version=${VERSION}'" -o release/$$OS/$$ARCH/$(TARGET)$$EXT; \
+			env GOOS=$$OS GOARCH=$$ARCH $(GO_BUILD) $(if $(GO_TAGS),-tags $(GO_TAGS)) -ldflags "-w -s -X 'github.com/cilium/cilium/hubble/pkg.Version=${VERSION}'" -o release/$$OS/$$ARCH/$(TARGET)$$EXT; \
 			tar -czf release/$(TARGET)-$$OS-$$ARCH.tar.gz -C release/$$OS/$$ARCH $(TARGET)$$EXT; \
 			(cd release && sha256sum $(TARGET)-$$OS-$$ARCH.tar.gz > $(TARGET)-$$OS-$$ARCH.tar.gz.sha256sum); \
 		done; \

@@ -130,11 +130,21 @@ type NodeNeighbors interface {
 	NodeNeighDiscoveryEnabled() bool
 
 	// NodeNeighborRefresh is called to refresh node neighbor table
-	NodeNeighborRefresh(ctx context.Context, node nodeTypes.Node)
+	NodeNeighborRefresh(ctx context.Context, node nodeTypes.Node, refresh bool) error
 
 	// NodeCleanNeighbors cleans all neighbor entries for the direct routing device
 	// and the encrypt interface.
 	NodeCleanNeighbors(migrateOnly bool)
+
+	// InsertMiscNeighbor inserts a neighbor entry for the address passed via newNode.
+	// This is needed for in-agent users where neighbors outside the cluster need to
+	// be added, for example, for external service backends.
+	InsertMiscNeighbor(newNode *nodeTypes.Node)
+
+	// DeleteMiscNeighbor delets a eighbor entry for the address passed via oldNode.
+	// This is needed to delete the entries which have been inserted at an earlier
+	// point in time through InsertMiscNeighbor.
+	DeleteMiscNeighbor(oldNode *nodeTypes.Node)
 }
 
 type NodeIDHandler interface {

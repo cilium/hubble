@@ -2,9 +2,13 @@
 
 ## Contribution workflow
 
-Hubble uses GitHub for collaborative development. Please use GitHub issues to
-discuss proposals and use pull requests to suggest changes. For more information
-see the [Cilium Development
+Hubble uses GitHub for collaborative development. Note that this repository
+only hosts release artifacts for Hubble CLI. The actual code for Hubble CLI
+is in [Cilium GitHub repository] under [`hubble/` directory](https://github.com/cilium/cilium/tree/main/hubble).
+Please use GitHub issues to discuss proposals and use pull requests to suggest
+changes in [Cilium GitHub repository].
+
+For more information see the [Cilium Development
 Guide](https://docs.cilium.io/en/latest/contributing/development/) and the
 [Hubble-specific
 notes](https://docs.cilium.io/en/latest/contributing/development/hubble/).
@@ -22,3 +26,5 @@ Covenant](https://www.contributor-covenant.org/version/1/4/code-of-conduct)
 Code of Conduct. Only by respecting each other can we develop a productive,
 collaborative community. If you would like to report a violation of the code of
 contact, please contact any of the maintainers.
+
+[Cilium GitHub repository]: https://github.com/cilium/cilium

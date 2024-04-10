@@ -22,7 +22,20 @@ const (
 // Sanitize validates and sanitizes a policy rule. Minor edits such as
 // capitalization of the protocol name are automatically fixed up. More
 // fundamental violations will cause an error to be returned.
-func (r Rule) Sanitize() error {
+func (r *Rule) Sanitize() error {
+	// Fill in the default traffic posture of this Rule.
+	// Default posture is per-direction (ingress or egress),
+	// if there is a peer selector for that direction, the
+	// default is deny, else allow.
+	if r.EnableDefaultDeny.Egress == nil {
+		x := len(r.Egress) > 0 || len(r.EgressDeny) > 0
+		r.EnableDefaultDeny.Egress = &x
+	}
+	if r.EnableDefaultDeny.Ingress == nil {
+		x := len(r.Ingress) > 0 || len(r.IngressDeny) > 0
+		r.EnableDefaultDeny.Ingress = &x
+	}
+
 	if r.EndpointSelector.LabelSelector == nil && r.NodeSelector.LabelSelector == nil {
 		return fmt.Errorf("rule must have one of EndpointSelector or NodeSelector")
 	}
@@ -87,6 +100,7 @@ func (i *IngressRule) sanitize() error {
 		"FromCIDR":      len(i.FromCIDR),
 		"FromCIDRSet":   len(i.FromCIDRSet),
 		"FromEntities":  len(i.FromEntities),
+		"FromNodes":     len(i.FromNodes),
 	}
 	l7Members := countL7Rules(i.ToPorts)
 	l7IngressSupport := map[string]bool{
@@ -120,6 +134,10 @@ func (i *IngressRule) sanitize() error {
 		return fmt.Errorf("The ICMPs block may only be present without ToPorts. Define a separate rule to use ToPorts.")
 	}
 
+	if len(i.FromNodes) > 0 && !option.Config.EnableNodeSelectorLabels {
+		return fmt.Errorf("FromNodes rules can only be applied when the %q flag is set", option.EnableNodeSelectorLabels)
+	}
+
 	for _, es := range i.FromEndpoints {
 		if err := es.sanitize(); err != nil {
 			return err
@@ -140,6 +158,12 @@ func (i *IngressRule) sanitize() error {
 
 	for n := range i.ICMPs {
 		if err := i.ICMPs[n].verify(); err != nil {
+			return err
+		}
+	}
+
+	for _, ns := range i.FromNodes {
+		if err := ns.sanitize(); err != nil {
 			return err
 		}
 	}
@@ -168,15 +192,33 @@ func (i *IngressRule) sanitize() error {
 	return nil
 }
 
+// countNonGeneratedRules counts the number of CIDRRule items which are not
+// `Generated`, i.e. were directly provided by the user.
+// The `Generated` field is currently only set by the `ToServices`
+// implementation, which extracts service endpoints and translates them as
+// ToCIDRSet rules before the CNP is passed to the policy repository.
+// Therefore, we want to allow the combination of ToCIDRSet and ToServices
+// rules, if (and only if) the ToCIDRSet only contains `Generated` entries.
+func countNonGeneratedCIDRRules(s CIDRRuleSlice) int {
+	n := 0
+	for _, c := range s {
+		if !c.Generated {
+			n++
+		}
+	}
+	return n
+}
+
 func (e *EgressRule) sanitize() error {
 	l3Members := map[string]int{
 		"ToCIDR":      len(e.ToCIDR),
-		"ToCIDRSet":   len(e.ToCIDRSet),
+		"ToCIDRSet":   countNonGeneratedCIDRRules(e.ToCIDRSet),
 		"ToEndpoints": len(e.ToEndpoints),
 		"ToEntities":  len(e.ToEntities),
 		"ToServices":  len(e.ToServices),
 		"ToFQDNs":     len(e.ToFQDNs),
 		"ToGroups":    len(e.ToGroups),
+		"ToNodes":     len(e.ToNodes),
 	}
 	l3DependentL4Support := map[interface{}]bool{
 		"ToCIDR":      true,
@@ -186,6 +228,7 @@ func (e *EgressRule) sanitize() error {
 		"ToServices":  false, // see https://github.com/cilium/cilium/issues/20067
 		"ToFQDNs":     true,
 		"ToGroups":    true,
+		"ToNodes":     true,
 	}
 	l7Members := countL7Rules(e.ToPorts)
 	l7EgressSupport := map[string]bool{
@@ -224,6 +267,10 @@ func (e *EgressRule) sanitize() error {
 		return fmt.Errorf("The ICMPs block may only be present without ToPorts. Define a separate rule to use ToPorts.")
 	}
 
+	if len(e.ToNodes) > 0 && !option.Config.EnableNodeSelectorLabels {
+		return fmt.Errorf("ToNodes rules can only be applied when the %q flag is set", option.EnableNodeSelectorLabels)
+	}
+
 	for _, es := range e.ToEndpoints {
 		if err := es.sanitize(); err != nil {
 			return err
@@ -244,6 +291,12 @@ func (e *EgressRule) sanitize() error {
 
 	for n := range e.ICMPs {
 		if err := e.ICMPs[n].verify(); err != nil {
+			return err
+		}
+	}
+
+	for _, ns := range e.ToNodes {
+		if err := ns.sanitize(); err != nil {
 			return err
 		}
 	}
@@ -412,7 +465,7 @@ func (pp *PortProtocol) sanitize() (isZero bool, err error) {
 	} else {
 		p, err := strconv.ParseUint(pp.Port, 0, 16)
 		if err != nil {
-			return isZero, fmt.Errorf("Unable to parse port: %s", err)
+			return isZero, fmt.Errorf("Unable to parse port: %w", err)
 		}
 		isZero = p == 0
 	}
@@ -446,7 +499,7 @@ func (c CIDR) sanitize() error {
 	if err != nil {
 		_, err := netip.ParseAddr(strCIDR)
 		if err != nil {
-			return fmt.Errorf("unable to parse CIDR: %s", err)
+			return fmt.Errorf("unable to parse CIDR: %w", err)
 		}
 		return nil
 	}
@@ -466,7 +519,7 @@ func (c *CIDRRule) sanitize() error {
 	// the logic in api.CIDR.Sanitize().
 	prefix, err := netip.ParsePrefix(string(c.Cidr))
 	if err != nil {
-		return fmt.Errorf("Unable to parse CIDRRule %q: %s", c.Cidr, err)
+		return fmt.Errorf("Unable to parse CIDRRule %q: %w", c.Cidr, err)
 	}
 
 	prefixLength := prefix.Bits()
