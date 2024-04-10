@@ -98,7 +98,13 @@ type EgressCommonRule struct {
 	//     - 'sg-XXXXXXXXXXXXX'
 	//
 	// +kubebuilder:validation:Optional
-	ToGroups []ToGroups `json:"toGroups,omitempty"`
+	ToGroups []Groups `json:"toGroups,omitempty"`
+
+	// ToNodes is a list of nodes identified by an
+	// EndpointSelector to which endpoints subject to the rule is allowed to communicate.
+	//
+	// +kubebuilder:validation:Optional
+	ToNodes []EndpointSelector `json:"toNodes,omitempty"`
 
 	// TODO: Move this to the policy package
 	// (https://github.com/cilium/cilium/issues/8353)
@@ -219,6 +225,13 @@ type EgressDenyRule struct {
 // ToEndpoints is not aggregated due to requirement folding in
 // GetDestinationEndpointSelectorsWithRequirements()
 func (e *EgressCommonRule) getAggregatedSelectors() EndpointSelectorSlice {
+	// explicitly check for empty non-nil slices, it should not result in any identity being selected.
+	if (e.ToEntities != nil && len(e.ToEntities) == 0) ||
+		(e.ToCIDR != nil && len(e.ToCIDR) == 0) ||
+		(e.ToCIDRSet != nil && len(e.ToCIDRSet) == 0) {
+		return nil
+	}
+
 	res := make(EndpointSelectorSlice, 0, len(e.ToEntities)+len(e.ToCIDR)+len(e.ToCIDRSet))
 	res = append(res, e.ToEntities.GetAsEndpointSelectors()...)
 	res = append(res, e.ToCIDR.GetAsEndpointSelectors()...)
@@ -282,7 +295,13 @@ func (e *EgressCommonRule) getDestinationEndpointSelectorsWithRequirements(
 	requirements []slim_metav1.LabelSelectorRequirement,
 ) EndpointSelectorSlice {
 
-	res := make(EndpointSelectorSlice, 0, len(e.ToEndpoints)+len(e.aggregatedSelectors))
+	// explicitly check for empty non-nil slices, it should not result in any identity being selected.
+	if e.aggregatedSelectors == nil || (e.ToEndpoints != nil && len(e.ToEndpoints) == 0) ||
+		(e.ToNodes != nil && len(e.ToNodes) == 0) {
+		return nil
+	}
+
+	res := make(EndpointSelectorSlice, 0, len(e.ToEndpoints)+len(e.aggregatedSelectors)+len(e.ToNodes))
 
 	if len(requirements) > 0 && len(e.ToEndpoints) > 0 {
 		for idx := range e.ToEndpoints {
@@ -296,6 +315,7 @@ func (e *EgressCommonRule) getDestinationEndpointSelectorsWithRequirements(
 		}
 	} else {
 		res = append(res, e.ToEndpoints...)
+		res = append(res, e.ToNodes...)
 	}
 	return append(res, e.aggregatedSelectors...)
 }
@@ -329,16 +349,11 @@ func (e *EgressRule) CreateDerivative(ctx context.Context) (*EgressRule, error) 
 		return newRule, nil
 	}
 	newRule.ToCIDRSet = make(CIDRRuleSlice, 0, len(e.ToGroups))
-	for _, group := range e.ToGroups {
-		cidrSet, err := group.GetCidrSet(ctx)
-		if err != nil {
-			return &EgressRule{}, err
-		}
-		if len(cidrSet) == 0 {
-			return &EgressRule{}, nil
-		}
-		newRule.ToCIDRSet = append(e.ToCIDRSet, cidrSet...)
+	cidrSet, err := ExtractCidrSet(ctx, e.ToGroups)
+	if err != nil {
+		return &EgressRule{}, err
 	}
+	newRule.ToCIDRSet = append(e.ToCIDRSet, cidrSet...)
 	newRule.ToGroups = nil
 	e.SetAggregatedSelectors()
 	return newRule, nil
@@ -354,16 +369,11 @@ func (e *EgressDenyRule) CreateDerivative(ctx context.Context) (*EgressDenyRule,
 		return newRule, nil
 	}
 	newRule.ToCIDRSet = make(CIDRRuleSlice, 0, len(e.ToGroups))
-	for _, group := range e.ToGroups {
-		cidrSet, err := group.GetCidrSet(ctx)
-		if err != nil {
-			return &EgressDenyRule{}, err
-		}
-		if len(cidrSet) == 0 {
-			return &EgressDenyRule{}, nil
-		}
-		newRule.ToCIDRSet = append(e.ToCIDRSet, cidrSet...)
+	cidrSet, err := ExtractCidrSet(ctx, e.ToGroups)
+	if err != nil {
+		return &EgressDenyRule{}, err
 	}
+	newRule.ToCIDRSet = append(e.ToCIDRSet, cidrSet...)
 	newRule.ToGroups = nil
 	e.SetAggregatedSelectors()
 	return newRule, nil

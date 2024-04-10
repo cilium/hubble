@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cilium/hubble/cmd"
+	"github.com/cilium/cilium/hubble/cmd"
 )
 
 func main() {

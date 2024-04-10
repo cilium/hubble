@@ -4,6 +4,8 @@
 package api
 
 import (
+	"context"
+
 	slim_metav1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 )
 
@@ -72,6 +74,26 @@ type IngressCommonRule struct {
 	// +kubebuilder:validation:Optional
 	FromEntities EntitySlice `json:"fromEntities,omitempty"`
 
+	// FromGroups is a directive that allows the integration with multiple outside
+	// providers. Currently, only AWS is supported, and the rule can select by
+	// multiple sub directives:
+	//
+	// Example:
+	// FromGroups:
+	// - aws:
+	//     securityGroupsIds:
+	//     - 'sg-XXXXXXXXXXXXX'
+	//
+	// +kubebuilder:validation:Optional
+	FromGroups []Groups `json:"fromGroups,omitempty"`
+
+	// FromNodes is a list of nodes identified by an
+	// EndpointSelector which are allowed to communicate with the endpoint
+	// subject to the rule.
+	//
+	// +kubebuilder:validation:Optional
+	FromNodes []EndpointSelector `json:"fromNodes,omitempty"`
+
 	// TODO: Move this to the policy package
 	// (https://github.com/cilium/cilium/issues/8353)
 	aggregatedSelectors EndpointSelectorSlice `json:"-"`
@@ -135,7 +157,7 @@ type IngressRule struct {
 //     the effects of any Requires field in any rule will apply to all other
 //     rules as well.
 //
-//   - FromEndpoints, FromCIDR, FromCIDRSet and FromEntities are mutually
+//   - FromEndpoints, FromCIDR, FromCIDRSet, FromGroups and FromEntities are mutually
 //     exclusive. Only one of these members may be present within an individual
 //     rule.
 type IngressDenyRule struct {
@@ -175,12 +197,21 @@ type IngressDenyRule struct {
 // FromEndpoints is not aggregated due to requirement folding in
 // GetSourceEndpointSelectorsWithRequirements()
 func (i *IngressCommonRule) SetAggregatedSelectors() {
+	// Goroutines can race setting i.aggregatedSelectors, but they will all compute the same result, so it does not matter.
+
+	// explicitly check for empty non-nil slices, it should not result in any identity being selected.
+	if (i.FromCIDR != nil && len(i.FromCIDR) == 0) ||
+		(i.FromCIDRSet != nil && len(i.FromCIDRSet) == 0) ||
+		(i.FromEntities != nil && len(i.FromEntities) == 0) {
+		i.aggregatedSelectors = nil
+		return
+	}
+
 	res := make(EndpointSelectorSlice, 0, len(i.FromEntities)+len(i.FromCIDR)+len(i.FromCIDRSet))
 	res = append(res, i.FromEntities.GetAsEndpointSelectors()...)
 	res = append(res, i.FromCIDR.GetAsEndpointSelectors()...)
 	res = append(res, i.FromCIDRSet.GetAsEndpointSelectors()...)
-	// Goroutines can race setting this, but they will all compute
-	// the same result, so it does not matter.
+
 	i.aggregatedSelectors = res
 }
 
@@ -190,7 +221,14 @@ func (i *IngressCommonRule) GetSourceEndpointSelectorsWithRequirements(requireme
 	if i.aggregatedSelectors == nil {
 		i.SetAggregatedSelectors()
 	}
-	res := make(EndpointSelectorSlice, 0, len(i.FromEndpoints)+len(i.aggregatedSelectors))
+
+	// explicitly check for empty non-nil slices, it should not result in any identity being selected.
+	if i.aggregatedSelectors == nil || (i.FromEndpoints != nil && len(i.FromEndpoints) == 0) ||
+		(i.FromNodes != nil && len(i.FromNodes) == 0) {
+		return nil
+	}
+
+	res := make(EndpointSelectorSlice, 0, len(i.FromEndpoints)+len(i.aggregatedSelectors)+len(i.FromNodes))
 	if len(requirements) > 0 && len(i.FromEndpoints) > 0 {
 		for idx := range i.FromEndpoints {
 			sel := *i.FromEndpoints[idx].DeepCopy()
@@ -203,6 +241,7 @@ func (i *IngressCommonRule) GetSourceEndpointSelectorsWithRequirements(requireme
 		}
 	} else {
 		res = append(res, i.FromEndpoints...)
+		res = append(res, i.FromNodes...)
 	}
 
 	return append(res, i.aggregatedSelectors...)
@@ -212,4 +251,51 @@ func (i *IngressCommonRule) GetSourceEndpointSelectorsWithRequirements(requireme
 // policy evaluation for the given rule.
 func (i *IngressCommonRule) AllowsWildcarding() bool {
 	return len(i.FromRequires) == 0
+}
+
+// RequiresDerivative returns true when the EgressCommonRule contains sections
+// that need a derivative policy created in order to be enforced
+// (e.g. FromGroups).
+func (e *IngressCommonRule) RequiresDerivative() bool {
+	return len(e.FromGroups) > 0
+}
+
+// CreateDerivative will return a new rule based on the data gathered by the
+// rules that creates a new derivative policy.
+// In the case of FromGroups will call outside using the groups callback and this
+// function can take a bit of time.
+func (e *IngressRule) CreateDerivative(ctx context.Context) (*IngressRule, error) {
+	newRule := e.DeepCopy()
+	if !e.RequiresDerivative() {
+		return newRule, nil
+	}
+	newRule.FromCIDRSet = make(CIDRRuleSlice, 0, len(e.FromGroups))
+	cidrSet, err := ExtractCidrSet(ctx, e.FromGroups)
+	if err != nil {
+		return &IngressRule{}, err
+	}
+	newRule.FromCIDRSet = append(e.FromCIDRSet, cidrSet...)
+	newRule.FromGroups = nil
+	e.SetAggregatedSelectors()
+	return newRule, nil
+}
+
+// CreateDerivative will return a new rule based on the data gathered by the
+// rules that creates a new derivative policy.
+// In the case of FromGroups will call outside using the groups callback and this
+// function can take a bit of time.
+func (e *IngressDenyRule) CreateDerivative(ctx context.Context) (*IngressDenyRule, error) {
+	newRule := e.DeepCopy()
+	if !e.RequiresDerivative() {
+		return newRule, nil
+	}
+	newRule.FromCIDRSet = make(CIDRRuleSlice, 0, len(e.FromGroups))
+	cidrSet, err := ExtractCidrSet(ctx, e.FromGroups)
+	if err != nil {
+		return &IngressDenyRule{}, err
+	}
+	newRule.FromCIDRSet = append(e.FromCIDRSet, cidrSet...)
+	newRule.FromGroups = nil
+	e.SetAggregatedSelectors()
+	return newRule, nil
 }
