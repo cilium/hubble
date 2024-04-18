@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.3] - 2023-04-18
+[v0.13.3]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
+
+**Misc Changes:**
+* chore(deps): update all github action dependencies (v0.13) (minor) (#1422, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1421, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.15.3 (v0.13) (#1435, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.14.4 (v0.13) (#1449, @renovate[bot])
+* chore(deps): update docker/setup-buildx-action action to v3.3.0 (v0.13) (#1450, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.24.10 (v0.13) (#1443, @renovate[bot])
+* chore(deps): update golang stable (v0.13) (#1428, @renovate[bot])
+* Prepare for 0.13.3 (#1414, @chancez)
+* v0.13: vendor: update cilium to v1.15.3 (#1433, @rolinh)
+
 ## [v0.13.2] - 2023-03-11
 [v0.13.2]: https://github.com/cilium/hubble/compare/v0.13.1...v0.13.2
 
