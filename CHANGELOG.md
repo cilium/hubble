@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.13.3] - 2023-04-18
+## [v0.13.3] - 2024-04-18
 [v0.13.3]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
 
 **Misc Changes:**
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Prepare for 0.13.3 (#1414, @chancez)
 * v0.13: vendor: update cilium to v1.15.3 (#1433, @rolinh)
 
-## [v0.13.2] - 2023-03-11
+## [v0.13.2] - 2024-03-11
 [v0.13.2]: https://github.com/cilium/hubble/compare/v0.13.1...v0.13.2
 
 **Minor Changes:**
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Misc Changes:**
 * Prepare for v0.13.2 (#1408, @chancez)
 
-## [v0.13.1] - 2023-03-08
+## [v0.13.1] - 2024-03-08
 [v0.13.1]: https://github.com/cilium/hubble/compare/v0.13.0...v0.13.1
 
 **Misc Changes:**
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * chore(deps): update golang stable (v0.13) (#1372, @renovate[bot])
 * chore(deps): update golangci/golangci-lint-action action to v4 (v0.13) (#1384, @renovate[bot])
 
-## [v0.13.0] - 2023-01-15
+## [v0.13.0] - 2024-01-15
 [v0.13.0]: https://github.com/cilium/hubble/compare/v0.12.3...v0.13.0
 
 **Minor Changes:**
