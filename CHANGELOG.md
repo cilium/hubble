@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.0-pre.2] - 2024-05-06
+[v1.16.0-pre.2]: https://github.com/cilium/cilium/compare/v1.16.0-pre.1...v1.16.0-pre.2
+
+**Major Changes:**
+* Move cilium/hubble code to cilium/cilium repo (cilium/cilium#31893, @michi-covalent)
+
+**Minor Changes:**
+* hubble: support drop\_reason\_desc in flow filter (cilium/cilium#32135, @chaunceyjiang)
+
+**Misc Changes:**
+* hive: Rebase on cilium/hive (cilium/cilium#32020, @bimmlerd)
+* hubble: Support --cel-expression filter in hubble observe (cilium/cilium#32147, @chancez)
+
 ## [v0.13.3] - 2024-04-18
 [v0.13.3]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
 
