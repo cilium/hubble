@@ -24,8 +24,8 @@ RENOVATE_GITHUB_COM_TOKEN ?= $(shell gh auth token)
 TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=golangci/golangci-lint
-GOLANGCILINT_WANT_VERSION = v1.58.0
-GOLANGCILINT_IMAGE_SHA = sha256:42692fa92a34b74d9e85687b5efea48f0c5eaa13f93d08edd72fb629d9385933
+GOLANGCILINT_WANT_VERSION = v1.58.1
+GOLANGCILINT_IMAGE_SHA = sha256:5bef7ef61a4e2529b39d4e39de3564d82c38291636cdb9b79a656cedb09ab175
 GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 # renovate: datasource=docker depName=library/golang
