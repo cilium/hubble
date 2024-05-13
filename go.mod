@@ -1,6 +1,6 @@
 module github.com/cilium/hubble
 
-go 1.21.8
+go 1.21.10
 
 require (
 	github.com/cilium/cilium v1.15.4
