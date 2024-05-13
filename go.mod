@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 go 1.21.8
 
 require (
-	github.com/cilium/cilium v1.15.3
+	github.com/cilium/cilium v1.15.4
 	github.com/fatih/color v1.16.0
 	github.com/google/go-cmp v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
