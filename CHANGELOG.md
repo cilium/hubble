@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.4] - 2024-05-13
+[v0.13.4]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
+
+**Misc Changes:**
+* [v0.13] Bump Golang to v1.21.10 (#1491, @gandro)
+* chore(deps): update actions/setup-go action to v5.0.1 (v0.13) (#1474, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1461, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1469, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (#1486, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.25.1 (v0.13) (#1462, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v5 (v0.13) (#1471, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v5.1.0 (v0.13) (#1475, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v5.3.0 (v0.13) (#1487, @renovate[bot])
+* chore(deps): update golangci/golangci-lint-action action to v6 (v0.13) (#1488, @renovate[bot])
+* chore(deps): update helm/kind-action action to v1.10.0 (v0.13) (#1470, @renovate[bot])
+* Prepare for v0.13.4 and fix years in CHANGELOG (#1458, @glrf)
+* vendor: Bump Cilium to v1.15.4 (#1489, @gandro)
+
 ## [v0.13.3] - 2024-04-18
 [v0.13.3]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
 
