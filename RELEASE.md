@@ -1,4 +1,4 @@
-# RELEASE
+# RELEASE test 2
 
 Release process and checklist for `hubble`. 
 
