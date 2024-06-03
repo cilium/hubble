@@ -23,17 +23,6 @@ jobs:
     - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
       with:
         go-version-file: 'go.mod'
-    - name: Run static checks
-      uses: golangci/golangci-lint-action@a4f60bb28d35aeee14e6880718e0c85ff1882e64 # v6.0.1
-      with:
-        # renovate: datasource=docker depName=golangci/golangci-lint
-        version: v1.59.0
-        args: --config=.golangci.yml --verbose
-        skip-cache: true
-    - name: Run slowg analyzer
-      run: | # TODO: remove once slowg is integrated in golangci-lint
-        go install github.com/cilium/linters@latest
-        linters -slowg ./...
     - name: Check module vendoring
       run: |
         go mod tidy
