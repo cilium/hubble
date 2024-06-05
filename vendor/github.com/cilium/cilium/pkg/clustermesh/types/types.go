@@ -13,6 +13,8 @@ const (
 	// ClusterIDMin is the minimum value of the cluster ID
 	ClusterIDMin    = 0
 	ClusterIDExt511 = 511
+
+	ClusterIDUnset = ClusterIDMin
 )
 
 // ClusterIDMax is the maximum value of the cluster ID
@@ -61,12 +63,3 @@ type CiliumClusterConfigCapabilities struct {
 	// The maximum number of clusters the given cluster can support in a ClusterMesh.
 	MaxConnectedClusters uint32 `json:"maxConnectedClusters,omitempty"`
 }
-
-// ValidationMode defines if a missing CiliumClusterConfig should be allowed for
-// backward compatibility, or it should be flagged as an error.
-type ValidationMode bool
-
-const (
-	BackwardCompatible ValidationMode = false
-	Strict             ValidationMode = true
-)
