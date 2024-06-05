@@ -1,5 +1,6 @@
 ---
 name: Release a new version of Hubble CLI from main branch
+about: A checklist for Hubble CLI release process
 title: 'vX.Y.Z release'
 ---
 
