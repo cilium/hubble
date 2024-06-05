@@ -5,8 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.13.5] - 2024-06-05
+[v0.13.5]: https://github.com/cilium/hubble/compare/v0.13.4...v0.13.5
+
+**Minor Changes:**
+* [v0.13] Bump golang to v1.21.11 (cilium/hubble#1517, @chancez)
+
+**Misc Changes:**
+* chore(deps): update all github action dependencies (v0.13) (minor) (cilium/hubble#1498, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (cilium/hubble#1497, @renovate[bot])
+* chore(deps): update all github action dependencies (v0.13) (patch) (cilium/hubble#1503, @renovate[bot])
+* chore(deps): update docker/login-action action to v3.2.0 (v0.13) (cilium/hubble#1507, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.25.7 (v0.13) (cilium/hubble#1509, @renovate[bot])
+* chore(deps): update github/codeql-action action to v3.25.8 (v0.13) (cilium/hubble#1516, @renovate[bot])
+* chore(deps): update golang stable (v0.13) (cilium/hubble#1496, @renovate[bot])
+* Prepare for v0.13.5 development (cilium/hubble#1492, @gandro)
+
 ## [v0.13.4] - 2024-05-13
-[v0.13.4]: https://github.com/cilium/hubble/compare/v0.13.2...v0.13.3
+[v0.13.4]: https://github.com/cilium/hubble/compare/v0.13.3...v0.13.4
 
 **Misc Changes:**
 * [v0.13] Bump Golang to v1.21.10 (#1491, @gandro)
