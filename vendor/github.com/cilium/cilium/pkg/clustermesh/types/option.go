@@ -4,7 +4,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/spf13/pflag"
@@ -81,18 +80,8 @@ func (c ClusterInfo) ExtendedClusterMeshEnabled() bool {
 }
 
 // ValidateRemoteConfig validates the remote CiliumClusterConfig to ensure
-// compatibility with this cluster's configuration. When configRequired is
-// false, a missing configuration or one with ID=0 is allowed for backward
-// compatibility, otherwise it is flagged as an error.
-func (c ClusterInfo) ValidateRemoteConfig(configRequired bool, config *CiliumClusterConfig) error {
-	if config == nil || config.ID == 0 {
-		if configRequired || c.ExtendedClusterMeshEnabled() {
-			return errors.New("remote cluster is missing cluster configuration")
-		}
-
-		return nil
-	}
-
+// compatibility with this cluster's configuration.
+func (c ClusterInfo) ValidateRemoteConfig(config CiliumClusterConfig) error {
 	if err := ValidateClusterID(config.ID); err != nil {
 		return err
 	}

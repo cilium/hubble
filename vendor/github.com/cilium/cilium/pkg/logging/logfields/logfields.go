@@ -32,6 +32,9 @@ const (
 	// EndpointState is the current endpoint state
 	EndpointState = "endpointState"
 
+	// Error is the Go error
+	Error = "error"
+
 	// EventUUID is an event unique identifier
 	EventUUID = "eventID"
 
@@ -201,6 +204,9 @@ const (
 
 	// Port is a L4 port
 	Port = "port"
+
+	// Ports is a list of L4 ports
+	Ports = "ports"
 
 	// PortName is a k8s ContainerPort Name
 	PortName = "portName"

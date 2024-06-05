@@ -189,6 +189,7 @@ func newFlowFilter() *flowFilter {
 			{"from-pod", "namespace", "all-namespaces"},
 			{"to-service", "namespace", "all-namespaces"},
 			{"from-service", "namespace", "all-namespaces"},
+			{"snat-ip"},
 			{"label", "from-label"},
 			{"label", "to-label"},
 			{"service", "from-service"},
@@ -424,16 +425,20 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			f.DestinationPod = append(f.GetDestinationPod(), val)
 		})
 	// ip filters
+	case "from-ip":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.SourceIp = append(f.GetSourceIp(), val)
+		})
+	case "snat-ip":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.SourceIpXlated = append(f.SourceIpXlated, val)
+		})
 	case "ip":
 		f.applyLeft(func(f *flowpb.FlowFilter) {
 			f.SourceIp = append(f.GetSourceIp(), val)
 		})
 		f.applyRight(func(f *flowpb.FlowFilter) {
 			f.DestinationIp = append(f.GetDestinationIp(), val)
-		})
-	case "from-ip":
-		f.apply(func(f *flowpb.FlowFilter) {
-			f.SourceIp = append(f.GetSourceIp(), val)
 		})
 	case "to-ip":
 		f.apply(func(f *flowpb.FlowFilter) {
@@ -720,13 +725,16 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 		default:
 			return fmt.Errorf("%s: invalid traffic direction, expected ingress or egress", td)
 		}
-
 	case "cel-expression":
 		f.apply(func(f *flowpb.FlowFilter) {
 			if f.GetExperimental() == nil {
 				f.Experimental = &flowpb.FlowFilter_Experimental{}
 			}
 			f.Experimental.CelExpression = append(f.Experimental.CelExpression, val)
+		})
+	case "interface":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.Interface = append(f.Interface, &flowpb.NetworkInterface{Name: val})
 		})
 	}
 

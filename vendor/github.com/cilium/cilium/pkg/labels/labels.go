@@ -141,6 +141,9 @@ const (
 	// LabelSourceNode is the label source for remote-nodes.
 	LabelSourceNode = "node"
 
+	// LabelSourceFQDN is the label source for IPs resolved by fqdn lookups
+	LabelSourceFQDN = "fqdn"
+
 	// LabelSourceReservedKeyPrefix is the prefix of a reserved label
 	LabelSourceReservedKeyPrefix = LabelSourceReserved + "."
 
@@ -653,6 +656,16 @@ func (l Labels) IsReserved() bool {
 func (l Labels) Has(label Label) bool {
 	for _, lbl := range l {
 		if lbl.Has(&label) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasSource returns true if l contains the given label source.
+func (l Labels) HasSource(source string) bool {
+	for _, lbl := range l {
+		if lbl.Source == source {
 			return true
 		}
 	}
