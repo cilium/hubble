@@ -27,7 +27,7 @@ GOLANGCILINT_VERSION = $(shell golangci-lint version 2>/dev/null)
 
 # renovate: datasource=docker depName=library/golang
 GOLANG_IMAGE_VERSION = 1.21.11-alpine3.19
-GOLANG_IMAGE_SHA = sha256:c5e93a93d578bf46e98a1821efa2153d0afbf29723990a4a3c0f3658bfdc1fbe
+GOLANG_IMAGE_SHA = sha256:b192e03ed1435beeba0120e2a48e0e4f82de02f1ff254aab952b03791b07fddc
 
 # Add the ability to override variables
 -include Makefile.override
