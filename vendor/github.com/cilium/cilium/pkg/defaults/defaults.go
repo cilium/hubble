@@ -189,6 +189,10 @@ const (
 	// DNSProxyLockCount.
 	DNSProxyLockTimeout = 500 * time.Millisecond
 
+	// DNSProxySocketLingerTimeout defines how many seconds we wait for the connection
+	// between the DNS proxy and the upstream server to be closed.
+	DNSProxySocketLingerTimeout = 10
+
 	// IdentityChangeGracePeriod is the default value for
 	// option.IdentityChangeGracePeriod
 	IdentityChangeGracePeriod = 5 * time.Second
@@ -304,6 +308,9 @@ const (
 
 	// EnableAutoDirectRouting is the default value for EnableAutoDirectRouting
 	EnableAutoDirectRouting = false
+
+	// EnableDirectRoutingSkipUnreachable is the default value for EnableDirectRoutingIgnoreUnreachableName
+	EnableDirectRoutingSkipUnreachable = false
 
 	// EnableHealthChecking is the default value for EnableHealthChecking
 	EnableHealthChecking = true
@@ -587,6 +594,9 @@ const (
 
 	// EnableEnvoyConfig is the default value for option.EnableEnvoyConfig
 	EnableEnvoyConfig = false
+
+	// NetNsPath is the default path to the mounted network namespaces directory
+	NetNsPath = "/var/run/cilium/netns"
 )
 
 var (
