@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.0] - 2024-06-24
+[v1.16.0]: https://github.com/cilium/cilium/compare/5aec7f58af0e57f93d5fa65f6e84a5e45609aac0...v1.16.0
+
+**Major Changes:**
+* Move cilium/hubble code to cilium/cilium repo (cilium/cilium#31893, @michi-covalent)
+
+**Minor Changes:**
+* hubble: node labels (cilium/cilium#32851, @kaworu)
+* hubble: support drop\_reason\_desc in flow filter (cilium/cilium#32135, @chaunceyjiang)
+
+**Misc Changes:**
+* Add auto labeler for hubble-cli (cilium/cilium#32343, @aanm)
+* hive: Rebase on cilium/hive (cilium/cilium#32020, @bimmlerd)
+* hubble: Support --cel-expression filter in hubble observe (cilium/cilium#32147, @chancez)
+
 ## [v0.13.6] - 2024-06-18
 [v0.13.6]: https://github.com/cilium/hubble/compare/v0.13.5...v0.13.6
 
