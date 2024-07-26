@@ -30,7 +30,6 @@
   "pruneStaleBranches": true,
   "baseBranches": [
     "main",
-    "v0.13"
   ],
   "vulnerabilityAlerts": {
     "enabled": true
@@ -110,19 +109,6 @@
       ]
     },
     {
-      // Do not allow any dependency updates into stable branches.
-      "enabled": false,
-      "groupName": "all go dependencies stable",
-      "groupSlug": "all-go-deps-stable",
-      "matchFiles": [
-        "go.mod",
-        "go.sum"
-      ],
-      matchBaseBranches: [
-        "v0.13",
-      ]
-    },
-    {
       "enabled": false,
       "matchPackageNames": [
         // All of these packages are maintained on a Cilium fork. Thus, we don't
@@ -158,39 +144,12 @@
         "golang"
       ],
     },
-    // Limit versions that are allowed for stable branches to patch version updates
-    {
-      "groupName": "golang stable",
-      "groupSlug": "golang-stable",
-      "matchPackageNames": [
-        "docker.io/library/golang",
-        "library/golang",
-        "go",
-        "golang"
-      ],
-      "allowedVersions": "<1.22",
-      "matchBaseBranches": [
-        "v0.13"
-      ],
-    },
     {
       "groupName": "alpine",
       // Restrict the alpine version that can be used on stable branches
       "matchPackageNames": [
         "docker.io/library/alpine"
       ],
-    },
-    {
-      "groupName": "alpine stable",
-      "groupSlug": "alpine-stable",
-      // Restrict the alpine version that can be used on stable branches
-      "matchPackageNames": [
-        "docker.io/library/alpine"
-      ],
-      "allowedVersions": "<3.20",
-      "matchBaseBranches": [
-        "v0.13"
-      ]
     },
     {
       // Group golangci-lint updates to overrule grouping of version updates in the GHA files.
@@ -200,18 +159,6 @@
         "golangci/golangci-lint"
       ]
     },
-    {
-      // Do not allow any golangci-lint updates into stable branches.
-      "enabled": false,
-      "groupName": "golangci-lint stable",
-      "groupSlug": "golangci-lint-stable",
-      "matchDepNames": [
-        "golangci/golangci-lint"
-      ],
-      "matchBaseBranches": [
-        "v0.13",
-      ]
-    }
   ],
   "regexManagers": [
     {
