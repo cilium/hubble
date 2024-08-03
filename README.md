@@ -273,7 +273,7 @@ flag. For example:
 
 # Community
 
-Join the [Cilium Slack #hubble channel](https://cilium.herokuapp.com/) to chat
+Join the [Cilium Slack #hubble channel](https://slack.cilium.io) to chat
 with Cilium Hubble developers and other Cilium / Hubble users. This is a good
 place to learn about Hubble and Cilium, ask questions, and share your
 experiences.
