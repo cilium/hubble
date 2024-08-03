@@ -163,7 +163,7 @@ needs to be approved, ping a member of the
 ## Announce the release on Slack
 
 Post a release announcement message in the [Cilium Slack #hubble
-channel](https://cilium.herokuapp.com/).
+channel](https://slack.cilium.io).
 
 Example:
 
