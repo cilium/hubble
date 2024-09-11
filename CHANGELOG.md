@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.1] - 2024-09-11
+[v1.16.1]: https://github.com/cilium/cilium/compare/v1.16.0...v1.16.1
+
+**Misc Changes:**
+* chore(deps): update actions/upload-artifact action to v4.4.0 (cilium/hubble#1582, @renovate[bot])
+* chore(deps): update docker/build-push-action action to v6.6.1 (cilium/hubble#1576, @renovate[bot])
+* chore(deps): update docker/setup-buildx-action action to v3.6.1 (cilium/hubble#1571, @renovate[bot])
+* chore(deps): update golang to v1.23.1 (patch) (cilium/hubble#1583, @renovate[bot])
+
 ## [v1.16.0] - 2024-06-24
 [v1.16.0]: https://github.com/cilium/cilium/compare/5aec7f58af0e57f93d5fa65f6e84a5e45609aac0...v1.16.0
 
