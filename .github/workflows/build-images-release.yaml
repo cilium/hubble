@@ -22,7 +22,7 @@ jobs:
   determine-deployment:
     if: ${{ github.repository == 'cilium/hubble' }}
     name: Determine Deployment
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Determine deployment environment
         id: environment
@@ -35,7 +35,7 @@ jobs:
   build-and-push:
     if: ${{ github.repository == 'cilium/hubble' }}
     environment: ${{ needs.determine-deployment.outputs.name }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: determine-deployment
     strategy:
       # matrix for easier code-sharing with workflows from cilium/cilium
@@ -102,7 +102,7 @@ jobs:
   image-digests:
     if: ${{ github.repository == 'cilium/hubble' }}
     name: Display Digests
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: build-and-push
     steps:
       - name: Getting image tag
