@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.2] - 2024-10-03
+[v1.16.2]: https://github.com/cilium/cilium/compare/v1.16.1...v1.16.2
+
+**Misc Changes:**
+* chore(deps): update actions/checkout action to v4.2.0 (cilium/hubble#1590, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.16.2 (cilium/hubble#1589, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.16.1 (cilium/hubble#1588, @renovate[bot])
+* chore(deps): update dependency ubuntu to v24 (cilium/hubble#1591, @renovate[bot])
+* chore(deps): update docker.io/library/alpine docker tag to v3.20.3 (cilium/hubble#1587, @renovate[bot])
+* chore(deps): update docker/build-push-action action to v6.8.0 (cilium/hubble#1592, @renovate[bot])
+* chore(deps): update golang (cilium/hubble#1586, @renovate[bot])
+* chore(deps): update golang to v1.23.2 (patch) (cilium/hubble#1593, @renovate[bot])
+* Update stable release to 1.16.1 (cilium/hubble#1585, @glibsm)
+
 ## [v1.16.1] - 2024-09-11
 [v1.16.1]: https://github.com/cilium/cilium/compare/v1.16.0...v1.16.1
 
