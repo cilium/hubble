@@ -5,12 +5,6 @@ title: 'vX.Y.Z release'
 ---
 
 - [ ] Install [`gh`](https://cli.github.com/) and authenticate with GitHub by running `gh auth login`.
-- [ ] Install the latest [Cilium release tool]:
-
-      git clone https://github.com/cilium/release.git "$(go env GOPATH)/src/github.com/cilium/release"
-      cd $(go env GOPATH)/src/github.com/cilium/release
-      git checkout master && git pull && make
-      sudo install release /usr/local/bin
 
 - [ ] Define `NEW_RELEASE` and `PREVIOUS_RELEASE` environment variables. For
       example, if you are releasing a new Hubble CLI version based on
@@ -24,7 +18,7 @@ title: 'vX.Y.Z release'
       git checkout main
       git pull origin main
       git switch -c pr/$USER/v$NEW_RELEASE-prep
- 
+
 - [ ] Check if `replace` directive in `go.mod` is in sync with `cilium/cilium`. Run:
 
        curl https://raw.githubusercontent.com/cilium/cilium/$NEW_RELEASE/go.mod
@@ -37,9 +31,13 @@ title: 'vX.Y.Z release'
       go mod tidy && go mod vendor && go mod verify
       git add go.mod go.sum vendor
 
-- [ ] Prepare release notes:
+- [ ] Prepare release notes. You need to generate release notes from both
+      cilium/cilium and cilium/hubble repositories and manually combine them.
 
-      GITHUB_TOKEN=$(gh auth token) release changelog --base v$PREVIOUS_RELEASE --head v$NEW_RELEASE --repo cilium/cilium --label-filter hubble-cli
+      docker pull quay.io/cilium/release-tool:main
+      alias release='docker run -it --rm -e GITHUB_TOKEN=$(gh auth token) quay.io/cilium/release-tool:main'
+      release changelog --base v$PREVIOUS_RELEASE --head v$NEW_RELEASE --repo cilium/cilium --label-filter hubble-cli
+      release changelog --base v$PREVIOUS_RELEASE --head main --repo cilium/hubble
 
 - [ ] Modify `CHANGELOG.md` with the generated release notes:
 
@@ -48,12 +46,12 @@ title: 'vX.Y.Z release'
       git add CHANGELOG.md
 
 - [ ] Push the prep branch and open a Pull Request against main branch.
- 
+
        git commit -s -m "Prepare for v$NEW_RELEASE release"
        git push
 
      Get the pull request reviewed and merged.
- 
+
 - [ ] Update your local checkout:
 
       git checkout main
@@ -72,7 +70,7 @@ title: 'vX.Y.Z release'
       git tag -s -a "v$NEW_RELEASE" -m "v$NEW_RELEASE" $COMMIT_SHA
 
      Admire the tag you just created for 1 minute:
- 
+
       git show "v$NEW_RELEASE"
 
      Then push the tag:
@@ -85,7 +83,7 @@ title: 'vX.Y.Z release'
 - [ ] Find the release draft in the [Releases page]. Copy and paste release notes from
       CHANGELOG.md, and click on `Publish release` button.
 - [ ] Post a release announcement message in the [Cilium Slack #general channel]. Example:
- 
+
       Hubble CLI v0.8.2 is released ￼
       Release notes and binaries: https://github.com/cilium/hubble/releases/tag/v0.8.2
       Notable changes:
