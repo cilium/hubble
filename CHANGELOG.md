@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.3] - 2024-10-25
+[v1.16.3]: https://github.com/cilium/cilium/compare/v1.16.2...v1.16.3
+
+**Bugfixes:**
+* hubble: add printer for lost events (Backport PR cilium/cilium#35274, Upstream PR cilium/cilium#35208, @aanm)
+
+**Minor Changes:**
+* .github: add cache to cilium-cli and hubble-cli build workflows (Backport PR cilium/cilium#35157, Upstream PR cilium/cilium#34847, @aanm)
+* Makefile cleanups / improvements (cilium/hubble#1600, @michi-covalent)
+
+**Misc Changes:**
+* chore(deps): update actions/checkout action to v4.2.2 (cilium/hubble#1604, @renovate[bot])
+* chore(deps): update actions/setup-go action to v5.1.0 (cilium/hubble#1605, @renovate[bot])
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1602, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.16.3 (cilium/hubble#1603, @renovate[bot])
+* Update stable release to 1.16.2 (cilium/hubble#1599, @michi-covalent)
+* Update the release issue template (cilium/hubble#1597, @michi-covalent)
+
 ## [v1.16.2] - 2024-10-03
 [v1.16.2]: https://github.com/cilium/cilium/compare/v1.16.1...v1.16.2
 
