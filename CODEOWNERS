@@ -3,7 +3,6 @@
 # @cilium/contributing       Developer documentation & tools
 # @cilium/github-sec         GitHub security (handling of secrets, consequences of pull_request_target, etc.)
 # @cilium/sig-hubble         All related to Hubble (client and server)
-# @cilium/vendor             Vendoring, dependency management
 
 # The following filepaths should be sorted so that more specific paths occur
 # after the less specific paths, otherwise the ownership for the specific paths
@@ -11,6 +10,3 @@
 * @cilium/sig-hubble
 /.github/workflows/ @cilium/github-sec @cilium/ci-structure @cilium/sig-hubble
 /CODEOWNERS @cilium/contributing @cilium/sig-hubble
-/go.sum @cilium/vendor
-/go.mod @cilium/vendor
-/vendor/ @cilium/vendor
