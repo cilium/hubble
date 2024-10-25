@@ -2,7 +2,7 @@ module github.com/cilium/hubble
 
 go 1.22.2
 
-require github.com/cilium/cilium v1.16.2
+require github.com/cilium/cilium v1.16.3
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -72,7 +72,7 @@ require (
 )
 
 // Replace directives from github.com/cilium/cilium. Keep in sync when updating Cilium!
-// Copied from https://github.com/cilium/cilium/blob/v1.16.2/go.mod#L285-L291
+// Copied from https://github.com/cilium/cilium/blob/v1.16.3/go.mod#L286-L292
 replace (
 	go.universe.tf/metallb => github.com/cilium/metallb v0.1.1-0.20220829170633-5d7dfb1129f7
 
