@@ -17,7 +17,7 @@ concurrency:
 
 env:
   # renovate: datasource=github-releases depName=helm/helm
-  HELM_VERSION: v3.16.2
+  HELM_VERSION: v3.16.3
   # renovate: datasource=github-releases depName=kubernetes-sigs/kind
   KIND_VERSION: v0.25.0
   KIND_CONFIG: .github/kind-config.yaml
