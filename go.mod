@@ -2,7 +2,7 @@ module github.com/cilium/hubble
 
 go 1.22.2
 
-require github.com/cilium/cilium v1.16.3
+require github.com/cilium/cilium v1.16.4
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/spf13/viper v1.19.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/vishvananda/netlink v1.2.1-beta.2.0.20240524165444-4d4ba1473f21 // indirect
+	github.com/vishvananda/netlink v1.3.1-0.20241022031324-976bd8de7d81 // indirect
 	github.com/vishvananda/netns v0.0.4 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
