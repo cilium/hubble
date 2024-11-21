@@ -82,14 +82,6 @@ title: 'vX.Y.Z release'
 - [ ] Wait for the [`Create a release` workflow] to finish.
 - [ ] Find the release draft in the [Releases page]. Copy and paste release notes from
       CHANGELOG.md, and click on `Publish release` button.
-- [ ] Post a release announcement message in the [Cilium Slack #general channel]. Example:
-
-      Hubble CLI v0.8.2 is released ￼
-      Release notes and binaries: https://github.com/cilium/hubble/releases/tag/v0.8.2
-      Notable changes:
-      - Change 1
-      - ...
-
 - [ ] Update the [*Releases* section of the `README.md`] to point to the latest
       release.
 - [ ] Update `stable.txt` in the main branch:
