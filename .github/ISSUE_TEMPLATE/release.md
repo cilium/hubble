@@ -94,11 +94,11 @@ title: 'vX.Y.Z release'
       release.
 - [ ] Update `stable.txt` in the main branch:
 
-      git switch -c pr/$USER/update-stable main
+      git switch -c pr/$USER/update-stable-to-$NEW_RELEASE main
       echo v$NEW_RELEASE > stable.txt
       git add README.md stable.txt
       git commit -s -m "Update stable release to $NEW_RELEASE"
-      git push origin pr/$USER/update-stable
+      git push origin pr/$USER/update-stable-to-$NEW_RELEASE
 
      and then open a pull request against the `main` branch, get it reviewed and merged.
 
