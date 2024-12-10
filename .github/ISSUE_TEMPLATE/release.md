@@ -78,7 +78,7 @@ title: 'vX.Y.Z release'
       git push origin "v$NEW_RELEASE"
 
 - [ ] Ping [`hubble-maintainers` team] on Slack to get an approval to run
-      [Image Release Build workflow].
+      [Release workflow].
 - [ ] Wait for the [`Create a release` workflow] to finish.
 - [ ] Find the release draft in the [Releases page]. Copy and paste release notes from
       CHANGELOG.md, and click on `Publish release` button.
@@ -95,7 +95,7 @@ title: 'vX.Y.Z release'
      and then open a pull request against the `main` branch, get it reviewed and merged.
 
 [Cilium release tool]: https://github.com/cilium/release
-[Image Release Build workflow]: https://github.com/cilium/hubble/actions/workflows/build-images-release.yaml
+[Release workflow]: https://github.com/cilium/hubble/actions/workflows/release.yml
 [`hubble-maintainers` team]: https://github.com/orgs/cilium/teams/hubble-maintainers
 [Releases page]: https://github.com/cilium/hubble/releases
 [Cilium Slack #general channel]: https://cilium.slack.com/archives/C1MATJ5U5

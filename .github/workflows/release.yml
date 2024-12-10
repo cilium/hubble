@@ -9,6 +9,7 @@ name: Create a release
 jobs:
   build:
     name: Create Release
+    environment: release
     if: github.repository == 'cilium/hubble'
     runs-on: ubuntu-24.04
     steps:
