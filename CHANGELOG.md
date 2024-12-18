@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.5] - 2024-12-18
+[v1.16.5]: https://github.com/cilium/cilium/compare/v1.16.4...v1.16.5
+
+**CI Changes:**
+* Remove Dockerfile (cilium/hubble#1631, @michi-covalent)
+
+**Misc Changes:**
+* chore(deps): update actions/setup-go action to v5.2.0 (cilium/hubble#1633, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.16.4 (cilium/hubble#1624, @renovate[bot])
+* chore(deps): update docker.io/library/alpine docker tag to v3.21.0 (cilium/hubble#1627, @renovate[bot])
+* chore(deps): update docker.io/library/alpine:3.21.0 docker digest to 21dc606 (cilium/hubble#1628, @renovate[bot])
+* chore(deps): update docker/build-push-action action to v6.10.0 (cilium/hubble#1625, @renovate[bot])
+* chore(deps): update golang to v1.23.4 (patch) (cilium/hubble#1626, @renovate[bot])
+* release: Remove the step to post a Slack message (cilium/hubble#1622, @michi-covalent)
+* Update stable release to 1.16.4 (cilium/hubble#1623, @michi-covalent)
+
 ## [v1.16.4] - 2024-11-20
 [v1.16.4]: https://github.com/cilium/cilium/compare/v1.16.3...v1.16.4
 
