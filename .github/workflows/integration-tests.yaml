@@ -17,12 +17,12 @@ concurrency:
 
 env:
   # renovate: datasource=github-releases depName=helm/helm
-  HELM_VERSION: v3.16.3
+  HELM_VERSION: v3.16.4
   # renovate: datasource=github-releases depName=kubernetes-sigs/kind
   KIND_VERSION: v0.25.0
   KIND_CONFIG: .github/kind-config.yaml
   # renovate: datasource=github-releases depName=cilium/cilium
-  CILIUM_VERSION: v1.16.4
+  CILIUM_VERSION: v1.16.5
   CILIUM_VALUES: .github/cilium-values.yaml
 
 jobs:
