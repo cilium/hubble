@@ -72,7 +72,7 @@ this reason, only the latest Hubble CLI version is maintained.
 
 | Version                                              | Release Date         | Maintained | Supported Cilium Version | Artifacts                                                               |
 |------------------------------------------------------|----------------------|------------|--------------------------|-------------------------------------------------------------------------|
-| [v1.16](https://github.com/cilium/hubble/tree/main)  | 2024-12-18 (v1.16.5) | Yes        | Cilium 1.16 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v1.16.5) |
+| [v1.16](https://github.com/cilium/hubble/tree/main)  | 2025-01-22 (v1.16.6) | Yes        | Cilium 1.16 and older    | [GitHub Release](https://github.com/cilium/hubble/releases/tag/v1.16.6) |
 
 ## Component Stability
 
