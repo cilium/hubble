@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.16.6] - 2025-01-22
+[v1.16.6]: https://github.com/cilium/cilium/compare/v1.16.5...v1.16.6
+
+**Misc Changes:**
+* chore(deps): update all github action dependencies (minor) (cilium/hubble#1638, @renovate[bot])
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1637, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.17.0 (cilium/hubble#1641, @renovate[bot])
+* chore(deps): update helm/kind-action action to v1.12.0 (cilium/hubble#1639, @renovate[bot])
+* chore(deps): update module golang.org/x/net to v0.33.0 [security] (cilium/hubble#1636, @renovate[bot])
+* Update readme/stable.txt to v1.16.5 (cilium/hubble#1635, @chancez)
+
 ## [v1.16.5] - 2024-12-18
 [v1.16.5]: https://github.com/cilium/cilium/compare/v1.16.4...v1.16.5
 

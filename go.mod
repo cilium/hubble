@@ -2,7 +2,7 @@ module github.com/cilium/hubble
 
 go 1.22.2
 
-require github.com/cilium/cilium v1.16.5
+require github.com/cilium/cilium v1.16.6
 
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
