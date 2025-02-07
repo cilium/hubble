@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.17.0] - 2025-02-07
+[v1.17.0]: https://github.com/cilium/cilium/compare/v1.16.6...v1.17.0
+
+**Minor Changes:**
+* Add support for automatic port-forwarding in Hubble CLI Replace kubectl-based port-forwarding with native implementation in Cilium CLI (cilium/cilium#35483, @devodev)
+* hubble: from and to cluster filters (cilium/cilium#33325, @kaworu)
+* hubble: Stop building 32-bit binaries (cilium/cilium#35974, @michi-covalent)
+
+**Bugfixes:**
+* hubble: add printer for lost events (cilium/cilium#35208, @aanm)
+* hubble: consistently use v as prefix for the Hubble version (cilium/cilium#35891, @rolinh)
+
+**CI Changes:**
+* Add Hubble CLI integration tests and skip running e2e/conformance on Hubble CLI only changes (cilium/cilium#33850, @chancez)
+
+**Misc Changes:**
+* .github: add cache to cilium-cli and hubble-cli build workflows (cilium/cilium#34847, @aanm)
+* hubble: Add 'release' Make target (cilium/cilium#35561, @michi-covalent)
+* hubble: Combine hubble and hubble-bin make targets (cilium/cilium#35256, @michi-covalent)
+* hubble: remove outdated //go:build go1.18 tag (cilium/cilium#35174, @tklauser)
+* hubble: Use hubble-bin target to generate release binaries (cilium/cilium#35127, @michi-covalent)
+* make: add hubble cli to kind-image-fast-agent (cilium/cilium#35344, @kaworu)
+* Refactor Hubble as a cell (cilium/cilium#35206, @kaworu)
+* Remove deprecated call to DialContext in Hubble (cilium/cilium#34241, @davchos)
+* Use Go standard library slices package more extensively (cilium/cilium#34796, @tklauser)
+* chore(deps): update actions/setup-go action to v5.3.0 (cilium/hubble#1645, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.16.6 (cilium/hubble#1644, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.17.0 (cilium/hubble#1646, @renovate[bot])
+* Update stable release to 1.16.6 (cilium/hubble#1643, @chancez)
+
 ## [v1.16.6] - 2025-01-22
 [v1.16.6]: https://github.com/cilium/cilium/compare/v1.16.5...v1.16.6
 

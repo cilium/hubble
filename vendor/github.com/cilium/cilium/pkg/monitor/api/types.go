@@ -459,9 +459,7 @@ type ServiceUpsertNotification struct {
 	Backends           []ServiceUpsertNotificationAddr `json:"backend-addresses"`
 	NumBackendsOmitted int                             `json:"num-backends-omitted,omitempty"`
 
-	Type string `json:"type,omitempty"`
-	// Deprecated: superseded by ExtTrafficPolicy.
-	TrafficPolicy    string `json:"traffic-policy,omitempty"`
+	Type             string `json:"type,omitempty"`
 	ExtTrafficPolicy string `json:"ext-traffic-policy,omitempty"`
 	IntTrafficPolicy string `json:"int-traffic-policy,omitempty"`
 
@@ -483,7 +481,6 @@ func ServiceUpsertMessage(
 		Backends:           backends,
 		NumBackendsOmitted: numBackendsOmitted,
 		Type:               svcType,
-		TrafficPolicy:      svcExtTrafficPolicy,
 		ExtTrafficPolicy:   svcExtTrafficPolicy,
 		IntTrafficPolicy:   svcIntTrafficPolicy,
 		Name:               svcName,
