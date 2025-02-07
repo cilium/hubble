@@ -5,9 +5,8 @@ package container
 
 import (
 	"cmp"
+	"encoding/json"
 	"slices"
-
-	"golang.org/x/exp/constraints"
 )
 
 // ImmSet is an immutable set optimized for a smallish (1-1000) set of items.
@@ -18,7 +17,7 @@ type ImmSet[T any] struct {
 	eq  func(T, T) bool
 }
 
-func NewImmSet[T constraints.Ordered](items ...T) ImmSet[T] {
+func NewImmSet[T cmp.Ordered](items ...T) ImmSet[T] {
 	return NewImmSetFunc[T](cmp.Compare, items...)
 }
 
@@ -42,6 +41,14 @@ func (s ImmSet[T]) Len() int {
 func (s ImmSet[T]) Has(x T) bool {
 	_, found := slices.BinarySearchFunc(s.xs, x, s.cmp)
 	return found
+}
+
+func (s *ImmSet[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.xs)
+}
+
+func (s *ImmSet[T]) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &s.xs)
 }
 
 func (s ImmSet[T]) Insert(xs ...T) ImmSet[T] {

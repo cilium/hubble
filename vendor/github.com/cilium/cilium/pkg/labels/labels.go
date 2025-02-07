@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"net/netip"
 	"slices"
-	"sort"
 	"strings"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/cilium/cilium/pkg/container/cache"
 	"github.com/cilium/cilium/pkg/logging/logfields"
 )
 
@@ -105,9 +105,18 @@ var (
 	// on IDNameKubeAPIServer.
 	LabelKubeAPIServer = Labels{IDNameKubeAPIServer: NewLabel(IDNameKubeAPIServer, "", LabelSourceReserved)}
 
+	LabelKubeAPIServerExt = Labels{
+		IDNameKubeAPIServer: NewLabel(IDNameKubeAPIServer, "", LabelSourceReserved),
+		IDNameWorld:         NewLabel(IDNameWorld, "", LabelSourceReserved),
+	}
+
 	// LabelIngress is the label used for Ingress proxies. See comment
 	// on IDNameIngress.
 	LabelIngress = Labels{IDNameIngress: NewLabel(IDNameIngress, "", LabelSourceReserved)}
+
+	// LabelKeyFixedIdentity is the label that can be used to define a fixed
+	// identity.
+	LabelKeyFixedIdentity = "io.cilium.fixed-identity"
 )
 
 const (
@@ -138,6 +147,12 @@ const (
 	// LabelSourceCIDR is the label source for generated CIDRs.
 	LabelSourceCIDR = "cidr"
 
+	// LabelSourceCIDRGroup is the label source used for labels from CIDRGroups
+	LabelSourceCIDRGroup = "cidrgroup"
+
+	// LabelSourceCIDRGroupKeyPrefix is the source as a k8s selector key prefix
+	LabelSourceCIDRGroupKeyPrefix = LabelSourceCIDRGroup + "."
+
 	// LabelSourceNode is the label source for remote-nodes.
 	LabelSourceNode = "node"
 
@@ -149,10 +164,6 @@ const (
 
 	// LabelSourceDirectory is the label source for policies read from files
 	LabelSourceDirectory = "directory"
-
-	// LabelKeyFixedIdentity is the label that can be used to define a fixed
-	// identity.
-	LabelKeyFixedIdentity = "io.cilium.fixed-identity"
 )
 
 // Label is the Cilium's representation of a container label.
@@ -172,6 +183,60 @@ type Label struct {
 // Labels is a map of labels where the map's key is the same as the label's key.
 type Labels map[string]Label
 
+//
+// Convenience functions to use instead of Has(), which iterates through the labels
+//
+
+// HasLabelWithKey returns true if lbls has a label with 'key'
+func (l Labels) HasLabelWithKey(key string) bool {
+	_, ok := l[key]
+	return ok
+}
+
+func (l Labels) HasFixedIdentityLabel() bool {
+	return l.HasLabelWithKey(LabelKeyFixedIdentity)
+}
+
+func (l Labels) HasInitLabel() bool {
+	return l.HasLabelWithKey(IDNameInit)
+}
+
+func (l Labels) HasHealthLabel() bool {
+	return l.HasLabelWithKey(IDNameHealth)
+}
+
+func (l Labels) HasIngressLabel() bool {
+	return l.HasLabelWithKey(IDNameIngress)
+}
+
+func (l Labels) HasHostLabel() bool {
+	return l.HasLabelWithKey(IDNameHost)
+}
+
+func (l Labels) HasKubeAPIServerLabel() bool {
+	return l.HasLabelWithKey(IDNameKubeAPIServer)
+}
+
+func (l Labels) HasRemoteNodeLabel() bool {
+	return l.HasLabelWithKey(IDNameRemoteNode)
+}
+
+func (l Labels) HasWorldIPv6Label() bool {
+	return l.HasLabelWithKey(IDNameWorldIPv6)
+}
+
+func (l Labels) HasWorldIPv4Label() bool {
+	return l.HasLabelWithKey(IDNameWorldIPv4)
+}
+
+func (l Labels) HasNonDualstackWorldLabel() bool {
+	return l.HasLabelWithKey(IDNameWorld)
+}
+
+func (l Labels) HasWorldLabel() bool {
+	return l.HasNonDualstackWorldLabel() || l.HasWorldIPv4Label() || l.HasWorldIPv6Label()
+}
+
 // GetPrintableModel turns the Labels into a sorted list of strings
 // representing the labels.
 func (l Labels) GetPrintableModel() (res []string) {
@@ -190,7 +255,7 @@ func (l Labels) GetPrintableModel() (res []string) {
 		}
 	}
 
-	sort.Strings(res)
+	slices.Sort(res)
 	return res
 }
 
@@ -227,6 +292,17 @@ func (l Labels) GetFromSource(source string) Labels {
 	return lbls
 }
 
+// RemoveFromSource removes all labels that are from the given source
+func (l Labels) RemoveFromSource(source string) Labels {
+	lbls := Labels{}
+	for k, v := range l {
+		if v.Source != source {
+			lbls[k] = v
+		}
+	}
+	return lbls
+}
+
 // NewLabel returns a new label from the given key, value and source. If source is empty,
 // the default value will be LabelSourceUnspec. If key starts with '$', the source
 // will be overwritten with LabelSourceReserved. If key contains ':', the value
@@ -248,9 +324,9 @@ func NewLabel(key string, value string, source string) Label {
 	}
 
 	l := Label{
-		Key:    key,
-		Value:  value,
-		Source: source,
+		Key:    cache.Strings.Get(key),
+		Value:  cache.Strings.Get(value),
+		Source: cache.Strings.Get(source),
 	}
 	if l.Source == LabelSourceCIDR {
 		c, err := LabelToPrefix(l.Key)

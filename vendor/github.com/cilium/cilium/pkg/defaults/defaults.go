@@ -72,43 +72,9 @@ const (
 	// SockPathEnv is the environment variable to overwrite SockPath
 	SockPathEnv = "CILIUM_SOCK"
 
-	// HubbleSockPath is the path to the UNIX domain socket exposing the Hubble
-	// API to clients locally.
-	HubbleSockPath = RuntimePath + "/hubble.sock"
-
-	// HubbleSockPathEnv is the environment variable to overwrite
-	// HubbleSockPath.
-	HubbleSockPathEnv = "HUBBLE_SOCK"
-
-	// HubbleRecorderStoragePath specifies the directory in which pcap files
-	// created via the Hubble Recorder API are stored
-	HubbleRecorderStoragePath = RuntimePath + "/pcaps"
-
-	// HubbleRecorderSinkQueueSize is the queue size for each recorder sink
-	HubbleRecorderSinkQueueSize = 1024
-
-	// HubbleRedactEnabled controls if sensitive information will be redacted from L7 flows
-	HubbleRedactEnabled = false
-
-	// HubbleRedactHttpURLQuery controls if the URL query will be redacted from flows
-	HubbleRedactHttpURLQuery = false
-
-	// HubbleRedactHttpUserInfo controls if the user info will be redacted from flows
-	HubbleRedactHttpUserInfo = true
-
-	// HubbleRedactKafkaApiKey controls if the Kafka API key will be redacted from flows
-	HubbleRedactKafkaApiKey = false
-
-	// HubbleDropEventsEnabled controls whether Hubble should create v1.Events
-	// for packet drops related to pods
-	HubbleDropEventsEnabled = false
-
-	// HubbleDropEventsInterval controls the minimum time between emitting events
-	// with the same source and destination IP
-	HubbleDropEventsInterval = 2 * time.Minute
-
-	// HubbleDropEventsReasons controls which drop reasons to emit events for
-	HubbleDropEventsReasons = "auth_required,policy_denied"
+	// ShellSockPath is the path to the UNIX domain socket exposing the debug shell
+	// to which "cilium-dbg shell" connects to.
+	ShellSockPath = RuntimePath + "/shell.sock"
 
 	// MonitorSockPath1_2 is the path to the UNIX domain socket used to
 	// distribute BPF and agent events to listeners.
@@ -153,7 +119,7 @@ const (
 
 	// ToFQDNsMaxIPsPerHost defines the maximum number of IPs to maintain
 	// for each FQDN name in an endpoint's FQDN cache
-	ToFQDNsMaxIPsPerHost = 50
+	ToFQDNsMaxIPsPerHost = 1000
 
 	// ToFQDNsMaxDeferredConnectionDeletes Maximum number of IPs to retain for
 	// expired DNS lookups with still-active connections
@@ -222,6 +188,10 @@ const (
 	// StatusCollectorFailureThreshold is the duration after which a probe
 	// is considered failed
 	StatusCollectorFailureThreshold = 1 * time.Minute
+
+	// SessionAffinityTimeoutMaxFallback defines the maximum number of seconds
+	// for the session affinity timeout. See also lb{4,6}_affinity_timeout().
+	SessionAffinityTimeoutMaxFallback = 0xffffff
 
 	// EnableIPv4 is the default value for IPv4 enablement
 	EnableIPv4 = true
@@ -300,9 +270,6 @@ const (
 	// EnableBPFTProxy is the default value for EnableBPFTProxy
 	EnableBPFTProxy = false
 
-	// EnableXTSocketFallback is the default value for EnableXTSocketFallback
-	EnableXTSocketFallback = true
-
 	// EnableLocalNodeRoute default value for EnableLocalNodeRoute
 	EnableLocalNodeRoute = true
 
@@ -327,6 +294,9 @@ const (
 	// EnableHealthCheckLoadBalancerIP
 	EnableHealthCheckLoadBalancerIP = false
 
+	// HealthCheckICMPFailureThreshold is the default value for HealthCheckICMPFailureThreshold
+	HealthCheckICMPFailureThreshold = 3
+
 	// AlignCheckerName is the BPF object name for the alignchecker.
 	AlignCheckerName = "bpf_alignchecker.o"
 
@@ -340,8 +310,9 @@ const (
 	// a kvstore path for too long.
 	KVStoreStaleLockTimeout = 30 * time.Second
 
-	// PolicyQueueSize is the default queue size for policy-related events.
-	PolicyQueueSize = 100
+	// KVstorePodNetworkSupport represents whether to enable the support for
+	// running the Cilium KVstore in pod network.
+	KVstorePodNetworkSupport = false
 
 	// KVstoreQPS is default rate limit for kv store operations
 	KVstoreQPS = 20
@@ -407,7 +378,7 @@ const (
 	LockLeaseTTL = 25 * time.Second
 
 	// KVstoreLeaseMaxTTL is the upper bound for KVStore lease TTL value.
-	// It is calculated as Min(int64 positive max, etcd MaxLeaseTTL, consul MaxLeaseTTL)
+	// It is calculated as Min(int64 positive max, etcd MaxLeaseTTL)
 	KVstoreLeaseMaxTTL = 86400 * time.Second
 
 	// IPAMPreAllocation is the default value for
@@ -465,13 +436,11 @@ const (
 	// policy updates are invoked.
 	PolicyTriggerInterval = 1 * time.Second
 
-	// K8sClientQPSLimit is the default qps for the k8s client. It is set to 0 because the k8s client
-	// has its own default.
-	K8sClientQPSLimit float32 = 0.0
+	// K8sClientQPSLimit is the default qps for the cilium-agent k8s client.
+	K8sClientQPSLimit float32 = 10.0
 
-	// K8sClientBurst is the default burst for the k8s client. It is set to 0 because the k8s client
-	// has its own default.
-	K8sClientBurst = 0
+	// K8sClientBurst is the default burst for the cilium-agent k8s client.
+	K8sClientBurst = 20
 
 	// K8sServiceCacheSize is the default value for option.K8sServiceCacheSize
 	// which denotes the value of Cilium's K8s service cache size.
@@ -573,6 +542,13 @@ const (
 	// EnableK8sNetworkPolicy enables support for K8s NetworkPolicy.
 	EnableK8sNetworkPolicy = true
 
+	// EnableCiliumNetworkPolicy enables support for Cilium Network Policy.
+	EnableCiliumNetworkPolicy = true
+
+	// EnableCiliumClusterwideNetworkPolicy enables support for Cilium Clusterwide
+	// Network Policy.
+	EnableCiliumClusterwideNetworkPolicy = true
+
 	// MaxConnectedClusters sets the maximum number of clusters that can be
 	// connected in a clustermesh.
 	// The value is used to determine the bit allocation for cluster ID and
@@ -592,11 +568,23 @@ const (
 	// BPFEventsTraceEnabled controls whether the Cilium datapath exposes "trace" events to Cilium monitor and Hubble.
 	BPFEventsTraceEnabled = true
 
+	// BPFConntrackAccounting controls whether CT accounting for packets and bytes is enabled
+	BPFConntrackAccounting = false
+
 	// EnableEnvoyConfig is the default value for option.EnableEnvoyConfig
 	EnableEnvoyConfig = false
 
 	// NetNsPath is the default path to the mounted network namespaces directory
 	NetNsPath = "/var/run/cilium/netns"
+
+	// EnableIternalTrafficPolicy is the default value for option.EnableInternalTrafficPolicy
+	EnableInternalTrafficPolicy = true
+
+	// EnableNonDefaultDenyPolicies allows policies to define whether they are operating in default-deny mode
+	EnableNonDefaultDenyPolicies = true
+
+	// EnableSourceIPVerification is the default value for source ip validation
+	EnableSourceIPVerification = true
 )
 
 var (

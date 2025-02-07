@@ -7,12 +7,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 
 	"github.com/cilium/cilium/pkg/defaults"
 	ipamOption "github.com/cilium/cilium/pkg/ipam/option"
-	"github.com/cilium/cilium/pkg/logging/logfields"
 )
 
 const (
@@ -49,23 +47,23 @@ func (def ClusterInfo) Flags(flags *pflag.FlagSet) {
 
 // Validate validates that the ClusterID is in the valid range (including ClusterID == 0),
 // and that the ClusterName is different from the default value if the ClusterID != 0.
-func (c ClusterInfo) Validate(log logrus.FieldLogger) error {
+func (c ClusterInfo) Validate() error {
 	if c.ID < ClusterIDMin || c.ID > ClusterIDMax {
 		return fmt.Errorf("invalid cluster id %d: must be in range %d..%d",
 			c.ID, ClusterIDMin, ClusterIDMax)
 	}
 
-	return c.validateName(log)
+	return c.validateName()
 }
 
 // ValidateStrict validates that the ClusterID is in the valid range, but not 0,
 // and that the ClusterName is different from the default value.
-func (c ClusterInfo) ValidateStrict(log logrus.FieldLogger) error {
+func (c ClusterInfo) ValidateStrict() error {
 	if err := ValidateClusterID(c.ID); err != nil {
 		return err
 	}
 
-	return c.validateName(log)
+	return c.validateName()
 }
 
 // ValidateBuggyClusterID returns an error if a buggy cluster ID (i.e., with the
@@ -82,10 +80,9 @@ func (c ClusterInfo) ValidateBuggyClusterID(ipamMode, chainingMode string) error
 	return nil
 }
 
-func (c ClusterInfo) validateName(log logrus.FieldLogger) error {
+func (c ClusterInfo) validateName() error {
 	if err := ValidateClusterName(c.Name); err != nil {
-		log.WithField(logfields.ClusterName, c.Name).WithError(err).
-			Error("Invalid cluster name. This may cause degraded functionality, and will be strictly forbidden starting from Cilium v1.17")
+		return fmt.Errorf("invalid cluster name: %w", err)
 	}
 
 	if c.ID != 0 && c.Name == defaults.ClusterName {
@@ -114,4 +111,27 @@ func (c ClusterInfo) ValidateRemoteConfig(config CiliumClusterConfig) error {
 	}
 
 	return nil
+}
+
+// QuirksConfig allows the user to configure how Cilium behaves when a set
+// of incompatible options are configured together into the agent.
+type QuirksConfig struct {
+	// AllowUnsafePolicySKBUsage determines whether to hard-fail startup
+	// due to detection of a configuration combination that may trigger
+	// connection impact in the dataplane due to clustermesh IDs
+	// conflicting with other usage of skb->mark field. See GH-21330.
+	AllowUnsafePolicySKBUsage bool
+}
+
+var DefaultQuirks = QuirksConfig{
+	AllowUnsafePolicySKBUsage: false,
+}
+
+func (_ QuirksConfig) Flags(flags *pflag.FlagSet) {
+	flags.Bool("allow-unsafe-policy-skb-usage", false,
+		"Allow the daemon to continue to operate even if conflicting "+
+			"clustermesh ID configuration is detected which may "+
+			"impact the ability for Cilium to enforce network "+
+			"policy both within and across clusters")
+	flags.MarkHidden("allow-unsafe-policy-skb-usage")
 }
