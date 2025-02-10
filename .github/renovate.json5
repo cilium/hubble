@@ -1,9 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":gitSignOff",
-    "helpers:pinGitHubActionDigests"
+    "helpers:pinGitHubActionDigests",
   ],
   // This ensures that the gitAuthor and gitSignOff fields match
   "gitAuthor": "renovate[bot] <bot@renovateapp.com>",
@@ -14,15 +14,17 @@
     "Makefile",
   ],
   postUpdateOptions: [
-    "gomodTidy"
+    "gomodTidy",
   ],
   "ignoreDeps": [
-    "github.com/cilium/cilium"
+    "github.com/cilium/cilium",
   ],
   "pinDigests": true,
   "prHourlyLimit": 2, // do not open more than two pull requests an hour
   "prConcurrentLimit": 5, // do not open more than five PRs per branch at a time
-  "schedule": ["before 6am on tuesday"], // only run renovate part of the day tuesday
+  "schedule": [
+      "before 6am on tuesday", // only run renovate part of the day tuesday
+  ],
   "separateMajorMinor": true,
   "separateMultipleMajor": true,
   "separateMinorPatch": true,
@@ -36,11 +38,7 @@
   "labels": [
     "kind/enhancement",
     "release-note/misc",
-    "priority/release-blocker"
-  ],
-  // uncomment after renovate onboarding is merged and renovate PRs are merged
-  "schedule": [
-    "on friday"
+    "priority/release-blocker",
   ],
   "stopUpdatingLabel": "renovate/stop-updating",
   "packageRules": [
@@ -49,31 +47,29 @@
     {
       "matchPackageNames": [
         "go", // golang version directive upgrade in go.mod
-      ],
-      // list of trusted packages that can automerge
-      "matchPackagePrefixes": [
-        "docker.io/library/", // official Docker images
-        "github.com/golang/", // Golang official org
-        "golang.org/x/", // Golang official experimental org
-        "google.golang.org/", // Google official repo for api/genproto/grpc/protobuf
-        "github.com/google/", // Google official github org
-        "k8s.io/", // Kubernetes official repo
-        "sigs.k8s.io/", // Kubernetes official SIG repo
+        // list of trusted packages that can automerge
+        "docker.io/library/{/,}**", // official Docker images
+        "github.com/golang/{/,}**", // Golang official org
+        "golang.org/x/{/,}**",      // Golang official experimental org
+        "google.golang.org/{/,}**", // Google official repo for api/genproto/grpc/protobuf
+        "github.com/google/{/,}**", // Google official github org
+        "k8s.io/{/,}**",            // Kubernetes official repo
+        "sigs.k8s.io/{/,}**",       // Kubernetes official SIG repo
       ],
       // auto merge non-major updates
       "matchUpdateTypes": [
         "minor",
         "patch",
         "pin",
-        "pinDigest"
+        "pinDigest",
       ],
       "automerge": true
     },
     {
       "groupName": "all github action dependencies",
       "groupSlug": "all-github-action",
-      "matchPaths": [
-        ".github/workflows/**"
+      "matchFileNames": [
+        ".github/workflows/**",
       ],
       "matchUpdateTypes": [
         "major",
@@ -81,7 +77,7 @@
         "digest",
         "patch",
         "pin",
-        "pinDigest"
+        "pinDigest",
       ],
     },
     {
@@ -89,7 +85,7 @@
       "groupSlug": "all-go-deps-main",
       "matchFiles": [
         "go.mod",
-        "go.sum"
+        "go.sum",
       ],
       "postUpdateOptions": [
         // update source import paths on major updates
@@ -101,10 +97,10 @@
         "digest",
         "patch",
         "pin",
-        "pinDigest"
+        "pinDigest",
       ],
       matchBaseBranches: [
-        "main"
+        "main",
       ]
     },
     {
@@ -126,11 +122,9 @@
         // renovate wants to downgrade to 1.0.5. Can be removed if pflag ever
         // tags a new release.
         "github.com/spf13/pflag",
-      ],
-      "matchPackagePatterns": [
         // k8s dependencies will be updated manually along with tests
-        "k8s.io/*",
-        "sigs.k8s.io/*"
+        "/k8s.io/*/",
+        "/sigs.k8s.io/*/",
       ]
     },
     {
@@ -140,14 +134,14 @@
         "docker.io/library/golang",
         "library/golang",
         "go",
-        "golang"
+        "golang",
       ],
     },
     {
       "groupName": "alpine",
       // Restrict the alpine version that can be used on stable branches
       "matchPackageNames": [
-        "docker.io/library/alpine"
+        "docker.io/library/alpine",
       ],
     },
     {
@@ -155,31 +149,33 @@
       // Without this, golangci-lint updates are not in sync for GHA files and other usages.
       "groupName": "golangci-lint",
       "matchDepNames": [
-        "golangci/golangci-lint"
+        "golangci/golangci-lint",
       ]
     },
   ],
-  "regexManagers": [
+  "customManagers": [
     {
+      "customType": "regex",
       "fileMatch": [
-        "^\\.github/workflows/[^/]+\\.ya?ml$"
+        "^\\.github/workflows/[^/]+\\.ya?ml$",
       ],
       // This regex manages version strings in GitHub actions workflow files,
       // similar to the examples shown here:
       //   https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+(?:version|VERSION): +['\"]?(?<currentValue>[^\\s'\"]+)['\"]?"
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+(?:version|VERSION): +['\"]?(?<currentValue>[^\\s'\"]+)['\"]?",
       ]
     },
     {
+      "customType": "regex",
       "fileMatch": [
-        "^Makefile$"
+        "^Makefile$",
       ],
       // This regex manages version strings in the Makefile,
       // similar to the examples shown here:
       //   https://docs.renovatebot.com/modules/manager/regex/#advanced-capture
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+_VERSION = (?<currentValue>.*)\\s+.+_SHA = (?<currentDigest>sha256:[a-f0-9]+)"
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+.+_VERSION = (?<currentValue>.*)\\s+.+_SHA = (?<currentDigest>sha256:[a-f0-9]+)",
       ]
     },
   ]
