@@ -83,7 +83,7 @@
     {
       "groupName": "all go dependencies main",
       "groupSlug": "all-go-deps-main",
-      "matchFiles": [
+      "matchFileNames": [
         "go.mod",
         "go.sum",
       ],
