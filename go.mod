@@ -3,7 +3,7 @@ module github.com/cilium/hubble
 // renovate: datasource=golang-version depName=go
 go 1.23.6
 
-require github.com/cilium/cilium v1.17.0
+require github.com/cilium/cilium v1.17.1
 
 require (
 	cel.dev/expr v0.18.0 // indirect
