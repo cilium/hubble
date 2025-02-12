@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.17.1] - 2025-02-12
+[v1.17.1]: https://github.com/cilium/cilium/compare/v1.17.0...v1.17.1
+
+**Minor Changes:**
+* update Go to v1.23.6 and fix Renovate handling of Go (cilium/hubble#1650, @rolinh)
+
+**Misc Changes:**
+* migrate Renovate config (cilium/hubble#1652, @rolinh)
+* migrate Renovate config take #2 (cilium/hubble#1654, @rolinh)
+* Update stable release to 1.17.0 (cilium/hubble#1649, @rolinh)
+
 ## [v1.17.0] - 2025-02-07
 [v1.17.0]: https://github.com/cilium/cilium/compare/v1.16.6...v1.17.0
 
