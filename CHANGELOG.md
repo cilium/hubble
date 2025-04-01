@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.17.2] - 2025-04-01
+[v1.17.2]: https://github.com/cilium/cilium/compare/v1.17.1...v1.17.2
+
+**Bugfixes:**
+* hubble: escape terminal special characters from observe output (Backport PR cilium/cilium#37648, Upstream PR cilium/cilium#37401, @devodev)
+
+**Misc Changes:**
+* chore(deps): update actions/setup-go action to v5.4.0 (cilium/hubble#1667, @renovate[bot])
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1666, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.17.1 (cilium/hubble#1661, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.17.1 (cilium/hubble#1659, @renovate[bot])
+* chore(deps): update dependency kubernetes-sigs/kind to v0.27.0 (cilium/hubble#1660, @renovate[bot])
+* chore(deps): update library/golang docker tag to v1.23.7 (cilium/hubble#1664, @renovate[bot])
+* chore(deps): update module golang.org/x/net to v0.36.0 [security] (cilium/hubble#1665, @renovate[bot])
+* update stable release to 1.17.1 (cilium/hubble#1658, @rolinh)
+
 ## [v1.17.1] - 2025-02-12
 [v1.17.1]: https://github.com/cilium/cilium/compare/v1.17.0...v1.17.1
 
