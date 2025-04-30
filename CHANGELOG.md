@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.17.3] - 2025-04-30
+[v1.17.3]: https://github.com/cilium/cilium/compare/v1.17.2...v1.17.3
+
+**Misc Changes:**
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1672, @renovate[bot])
+* chore(deps): update library/golang docker tag to v1.23.8 (cilium/hubble#1671, @renovate[bot])
+* chore(deps): update module golang.org/x/net to v0.38.0 [security] (cilium/hubble#1673, @renovate[bot])
+* Update stable to 1.17.2 (cilium/hubble#1670, @chancez)
+
 ## [v1.17.2] - 2025-04-01
 [v1.17.2]: https://github.com/cilium/cilium/compare/v1.17.1...v1.17.2
 
