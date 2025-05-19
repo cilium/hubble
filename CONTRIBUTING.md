@@ -9,8 +9,7 @@
 
 ## Contribution workflow
 
-Hubble uses GitHub for collaborative development. Note that this repository only hosts release artifacts for Hubble CLI. The actual code for Hubble CLI
-is in [Cilium GitHub repository] under [`hubble/` directory](https://github.com/cilium/cilium/tree/main/hubble). Please use GitHub issues to discuss proposals and use pull requests to suggest changes in [Cilium GitHub repository].
+Hubble uses GitHub for collaborative development. Note that this repository only hosts release artifacts for the Hubble CLI. The actual code for Hubble (CLI, server, Relay, metrics) is in the Cilium GitHub repository under [`hubble/`](https://github.com/cilium/cilium/tree/main/hubble), [`hubble-relay/`](https://github.com/cilium/cilium/tree/main/hubble-relay) and [`pkg/hubble/`](https://github.com/cilium/cilium/tree/main/pkg/hubble) directories. Please use GitHub issues to discuss proposals and use pull requests to suggest changes in Cilium GitHub repository.
 
 For more information see the [Cilium Development Guide](https://docs.cilium.io/en/latest/contributing/development/) and the [Hubble-specific notes](https://docs.cilium.io/en/latest/contributing/development/hubble/).
 
