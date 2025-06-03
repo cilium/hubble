@@ -25,7 +25,7 @@ TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=library/golang
 GOLANG_IMAGE_VERSION = 1.24.3-alpine
-GOLANG_IMAGE_SHA = sha256:ef18ee7117463ac1055f5a370ed18b8750f01589f13ea0b48642f5792b234044
+GOLANG_IMAGE_SHA = sha256:b4f875e650466fa0fe62c6fd3f02517a392123eea85f1d7e69d85f780e4db1c1
 
 # Add the ability to override variables
 -include Makefile.override
@@ -41,7 +41,7 @@ hubble-bin:
 release:
 	$(CONTAINER_ENGINE) run --rm --workdir /hubble --volume `pwd`:/hubble docker.io/library/golang:$(GOLANG_IMAGE_VERSION)@$(GOLANG_IMAGE_SHA) \
 		sh -c "apk add --no-cache setpriv make git && \
-			/usr/bin/setpriv --reuid=$(RELEASE_UID) --regid=$(RELEASE_GID) --clear-groups make GOCACHE=/tmp/gocache local-release"
+			/bin/setpriv --reuid=$(RELEASE_UID) --regid=$(RELEASE_GID) --clear-groups make GOCACHE=/tmp/gocache local-release"
 
 local-release: clean
 	set -o errexit; \
