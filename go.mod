@@ -1,9 +1,11 @@
 module github.com/cilium/hubble
 
 // renovate: datasource=golang-version depName=go
-go 1.23.6
+go 1.24.0
 
-require github.com/cilium/cilium v1.17.3
+toolchain go1.24.4
+
+require github.com/cilium/cilium v1.17.5
 
 require (
 	cel.dev/expr v0.19.1 // indirect
@@ -14,9 +16,9 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cilium/ebpf v0.17.1 // indirect
-	github.com/cilium/hive v0.0.0-20250121145729-e67f66eb0375 // indirect
+	github.com/cilium/hive v0.0.0-20250522145610-0734675df148 // indirect
 	github.com/cilium/proxy v0.0.0-20250408103314-d3be7c547203 // indirect
-	github.com/cilium/statedb v0.3.6 // indirect
+	github.com/cilium/statedb v0.4.0 // indirect
 	github.com/cilium/stream v0.0.0-20241203114243-53c3e5d79744 // indirect
 	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
