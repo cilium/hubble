@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.17.5] - 2025-06-23
+[v1.17.3]: https://github.com/cilium/cilium/compare/v1.17.3...v1.17.5
+
+**Misc Changes:**
+* chore(deps): update actions/setup-go action to v5.5.0 (cilium/hubble#1680, @renovate[bot])
+* chore(deps): update all github action dependencies (minor) (cilium/hubble#1683, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.17.4 (cilium/hubble#1682, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.18.3 (cilium/hubble#1689, @renovate[bot])
+* chore(deps): update dependency kubernetes-sigs/kind to v0.29.0 (cilium/hubble#1684, @renovate[bot])
+* chore(deps): update library/golang docker tag to v1.24.4 (cilium/hubble#1687, @renovate[bot])
+* chore(deps): update library/golang:1.24.3-alpine docker digest to b4f875e (cilium/hubble#1685, @renovate[bot])
+* Update CONTRIBUTING.md (cilium/hubble#1681, @xmulligan)
+* Update stable release to 1.17.3 (cilium/hubble#1677, @chancez)
+
 ## [v1.17.3] - 2025-04-30
 [v1.17.3]: https://github.com/cilium/cilium/compare/v1.17.2...v1.17.3
 
