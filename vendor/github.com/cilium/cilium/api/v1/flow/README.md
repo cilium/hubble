@@ -41,6 +41,7 @@
     - [TimeNotification](#flow-TimeNotification)
     - [TraceContext](#flow-TraceContext)
     - [TraceParent](#flow-TraceParent)
+    - [Tunnel](#flow-Tunnel)
     - [UDP](#flow-UDP)
     - [Workload](#flow-Workload)
   
@@ -58,6 +59,7 @@
     - [TraceObservationPoint](#flow-TraceObservationPoint)
     - [TraceReason](#flow-TraceReason)
     - [TrafficDirection](#flow-TrafficDirection)
+    - [Tunnel.Protocol](#flow-Tunnel-Protocol)
     - [Verdict](#flow-Verdict)
   
 - [Scalar Value Types](#scalar-value-types)
@@ -86,8 +88,8 @@
 | endpoint_regenerate | [EndpointRegenNotification](#flow-EndpointRegenNotification) |  | used for ENDPOINT_REGENERATE_SUCCESS and ENDPOINT_REGENERATE_FAILURE |
 | endpoint_update | [EndpointUpdateNotification](#flow-EndpointUpdateNotification) |  | used for ENDPOINT_CREATED and ENDPOINT_DELETED |
 | ipcache_update | [IPCacheNotification](#flow-IPCacheNotification) |  | used for IPCACHE_UPSERTED and IPCACHE_DELETED |
-| service_upsert | [ServiceUpsertNotification](#flow-ServiceUpsertNotification) |  |  |
-| service_delete | [ServiceDeleteNotification](#flow-ServiceDeleteNotification) |  |  |
+| service_upsert | [ServiceUpsertNotification](#flow-ServiceUpsertNotification) |  | **Deprecated.**  |
+| service_delete | [ServiceDeleteNotification](#flow-ServiceDeleteNotification) |  | **Deprecated.**  |
 
 
 
@@ -292,6 +294,7 @@ EventTypeFilter is a filter describing a particular event type.
 | ethernet | [Ethernet](#flow-Ethernet) |  | l2 |
 | IP | [IP](#flow-IP) |  | l3 |
 | l4 | [Layer4](#flow-Layer4) |  | l4 |
+| tunnel | [Tunnel](#flow-Tunnel) |  |  |
 | source | [Endpoint](#flow-Endpoint) |  |  |
 | destination | [Endpoint](#flow-Endpoint) |  |  |
 | Type | [FlowType](#flow-FlowType) |  |  |
@@ -324,6 +327,7 @@ EventTypeFilter is a filter describing a particular event type.
 | ingress_allowed_by | [Policy](#flow-Policy) | repeated | The CiliumNetworkPolicies allowing the ingress of the flow. |
 | egress_denied_by | [Policy](#flow-Policy) | repeated | The CiliumNetworkPolicies denying the egress of the flow. |
 | ingress_denied_by | [Policy](#flow-Policy) | repeated | The CiliumNetworkPolicies denying the ingress of the flow. |
+| policy_log | [string](#string) | repeated | The set of Log values for policies that matched this flow. If no matched policies have an explicit log value configured, this list is empty. Duplicate values are elided; each entry is unique. |
 
 
 
@@ -808,6 +812,23 @@ TraceParent identifies the incoming request in a tracing system.
 
 
 
+<a name="flow-Tunnel"></a>
+
+### Tunnel
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| protocol | [Tunnel.Protocol](#flow-Tunnel-Protocol) |  |  |
+| IP | [IP](#flow-IP) |  |  |
+| l4 | [Layer4](#flow-Layer4) |  |  |
+
+
+
+
+
+
 <a name="flow-UDP"></a>
 
 ### UDP
@@ -1058,6 +1079,7 @@ here.
 | DROP_HOST_NOT_READY | 202 | A BPF program wants to tail call into bpf_host, but the host datapath hasn&#39;t been loaded yet. |
 | DROP_EP_NOT_READY | 203 | A BPF program wants to tail call some endpoint&#39;s policy program in cilium_call_policy, but the program is not available. |
 | DROP_NO_EGRESS_IP | 204 | An Egress Gateway node matched a packet against an Egress Gateway policy that didn&#39;t select a valid Egress IP. |
+| DROP_PUNT_PROXY | 205 | Punt packet to a user space proxy. |
 
 
 
@@ -1198,6 +1220,19 @@ This mirrors enum xlate_point in bpf/lib/trace_sock.h
 | TRAFFIC_DIRECTION_UNKNOWN | 0 |  |
 | INGRESS | 1 |  |
 | EGRESS | 2 |  |
+
+
+
+<a name="flow-Tunnel-Protocol"></a>
+
+### Tunnel.Protocol
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNKNOWN | 0 |  |
+| VXLAN | 1 |  |
+| GENEVE | 2 |  |
 
 
 

@@ -7,6 +7,7 @@ package labels
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"sort"
 	"strconv"
@@ -34,6 +35,19 @@ var (
 
 // Requirements is AND of all requirements.
 type Requirements []Requirement
+
+func (r Requirements) String() string {
+	var sb strings.Builder
+
+	for i, requirement := range r {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(requirement.String())
+	}
+
+	return sb.String()
+}
 
 // Selector represents a label selector.
 type Selector interface {
@@ -191,12 +205,7 @@ func NewRequirement(key string, op selection.Operator, vals []string, opts ...fi
 }
 
 func (r *Requirement) hasValue(value string) bool {
-	for i := range r.strValues {
-		if r.strValues[i] == value {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(r.strValues, value)
 }
 
 // Matches returns true if the Requirement matches the input Labels.
@@ -272,6 +281,13 @@ func (r *Requirement) Values() sets.Set[string] {
 	for i := range r.strValues {
 		ret.Insert(r.strValues[i])
 	}
+	return ret
+}
+
+// ValuesUnsorted returns a copy of requirement values as passed to NewRequirement without sorting.
+func (r *Requirement) ValuesUnsorted() []string {
+	ret := make([]string, 0, len(r.strValues))
+	ret = append(ret, r.strValues...)
 	return ret
 }
 
@@ -977,14 +993,9 @@ func (s ValidatedSetSelector) Empty() bool {
 }
 
 func (s ValidatedSetSelector) String() string {
-	keys := make([]string, 0, len(s))
-	for k := range s {
-		keys = append(keys, k)
-	}
-	// Ensure deterministic output
-	slices.Sort(keys)
 	b := strings.Builder{}
-	for i, key := range keys {
+	// Ensure deterministic output by sorting
+	for i, key := range slices.Sorted(maps.Keys(s)) {
 		v := s[key]
 		b.Grow(len(key) + 2 + len(v))
 		if i != 0 {
@@ -1006,11 +1017,7 @@ func (s ValidatedSetSelector) Requirements() (requirements Requirements, selecta
 }
 
 func (s ValidatedSetSelector) DeepCopySelector() Selector {
-	res := make(ValidatedSetSelector, len(s))
-	for k, v := range s {
-		res[k] = v
-	}
-	return res
+	return maps.Clone(s)
 }
 
 func (s ValidatedSetSelector) RequiresExactMatch(label string) (value string, found bool) {

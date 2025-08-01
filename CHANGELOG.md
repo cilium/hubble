@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.18.0] - 2025-08-01
+[v1.18.0]: https://github.com/cilium/cilium/compare/v1.17.5...v1.18.0
+
+**Minor Changes:**
+* hubble-cli: new `--print-policy-names` option to show the names of (C)CNPs that allowed or denied traffic (cilium/cilium#39453, @antonipp)
+* hubble: send server version using metadata in gRPC responses (cilium/cilium#38668, @devodev)
+* loader: attach datapath to IPIP tunnel devices (cilium/cilium#37346, @gyutaeb)
+
+**Bugfixes:**
+* hubble: escape terminal special characters from observe output (cilium/cilium#37401, @devodev)
+
+**Misc Changes:**
+* chore(deps): update dependency helm/helm to v3.18.4 (cilium/hubble#1695, @renovate[bot])
+* chore(deps): update golang to v1.24.5 (patch) (cilium/hubble#1696, @renovate[bot])
+* chore(deps): update library/golang:1.24.5-alpine docker digest to daae04e (cilium/hubble#1698, @renovate[bot])
+
 ## [v1.17.5] - 2025-06-23
 [v1.17.3]: https://github.com/cilium/cilium/compare/v1.17.3...v1.17.5
 
