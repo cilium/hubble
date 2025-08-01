@@ -141,12 +141,6 @@ func (id *Identity) IsWellKnown() bool {
 	return WellKnown.lookupByNumericIdentity(id.ID) != nil
 }
 
-// IsWellKnownIdentity returns true if the identity represents a well-known
-// identity, false otherwise.
-func IsWellKnownIdentity(id NumericIdentity) bool {
-	return WellKnown.lookupByNumericIdentity(id) != nil
-}
-
 // NewIdentityFromLabelArray creates a new identity
 func NewIdentityFromLabelArray(id NumericIdentity, lblArray labels.LabelArray) *Identity {
 	var lbls labels.Labels
@@ -206,6 +200,13 @@ func ScopeForLabels(lbls labels.Labels) NumericIdentity {
 	// callers will already have gotten a value from LookupReservedIdentityByLabels.
 	if lbls.HasRemoteNodeLabel() {
 		return IdentityScopeRemoteNode
+	}
+
+	// The ingress label is for L7 LB with cilium proxy, which is running on
+	// every node. So it's not necessary to be global identity, but local
+	// identity instead.
+	if lbls.HasIngressLabel() {
+		return IdentityScopeLocal
 	}
 
 	for _, label := range lbls {

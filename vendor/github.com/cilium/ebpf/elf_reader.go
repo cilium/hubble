@@ -10,11 +10,13 @@ import (
 	"io"
 	"math"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/cilium/ebpf/asm"
 	"github.com/cilium/ebpf/btf"
 	"github.com/cilium/ebpf/internal"
+	"github.com/cilium/ebpf/internal/platform"
 	"github.com/cilium/ebpf/internal/sys"
 )
 
@@ -79,8 +81,8 @@ func LoadCollectionSpecFromReader(rd io.ReaderAt) (*CollectionSpec, error) {
 
 	// Checks if the ELF file is for BPF data.
 	// Old LLVM versions set e_machine to EM_NONE.
-	if f.File.Machine != elf.EM_NONE && f.File.Machine != elf.EM_BPF {
-		return nil, fmt.Errorf("unexpected machine type for BPF ELF: %s", f.File.Machine)
+	if f.Machine != elf.EM_NONE && f.Machine != elf.EM_BPF {
+		return nil, fmt.Errorf("unexpected machine type for BPF ELF: %s", f.Machine)
 	}
 
 	var (
@@ -184,7 +186,13 @@ func LoadCollectionSpecFromReader(rd io.ReaderAt) (*CollectionSpec, error) {
 		return nil, fmt.Errorf("load programs: %w", err)
 	}
 
-	return &CollectionSpec{ec.maps, progs, ec.vars, btfSpec, ec.ByteOrder}, nil
+	return &CollectionSpec{
+		ec.maps,
+		progs,
+		ec.vars,
+		btfSpec,
+		ec.ByteOrder,
+	}, nil
 }
 
 func loadLicense(sec *elf.Section) (string, error) {
@@ -402,7 +410,8 @@ func (ec *elfCode) loadFunctions(section *elfSection) (map[string]asm.Instructio
 
 	// Decode the section's instruction stream.
 	insns := make(asm.Instructions, 0, section.Size/asm.InstructionSize)
-	if err := insns.Unmarshal(r, ec.ByteOrder); err != nil {
+	insns, err := asm.AppendInstructions(insns, r, ec.ByteOrder, platform.Linux)
+	if err != nil {
 		return nil, fmt.Errorf("decoding instructions for section %s: %w", section.Name, err)
 	}
 	if len(insns) == 0 {
@@ -716,6 +725,22 @@ func (ec *elfCode) loadMaps() error {
 			return fmt.Errorf("section %v: map descriptors are not of equal size", sec.Name)
 		}
 
+		// If the ELF has BTF, pull out the btf.Var for each map definition to
+		// extract decl tags from.
+		varsByName := make(map[string]*btf.Var)
+		if ec.btf != nil {
+			var ds *btf.Datasec
+			if err := ec.btf.TypeByName(sec.Name, &ds); err == nil {
+				for _, vsi := range ds.Vars {
+					v, ok := btf.As[*btf.Var](vsi.Type)
+					if !ok {
+						return fmt.Errorf("section %v: btf.VarSecInfo doesn't point to a *btf.Var: %T", sec.Name, vsi.Type)
+					}
+					varsByName[string(v.Name)] = v
+				}
+			}
+		}
+
 		var (
 			r    = bufio.NewReader(sec.Open())
 			size = sec.Size / uint64(nSym)
@@ -734,7 +759,7 @@ func (ec *elfCode) loadMaps() error {
 			lr := io.LimitReader(r, int64(size))
 
 			spec := MapSpec{
-				Name: SanitizeName(mapName, -1),
+				Name: sanitizeName(mapName, -1),
 			}
 			switch {
 			case binary.Read(lr, ec.ByteOrder, &spec.Type) != nil:
@@ -755,6 +780,10 @@ func (ec *elfCode) loadMaps() error {
 			}
 			if len(extra) > 0 {
 				spec.Extra = bytes.NewReader(extra)
+			}
+
+			if v, ok := varsByName[mapName]; ok {
+				spec.Tags = slices.Clone(v.Tags)
 			}
 
 			ec.maps[mapName] = &spec
@@ -1020,8 +1049,13 @@ func mapSpecFromBTF(es *elfSection, vs *btf.VarSecinfo, def *btf.Struct, spec *b
 		valueSize = 0
 	}
 
+	v, ok := btf.As[*btf.Var](vs.Type)
+	if !ok {
+		return nil, fmt.Errorf("BTF map definition: btf.VarSecInfo doesn't point to a *btf.Var: %T", vs.Type)
+	}
+
 	return &MapSpec{
-		Name:       SanitizeName(name, -1),
+		Name:       sanitizeName(name, -1),
 		Type:       MapType(mapType),
 		KeySize:    keySize,
 		ValueSize:  valueSize,
@@ -1032,6 +1066,7 @@ func mapSpecFromBTF(es *elfSection, vs *btf.VarSecinfo, def *btf.Struct, spec *b
 		Pinning:    pinType,
 		InnerMap:   innerMapSpec,
 		Contents:   contents,
+		Tags:       slices.Clone(v.Tags),
 	}, nil
 }
 
@@ -1087,7 +1122,7 @@ func resolveBTFValuesContents(es *elfSection, vs *btf.VarSecinfo, member btf.Mem
 	end := vs.Size + vs.Offset
 	// The size of an address in this section. This determines the width of
 	// an index in the array.
-	align := uint32(es.SectionHeader.Addralign)
+	align := uint32(es.Addralign)
 
 	// Check if variable-length section is aligned.
 	if (end-start)%align != 0 {
@@ -1148,7 +1183,7 @@ func (ec *elfCode) loadDataSections() error {
 		}
 
 		mapSpec := &MapSpec{
-			Name:       SanitizeName(sec.Name, -1),
+			Name:       sanitizeName(sec.Name, -1),
 			Type:       Array,
 			KeySize:    4,
 			ValueSize:  uint32(sec.Size),

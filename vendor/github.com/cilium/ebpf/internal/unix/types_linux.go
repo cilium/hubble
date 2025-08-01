@@ -4,28 +4,9 @@ package unix
 
 import (
 	"syscall"
+	"unsafe"
 
 	linux "golang.org/x/sys/unix"
-)
-
-const (
-	ENOENT     = linux.ENOENT
-	EEXIST     = linux.EEXIST
-	EAGAIN     = linux.EAGAIN
-	ENOSPC     = linux.ENOSPC
-	EINVAL     = linux.EINVAL
-	EPOLLIN    = linux.EPOLLIN
-	EINTR      = linux.EINTR
-	EPERM      = linux.EPERM
-	ESRCH      = linux.ESRCH
-	ENODEV     = linux.ENODEV
-	EBADF      = linux.EBADF
-	E2BIG      = linux.E2BIG
-	EFAULT     = linux.EFAULT
-	EACCES     = linux.EACCES
-	EILSEQ     = linux.EILSEQ
-	EOPNOTSUPP = linux.EOPNOTSUPP
-	ESTALE     = linux.ESTALE
 )
 
 const (
@@ -58,6 +39,7 @@ const (
 	PROT_WRITE                = linux.PROT_WRITE
 	MAP_ANON                  = linux.MAP_ANON
 	MAP_SHARED                = linux.MAP_SHARED
+	MAP_FIXED                 = linux.MAP_FIXED
 	MAP_PRIVATE               = linux.MAP_PRIVATE
 	PERF_ATTR_SIZE_VER1       = linux.PERF_ATTR_SIZE_VER1
 	PERF_TYPE_SOFTWARE        = linux.PERF_TYPE_SOFTWARE
@@ -156,6 +138,11 @@ func Mmap(fd int, offset int64, length int, prot int, flags int) (data []byte, e
 	return linux.Mmap(fd, offset, length, prot, flags)
 }
 
+//go:nocheckptr
+func MmapPtr(fd int, offset int64, addr unsafe.Pointer, length uintptr, prot int, flags int) (ret unsafe.Pointer, err error) {
+	return linux.MmapPtr(fd, offset, addr, length, prot, flags)
+}
+
 func Munmap(b []byte) (err error) {
 	return linux.Munmap(b)
 }
@@ -188,6 +175,10 @@ func ByteSliceToString(s []byte) string {
 	return linux.ByteSliceToString(s)
 }
 
+func ByteSliceFromString(s string) ([]byte, error) {
+	return linux.ByteSliceFromString(s)
+}
+
 func Renameat2(olddirfd int, oldpath string, newdirfd int, newpath string, flags uint) error {
 	return linux.Renameat2(olddirfd, oldpath, newdirfd, newpath, flags)
 }
@@ -214,4 +205,8 @@ func SchedSetaffinity(pid int, set *CPUSet) error {
 
 func SchedGetaffinity(pid int, set *CPUSet) error {
 	return linux.SchedGetaffinity(pid, set)
+}
+
+func Auxv() ([][2]uintptr, error) {
+	return linux.Auxv()
 }

@@ -28,6 +28,7 @@ var errors = map[uint8]string{
 	11:  "Missed tail call to custom program",
 	12:  "Interface Decrypting",
 	13:  "Interface Encrypting",
+	14:  "LB: sock cgroup: Reverse entry delete succeeded",
 	130: "Invalid source mac",      // Unused
 	131: "Invalid destination mac", // Unused
 	132: "Invalid source ip",
@@ -102,6 +103,7 @@ var errors = map[uint8]string{
 	202: "Host datapath not ready",
 	203: "Endpoint policy program not available",
 	204: "No Egress IP configured",
+	205: "Punt to proxy",
 }
 
 func extendedReason(extError int8) string {
