@@ -5,8 +5,8 @@ package labels
 
 import (
 	"fmt"
-
-	"github.com/sirupsen/logrus"
+	"log/slog"
+	"maps"
 
 	"github.com/cilium/cilium/pkg/logging/logfields"
 )
@@ -74,13 +74,9 @@ func (o *OpLabels) SplitUserLabelChanges(lbls Labels) (add, del Labels) {
 func (o *OpLabels) IdentityLabels() Labels {
 	enabled := make(Labels, len(o.Custom)+len(o.OrchestrationIdentity))
 
-	for k, v := range o.Custom {
-		enabled[k] = v
-	}
+	maps.Copy(enabled, o.Custom)
 
-	for k, v := range o.OrchestrationIdentity {
-		enabled[k] = v
-	}
+	maps.Copy(enabled, o.OrchestrationIdentity)
 
 	return enabled
 }
@@ -98,32 +94,24 @@ func (o *OpLabels) GetIdentityLabel(key string) (l Label, found bool) {
 func (o *OpLabels) AllLabels() Labels {
 	all := make(Labels, len(o.Custom)+len(o.OrchestrationInfo)+len(o.OrchestrationIdentity)+len(o.Disabled))
 
-	for k, v := range o.Custom {
-		all[k] = v
-	}
+	maps.Copy(all, o.Custom)
 
-	for k, v := range o.Disabled {
-		all[k] = v
-	}
+	maps.Copy(all, o.Disabled)
 
-	for k, v := range o.OrchestrationIdentity {
-		all[k] = v
-	}
+	maps.Copy(all, o.OrchestrationIdentity)
 
-	for k, v := range o.OrchestrationInfo {
-		all[k] = v
-	}
+	maps.Copy(all, o.OrchestrationInfo)
 	return all
 }
 
-func (o *OpLabels) ReplaceInformationLabels(sourceFilter string, l Labels, logger *logrus.Entry) bool {
+func (o *OpLabels) ReplaceInformationLabels(sourceFilter string, l Labels, logger *slog.Logger) bool {
 	changed := false
 	keepers := make(keepMarks)
 	for _, v := range l {
 		keepers.set(v.Key)
 		if o.OrchestrationInfo.upsertLabel(sourceFilter, v) {
 			changed = true
-			logger.WithField(logfields.Object, logfields.Repr(v)).Debug("Assigning information label")
+			logger.Debug("Assigning information label", logfields.Object, v)
 		}
 	}
 	o.OrchestrationInfo.deleteUnMarked(sourceFilter, keepers)
@@ -131,7 +119,7 @@ func (o *OpLabels) ReplaceInformationLabels(sourceFilter string, l Labels, logge
 	return changed
 }
 
-func (o *OpLabels) ReplaceIdentityLabels(sourceFilter string, l Labels, logger *logrus.Entry) bool {
+func (o *OpLabels) ReplaceIdentityLabels(sourceFilter string, l Labels, logger *slog.Logger) bool {
 	changed := false
 
 	keepers := make(keepMarks)
@@ -142,7 +130,7 @@ func (o *OpLabels) ReplaceIdentityLabels(sourceFilter string, l Labels, logger *
 		if _, found := o.Disabled[k]; found {
 			disabledKeepers.set(k)
 		} else if keepers.set(v.Key); o.OrchestrationIdentity.upsertLabel(sourceFilter, v) {
-			logger.WithField(logfields.Object, logfields.Repr(v)).Debug("Assigning security relevant label")
+			logger.Debug("Assigning security relevant label", logfields.Object, v)
 			changed = true
 		}
 	}

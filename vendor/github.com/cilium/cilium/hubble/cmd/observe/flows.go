@@ -18,11 +18,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"go.yaml.in/yaml/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"gopkg.in/yaml.v3"
 
 	flowpb "github.com/cilium/cilium/api/v1/flow"
 	observerpb "github.com/cilium/cilium/api/v1/observer"
@@ -33,6 +33,7 @@ import (
 	"github.com/cilium/cilium/hubble/pkg/logger"
 	hubprinter "github.com/cilium/cilium/hubble/pkg/printer"
 	hubtime "github.com/cilium/cilium/hubble/pkg/time"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 	monitorAPI "github.com/cilium/cilium/pkg/monitor/api"
 )
 
@@ -160,7 +161,7 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 			}
 			cleanup = f.Close
 		}
-		client = NewIOReaderObserver(f)
+		client = NewIOReaderObserver(logger.Logger, f)
 		return client, cleanup, nil
 	}
 	// read flows from a hubble server
@@ -168,7 +169,7 @@ var GetHubbleClientFunc = func(ctx context.Context, vp *viper.Viper) (client obs
 	if err != nil {
 		return nil, nil, err
 	}
-	logger.Logger.Debug("connected to Hubble API", "server", config.KeyServer)
+	logger.Logger.Debug("connected to Hubble API", logfields.Server, config.KeyServer)
 	cleanup = hubbleConn.Close
 	client = observerpb.NewObserverClient(hubbleConn)
 	return client, cleanup, nil
@@ -330,7 +331,7 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 			}
 			defer cleanup()
 
-			logger.Logger.Debug("Sending GetFlows request", "request", req)
+			logger.Logger.Debug("Sending GetFlows request", logfields.Request, req)
 			if err := getFlows(ctx, client, req); err != nil {
 				msg := err.Error()
 				// extract custom error message from failed grpc call
@@ -713,6 +714,9 @@ func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err erro
 	}
 	if formattingOpts.nodeName {
 		opts = append(opts, hubprinter.WithNodeName())
+	}
+	if formattingOpts.policyNames {
+		opts = append(opts, hubprinter.WithPolicyNames())
 	}
 	printer = hubprinter.New(opts...)
 	return nil
