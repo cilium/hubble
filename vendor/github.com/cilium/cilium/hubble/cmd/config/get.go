@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 func newGetCommand(vp *viper.Viper) *cobra.Command {
@@ -43,7 +43,7 @@ func runGet(cmd *cobra.Command, vp *viper.Viper, key string) error {
 		return fmt.Errorf("key=%s not bound to a flag", key)
 	}
 
-	var val interface{}
+	var val any
 	switch typ := flag.Value.Type(); typ {
 	case "bool":
 		val = vp.GetBool(key)

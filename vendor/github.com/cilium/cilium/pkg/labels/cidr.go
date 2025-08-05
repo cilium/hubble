@@ -33,7 +33,7 @@ func maskedIPToLabel(ipStr string, prefix int) Label {
 			1, /* '/' */
 	)
 
-	for i := 0; i < len(ipStr); i++ {
+	for i := range len(ipStr) {
 		if ipStr[i] == ':' {
 			// EndpointSelector keys can't start or end with a "-", so insert a
 			// zero at the start or end if it would otherwise have a "-" at that
@@ -110,7 +110,7 @@ func (lbls Labels) AddWorldLabel(addr netip.Addr) {
 }
 
 func LabelToPrefix(key string) (netip.Prefix, error) {
-	prefixStr := strings.Replace(key, "-", ":", -1)
+	prefixStr := strings.ReplaceAll(key, "-", ":")
 	pfx, err := netip.ParsePrefix(prefixStr)
 	if err != nil {
 		return netip.Prefix{}, fmt.Errorf("failed to parse label prefix %s: %w", key, err)

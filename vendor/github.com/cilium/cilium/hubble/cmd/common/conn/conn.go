@@ -6,18 +6,21 @@ package conn
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/timeout"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/cilium/cilium/hubble/cmd/common/config"
 	"github.com/cilium/cilium/hubble/pkg/defaults"
 	"github.com/cilium/cilium/hubble/pkg/logger"
-	"github.com/cilium/cilium/pkg/k8s"
+	"github.com/cilium/cilium/pkg/k8s/portforward"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 )
 
 // GRPCOptionFunc is a function that configures a gRPC dial option.
@@ -29,13 +32,68 @@ var GRPCOptionFuncs []GRPCOptionFunc
 func init() {
 	GRPCOptionFuncs = append(
 		GRPCOptionFuncs,
-		grpcInterceptors,
+		grpcUnaryInterceptors,
+		grpcStreamInterceptors,
 		grpcOptionTLS,
 	)
 }
 
-func grpcInterceptors(vp *viper.Viper) (grpc.DialOption, error) {
-	return grpc.WithUnaryInterceptor(timeout.UnaryClientInterceptor(vp.GetDuration(config.KeyRequestTimeout))), nil
+func grpcUnaryInterceptors(vp *viper.Viper) (grpc.DialOption, error) {
+	option := grpc.WithChainUnaryInterceptor(
+		timeout.UnaryClientInterceptor(vp.GetDuration(config.KeyRequestTimeout)),
+		onReceiveHeaderUnaryInterceptor(logger.Logger, logVersionMismatch()),
+	)
+	return option, nil
+}
+
+func grpcStreamInterceptors(vp *viper.Viper) (grpc.DialOption, error) {
+	option := grpc.WithChainStreamInterceptor(
+		onReceiveHeaderStreamInterceptor(logger.Logger, logVersionMismatch()),
+	)
+	return option, nil
+}
+
+type onReceiveHeader func(log *slog.Logger, header metadata.MD)
+
+// onReceiveHeaderUnaryInterceptor is a gRPC client unary interceptor that retrieves the header
+// metadata and execute the provided function.
+func onReceiveHeaderUnaryInterceptor(log *slog.Logger, fn onReceiveHeader) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req any, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		var header metadata.MD
+		opts = append(opts, grpc.Header(&header))
+		if err := invoker(ctx, method, req, reply, cc, opts...); err != nil {
+			return err
+		}
+		fn(log, header)
+		return nil
+	}
+}
+
+// onReceiveHeaderStreamInterceptor is a gRPC client stream interceptor that retrieves the header
+// metadata and execute the provided function.
+func onReceiveHeaderStreamInterceptor(log *slog.Logger, fn onReceiveHeader) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		stream, err := streamer(ctx, desc, cc, method, opts...)
+		if err != nil {
+			return nil, err
+		}
+		// stream.Header() blocks until metadata is ready to read.
+		// This could be:
+		//  - Forever if no metadata is ever sent.
+		//  - After the first read from the stream.
+		//  - After an explicit call to SendHeader() server-side.
+		// To avoid a possible deadlock, perform header extraction in a goroutine tied to
+		// the lifetime of the stream (stream.Header() returns on stream close).
+		go func() {
+			header, err := stream.Header()
+			if err != nil {
+				log.Warn("Failed to obtain grpc stream headers in log version mismatch interceptor", logfields.Error, err)
+				return
+			}
+			fn(log, header)
+		}()
+		return stream, nil
+	}
 }
 
 var grpcDialOptions []grpc.DialOption
@@ -86,7 +144,7 @@ func NewWithFlags(ctx context.Context, vp *viper.Viper) (*grpc.ClientConn, error
 		}
 
 		server = fmt.Sprintf("127.0.0.1:%d", res.ForwardedPort.Local)
-		logger.Logger.Debug("port-forward to hubble-relay pod running", "addr", server)
+		logger.Logger.Debug("port-forward to hubble-relay pod running", logfields.Address, server)
 	}
 
 	conn, err := New(server)
@@ -97,7 +155,7 @@ func NewWithFlags(ctx context.Context, vp *viper.Viper) (*grpc.ClientConn, error
 	return conn, nil
 }
 
-func newPortForwarder(context, kubeconfig string) (*k8s.PortForwarder, error) {
+func newPortForwarder(context, kubeconfig string) (*portforward.PortForwarder, error) {
 	restClientGetter := genericclioptions.ConfigFlags{
 		Context:    &context,
 		KubeConfig: &kubeconfig,
@@ -114,6 +172,6 @@ func newPortForwarder(context, kubeconfig string) (*k8s.PortForwarder, error) {
 		return nil, err
 	}
 
-	pf := k8s.NewPortForwarder(clientset, config)
+	pf := portforward.NewPortForwarder(clientset, config)
 	return pf, nil
 }
