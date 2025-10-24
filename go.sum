@@ -14,8 +14,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/cilium/cilium v1.18.0 h1:KdWgc6Jl5NmWpJGCRm69TogMgeZNFaCAxtPgBHtv33A=
-github.com/cilium/cilium v1.18.0/go.mod h1:jpcmwtJ40qbX+HB47B8nDiZqEC1NmWo9xClyKGdsIQI=
+github.com/cilium/cilium v1.18.3 h1:E0SnxNDeWJ3AtO6IX0oIsJdODT71M/QCcj9LjuLdGK0=
+github.com/cilium/cilium v1.18.3/go.mod h1:2FzcCUTmMUDdOYxZgyeu1DXbnlwgLHQdzK3FWj+28ME=
 github.com/cilium/ebpf v0.19.0 h1:Ro/rE64RmFBeA9FGjcTc+KmCeY6jXmryu6FfnzPRIao=
 github.com/cilium/ebpf v0.19.0/go.mod h1:fLCgMo3l8tZmAdM3B2XqdFzXBpwkcSTroaVqN08OWVY=
 github.com/cilium/hive v0.0.0-20250611195437-5a5dacdfb354 h1:4G9PC8nQw4pGW5wCMA0g8J8rK1l4C3owlceAOQggXzs=
