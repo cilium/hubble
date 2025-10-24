@@ -1095,6 +1095,10 @@ const (
 
 	PoolSpec = "poolSpec"
 
+	PoolOldSpec = "poolOldSpec"
+
+	PoolNewSpec = "poolNewSpec"
+
 	PoolName = "poolName"
 
 	MaxRetries = "maxRetries"
@@ -1148,6 +1152,10 @@ const (
 	Registrations = "registrations"
 
 	HTTPRoute = "httpRoute"
+
+	TLSRoute = "tlsRoute"
+
+	GRPCRoute = "grpcRoute"
 
 	Secret = "secret"
 
@@ -1790,4 +1798,10 @@ const (
 	Matcher = "matcher"
 
 	ParentResource = "parentResource"
+
+	Fraction = "fraction"
+
+	Rate = "rate"
+
+	KPRConfiguration = "kprConfiguration"
 )

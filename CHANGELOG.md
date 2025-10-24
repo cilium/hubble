@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.18.3] - 2025-10-24
+[v1.18.3]: https://github.com/cilium/cilium/compare/v1.18.0...v1.18.3
+
+**Misc Changes:**
+* chore(deps): update actions/setup-go action to v6 (cilium/hubble#1716, @renovate[bot])
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1708, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.18.2 (cilium/hubble#1718, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.19.0 (cilium/hubble#1719, @renovate[bot])
+* chore(deps): update dependency kubernetes-sigs/kind to v0.30.0 (cilium/hubble#1715, @renovate[bot])
+* chore(deps): update golang to v1.25.3 (patch) (cilium/hubble#1720, @renovate[bot])
+* chore(deps): update module github.com/go-viper/mapstructure/v2 to v2.4.0 [security] (cilium/hubble#1717, @renovate[bot])
+* Update stable release to 1.18.0 (cilium/hubble#1705, @glibsm)
+
+
 ## [v1.18.0] - 2025-08-11
 [v1.18.0]: https://github.com/cilium/cilium/compare/v1.17.5...v1.18.0
 

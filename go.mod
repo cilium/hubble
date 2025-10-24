@@ -5,7 +5,7 @@ go 1.24.0
 
 toolchain go1.25.3
 
-require github.com/cilium/cilium v1.18.0
+require github.com/cilium/cilium v1.18.3
 
 require (
 	cel.dev/expr v0.24.0 // indirect
@@ -118,7 +118,12 @@ require (
 )
 
 // Replace directives from github.com/cilium/cilium. Keep in sync when updating Cilium!
-// Copied from https://github.com/cilium/cilium/blob/v1.16.3/go.mod#L286-L292
+// Copied from https://github.com/cilium/cilium/blob/v1.18.3/go.mod
+
 // Using private fork of controller-tools. See commit msg for more context
 // as to why we are using a private fork.
 replace sigs.k8s.io/controller-tools => github.com/cilium/controller-tools v0.16.5-1
+
+// Using private fork of gobgp. See commit msg for more context as to why we
+// are using a private fork.
+replace github.com/osrg/gobgp/v3 => github.com/cilium/gobgp/v3 v3.0.0-20250717193620-26a4abb75464
