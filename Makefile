@@ -25,7 +25,7 @@ TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=library/golang
 GOLANG_IMAGE_VERSION = 1.25.3-alpine
-GOLANG_IMAGE_SHA = sha256:20ee0b674f987514ae3afb295b6a2a4e5fa11de8cc53a289343bbdab59b0df59
+GOLANG_IMAGE_SHA = sha256:aee43c3ccbf24fdffb7295693b6e33b21e01baec1b2a55acc351fde345e9ec34
 
 # Add the ability to override variables
 -include Makefile.override
