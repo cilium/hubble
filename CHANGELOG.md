@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.18.5] - 2026-01-05
+[v1.18.5]: https://github.com/cilium/cilium/compare/v1.18.3...v1.18.5
+
+Summary of Changes
+------------------
+
+**Misc Changes:**
+* chore(deps): update actions/checkout action to v6.0.1 (cilium/hubble#1738, @renovate[bot])
+* chore(deps): update actions/setup-go action to v6.1.0 (cilium/hubble#1734, @renovate[bot])
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1740, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.18.3 (cilium/hubble#1726, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.19.1 (cilium/hubble#1730, @renovate[bot])
+* chore(deps): update dependency kubernetes-sigs/kind to v0.31.0 (cilium/hubble#1742, @renovate[bot])
+* chore(deps): update golang to v1.25.4 (patch) (cilium/hubble#1729, @renovate[bot])
+* chore(deps): update golang to v1.25.5 (patch) (cilium/hubble#1739, @renovate[bot])
+* chore(deps): update helm/kind-action action to v1.13.0 (cilium/hubble#1728, @renovate[bot])
+* chore(deps): update library/golang:1.25.5-alpine docker digest to ac09a5f (cilium/hubble#1741, @renovate[bot])
+
 ## [v1.18.3] - 2025-10-24
 [v1.18.3]: https://github.com/cilium/cilium/compare/v1.18.0...v1.18.3
 
