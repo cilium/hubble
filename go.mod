@@ -5,7 +5,7 @@ go 1.24.0
 
 toolchain go1.25.6
 
-require github.com/cilium/cilium v1.18.5
+require github.com/cilium/cilium v1.18.6
 
 require (
 	cel.dev/expr v0.24.0 // indirect
@@ -118,7 +118,7 @@ require (
 )
 
 // Replace directives from github.com/cilium/cilium. Keep in sync when updating Cilium!
-// Copied from https://github.com/cilium/cilium/blob/v1.18.5/go.mod
+// Copied from https://github.com/cilium/cilium/blob/v1.18.6/go.mod
 
 // Using private fork of controller-tools. See commit msg for more context
 // as to why we are using a private fork.
