@@ -56,7 +56,6 @@
         'k8s.io/{/,}**',            // Kubernetes official repo
         'sigs.k8s.io/{/,}**',       // Kubernetes official SIG repo
       ],
-      ],
       // auto merge non-major updates
       matchUpdateTypes: [
         'minor',
