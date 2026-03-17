@@ -3,7 +3,11 @@
 
 package defaults
 
-import ciliumDefaults "github.com/cilium/cilium/pkg/defaults"
+import (
+	"time"
+
+	ciliumDefaults "github.com/cilium/cilium/pkg/defaults"
+)
 
 const (
 	// ServerPort is the default port for hubble server when a provided
@@ -31,7 +35,8 @@ const (
 	// to clients locally.
 	SocketPath = ciliumDefaults.RuntimePath + "/hubble.sock"
 
-	// RecorderStoragePath is the directory in which pcap files created via the
-	// Hubble Recorder API are stored.
-	RecorderStoragePath = ciliumDefaults.RuntimePath + "/pcaps"
+	// LostEventSendInterval is the default interval at which lost events are sent
+	// from the Observer server, if any. The default of 1s matches Hubble
+	// Relay's SortBufferDrainTimeout.
+	LostEventSendInterval = 1 * time.Second
 )

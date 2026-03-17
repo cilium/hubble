@@ -45,6 +45,8 @@ var protocols = []string{
 	"sctp",
 	"tcp",
 	"udp",
+	"vrrp",
+	"igmp",
 	// L7
 	"dns",
 	"http",
@@ -62,9 +64,8 @@ var verdicts = []string{
 }
 
 // flowEventTypes are the valid event types supported by observe. This corresponds
-// to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent,
-// MessageTypeNameDebug and MessageTypeNameRecCapture. These excluded message
-// types are not supported by `hubble observe flows` but have separate
+// to monitorAPI.MessageTypeNames, excluding MessageTypeNameAgent and MessageTypeNameDebug.
+// These excluded message types are not supported by `hubble observe flows` but have separate
 // sub-commands.
 var flowEventTypes = []string{
 	monitorAPI.MessageTypeNameCapture,
@@ -422,6 +423,10 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 		"Show only flows which match this trace ID"))
 
 	filterFlags.Var(filterVar(
+		"ip-trace-id", ofilter,
+		"Show only flows which match this IP trace ID"))
+
+	filterFlags.Var(filterVar(
 		"from-fqdn", ofilter,
 		`Show all flows originating at the given fully qualified domain name (e.g. "*.cilium.io").`))
 	filterFlags.Var(filterVar(
@@ -547,6 +552,12 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	filterFlags.Var(filterVar(
 		"interface", ofilter,
 		"Show all flows observed at the given interface name (e.g. eth0)"))
+	filterFlags.Var(filterVar(
+		"encrypted", ofilter,
+		"Show only encrypted flows (WireGuard/IPsec)"))
+	filterFlags.Var(filterVar(
+		"unencrypted", ofilter,
+		"Show only unencrypted flows"))
 
 	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
 	rawFilterFlags.StringArray(denylistFlag, []string{}, "Specify denylist as JSON encoded FlowFilters")
@@ -652,6 +663,8 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	}
 	// default value for when the flag is on the command line without any options
 	flowsCmd.Flags().Lookup("not").NoOptDefVal = "true"
+	flowsCmd.Flags().Lookup("encrypted").NoOptDefVal = "true"
+	flowsCmd.Flags().Lookup("unencrypted").NoOptDefVal = "true"
 	template.RegisterFlagSets(flowsCmd, flagSets...)
 	return flowsCmd
 }
@@ -692,11 +705,11 @@ func handleFlowArgs(writer io.Writer, ofilter *flowFilter, debug bool) (err erro
 		return fmt.Errorf("invalid output format: %s", formattingOpts.output)
 	}
 	if !jsonOut {
-		if len(experimentalOpts.fieldMask) > 0 {
+		if len(maskOpts.fieldMask) > 0 {
 			return fmt.Errorf("%s output format is not compatible with custom field mask", formattingOpts.output)
 		}
-		if experimentalOpts.useDefaultMasks {
-			experimentalOpts.fieldMask = defaults.FieldMask
+		if maskOpts.useDefaultMasks {
+			maskOpts.fieldMask = defaults.FieldMask
 		}
 	}
 
@@ -834,14 +847,12 @@ func getFlowsRequest(ofilter *flowFilter, allowlist []string, denylist []string)
 		First:     first,
 	}
 
-	if len(experimentalOpts.fieldMask) > 0 {
-		fm, err := fieldmaskpb.New(&flowpb.Flow{}, experimentalOpts.fieldMask...)
+	if len(maskOpts.fieldMask) > 0 {
+		fm, err := fieldmaskpb.New(&flowpb.Flow{}, maskOpts.fieldMask...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to construct field mask: %w", err)
 		}
-		req.Experimental = &observerpb.GetFlowsRequest_Experimental{
-			FieldMask: fm,
-		}
+		req.FieldMask = fm
 	}
 
 	return req, nil

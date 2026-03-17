@@ -131,6 +131,7 @@ func DefaultFilters(log *slog.Logger) []OnBuildFilter {
 		&VerdictFilter{},
 		&DropReasonDescFilter{},
 		&ReplyFilter{},
+		&EncryptedFilter{},
 		&IdentityFilter{},
 		&ProtocolFilter{},
 		&IPFilter{},
@@ -149,5 +150,6 @@ func DefaultFilters(log *slog.Logger) []OnBuildFilter {
 		&TrafficDirectionFilter{},
 		&CELExpressionFilter{log: log},
 		&NetworkInterfaceFilter{},
+		&IPTraceIDFilter{},
 	}
 }

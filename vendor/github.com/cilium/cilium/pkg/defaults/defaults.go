@@ -7,15 +7,21 @@ import (
 	"time"
 )
 
+// Hive options
 const (
-	// AgentHealthPort is the default value for option.AgentHealthPort
-	AgentHealthPort = 9879
+	// HiveStartTimeout is the default value for option.HiveStartTimeout
+	HiveStartTimeout = 5 * time.Minute
 
+	// HiveStopTimeout is the default value for option.HiveStopTimeout
+	HiveStopTimeout = time.Minute
+
+	// HiveLogThreshold is the default value for option.HiveLogThreshold
+	HiveLogThreshold = 100 * time.Millisecond
+)
+
+const (
 	// ClusterHealthPort is the default value for option.ClusterHealthPort
 	ClusterHealthPort = 4240
-
-	// ClusterMeshHealthPort is the default value for option.ClusterMeshHealthPort
-	ClusterMeshHealthPort = 80
 
 	// EnableGops is the default value for option.EnableGops
 	EnableGops = true
@@ -108,10 +114,6 @@ const (
 	// DefaultCgroupRoot is the default path where cilium cgroup2 should be mounted
 	DefaultCgroupRoot = "/run/cilium/cgroupv2"
 
-	// DNSMaxIPsPerRestoredRule defines the maximum number of IPs to maintain
-	// for each FQDN selector in endpoint's restored DNS rules.
-	DNSMaxIPsPerRestoredRule = 1000
-
 	// FQDNRegexCompileLRUSize defines the maximum size for the FQDN regex
 	// compilation LRU used by the DNS proxy and policy validation.
 	FQDNRegexCompileLRUSize = 1024
@@ -142,10 +144,6 @@ const (
 	// global cache on startup.
 	// The file is not re-read after agent start.
 	ToFQDNsPreCache = ""
-
-	// ToFQDNsEnableDNSCompression allows the DNS proxy to compress responses to
-	// endpoints that are larger than 512 Bytes or the EDNS0 option, if present.
-	ToFQDNsEnableDNSCompression = true
 
 	// DNSProxyEnableTransparentMode enables transparent mode for the DNS proxy.
 	DNSProxyEnableTransparentMode = false
@@ -215,33 +213,9 @@ const (
 	// PreAllocateMaps is the default value for BPF map preallocation
 	PreAllocateMaps = true
 
-	// EnableIPSec is the default value for IPSec enablement
-	EnableIPSec = false
-
-	// IPsecKeyRotationDuration is the time to wait before removing old keys when
-	// the IPsec key is changing.
-	IPsecKeyRotationDuration = 5 * time.Minute
-
-	// Enable watcher for IPsec key. If disabled, a restart of the agent will
-	// be necessary on key rotations.
-	EnableIPsecKeyWatcher = true
-
-	// Enable caching for XfrmState for IPSec. Significantly reduces CPU usage
-	// in large clusters.
-	EnableIPSecXfrmStateCaching = true
-
-	// Enable IPSec encrypted overlay
-	//
-	// This feature will encrypt overlay traffic before it leaves the cluster.
-	EnableIPSecEncryptedOverlay = false
-
 	// EncryptNode enables encrypting traffic from host networking applications
 	// which are not part of Cilium manged pods.
 	EncryptNode = false
-
-	// NodeEncryptionOptOutLabels contains the label selectors for nodes opting out of
-	// node-to-node encryption
-	NodeEncryptionOptOutLabels = "node-role.kubernetes.io/control-plane"
 
 	// MonitorQueueSizePerCPU is the default value for the monitor queue
 	// size per CPU
@@ -281,10 +255,6 @@ const (
 	// EnableEndpointHealthChecking
 	EnableEndpointHealthChecking = true
 
-	// EnableHealthCheckLoadBalancerIP is the default value for
-	// EnableHealthCheckLoadBalancerIP
-	EnableHealthCheckLoadBalancerIP = false
-
 	// HealthCheckICMPFailureThreshold is the default value for HealthCheckICMPFailureThreshold
 	HealthCheckICMPFailureThreshold = 3
 
@@ -318,9 +288,6 @@ const (
 	// ConntrackGCStartingInterval is the default starting interval for
 	// connection tracking garbage collection
 	ConntrackGCStartingInterval = 5 * time.Minute
-
-	// ServiceLoopbackIPv4 is the default address for service loopback
-	ServiceLoopbackIPv4 = "169.254.42.1"
 
 	// EnableEndpointRoutes is the value for option.EnableEndpointRoutes.
 	// It is disabled by default for backwards compatibility.
@@ -373,6 +340,10 @@ const (
 	// CiliumNode.Spec.ENI.DisablePrefixDelegation if no value is set.
 	ENIDisableNodeLevelPD = false
 
+	// ENIDeleteOnTermination is the default value for
+	// CiliumNode.Spec.ENI.DeleteOnTermination if no value is set.
+	ENIDeleteOnTermination = true
+
 	// ENIGarbageCollectionTagManagedName is part of the ENIGarbageCollectionTags default tag set
 	ENIGarbageCollectionTagManagedName = "io.cilium/cilium-managed"
 
@@ -392,8 +363,8 @@ const (
 	// per GC interval
 	ENIGarbageCollectionMaxPerInterval = 25
 
-	// ENIMaxResultsPerApiCall is the maximum number of ENI objects to fetch per DescribeNetworkInterfaces API call
-	ENIMaxResultsPerApiCall = 1000
+	// AWSResultsPerApiCall is the maximum number of objects to fetch per paginated API call
+	AWSResultsPerApiCall = 1000
 
 	// ParallelAllocWorkers is the default max number of parallel workers doing allocation in the operator
 	ParallelAllocWorkers = 50
@@ -457,11 +428,6 @@ const (
 	// for local traffic
 	EnableIdentityMark = true
 
-	// K8sEnableLeasesFallbackDiscovery enables k8s to fallback to API probing to check
-	// for the support of Leases in Kubernetes when there is an error in discovering
-	// API groups using Discovery API.
-	K8sEnableLeasesFallbackDiscovery = false
-
 	// InstallNoConntrackRules instructs Cilium to install Iptables rules to skip netfilter connection tracking on all pod traffic.
 	InstallNoConntrackIptRules = false
 
@@ -502,8 +468,8 @@ const (
 	// The value is aligned to 3 cache-lines, see above comment in TracePayloadLen.
 	TracePayloadLenOverlay = 192
 
-	// Use the CiliumInternalIPs (vs. NodeInternalIPs) for IPsec encapsulation.
-	UseCiliumInternalIPForIPsec = false
+	// PolicyDenyResponse is the default action for pod egress network policy denials (drop packets silently)
+	PolicyDenyResponse = "none"
 
 	// TunnelPortVXLAN is the default VXLAN port
 	TunnelPortVXLAN uint16 = 8472
@@ -558,20 +524,23 @@ const (
 	// NetNsPath is the default path to the mounted network namespaces directory
 	NetNsPath = "/var/run/cilium/netns"
 
-	// EnableIternalTrafficPolicy is the default value for option.EnableInternalTrafficPolicy
-	EnableInternalTrafficPolicy = true
-
 	// EnableNonDefaultDenyPolicies allows policies to define whether they are operating in default-deny mode
 	EnableNonDefaultDenyPolicies = true
 
 	// EnableSourceIPVerification is the default value for source ip validation
 	EnableSourceIPVerification = true
 
-	// WireguardTrackAllIPsFallback forces the WireGuard agent to track all IPs.
-	WireguardTrackAllIPsFallback = false
-
 	// ConnectivityProbeFrequencyRatio is the default connectivity probe frequency
 	ConnectivityProbeFrequencyRatio = 0.5
+
+	// EnableExtendedIPProtocols controls whether traffic with extended IP protocols is supported in datapath.
+	EnableExtendedIPProtocols = false
+
+	// IPTracingOptionType is the default value for option.IPTracingOptionType
+	IPTracingOptionType = 0
+
+	// EnableCiliumNodeCRD is the default value for option.EnableCiliumNodeCRD
+	EnableCiliumNodeCRD = true
 )
 
 var (
