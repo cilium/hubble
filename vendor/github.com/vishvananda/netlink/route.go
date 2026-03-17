@@ -45,6 +45,17 @@ type Encap interface {
 	Equal(Encap) bool
 }
 
+type RouteCacheInfo struct {
+	Users   uint32
+	Age     uint32
+	Expires int32
+	Error   uint32
+	Used    uint32
+	Id      uint32
+	Ts      uint32
+	Tsage   uint32
+}
+
 // Protocol describe what was the originator of the route
 type RouteProtocol int
 
@@ -87,6 +98,9 @@ type Route struct {
 	QuickACK         int
 	Congctl          string
 	FastOpenNoCookie int
+	Expires          int
+	CacheInfo        *RouteCacheInfo
+	NHID             uint32
 }
 
 func (r Route) String() string {
@@ -117,6 +131,12 @@ func (r Route) String() string {
 	elems = append(elems, fmt.Sprintf("Flags: %s", r.ListFlags()))
 	elems = append(elems, fmt.Sprintf("Table: %d", r.Table))
 	elems = append(elems, fmt.Sprintf("Realm: %d", r.Realm))
+	if r.Expires != 0 {
+		elems = append(elems, fmt.Sprintf("Expires: %dsec", r.Expires))
+	}
+	if r.NHID != 0 {
+		elems = append(elems, fmt.Sprintf("NHID: %d", r.NHID))
+	}
 	return fmt.Sprintf("{%s}", strings.Join(elems, " "))
 }
 
@@ -139,7 +159,8 @@ func (r Route) Equal(x Route) bool {
 		(r.MPLSDst == x.MPLSDst || (r.MPLSDst != nil && x.MPLSDst != nil && *r.MPLSDst == *x.MPLSDst)) &&
 		(r.NewDst == x.NewDst || (r.NewDst != nil && r.NewDst.Equal(x.NewDst))) &&
 		(r.Via == x.Via || (r.Via != nil && r.Via.Equal(x.Via))) &&
-		(r.Encap == x.Encap || (r.Encap != nil && r.Encap.Equal(x.Encap)))
+		(r.Encap == x.Encap || (r.Encap != nil && r.Encap.Equal(x.Encap))) &&
+		(r.NHID == x.NHID)
 }
 
 func (r *Route) SetFlag(flag NextHopFlag) {

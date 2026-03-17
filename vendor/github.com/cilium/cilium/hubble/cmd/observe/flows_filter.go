@@ -213,6 +213,7 @@ func newFlowFilter() *flowFilter {
 			{"uuid"},
 			{"traffic-direction"},
 			{"cel-expression"},
+			{"encrypted", "unencrypted"},
 		},
 	}
 }
@@ -514,6 +515,18 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 			f.TraceId = append(f.GetTraceId(), val)
 		})
 
+	case "ip-trace-id":
+		if val == "0" {
+			return fmt.Errorf("invalid --ip-trace-id value; must be greater than 0")
+		}
+		traceID, err := strconv.ParseUint(val, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid --ip-trace-id value: %w", err)
+		}
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.IpTraceId = append(f.GetIpTraceId(), traceID)
+		})
+
 	case "verdict":
 		if wipe {
 			f.apply(func(f *flowpb.FlowFilter) {
@@ -735,6 +748,14 @@ func (of *flowFilter) set(f *filterTracker, name, val string, track bool) error 
 	case "interface":
 		f.apply(func(f *flowpb.FlowFilter) {
 			f.Interface = append(f.Interface, &flowpb.NetworkInterface{Name: val})
+		})
+	case "encrypted":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.Encrypted = append(f.GetEncrypted(), true)
+		})
+	case "unencrypted":
+		f.apply(func(f *flowpb.FlowFilter) {
+			f.Encrypted = append(f.GetEncrypted(), false)
 		})
 	}
 

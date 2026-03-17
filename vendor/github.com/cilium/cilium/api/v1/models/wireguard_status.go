@@ -10,6 +10,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -26,6 +27,9 @@ type WireguardStatus struct {
 
 	// WireGuard interfaces managed by this Cilium instance
 	Interfaces []*WireguardInterface `json:"interfaces"`
+
+	// Label selector for nodes which will opt-out of node-to-node encryption
+	NodeEncryptOptOutLabels string `json:"node-encrypt-opt-out-labels,omitempty"`
 
 	// Node Encryption status
 	NodeEncryption string `json:"node-encryption,omitempty"`
@@ -57,11 +61,15 @@ func (m *WireguardStatus) validateInterfaces(formats strfmt.Registry) error {
 
 		if m.Interfaces[i] != nil {
 			if err := m.Interfaces[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("interfaces" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("interfaces" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -96,11 +104,15 @@ func (m *WireguardStatus) contextValidateInterfaces(ctx context.Context, formats
 			}
 
 			if err := m.Interfaces[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("interfaces" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("interfaces" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

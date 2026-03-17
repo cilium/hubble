@@ -34,17 +34,6 @@ type Identity struct {
 	// for faster lookup.
 	LabelArray labels.LabelArray `json:"-"`
 
-	// CIDRLabel is the primary identity label when the identity represents
-	// a CIDR. The Labels field will consist of all matching prefixes, e.g.
-	// 10.0.0.0/8
-	// 10.0.0.0/7
-	// 10.0.0.0/6
-	// [...]
-	// reserved:world
-	//
-	// The CIDRLabel field will only contain 10.0.0.0/8
-	CIDRLabel labels.Labels `json:"-"`
-
 	// ReferenceCount counts the number of references pointing to this
 	// identity. This field is used by the owning cache of the identity.
 	ReferenceCount int `json:"-"`
@@ -58,15 +47,16 @@ type Identity struct {
 // This structure is written as JSON to the key-value store. Do NOT modify this
 // structure in ways which are not JSON forward compatible.
 type IPIdentityPair struct {
-	IP           net.IP          `json:"IP"`
-	Mask         net.IPMask      `json:"Mask"`
-	HostIP       net.IP          `json:"HostIP"`
-	ID           NumericIdentity `json:"ID"`
-	Key          uint8           `json:"Key"`
-	Metadata     string          `json:"Metadata"`
-	K8sNamespace string          `json:"K8sNamespace,omitempty"`
-	K8sPodName   string          `json:"K8sPodName,omitempty"`
-	NamedPorts   []NamedPort     `json:"NamedPorts,omitempty"`
+	IP                net.IP          `json:"IP"`
+	Mask              net.IPMask      `json:"Mask"`
+	HostIP            net.IP          `json:"HostIP"`
+	ID                NumericIdentity `json:"ID"`
+	Key               uint8           `json:"Key"`
+	Metadata          string          `json:"Metadata"`
+	K8sNamespace      string          `json:"K8sNamespace,omitempty"`
+	K8sPodName        string          `json:"K8sPodName,omitempty"`
+	K8sServiceAccount string          `json:"K8sServiceAccount,omitempty"`
+	NamedPorts        []NamedPort     `json:"NamedPorts,omitempty"`
 }
 
 type IdentityMap map[NumericIdentity]labels.LabelArray
@@ -179,12 +169,6 @@ func (pair *IPIdentityPair) PrefixString() string {
 
 	ones, _ := pair.Mask.Size()
 	return ipstr + "/" + strconv.Itoa(ones)
-}
-
-// RequiresGlobalIdentity returns true if the label combination requires a
-// global identity
-func RequiresGlobalIdentity(lbls labels.Labels) bool {
-	return ScopeForLabels(lbls) == IdentityScopeGlobal
 }
 
 // ScopeForLabels returns the identity scope to be used for the label set.
