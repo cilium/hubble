@@ -3,6 +3,14 @@ on:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:
+    # Support re-running the workflow manually from the Actions tab in case it
+    # fails and we need to fix something in the automation but still have it
+    # run against the existing tag.
+    inputs:
+      tag:
+        description: 'release tag version'
+        required: true
 
 name: Create a release
 
