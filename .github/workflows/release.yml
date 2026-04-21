@@ -24,8 +24,18 @@ jobs:
       contents: 'write'
       id-token: 'write'
     steps:
+      - name: Set tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
       - name: Generate artifacts
         run: make release
       - name: Create Release
@@ -34,8 +44,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: ${{ steps.tag.outputs.tag }}
           draft: true # turn this to false once release notes are automatically added
           prerelease: false
           body: |
