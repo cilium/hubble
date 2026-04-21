@@ -5,11 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.3] - 2026-04-21
+[1.19.3]: https://github.com/cilium/cilium/compare/v1.18.6...v1.19.3
+
+**Important Security Updates:**
+* chore(deps): update module github.com/moby/spdystream to v0.5.1 [security] (cilium/hubble#1775, @renovate[bot])
+
+**Misc Changes:**
+* chore(config): migrate Renovate config (cilium/hubble#1757, @renovate[bot])
+* chore(deps): update actions/setup-go action to v6.4.0 (cilium/hubble#1769, @renovate[bot])
+* chore(deps): update all github action dependencies (minor) (cilium/hubble#1756, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.18.7 (cilium/hubble#1758, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.19.2 (cilium/hubble#1765, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.19.3 (cilium/hubble#1774, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.20.1 (cilium/hubble#1763, @renovate[bot])
+* chore(deps): update dependency helm/helm to v3.20.2 (cilium/hubble#1771, @renovate[bot])
+* chore(deps): update golang to v1.25.7 (patch) (cilium/hubble#1755, @renovate[bot])
+* chore(deps): update golang to v1.26.0 (minor) (cilium/hubble#1759, @renovate[bot])
+* chore(deps): update golang to v1.26.1 (patch) (cilium/hubble#1762, @renovate[bot])
+* chore(deps): update golang to v1.26.2 (patch) (cilium/hubble#1772, @renovate[bot])
+* chore(deps): update library/golang:1.26.2-alpine docker digest to f853308 (cilium/hubble#1773, @renovate[bot])
+* chore(deps): update module google.golang.org/grpc to v1.79.3 [security] (cilium/hubble#1766, @renovate[bot])
+* Fix renovate config (cilium/hubble#1761, @glibsm)
+* Update stable release to 1.18.6 (cilium/hubble#1754, @glibsm)
+* vendor: Update cilium to v1.19.1 (cilium/hubble#1764, @glibsm)
+
 ## [v1.18.6] - 2026-02-03
 [v1.18.6]: https://github.com/cilium/cilium/compare/v1.18.5...v1.18.6
-
-Summary of Changes
-------------------
 
 **Misc Changes:**
 * chore(deps): update actions/checkout action to v6.0.2 - autoclosed (cilium/hubble#1749, @renovate[bot])
@@ -21,9 +43,6 @@ Summary of Changes
 
 ## [v1.18.5] - 2026-01-05
 [v1.18.5]: https://github.com/cilium/cilium/compare/v1.18.3...v1.18.5
-
-Summary of Changes
-------------------
 
 **Misc Changes:**
 * chore(deps): update actions/checkout action to v6.0.1 (cilium/hubble#1738, @renovate[bot])
