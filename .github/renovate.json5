@@ -42,6 +42,11 @@
   ],
   stopUpdatingLabel: 'renovate/stop-updating',
   packageRules: [
+    {
+      // Dependency cooldown: skip versions published less than 5 days ago
+      matchUpdateTypes: ['major', 'minor', 'patch'],
+      minimumReleaseAge: '5 days',
+    },
     // Based on https://docs.renovatebot.com/key-concepts/automerge/#automerge-non-major-updates
     // and tetragon's automerge config.
     {
