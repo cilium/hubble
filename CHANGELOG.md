@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.4] - 2026-06-04
+[1.19.4]: https://github.com/cilium/cilium/compare/v1.19.3...v1.19.4
+
+**Misc Changes:**
+* chore(deps): update azure/setup-helm action to v5 (cilium/hubble#1783, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.19.4 (cilium/hubble#1786, @renovate[bot])
+* chore(deps): update dependency helm/helm to v4.2.0 (cilium/hubble#1787, @renovate[bot])
+* chore(deps): update golang to v1.26.4 (cilium/hubble#1789, @renovate[bot])
+* chore(deps): update module go.opentelemetry.io/otel to v1.41.0 [security] (cilium/hubble#1784, @renovate[bot])
+
+
 ## [1.19.3] - 2026-04-21
 [1.19.3]: https://github.com/cilium/cilium/compare/v1.18.6...v1.19.3
 
