@@ -116,6 +116,8 @@
         'github.com/cilium/metallb',
         'github.com/miekg/dns',
         'github.com/cilium/dns',
+        'github.com/osrg/gobgp/v3',
+        'github.com/cilium/gobgp/v3',
         'sigs.k8s.io/controller-tools',
         'github.com/cilium/controller-tools',
         'k8s.io/client-go',
