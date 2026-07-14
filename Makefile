@@ -24,8 +24,8 @@ RENOVATE_GITHUB_COM_TOKEN ?= $(shell gh auth token)
 TEST_TIMEOUT ?= 5s
 
 # renovate: datasource=docker depName=library/golang
-GOLANG_IMAGE_VERSION = 1.26.4-alpine
-GOLANG_IMAGE_SHA = sha256:3ad57304ad93bbec8548a0437ad9e06a455660655d9af011d58b993f6f615648
+GOLANG_IMAGE_VERSION = 1.26.5-alpine
+GOLANG_IMAGE_SHA = sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2
 
 # Add the ability to override variables
 -include Makefile.override
