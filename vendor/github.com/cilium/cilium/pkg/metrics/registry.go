@@ -9,11 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
 
-	"github.com/cilium/hive"
 	"github.com/cilium/hive/cell"
 	"github.com/cilium/hive/job"
 	"github.com/prometheus/client_golang/prometheus"
@@ -49,10 +49,9 @@ func (rc RegistryConfig) Flags(flags *pflag.FlagSet) {
 type RegistryParams struct {
 	cell.In
 
-	Logger     *slog.Logger
-	Shutdowner hive.Shutdowner
-	Lifecycle  cell.Lifecycle
-	JobGroup   job.Group
+	Logger    *slog.Logger
+	Lifecycle cell.Lifecycle
+	JobGroup  job.Group
 
 	AutoMetrics []metricpkg.WithMetadata `group:"hive-metrics"`
 	Config      RegistryConfig
@@ -83,18 +82,22 @@ func (reg *Registry) Gather() ([]*dto.MetricFamily, error) {
 	return reg.inner.Gather()
 }
 
-func (reg *Registry) AddServerRuntimeHooks(serverId string, tlsConfigPromise TLSConfigPromise) {
-	if reg.params.Config.PrometheusServeAddr != "" {
-		// The Handler function provides a default handler to expose metrics
-		// via an HTTP server. "/metrics" is the usual endpoint for that.
-		mux := http.NewServeMux()
-		mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-		srv := http.Server{
-			Addr:    reg.params.Config.PrometheusServeAddr,
-			Handler: mux,
-		}
+func (reg *Registry) AddServerRuntimeHooks(serverId string, tlsConfigPromise TLSConfigPromise, listenConfig net.ListenConfig) {
+	if reg.params.Config.PrometheusServeAddr == "" {
+		return
+	}
 
-		reg.params.JobGroup.Add(job.OneShot(serverId, func(ctx context.Context, _ cell.Health) error {
+	// The Handler function provides a default handler to expose metrics
+	// via an HTTP server. "/metrics" is the usual endpoint for that.
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	srv := http.Server{
+		Addr:    reg.params.Config.PrometheusServeAddr,
+		Handler: mux,
+	}
+
+	reg.params.JobGroup.Add(
+		job.OneShot(serverId, func(ctx context.Context, _ cell.Health) error {
 			tlsEnabled := tlsConfigPromise != nil
 			reg.params.Logger.Info("Serving prometheus metrics",
 				logfields.Server, serverId,
@@ -102,30 +105,38 @@ func (reg *Registry) AddServerRuntimeHooks(serverId string, tlsConfigPromise TLS
 				logfields.TLS, tlsEnabled,
 			)
 
-			listenAndServeFn := srv.ListenAndServe
+			ln, err := listenConfig.Listen(ctx, "tcp", reg.params.Config.PrometheusServeAddr)
+			if err != nil {
+				return err
+			}
+
+			var serveFn func() error
 			if tlsEnabled {
 				reg.params.Logger.Info("Waiting for TLS certificates to become available")
 				tlsConfig, err := tlsConfigPromise.Await(ctx)
 				if err != nil {
+					ln.Close()
 					return err
 				}
 				srv.TLSConfig = tlsConfig
-				listenAndServeFn = func() error {
-					return srv.ListenAndServeTLS("", "")
-				}
+				serveFn = func() error { return srv.ServeTLS(ln, "", "") }
+			} else {
+				serveFn = func() error { return srv.Serve(ln) }
 			}
 
-			if err := listenAndServeFn(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				reg.params.Shutdowner.Shutdown(hive.ShutdownWithError(err))
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			go func() {
+				<-ctx.Done()
+				srv.Close()
+			}()
+
+			if err := serveFn(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+				return err
 			}
 			return nil
-		}))
-		reg.params.Lifecycle.Append(cell.Hook{
-			OnStop: func(hc cell.HookContext) error {
-				return srv.Shutdown(hc)
-			},
-		})
-	}
+		}, job.WithShutdown()),
+	)
 }
 
 // NewRegistry constructs a new registry that is not initialized with
@@ -148,7 +159,7 @@ func NewAgentRegistry(params RegistryParams) *Registry {
 	// Resolve the global registry variable for as long as we still have global functions
 	registryResolver.Resolve(reg)
 
-	reg.AddServerRuntimeHooks("agent-prometheus-server", nil)
+	reg.AddServerRuntimeHooks("agent-prometheus-server", nil, net.ListenConfig{})
 
 	return reg
 }

@@ -4,8 +4,6 @@
 package api
 
 import (
-	"context"
-
 	"github.com/cilium/cilium/pkg/slices"
 )
 
@@ -69,18 +67,20 @@ type IngressCommonRule struct {
 
 	// FromEntities is a list of special entities which the endpoint subject
 	// to the rule is allowed to receive connections from. Supported entities are
-	// `world`, `cluster`, `host`, `remote-node`, `kube-apiserver`, `ingress`, `init`,
+	// `world`, `cluster`, `cluster-mesh`, `host`, `remote-node`, `kube-apiserver`, `ingress`, `init`,
 	// `health`, `unmanaged`, `none` and `all`.
 	//
 	// +kubebuilder:validation:Optional
 	FromEntities EntitySlice `json:"fromEntities,omitempty"`
 
-	// FromGroups is a directive that allows the integration with multiple outside
-	// providers. Currently, only AWS is supported, and the rule can select by
-	// multiple sub directives:
+	// FromGroups allows policies to reference CIDRs provided by external integrations.
+	// Currently, only AWS is supported, and the rule can select by multiple sub directives.
+	// FromGroups entries are functionally equivalent to FromCIDR, and have the same
+	// limitiations. They cannot select traffic originating from within the cluster.
+	//
 	//
 	// Example:
-	// FromGroups:
+	// fromGroups:
 	// - aws:
 	//     securityGroupsIds:
 	//     - 'sg-XXXXXXXXXXXXX'
@@ -198,63 +198,4 @@ type IngressDenyRule struct {
 	//
 	// +kubebuilder:validation:Optional
 	ICMPs ICMPRules `json:"icmps,omitempty"`
-}
-
-// RequiresDerivative returns true when the EgressCommonRule contains sections
-// that need a derivative policy created in order to be enforced
-// (e.g. FromGroups).
-func (e *IngressCommonRule) RequiresDerivative() bool {
-	return len(e.FromGroups) > 0
-}
-
-// IsL3 returns true if the IngressCommonRule contains at least a rule that
-// affects L3 policy enforcement.
-func (in *IngressCommonRule) IsL3() bool {
-	if in == nil {
-		return false
-	}
-	return len(in.FromEndpoints) > 0 ||
-		len(in.FromCIDR) > 0 ||
-		len(in.FromCIDRSet) > 0 ||
-		len(in.FromEntities) > 0 ||
-		len(in.FromGroups) > 0 ||
-		len(in.FromNodes) > 0
-}
-
-// CreateDerivative will return a new rule based on the data gathered by the
-// rules that creates a new derivative policy.
-// In the case of FromGroups will call outside using the groups callback and this
-// function can take a bit of time.
-func (e *IngressRule) CreateDerivative(ctx context.Context) (*IngressRule, error) {
-	newRule := e.DeepCopy()
-	if !e.RequiresDerivative() {
-		return newRule, nil
-	}
-	newRule.FromCIDRSet = make(CIDRRuleSlice, 0, len(e.FromGroups))
-	cidrSet, err := ExtractCidrSet(ctx, e.FromGroups)
-	if err != nil {
-		return &IngressRule{}, err
-	}
-	newRule.FromCIDRSet = append(newRule.FromCIDRSet, cidrSet...)
-	newRule.FromGroups = nil
-	return newRule, nil
-}
-
-// CreateDerivative will return a new rule based on the data gathered by the
-// rules that creates a new derivative policy.
-// In the case of FromGroups will call outside using the groups callback and this
-// function can take a bit of time.
-func (e *IngressDenyRule) CreateDerivative(ctx context.Context) (*IngressDenyRule, error) {
-	newRule := e.DeepCopy()
-	if !e.RequiresDerivative() {
-		return newRule, nil
-	}
-	newRule.FromCIDRSet = make(CIDRRuleSlice, 0, len(e.FromGroups))
-	cidrSet, err := ExtractCidrSet(ctx, e.FromGroups)
-	if err != nil {
-		return &IngressDenyRule{}, err
-	}
-	newRule.FromCIDRSet = append(newRule.FromCIDRSet, cidrSet...)
-	newRule.FromGroups = nil
-	return newRule, nil
 }

@@ -4,8 +4,6 @@
 package api
 
 import (
-	"context"
-
 	"github.com/cilium/cilium/pkg/slices"
 )
 
@@ -68,7 +66,7 @@ type EgressCommonRule struct {
 
 	// ToEntities is a list of special entities to which the endpoint subject
 	// to the rule is allowed to initiate connections. Supported entities are
-	// `world`, `cluster`, `host`, `remote-node`, `kube-apiserver`, `ingress`, `init`,
+	// `world`, `cluster`, `cluster-mesh`, `host`, `remote-node`, `kube-apiserver`, `ingress`, `init`,
 	// `health`, `unmanaged`, `none` and `all`.
 	//
 	// +kubebuilder:validation:Optional
@@ -81,9 +79,10 @@ type EgressCommonRule struct {
 	// +kubebuilder:validation:Optional
 	ToServices []Service `json:"toServices,omitempty"`
 
-	// ToGroups is a directive that allows the integration with multiple outside
-	// providers. Currently, only AWS is supported, and the rule can select by
-	// multiple sub directives:
+	// ToGroups allows policies to reference CIDRs provided by external integrations.
+	// Currently, only AWS is supported, and the rule can select by multiple sub directives.
+	// ToGroups entries are functionally equivalent to toCIDR, and have the same
+	// limitiations. They cannot select traffic originating from within the cluster.
 	//
 	// Example:
 	// toGroups:
@@ -218,61 +217,4 @@ type EgressDenyRule struct {
 	//
 	// +kubebuilder:validation:Optional
 	ICMPs ICMPRules `json:"icmps,omitempty"`
-}
-
-// RequiresDerivative returns true when the EgressCommonRule contains sections
-// that need a derivative policy created in order to be enforced
-// (e.g. ToGroups).
-func (e *EgressCommonRule) RequiresDerivative() bool {
-	return len(e.ToGroups) > 0
-}
-
-func (e *EgressCommonRule) IsL3() bool {
-	if e == nil {
-		return false
-	}
-	return len(e.ToEndpoints) > 0 ||
-		len(e.ToCIDR) > 0 ||
-		len(e.ToCIDRSet) > 0 ||
-		len(e.ToEntities) > 0 ||
-		len(e.ToGroups) > 0 ||
-		len(e.ToNodes) > 0
-}
-
-// CreateDerivative will return a new rule based on the data gathered by the
-// rules that creates a new derivative policy.
-// In the case of ToGroups will call outside using the groups callback and this
-// function can take a bit of time.
-func (e *EgressRule) CreateDerivative(ctx context.Context) (*EgressRule, error) {
-	newRule := e.DeepCopy()
-	if !e.RequiresDerivative() {
-		return newRule, nil
-	}
-	newRule.ToCIDRSet = make(CIDRRuleSlice, 0, len(e.ToGroups))
-	cidrSet, err := ExtractCidrSet(ctx, e.ToGroups)
-	if err != nil {
-		return &EgressRule{}, err
-	}
-	newRule.ToCIDRSet = append(newRule.ToCIDRSet, cidrSet...)
-	newRule.ToGroups = nil
-	return newRule, nil
-}
-
-// CreateDerivative will return a new rule based on the data gathered by the
-// rules that creates a new derivative policy.
-// In the case of ToGroups will call outside using the groups callback and this
-// function can take a bit of time.
-func (e *EgressDenyRule) CreateDerivative(ctx context.Context) (*EgressDenyRule, error) {
-	newRule := e.DeepCopy()
-	if !e.RequiresDerivative() {
-		return newRule, nil
-	}
-	newRule.ToCIDRSet = make(CIDRRuleSlice, 0, len(e.ToGroups))
-	cidrSet, err := ExtractCidrSet(ctx, e.ToGroups)
-	if err != nil {
-		return &EgressDenyRule{}, err
-	}
-	newRule.ToCIDRSet = append(newRule.ToCIDRSet, cidrSet...)
-	newRule.ToGroups = nil
-	return newRule, nil
 }

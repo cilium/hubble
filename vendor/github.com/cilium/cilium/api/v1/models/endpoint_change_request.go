@@ -11,7 +11,8 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/jsonutils"
+	"github.com/go-openapi/swag/typeutils"
 	"github.com/go-openapi/validate"
 )
 
@@ -29,9 +30,6 @@ type EndpointChangeRequest struct {
 	// Name of network device in container netns
 	ContainerInterfaceName string `json:"container-interface-name,omitempty"`
 
-	// Name assigned to container
-	ContainerName string `json:"container-name,omitempty"`
-
 	// Path of Container Netns
 	ContainerNetnsPath string `json:"container-netns-path,omitempty"`
 
@@ -40,15 +38,6 @@ type EndpointChangeRequest struct {
 
 	// ID of datapath tail call map
 	DatapathMapID int64 `json:"datapath-map-id,omitempty"`
-
-	// Disables lookup using legacy endpoint identifiers (container name, container id, pod name) for this endpoint
-	DisableLegacyIdentifiers bool `json:"disable-legacy-identifiers,omitempty"`
-
-	// Docker endpoint ID
-	DockerEndpointID string `json:"docker-endpoint-id,omitempty"`
-
-	// Docker network ID
-	DockerNetworkID string `json:"docker-network-id,omitempty"`
 
 	// MAC address
 	HostMac string `json:"host-mac,omitempty"`
@@ -61,6 +50,9 @@ type EndpointChangeRequest struct {
 
 	// Name of network device in host netns
 	InterfaceName string `json:"interface-name,omitempty"`
+
+	// Whether this is a secondary pod interface
+	IsSecondaryInterface bool `json:"is-secondary-interface,omitempty"`
 
 	// Kubernetes namespace name
 	K8sNamespace string `json:"k8s-namespace,omitempty"`
@@ -128,7 +120,7 @@ func (m *EndpointChangeRequest) Validate(formats strfmt.Registry) error {
 }
 
 func (m *EndpointChangeRequest) validateAddressing(formats strfmt.Registry) error {
-	if swag.IsZero(m.Addressing) { // not required
+	if typeutils.IsZero(m.Addressing) { // not required
 		return nil
 	}
 
@@ -151,7 +143,7 @@ func (m *EndpointChangeRequest) validateAddressing(formats strfmt.Registry) erro
 }
 
 func (m *EndpointChangeRequest) validateDatapathConfiguration(formats strfmt.Registry) error {
-	if swag.IsZero(m.DatapathConfiguration) { // not required
+	if typeutils.IsZero(m.DatapathConfiguration) { // not required
 		return nil
 	}
 
@@ -174,7 +166,7 @@ func (m *EndpointChangeRequest) validateDatapathConfiguration(formats strfmt.Reg
 }
 
 func (m *EndpointChangeRequest) validateLabels(formats strfmt.Registry) error {
-	if swag.IsZero(m.Labels) { // not required
+	if typeutils.IsZero(m.Labels) { // not required
 		return nil
 	}
 
@@ -248,7 +240,7 @@ func (m *EndpointChangeRequest) contextValidateAddressing(ctx context.Context, f
 
 	if m.Addressing != nil {
 
-		if swag.IsZero(m.Addressing) { // not required
+		if typeutils.IsZero(m.Addressing) { // not required
 			return nil
 		}
 
@@ -273,7 +265,7 @@ func (m *EndpointChangeRequest) contextValidateDatapathConfiguration(ctx context
 
 	if m.DatapathConfiguration != nil {
 
-		if swag.IsZero(m.DatapathConfiguration) { // not required
+		if typeutils.IsZero(m.DatapathConfiguration) { // not required
 			return nil
 		}
 
@@ -338,13 +330,13 @@ func (m *EndpointChangeRequest) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
-	return swag.WriteJSON(m)
+	return jsonutils.WriteJSON(m)
 }
 
 // UnmarshalBinary interface implementation
 func (m *EndpointChangeRequest) UnmarshalBinary(b []byte) error {
 	var res EndpointChangeRequest
-	if err := swag.ReadJSON(b, &res); err != nil {
+	if err := jsonutils.ReadJSON(b, &res); err != nil {
 		return err
 	}
 	*m = res

@@ -20,6 +20,7 @@ import (
 	k8sConst "github.com/cilium/cilium/pkg/k8s/apis/cilium.io"
 	slim_metav1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	"github.com/cilium/cilium/pkg/labels"
+	"github.com/cilium/cilium/pkg/option"
 	"github.com/cilium/cilium/pkg/policy/api"
 )
 
@@ -33,6 +34,8 @@ type APISelector interface {
 var (
 	WildcardSelector  = NewLabelSelectorFromLabels()
 	WildcardSelectors = Selectors{WildcardSelector}
+	HostSelector      = NewLabelSelector(api.ReservedEndpointSelectors[labels.IDNameHost])
+	HostSelectors     = Selectors{HostSelector}
 )
 
 // Selectors is a slice of Selectors.
@@ -152,6 +155,8 @@ func ToSelector[T APISelector](peer T) Selector {
 		return newCIDRRuleSelector(v)
 	case api.FQDNSelector:
 		return newFqdnSelector(v)
+	case api.Groups:
+		return NewLabelSelector(v.GetAsEndpointSelector())
 	}
 
 	return nil
@@ -506,11 +511,65 @@ func (p *CIDRSelector) SelectedNamespaces() []string {
 	return nil
 }
 
+// hasCIDRLabel returns true if the labels contain an IPv4 (ip4==true) or IPv6 CIDR label.
+func hasCIDRLabel(lbls labels.Labels, is4 bool) bool {
+	for _, l := range lbls {
+		if pfx := l.GetCIDRPrefix(); pfx != nil {
+			if pfx.IsValid() && pfx.Addr().Is4() == is4 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (p *CIDRSelector) Matches(ls labels.LabelArray) bool {
+	lbls := ls.Labels()
+	isWorld := lbls.HasWorldLabel()
+	isNode := lbls.HasHostLabel() || lbls.HasRemoteNodeLabel()
+	allowed := isWorld ||
+		(isNode && option.Config.PolicyCIDRMatchesNodes()) ||
+		(!isWorld && !isNode && option.Config.PolicyCIDRMatchesPods())
+
+	if !allowed {
+		return false
+	}
+
 	if p.encoded {
 		return matchesEncodedRequirements(p.requirements, ls)
 	}
-	return MatchesRequirements(p.requirements, ls)
+
+	for i := range p.requirements {
+		req := &p.requirements[i]
+		if matchesCIDRWildcard(req, lbls) {
+			continue // Wildcard requirement satisfied.
+		}
+		if !MatchesRequirement(req, ls) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// matchesCIDRWildcard returns true if the requirement is a wildcard and matches
+// the target under the PolicyCIDRMatchesPods configuration.
+func matchesCIDRWildcard(req *Requirement, lbls labels.Labels) bool {
+	if !option.Config.PolicyCIDRMatchesPods() || req.key.Source != labels.LabelSourceReserved {
+		return false
+	}
+
+	isIPv4Req := (req.key.Key == labels.IDNameWorldIPv4 || req.key.Key == labels.IDNameWorld)
+	isIPv6Req := (req.key.Key == labels.IDNameWorldIPv6 || req.key.Key == labels.IDNameWorld)
+
+	if option.Config.IPv4Enabled() && isIPv4Req && hasCIDRLabel(lbls, true /* ip4 */) {
+		return true
+	}
+	if option.Config.IPv6Enabled() && isIPv6Req && hasCIDRLabel(lbls, false /* ip4 */) {
+		return true
+	}
+
+	return false
 }
 
 func (p *CIDRSelector) GetFQDNSelector() (*api.FQDNSelector, bool) {
@@ -605,10 +664,9 @@ type CachedSelector interface {
 	// be modified, as it is shared among multiple users.
 	GetSelectionsAt(SelectorSnapshot) identity.NumericIdentitySlice
 
-	// GetMetadataLabels returns metadata labels for additional context
-	// surrounding the selector. These are typically the labels associated with
-	// Cilium rules.
-	GetMetadataLabels() labels.LabelArray
+	// GetMetadataLabels returns the labels of the rules currently
+	// using the selector.
+	GetMetadataLabels() labels.LabelArrayList
 
 	// Selects return 'true' if the CachedSelector selects the given
 	// numeric identity on the latest version of the selector.
@@ -685,4 +743,7 @@ type CachedSelectionUser interface {
 	// engine for selecting traffic for remote peers. False if used for
 	// selecting policy subjects.
 	IsPeerSelector() bool
+
+	// GetLabels is used for debugging
+	GetRuleLabels(cs CachedSelector) labels.LabelArrayList
 }

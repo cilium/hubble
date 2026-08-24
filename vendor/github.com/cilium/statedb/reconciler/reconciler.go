@@ -19,6 +19,7 @@ type reconciler[Obj comparable] struct {
 	retries              *retries
 	externalPruneTrigger chan struct{}
 	primaryIndexer       statedb.Indexer[Obj]
+	progress             *progressTracker
 }
 
 func (r *reconciler[Obj]) Prune() {
@@ -26,6 +27,10 @@ func (r *reconciler[Obj]) Prune() {
 	case r.externalPruneTrigger <- struct{}{}:
 	default:
 	}
+}
+
+func (r *reconciler[Obj]) WaitUntilReconciled(ctx context.Context, untilRevision statedb.Revision) (statedb.Revision, statedb.Revision, error) {
+	return r.progress.wait(ctx, untilRevision)
 }
 
 func (r *reconciler[Obj]) reconcileLoop(ctx context.Context, health cell.Health) error {
@@ -43,6 +48,7 @@ func (r *reconciler[Obj]) reconcileLoop(ctx context.Context, health cell.Health)
 	if err != nil {
 		return fmt.Errorf("watching for changes failed: %w", err)
 	}
+	defer changeIterator.Close()
 
 	tableWatchChan := closedWatchChannel
 
@@ -53,6 +59,7 @@ func (r *reconciler[Obj]) reconcileLoop(ctx context.Context, health cell.Health)
 
 	incremental := incremental[Obj]{
 		moduleID:       r.ModuleID,
+		name:           r.config.Name,
 		metrics:        r.config.Metrics,
 		config:         &r.config,
 		retries:        r.retries,
@@ -100,7 +107,8 @@ func (r *reconciler[Obj]) reconcileLoop(ctx context.Context, health cell.Health)
 
 		// Perform incremental reconciliation and retries of previously failed
 		// objects.
-		errs := incremental.run(ctx, txn, changes)
+		errs, lastRevision, retryLowWatermark := incremental.run(ctx, txn, changes)
+		r.progress.update(lastRevision, retryLowWatermark)
 
 		if tableInitialized && (prune || externalPrune) {
 			if err := r.prune(ctx, txn); err != nil {
@@ -129,8 +137,8 @@ func (r *reconciler[Obj]) prune(ctx context.Context, txn statedb.ReadTxn) error 
 		r.Log.Warn("Reconciler: failed to prune objects", "error", err, "pruneInterval", r.config.PruneInterval)
 		err = fmt.Errorf("prune: %w", err)
 	}
-	r.config.Metrics.PruneDuration(r.ModuleID, time.Since(start))
-	r.config.Metrics.PruneError(r.ModuleID, err)
+	r.config.Metrics.PruneDuration(r.ModuleID, r.config.Name, time.Since(start))
+	r.config.Metrics.PruneError(r.ModuleID, r.config.Name, err)
 	return err
 }
 

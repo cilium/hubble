@@ -23,24 +23,28 @@ import (
 //
 // To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewGetEndpointIDConfigParams() *GetEndpointIDConfigParams {
-	return &GetEndpointIDConfigParams{
-		timeout: cr.DefaultTimeout,
-	}
+	return NewGetEndpointIDConfigParamsWithTimeout(cr.DefaultTimeout)
 }
 
 // NewGetEndpointIDConfigParamsWithTimeout creates a new GetEndpointIDConfigParams object
 // with the ability to set a timeout on a request.
 func NewGetEndpointIDConfigParamsWithTimeout(timeout time.Duration) *GetEndpointIDConfigParams {
 	return &GetEndpointIDConfigParams{
-		timeout: timeout,
+		inner: innerParams{
+			timeout: timeout,
+		},
 	}
 }
 
 // NewGetEndpointIDConfigParamsWithContext creates a new GetEndpointIDConfigParams object
 // with the ability to set a context for a request.
+//
+// Deprecated: use the operation call with context to pass the context instead of [GetEndpointIDConfigParams].
 func NewGetEndpointIDConfigParamsWithContext(ctx context.Context) *GetEndpointIDConfigParams {
 	return &GetEndpointIDConfigParams{
-		Context: ctx,
+		inner: innerParams{
+			ctx: ctx,
+		},
 	}
 }
 
@@ -72,18 +76,14 @@ type GetEndpointIDConfigParams struct {
 	  - cilium-local: Local Cilium endpoint UUID, e.g. cilium-local:3389595
 	  - cilium-global: Global Cilium endpoint UUID, e.g. cilium-global:cluster1:nodeX:452343
 	  - cni-attachment-id: CNI attachment ID, e.g. cni-attachment-id:22222:eth0
-	  - container-id: Container runtime ID, e.g. container-id:22222 (deprecated, may not be unique)
-	  - container-name: Container name, e.g. container-name:foobar (deprecated, may not be unique)
-	  - pod-name: pod name for this container if K8s is enabled, e.g. pod-name:default:foobar (deprecated, may not be unique)
 	  - cep-name: cep name for this container if K8s is enabled, e.g. pod-name:default:foobar-net1
-	  - docker-endpoint: Docker libnetwork endpoint ID, e.g. docker-endpoint:4444
 
 	*/
 	ID string
 
-	timeout    time.Duration
-	Context    context.Context
 	HTTPClient *http.Client
+
+	inner innerParams
 }
 
 // WithDefaults hydrates default values in the get endpoint ID config params (not the query body).
@@ -101,54 +101,57 @@ func (o *GetEndpointIDConfigParams) SetDefaults() {
 	// no default values defined for this parameter
 }
 
-// WithTimeout adds the timeout to the get endpoint ID config params
+// WithTimeout adds the timeout to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) WithTimeout(timeout time.Duration) *GetEndpointIDConfigParams {
 	o.SetTimeout(timeout)
 	return o
 }
 
-// SetTimeout adds the timeout to the get endpoint ID config params
+// SetTimeout adds the timeout to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) SetTimeout(timeout time.Duration) {
-	o.timeout = timeout
+	o.inner.timeout = timeout
 }
 
-// WithContext adds the context to the get endpoint ID config params
+// WithContext adds the context to the get endpoint ID config params.
+//
+// Deprecated: use the operation call with context to pass the context instead of [GetEndpointIDConfigParams].
 func (o *GetEndpointIDConfigParams) WithContext(ctx context.Context) *GetEndpointIDConfigParams {
 	o.SetContext(ctx)
 	return o
 }
 
-// SetContext adds the context to the get endpoint ID config params
+// SetContext adds the context to the get endpoint ID config params.
+//
+// Deprecated: use the operation call with context to pass the context instead of [GetEndpointIDConfigParams].
 func (o *GetEndpointIDConfigParams) SetContext(ctx context.Context) {
-	o.Context = ctx
+	o.inner.ctx = ctx
 }
 
-// WithHTTPClient adds the HTTPClient to the get endpoint ID config params
+// WithHTTPClient adds the HTTPClient to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) WithHTTPClient(client *http.Client) *GetEndpointIDConfigParams {
 	o.SetHTTPClient(client)
 	return o
 }
 
-// SetHTTPClient adds the HTTPClient to the get endpoint ID config params
+// SetHTTPClient adds the HTTPClient to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithID adds the id to the get endpoint ID config params
+// WithID adds the id to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) WithID(id string) *GetEndpointIDConfigParams {
 	o.SetID(id)
 	return o
 }
 
-// SetID adds the id to the get endpoint ID config params
+// SetID adds the id to the get endpoint ID config params.
 func (o *GetEndpointIDConfigParams) SetID(id string) {
 	o.ID = id
 }
 
-// WriteToRequest writes these params to a swagger request
+// WriteToRequest writes these params to a [runtime.ClientRequest].
 func (o *GetEndpointIDConfigParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
-
-	if err := r.SetTimeout(o.timeout); err != nil {
+	if err := r.SetTimeout(o.inner.timeout); err != nil {
 		return err
 	}
 	var res []error

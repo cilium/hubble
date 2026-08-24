@@ -48,9 +48,9 @@ func agentCRDResourceNames() []string {
 
 	if !option.Config.DisableCiliumEndpointCRD {
 		result = append(result, CRDResourceName(v2.CEPName))
-		if option.Config.EnableCiliumEndpointSlice {
-			result = append(result, CRDResourceName(v2alpha1.CESName))
-		}
+	}
+	if option.Config.EnableCiliumEndpointSlice {
+		result = append(result, CRDResourceName(v2alpha1.CESName))
 	}
 
 	if option.Config.EnableCiliumNodeCRD {
@@ -85,6 +85,9 @@ func agentCRDResourceNames() []string {
 		result = append(result, CRDResourceName(v2.BGPPCName))
 		result = append(result, CRDResourceName(v2.BGPNCName))
 		result = append(result, CRDResourceName(v2.BGPNCOName))
+	}
+	if option.Config.EnableDatapathPlugins {
+		result = append(result, CRDResourceName(v2alpha1.CDPPName))
 	}
 
 	result = append(result,

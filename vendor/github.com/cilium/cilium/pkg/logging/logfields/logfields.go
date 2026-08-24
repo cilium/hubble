@@ -117,6 +117,9 @@ const (
 	// PolicyPrecedence is the datapath precedence for a policy Entry
 	PolicyPrecedence = "policyPrecedence"
 
+	// PolicyPassPrecedence is the precedence for a pass policy Entry
+	PolicyPassPrecedence = "policyPassPrecedence"
+
 	// PolicyRevision is the revision of the policy in the repository or of
 	// the object in question
 	PolicyRevision = "policyRevision"
@@ -479,6 +482,8 @@ const (
 	// Envoy secrets
 	ResourceSecrets = "secrets"
 
+	ResourceType = "resourceType"
+
 	// Size of the buffer
 	BufferSize = "buffer-size"
 
@@ -626,6 +631,21 @@ const (
 	// XDSDetail is detail string included in XDS NACKs.
 	XDSDetail = "xdsDetail"
 
+	// XDSCurrentVersion is the current version of an xDS resource.
+	XDSCurrentVersion = "xdsCurrentVersion"
+
+	// XDSPushedVersion is the version of an xDS resource that has been pushed.
+	XDSPushedVersion = "xdsPushedVersion"
+
+	// XDSVersion is the version of an xDS resource.
+	XDSVersion = "xdsVersion"
+
+	// XDSResourceNames is the names of xDS resources.
+	XDSResourceNames = "xdsResourceNames"
+
+	// XDSNumResources is the number of xDS resources in a response.
+	XDSNumResources = "numResources"
+
 	// K8s-specific
 
 	// K8sNodeID is the k8s ID of a K8sNode
@@ -659,6 +679,12 @@ const (
 
 	// K8sNetworkPolicyName is the name of a K8sPolicyObject
 	K8sNetworkPolicyName = "k8sNetworkPolicyName"
+
+	// K8sClusterNetworkPolicy is a k8s ClusterNetworkPolicy object.
+	K8sClusterNetworkPolicy = "k8sClusterNetworkPolicy"
+
+	// K8sClusterNetworkPolicyName is the name of a K8sPolicyObject
+	K8sClusterNetworkPolicyName = "k8sClusterNetworkPolicyName"
 
 	// K8sIngress is a k8s Ingress service object
 	K8sIngress = "k8sIngress"
@@ -1103,6 +1129,8 @@ const (
 
 	Link = "link"
 
+	LinkConfig = "linkConfig"
+
 	Hook = "hook"
 
 	DNSRedirect = "dnsRedirect"
@@ -1143,11 +1171,19 @@ const (
 
 	PoolName = "poolName"
 
+	AllowFirstIP = "allowFirstIP"
+
+	AllowLastIP = "allowLastIP"
+
 	MaxRetries = "maxRetries"
 
 	Retries = "retries"
 
 	Gateway = "gateway"
+
+	GammaService = "gammaService"
+
+	GatewayClass = "GatewayClass"
 
 	Kind = "kind"
 
@@ -1156,6 +1192,10 @@ const (
 	OptionalGVK = "optionalGVK"
 
 	ClusterConfig = "clusterConfig"
+
+	ListenerName = "listenerName"
+
+	ListenerConfig = "listenerConfig"
 
 	NodeConfig = "nodeConfig"
 
@@ -1198,6 +1238,10 @@ const (
 	TLSRoute = "tlsRoute"
 
 	GRPCRoute = "grpcRoute"
+
+	TCPRoute = "tcpRoute"
+
+	UDPRoute = "udpRoute"
 
 	Secret = "secret"
 
@@ -1289,6 +1333,10 @@ const (
 
 	NeededIPs = "neededIPs"
 
+	NeededIPv6Prefixes = "neededIPv6Prefixes"
+
+	AvailableIPv6Prefixes = "availableIPv6Prefixes"
+
 	Releasing = "releasing"
 
 	Excess = "excess"
@@ -1314,6 +1362,8 @@ const (
 	NumInterfaces = "numInterfaces"
 
 	NumSubnets = "numSubnets"
+
+	TargetedSubnets = "targetedSubnets"
 
 	NumRouteTables = "numRouteTables"
 
@@ -1575,8 +1625,6 @@ const (
 
 	BootTime = "bootTime"
 
-	BootstrapTime = "bootstrapTime"
-
 	Socket = "socket"
 
 	Filter = "filter"
@@ -1595,7 +1643,7 @@ const (
 
 	RssBytes = "rssBytes"
 
-	BPFSPath = "bpffsPath"
+	BPFFSPath = "bpffsPath"
 
 	ProgName = "progName"
 
@@ -1606,6 +1654,8 @@ const (
 	Tier = "tier"
 
 	TierBasePriority = "tierBasePriority"
+
+	TierLastPriority = "tierLastPriority"
 
 	Priority = "priority"
 
@@ -1624,8 +1674,6 @@ const (
 	NewLocally = "newLocally"
 
 	Released = "released"
-
-	DNSRulesV2 = "dnsRulesV2"
 
 	BPFHeaderfileHashOld = "old-" + "bpfHeaderfileHash"
 
@@ -1872,7 +1920,17 @@ const (
 
 	ExtendedMessage = "extendedMessage"
 
+	BackendTLSPolicyName = "backendTLSPolicyName"
+
+	ConfigMapName = "configMapName"
+
 	AttachType = "attachType"
 
 	WithFrags = "withFrags"
+
+	CiliumDatapathPluginName = "datapathPluginName"
+
+	CiliumDatapathPluginAttachmentPolicy = "datapathPluginAttachmentPolicy"
+
+	CiliumDatapathPluginVersion = "datapathPluginVersion"
 )

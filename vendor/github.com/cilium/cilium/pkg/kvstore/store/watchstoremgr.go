@@ -6,7 +6,6 @@ package store
 import (
 	"context"
 	"log/slog"
-	"path"
 	"sync"
 	"sync/atomic"
 
@@ -61,12 +60,10 @@ func (mgr *wsmCommon) ready(ctx context.Context, prefix string) {
 		mgr.log.Debug("Starting function for kvstore prefix", logfields.Prefix, prefix)
 		delete(mgr.functions, prefix)
 
-		mgr.wg.Add(1)
-		go func() {
-			defer mgr.wg.Done()
+		mgr.wg.Go(func() {
 			fn(ctx)
 			mgr.log.Debug("Function terminated for kvstore prefix", logfields.Prefix, prefix)
-		}()
+		})
 	} else {
 		mgr.log.Debug("Received sync event for unregistered prefix", logfields.Prefix, prefix)
 	}
@@ -114,7 +111,7 @@ func newWatchStoreManagerSync(logger *slog.Logger, backend WatchStoreBackend, cl
 func (mgr *wsmSync) Run(ctx context.Context) {
 	mgr.run()
 	mgr.onUpdate = func(prefix string) { mgr.ready(ctx, prefix) }
-	mgr.store.Watch(ctx, mgr.backend, path.Join(kvstore.SyncedPrefix, mgr.clusterName))
+	mgr.store.Watch(ctx, mgr.backend, kvstore.JoinKey(kvstore.SyncedPrefix, mgr.clusterName))
 	mgr.wait()
 }
 
