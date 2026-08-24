@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cilium/cilium/api/v1/models"
-	alibabaCloudTypes "github.com/cilium/cilium/pkg/alibabacloud/eni/types"
-	eniTypes "github.com/cilium/cilium/pkg/aws/eni/types"
+	alibabaCloudTypes "github.com/cilium/cilium/pkg/alibabacloud/types"
+	awsTypes "github.com/cilium/cilium/pkg/aws/types"
 	azureTypes "github.com/cilium/cilium/pkg/azure/types"
 	ipamTypes "github.com/cilium/cilium/pkg/ipam/types"
 	"github.com/cilium/cilium/pkg/node/addressing"
@@ -440,7 +440,7 @@ type NodeSpec struct {
 	// ENI is the AWS ENI specific configuration.
 	//
 	// +kubebuilder:validation:Optional
-	ENI eniTypes.ENISpec `json:"eni,omitempty"`
+	ENI awsTypes.ENISpec `json:"eni,omitempty"`
 
 	// Azure is the Azure IPAM specific configuration.
 	//
@@ -458,11 +458,6 @@ type NodeSpec struct {
 	//
 	// +kubebuilder:validation:Optional
 	IPAM ipamTypes.IPAMSpec `json:"ipam,omitempty"`
-
-	// NodeIdentity is the Cilium numeric identity allocated for the node, if any.
-	//
-	// +kubebuilder:validation:Optional
-	NodeIdentity uint64 `json:"nodeidentity,omitempty"`
 }
 
 // HealthAddressingSpec is the addressing information required to do
@@ -493,7 +488,7 @@ type NodeStatus struct {
 	// ENI is the AWS ENI specific status of the node.
 	//
 	// +kubebuilder:validation:Optional
-	ENI eniTypes.ENIStatus `json:"eni,omitempty"`
+	ENI awsTypes.ENIStatus `json:"eni,omitempty"`
 
 	// Azure is the Azure specific status of the node.
 	//
@@ -527,10 +522,6 @@ type CiliumNodeList struct {
 func (n *CiliumNode) InstanceID() (instanceID string) {
 	if n != nil {
 		instanceID = n.Spec.InstanceID
-		// OBSOLETE: This fallback can be removed in Cilium 1.9
-		if instanceID == "" {
-			instanceID = n.Spec.ENI.InstanceID
-		}
 	}
 	return
 }

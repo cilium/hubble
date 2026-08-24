@@ -101,25 +101,77 @@ const (
 	SVCLoadBalancingAlgorithmUndef  SVCLoadBalancingAlgorithm = 0
 	SVCLoadBalancingAlgorithmRandom SVCLoadBalancingAlgorithm = 1
 	SVCLoadBalancingAlgorithmMaglev SVCLoadBalancingAlgorithm = 2
+	SVCLoadBalancingAlgorithmCustom SVCLoadBalancingAlgorithm = 0x80
 )
 
-func (d SVCLoadBalancingAlgorithm) String() string {
-	switch d {
-	case SVCLoadBalancingAlgorithmRandom:
-		return "random"
-	case SVCLoadBalancingAlgorithmMaglev:
-		return "maglev"
-	default:
-		return "undef"
+type SVCLoadBalancingAlgorithmSpec struct {
+	Name      string
+	Value     SVCLoadBalancingAlgorithm
+	UseMaglev bool
+}
+
+var svcLoadBalancingAlgorithms = map[string]SVCLoadBalancingAlgorithmSpec{}
+
+func init() {
+	RegisterSVCLoadBalancingAlgorithm(SVCLoadBalancingAlgorithmSpec{
+		Name:  LBAlgorithmRandom,
+		Value: SVCLoadBalancingAlgorithmRandom,
+	})
+	RegisterSVCLoadBalancingAlgorithm(SVCLoadBalancingAlgorithmSpec{
+		Name:      LBAlgorithmMaglev,
+		Value:     SVCLoadBalancingAlgorithmMaglev,
+		UseMaglev: true,
+	})
+}
+
+func RegisterSVCLoadBalancingAlgorithm(spec SVCLoadBalancingAlgorithmSpec) {
+	if err := registerSVCLoadBalancingAlgorithm(spec); err != nil {
+		panic(err)
 	}
 }
 
-func ToSVCLoadBalancingAlgorithm(s string) SVCLoadBalancingAlgorithm {
-	if s == LBAlgorithmMaglev {
-		return SVCLoadBalancingAlgorithmMaglev
+func registerSVCLoadBalancingAlgorithm(spec SVCLoadBalancingAlgorithmSpec) error {
+	if spec.Name == "" {
+		return errors.New("load-balancing algorithm: name is empty")
 	}
-	if s == LBAlgorithmRandom {
-		return SVCLoadBalancingAlgorithmRandom
+	if spec.Value == SVCLoadBalancingAlgorithmUndef {
+		return fmt.Errorf("load-balancing algorithm %q: invalid value %d", spec.Name, spec.Value)
+	}
+	if _, ok := svcLoadBalancingAlgorithms[spec.Name]; ok {
+		return fmt.Errorf("load-balancing algorithm %q: already registered", spec.Name)
+	}
+
+	for _, alg := range svcLoadBalancingAlgorithms {
+		if alg.Value == spec.Value {
+			return fmt.Errorf("load-balancing algorithm %q: value %d is already used by %q", spec.Name, spec.Value, alg.Name)
+		}
+	}
+	svcLoadBalancingAlgorithms[spec.Name] = spec
+	return nil
+}
+
+func (d SVCLoadBalancingAlgorithm) String() string {
+	for _, spec := range svcLoadBalancingAlgorithms {
+		if spec.Value == d {
+			return spec.Name
+		}
+	}
+	return "undef"
+}
+
+func (d SVCLoadBalancingAlgorithm) UseMaglev() bool {
+	for _, spec := range svcLoadBalancingAlgorithms {
+		if spec.Value == d {
+			return spec.UseMaglev
+		}
+	}
+	return false
+}
+
+func ToSVCLoadBalancingAlgorithm(s string) SVCLoadBalancingAlgorithm {
+	spec, ok := svcLoadBalancingAlgorithms[s]
+	if ok {
+		return spec.Value
 	}
 	return SVCLoadBalancingAlgorithmUndef
 }
@@ -534,6 +586,17 @@ type ServiceName struct {
 	// (<cluster>/)<namespace>/<name>
 	//             ^
 	clusterEndPos uint16
+}
+
+func (s *ServiceName) DeepEqual(other *ServiceName) bool {
+	switch {
+	case s == nil && other == nil:
+		return true
+	case s != nil && other != nil:
+		return *s == *other
+	default:
+		return false
+	}
 }
 
 func (s ServiceName) Cluster() string {
@@ -1138,6 +1201,10 @@ func (l L3n4Addr) Bytes() []byte {
 				bytes: key,
 			}
 		}).bytes
+}
+
+func (l L3n4Addr) Key() index.Key {
+	return l.Bytes()
 }
 
 func (l L3n4Addr) MarshalYAML() (any, error) {

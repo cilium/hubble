@@ -4,6 +4,7 @@
 package reconciler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cilium/hive/job"
@@ -78,17 +79,34 @@ func Register[Obj comparable](
 		retries:              newRetries(cfg.RetryBackoffMinDuration, cfg.RetryBackoffMaxDuration, objectToKey),
 		externalPruneTrigger: make(chan struct{}, 1),
 		primaryIndexer:       idx,
+		progress:             newProgressTracker(),
 	}
 
-	params.JobGroup.Add(job.OneShot("reconcile", r.reconcileLoop))
+	var scoped = func(jn string) string {
+		if cfg.Name == "" {
+			return jn
+		}
+
+		return fmt.Sprintf("%s-%s", jn, cfg.Name)
+	}
+
+	params.JobGroup.Add(job.OneShot(scoped("reconcile"), r.reconcileLoop))
 	if r.config.RefreshInterval > 0 {
-		params.JobGroup.Add(job.OneShot("refresh", r.refreshLoop))
+		params.JobGroup.Add(job.OneShot(scoped("refresh"), r.refreshLoop))
 	}
 	return r, nil
 }
 
 // Option for the reconciler
 type Option func(opts *options)
+
+// WithName sets the name of this reconciler instance.
+// This name is passed to the configured [Metrics] implementation.
+func WithName(name string) Option {
+	return func(opts *options) {
+		opts.Name = name
+	}
+}
 
 // WithMetrics sets the [Metrics] instance to use with this reconciler.
 // The metrics capture the duration of operations during incremental and

@@ -14,8 +14,10 @@ import (
 
 	"github.com/cilium/hive/cell"
 
+	"github.com/cilium/cilium/pkg/datapath/tunnel"
 	"github.com/cilium/cilium/pkg/kpr"
 	"github.com/cilium/cilium/pkg/lbipamconfig"
+	"github.com/cilium/cilium/pkg/logging/logfields"
 	"github.com/cilium/cilium/pkg/nodeipamconfig"
 	"github.com/cilium/cilium/pkg/option"
 	"github.com/cilium/cilium/pkg/time"
@@ -56,9 +58,6 @@ const (
 
 	LBAlgorithmName = "bpf-lb-algorithm"
 
-	// Deprecated option for setting [LBAlgorithm]
-	NodePortAlgName = "node-port-algorithm"
-
 	// LoadBalancerMode indicates in which mode NodePort implementation should run
 	// ("snat", "dsr" or "hybrid")
 	LoadBalancerModeName = "bpf-lb-mode"
@@ -66,9 +65,6 @@ const (
 	// LoadBalancerModeAnnotation tells whether controller should check service
 	// level annotation for configuring bpf loadbalancing method (snat vs dsr).
 	LoadBalancerModeAnnotationName = "bpf-lb-mode-annotation"
-
-	// Deprecated option for setting [LoadBalancerMode]
-	NodePortModeName = "node-port-mode"
 
 	// LoadBalancerDSRDispatchName is the config option for setting the method for
 	// pushing packets to backends under DSR ("opt", "ipip", "geneve")
@@ -90,6 +86,15 @@ const (
 
 	// EnableServiceTopologyName is the flag name of for the EnableServiceTopology option
 	EnableServiceTopologyName = "enable-service-topology"
+
+	// NodePortEnableDynamicSourceLookup is the flag name for the NodePortEnableDynamicSourceLookup option
+	// Enable dynamic source IP resolution for SNAT via linux's routing table.
+	// The kernel must support this feature.
+	NodePortEnableDynamicSourceLookup = "enable-dynamic-source-lookup-nodeport"
+
+	// EnableWildcardEntries controls whether the load balancer datapath should
+	// program wildcard service entries into the BPF datapath.
+	EnableWildcardEntries = "bpf-lb-enable-wildcard-entries"
 )
 
 // Configuration option defaults
@@ -223,12 +228,27 @@ type UserConfig struct {
 	// thus may need to first reconcile the Kubernetes services to connect to ClusterMesh (if endpoints have changed
 	// while agent was down).
 	InitWaitTimeout time.Duration `mapstructure:"lb-init-wait-timeout"`
+
+	// Enable dynamic source IP resolution for SNAT via linux's routing table.
+	// The kernel must support this feature.
+	NodePortEnableDynamicSourceLookup bool `mapstructure:"enable-dynamic-source-lookup-nodeport"`
+
+	// ReflectorWaitTime is the maximum amount of time the K8s reflector waits
+	// to fill its events buffer. A higher wait time will reduce processing of
+	// transient states and increases throughput as it gives bigger batches
+	// downstream for processing. Batching also helps to combine related
+	// objects, e.g. a Service may have multiple associated EndpointSlices and
+	// preferably these would be processed together.
+	ReflectorWaitTime time.Duration `mapstructure:"lb-reflector-wait-time"`
+
+	// EnableWildcardEntries controls whether the load balancer datapath should
+	// program wildcard service entries into the BPF datapath.
+	EnableWildcardEntries bool `mapstructure:"bpf-lb-enable-wildcard-entries"`
 }
 
 // ConfigCell provides the [Config] and [ExternalConfig] configurations.
 var ConfigCell = cell.Group(
 	cell.Config(DefaultUserConfig),
-	cell.Config(DeprecatedConfig{}),
 	cell.Provide(
 		// Bridge options from [option.DaemonConfig] to [loadbalancer.ExternalConfig] to avoid
 		// direct dependency to DaemonConfig
@@ -236,6 +256,19 @@ var ConfigCell = cell.Group(
 
 		// Validate and populate [loadbalancer.userConfig] to produce the final [loadbalancer.Config]
 		NewConfig,
+
+		// Enable tunnel configuration when DSR Geneve is enabled.
+		func(kpr kpr.KPRConfig, lbcfg Config) tunnel.EnablerOut {
+			return tunnel.NewEnabler(
+				kpr.KubeProxyReplacement &&
+					lbcfg.LoadBalancerUsesDSR() &&
+					lbcfg.DSRDispatch == DSRDispatchGeneve,
+				// The datapath logic takes care of the MTU overhead. So no need to
+				// take it into account here.
+				// See encap_geneve_dsr_opt[4,6] in nodeport.h
+				tunnel.WithoutMTUAdaptation(),
+			)
+		},
 	),
 )
 
@@ -255,28 +288,6 @@ func (c *Config) LoadBalancerUsesDSR() bool {
 	return c.LBMode == LBModeDSR ||
 		c.LBMode == LBModeHybrid ||
 		c.LBModeAnnotation
-}
-
-type DeprecatedConfig struct {
-	// NodePortAlg indicates which backend selection algorithm is used
-	// ("random" or "maglev")
-	NodePortAlg string `mapstructure:"node-port-algorithm"`
-
-	// NodePortMode indicates in which mode NodePort implementation should run
-	// ("snat", "dsr" or "hybrid")
-	NodePortMode string `mapstructure:"node-port-mode"`
-}
-
-func (DeprecatedConfig) Flags(flags *pflag.FlagSet) {
-	// Deprecated option for setting [LBAlgorithm]
-	flags.String(NodePortAlgName, "", "BPF load balancing algorithm (\"random\", \"maglev\")")
-	flags.MarkHidden(NodePortAlgName)
-	flags.MarkDeprecated(NodePortAlgName, "Use --"+LBAlgorithmName+" instead")
-
-	// Deprecated option for setting [LBMode]
-	flags.String(NodePortModeName, "", "BPF NodePort mode (\"snat\", \"dsr\", \"hybrid\")")
-	flags.MarkHidden(NodePortModeName)
-	flags.MarkDeprecated(NodePortAlgName, "Use --"+LoadBalancerModeName+" instead")
 }
 
 func (def UserConfig) Flags(flags *pflag.FlagSet) {
@@ -337,11 +348,19 @@ func (def UserConfig) Flags(flags *pflag.FlagSet) {
 
 	flags.Duration("lb-init-wait-timeout", def.InitWaitTimeout, "Amount of time to wait for initialization before reconciling BPF maps")
 	flags.MarkHidden("lb-init-wait-timeout")
+
+	flags.Duration("lb-reflector-wait-time", def.ReflectorWaitTime, "Maximum time the K8s reflector waits to fill its event buffer")
+	flags.MarkHidden("lb-reflector-wait-time")
+
+	flags.Bool(NodePortEnableDynamicSourceLookup, def.NodePortEnableDynamicSourceLookup, "Enable dynamic source IP resolution for SNAT via linux's routing table. The kernel must support this feature.")
+
+	flags.Bool(EnableWildcardEntries, def.EnableWildcardEntries, "Enable service load balancer wildcard entries.")
+	flags.MarkHidden(EnableWildcardEntries)
 }
 
 // NewConfig takes the user-provided configuration, validates and processes it to produce the final
 // configuration for load-balancing.
-func NewConfig(log *slog.Logger, userConfig UserConfig, deprecatedConfig DeprecatedConfig, dcfg *option.DaemonConfig) (cfg Config, err error) {
+func NewConfig(log *slog.Logger, userConfig UserConfig, dcfg *option.DaemonConfig) (cfg Config, err error) {
 	cfg.UserConfig = userConfig
 
 	if cfg.LBMapEntries <= 0 {
@@ -368,7 +387,10 @@ func NewConfig(log *slog.Logger, userConfig UserConfig, deprecatedConfig Depreca
 	if cfg.LBSockRevNatEntries == 0 {
 		getEntries := dcfg.GetDynamicSizeCalculator(log)
 		cfg.LBSockRevNatEntries = getEntries(option.SockRevNATMapEntriesDefault, option.LimitTableAutoSockRevNatMin, option.LimitTableMax)
-		log.Info(fmt.Sprintf("option %s set by dynamic sizing to %v", LBSockRevNatEntriesName, cfg.LBSockRevNatEntries)) // FIXME
+		log.Info("Option set by dynamic sizing",
+			logfields.Option, LBSockRevNatEntriesName,
+			logfields.Value, cfg.LBSockRevNatEntries,
+		)
 	}
 
 	cfg.LBSockRevNatEntries = dcfg.AlignMapSizeForLRU(log, LBSockRevNatEntriesName, cfg.LBSockRevNatEntries)
@@ -426,21 +448,9 @@ func NewConfig(log *slog.Logger, userConfig UserConfig, deprecatedConfig Depreca
 		return Config{}, fmt.Errorf("Unable to parse min/max port value for NodePort range: %s", NodePortRange)
 	}
 
-	if deprecatedConfig.NodePortAlg != "" {
-		cfg.LBAlgorithm = deprecatedConfig.NodePortAlg
-	}
-
 	if cfg.LBAlgorithm != LBAlgorithmRandom &&
 		cfg.LBAlgorithm != LBAlgorithmMaglev {
 		return Config{}, fmt.Errorf("Invalid value for --%s: %s", LBAlgorithmName, cfg.LBAlgorithm)
-	}
-
-	if deprecatedConfig.NodePortMode != "" {
-		if cfg.LBMode != DefaultUserConfig.LBMode {
-			return Config{}, fmt.Errorf("both --%s and --%s were set. Use --%s instead.",
-				LoadBalancerModeName, NodePortModeName, LoadBalancerModeName)
-		}
-		cfg.LBMode = deprecatedConfig.NodePortMode
 	}
 
 	if cfg.LBMode != LBModeSNAT && cfg.LBMode != LBModeDSR && cfg.LBMode != LBModeHybrid {
@@ -452,25 +462,15 @@ func NewConfig(log *slog.Logger, userConfig UserConfig, deprecatedConfig Depreca
 		return Config{}, fmt.Errorf("The value --%s=%s is not supported as default under annotation mode", LoadBalancerModeName, cfg.LBMode)
 	}
 
-	/* FIXME:
-
-	if cfg.NodePortMode == option.NodePortModeDSR &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchOption &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchIPIP &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchGeneve {
-		return fmt.Errorf("Invalid value for --%s: %s", option.LoadBalancerDSRDispatch, cfg.LoadBalancerDSRDispatch)
+	if cfg.ReflectorWaitTime <= 0 {
+		return Config{}, fmt.Errorf("--lb-reflector-wait-time must be greater than 0, got %s", cfg.ReflectorWaitTime)
 	}
 
-	if cfg.NodePortMode == option.NodePortModeHybrid &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchOption &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchGeneve {
-		return fmt.Errorf("Invalid value for --%s: %s", option.LoadBalancerDSRDispatch, cfg.LoadBalancerDSRDispatch)
+	if cfg.DSRDispatch != DSRDispatchOption &&
+		cfg.DSRDispatch != DSRDispatchIPIP &&
+		cfg.DSRDispatch != DSRDispatchGeneve {
+		return Config{}, fmt.Errorf("Invalid value for --%s: %s", LoadBalancerDSRDispatchName, cfg.DSRDispatch)
 	}
-
-	if cfg.LoadBalancerModeAnnotation &&
-		cfg.LoadBalancerDSRDispatch != option.DSRDispatchIPIP {
-		return fmt.Errorf("Invalid value for --%s: %s", option.LoadBalancerDSRDispatch, cfg.LoadBalancerDSRDispatch)
-	}*/
 
 	return
 }
@@ -511,7 +511,11 @@ var DefaultUserConfig = UserConfig{
 
 	EnableServiceTopology: false,
 
-	InitWaitTimeout: 1 * time.Minute,
+	InitWaitTimeout:   1 * time.Minute,
+	ReflectorWaitTime: 500 * time.Millisecond,
+
+	// Enable service wildcard entries by default.
+	EnableWildcardEntries: true,
 }
 
 var DefaultConfig = Config{
@@ -563,9 +567,9 @@ func NewExternalConfig(p externalConfigParams) ExternalConfig {
 		EnableIPv4:                             p.DaemonConfig.EnableIPv4,
 		EnableIPv6:                             p.DaemonConfig.EnableIPv6,
 		KubeProxyReplacement:                   p.KprConfig.KubeProxyReplacement,
-		BPFSocketLBHostnsOnly:                  p.DaemonConfig.BPFSocketLBHostnsOnly,
+		BPFSocketLBHostnsOnly:                  p.DaemonConfig.UnsafeDaemonConfigOption.BPFSocketLBHostnsOnly,
 		EnableSocketLB:                         p.KprConfig.EnableSocketLB,
-		EnableSocketLBPodConnectionTermination: p.DaemonConfig.EnableSocketLBPodConnectionTermination,
+		EnableSocketLBPodConnectionTermination: p.DaemonConfig.UnsafeDaemonConfigOption.EnableSocketLBPodConnectionTermination,
 		DefaultLBServiceIPAM:                   p.LBIPAMConfig.GetDefaultLBServiceIPAM(),
 		EnableLBIPAM:                           p.LBIPAMConfig.IsEnabled(),
 		EnableNodeIPAM:                         p.NodeIPAMConfig.IsEnabled(),

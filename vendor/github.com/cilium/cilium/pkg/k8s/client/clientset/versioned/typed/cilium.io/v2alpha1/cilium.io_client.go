@@ -21,11 +21,11 @@ type CiliumV2alpha1Interface interface {
 	CiliumBGPNodeConfigOverridesGetter
 	CiliumBGPPeerConfigsGetter
 	CiliumCIDRGroupsGetter
+	CiliumDatapathPluginsGetter
 	CiliumEndpointSlicesGetter
 	CiliumGatewayClassConfigsGetter
 	CiliumL2AnnouncementPoliciesGetter
 	CiliumLoadBalancerIPPoolsGetter
-	CiliumNodeConfigsGetter
 	CiliumPodIPPoolsGetter
 }
 
@@ -58,6 +58,10 @@ func (c *CiliumV2alpha1Client) CiliumCIDRGroups() CiliumCIDRGroupInterface {
 	return newCiliumCIDRGroups(c)
 }
 
+func (c *CiliumV2alpha1Client) CiliumDatapathPlugins() CiliumDatapathPluginInterface {
+	return newCiliumDatapathPlugins(c)
+}
+
 func (c *CiliumV2alpha1Client) CiliumEndpointSlices() CiliumEndpointSliceInterface {
 	return newCiliumEndpointSlices(c)
 }
@@ -72,10 +76,6 @@ func (c *CiliumV2alpha1Client) CiliumL2AnnouncementPolicies() CiliumL2Announceme
 
 func (c *CiliumV2alpha1Client) CiliumLoadBalancerIPPools() CiliumLoadBalancerIPPoolInterface {
 	return newCiliumLoadBalancerIPPools(c)
-}
-
-func (c *CiliumV2alpha1Client) CiliumNodeConfigs(namespace string) CiliumNodeConfigInterface {
-	return newCiliumNodeConfigs(c, namespace)
 }
 
 func (c *CiliumV2alpha1Client) CiliumPodIPPools() CiliumPodIPPoolInterface {

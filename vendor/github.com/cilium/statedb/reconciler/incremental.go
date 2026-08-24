@@ -17,6 +17,7 @@ import (
 type incremental[Obj comparable] struct {
 	metrics        Metrics
 	moduleID       cell.FullModuleID
+	name           string
 	config         *config[Obj]
 	retries        *retries
 	primaryIndexer statedb.Indexer[Obj]
@@ -45,37 +46,43 @@ type opResult struct {
 	id       uint64 // the "pending" identifier
 }
 
-func (incr *incremental[Obj]) run(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) []error {
+func (incr *incremental[Obj]) run(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) (errs []error, lastRev statedb.Revision, retryLowWatermark statedb.Revision) {
 	// Reconcile new and changed objects using either Operations
 	// or BatchOperations.
 	if incr.config.BatchOperations != nil {
-		incr.batch(ctx, txn, changes)
+		lastRev = incr.batch(ctx, txn, changes)
 	} else {
-		incr.single(ctx, txn, changes)
+		lastRev = incr.single(ctx, txn, changes)
 	}
 
-	// Process objects that need to be retried that were not cleared.
-	incr.processRetries(ctx, txn)
-
-	// Finally commit the status updates.
+	// Commit status updates for new and changed objects.
 	newErrors := incr.commitStatus()
+	clear(incr.results)
+
+	// Process objects that need to be retried that were not cleared.
+	retryLowWatermark = incr.processRetries(ctx, txn)
+
+	// Finally commit the status updates from retries.
+	newErrors += incr.commitStatus()
 
 	// Since all failures are retried, we can return the errors from the retry
 	// queue which includes both errors occurred in this round and the old
 	// errors.
-	errs := incr.retries.errors()
-	incr.metrics.ReconciliationErrors(incr.moduleID, newErrors, len(errs))
+	errs = incr.retries.errors()
+	incr.metrics.ReconciliationErrors(incr.moduleID, incr.name, newErrors, len(errs))
 
-	// Prepare for next round
+	// Prepare for next round.
 	incr.numReconciled = 0
 	clear(incr.results)
 
-	return errs
+	return errs, lastRev, retryLowWatermark
 }
 
-func (incr *incremental[Obj]) single(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) {
+func (incr *incremental[Obj]) single(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) (lastRev statedb.Revision) {
 	// Iterate in revision order through new and changed objects.
 	for change, rev := range changes {
+		lastRev = rev
+
 		obj := change.Object
 
 		status := incr.config.GetObjectStatus(obj)
@@ -95,14 +102,18 @@ func (incr *incremental[Obj]) single(ctx context.Context, txn statedb.ReadTxn, c
 			break
 		}
 	}
+
+	return
 }
 
-func (incr *incremental[Obj]) batch(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) {
+func (incr *incremental[Obj]) batch(ctx context.Context, txn statedb.ReadTxn, changes iter.Seq2[statedb.Change[Obj], statedb.Revision]) (lastRev statedb.Revision) {
 	ops := incr.config.BatchOperations
 	updateBatch := []BatchEntry[Obj]{}
 	deleteBatch := []BatchEntry[Obj]{}
 
 	for change, rev := range changes {
+		lastRev = rev
+
 		obj := change.Object
 
 		status := incr.config.GetObjectStatus(obj)
@@ -138,13 +149,14 @@ func (incr *incremental[Obj]) batch(ctx context.Context, txn statedb.ReadTxn, ch
 		ops.DeleteBatch(ctx, txn, deleteBatch)
 		incr.metrics.ReconciliationDuration(
 			incr.moduleID,
+			incr.name,
 			OpDelete,
 			time.Since(start),
 		)
 		for _, entry := range deleteBatch {
 			if entry.Result != nil {
 				// Delete failed, queue a retry for it.
-				incr.retries.Add(entry.original, entry.Revision, true, entry.Result)
+				incr.retries.Add(entry.original, entry.Revision, entry.Revision, true, entry.Result)
 			}
 		}
 	}
@@ -155,6 +167,7 @@ func (incr *incremental[Obj]) batch(ctx context.Context, txn statedb.ReadTxn, ch
 		ops.UpdateBatch(ctx, txn, updateBatch)
 		incr.metrics.ReconciliationDuration(
 			incr.moduleID,
+			incr.name,
 			OpUpdate,
 			time.Since(start),
 		)
@@ -167,9 +180,11 @@ func (incr *incremental[Obj]) batch(ctx context.Context, txn statedb.ReadTxn, ch
 			incr.results[entry.Object] = opResult{rev: entry.Revision, id: status.ID, err: entry.Result, original: entry.original}
 		}
 	}
+
+	return
 }
 
-func (incr *incremental[Obj]) processRetries(ctx context.Context, txn statedb.ReadTxn) {
+func (incr *incremental[Obj]) processRetries(ctx context.Context, txn statedb.ReadTxn) statedb.Revision {
 	now := time.Now()
 	for incr.numReconciled < incr.config.IncrementalRoundSize {
 		item, ok := incr.retries.Top()
@@ -180,6 +195,7 @@ func (incr *incremental[Obj]) processRetries(ctx context.Context, txn statedb.Re
 		incr.processSingle(ctx, txn, item.object.(Obj), item.rev, item.delete)
 		incr.numReconciled++
 	}
+	return incr.retries.LowWatermark()
 }
 
 func (incr *incremental[Obj]) processSingle(ctx context.Context, txn statedb.ReadTxn, obj Obj, rev statedb.Revision, delete bool) {
@@ -194,7 +210,7 @@ func (incr *incremental[Obj]) processSingle(ctx context.Context, txn statedb.Rea
 		err = incr.config.Operations.Delete(ctx, txn, rev, obj)
 		if err != nil {
 			// Deletion failed. Retry again later.
-			incr.retries.Add(obj, rev, true, err)
+			incr.retries.Add(obj, rev, rev, true, err)
 		}
 	} else {
 		// Clone the object so it can be mutated by Update()
@@ -205,7 +221,7 @@ func (incr *incremental[Obj]) processSingle(ctx context.Context, txn statedb.Rea
 		status := incr.config.GetObjectStatus(obj)
 		incr.results[obj] = opResult{original: orig, id: status.ID, rev: rev, err: err}
 	}
-	incr.metrics.ReconciliationDuration(incr.moduleID, op, time.Since(start))
+	incr.metrics.ReconciliationDuration(incr.moduleID, incr.name, op, time.Since(start))
 
 	if err == nil {
 		incr.retries.Clear(obj)
@@ -257,7 +273,7 @@ func (incr *incremental[Obj]) commitStatus() (numErrors int) {
 			// Reconciliation of the object had failed and the status was updated
 			// successfully (object had not changed). Queue the retry for the object.
 			newRevision := incr.table.Revision(wtxn)
-			incr.retries.Add(result.original.(Obj), newRevision, false, result.err)
+			incr.retries.Add(result.original.(Obj), newRevision, result.rev, false, result.err)
 		}
 	}
 	return

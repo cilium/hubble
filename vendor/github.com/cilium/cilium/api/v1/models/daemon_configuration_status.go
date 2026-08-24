@@ -11,7 +11,8 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/jsonutils"
+	"github.com/go-openapi/swag/typeutils"
 )
 
 // DaemonConfigurationStatus Response to a daemon configuration request. Contains the addressing
@@ -35,6 +36,9 @@ type DaemonConfigurationStatus struct {
 
 	// addressing
 	Addressing *NodeAddressing `json:"addressing,omitempty"`
+
+	// configured datapath mode
+	ConfiguredDatapathMode ConfiguredDatapathMode `json:"configuredDatapathMode,omitempty"`
 
 	// Config map which contains all the active daemon configurations
 	DaemonConfigurationMap map[string]any `json:"daemonConfigurationMap,omitempty"`
@@ -107,6 +111,10 @@ func (m *DaemonConfigurationStatus) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateConfiguredDatapathMode(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateDatapathMode(formats); err != nil {
 		res = append(res, err)
 	}
@@ -138,7 +146,7 @@ func (m *DaemonConfigurationStatus) Validate(formats strfmt.Registry) error {
 }
 
 func (m *DaemonConfigurationStatus) validateAddressing(formats strfmt.Registry) error {
-	if swag.IsZero(m.Addressing) { // not required
+	if typeutils.IsZero(m.Addressing) { // not required
 		return nil
 	}
 
@@ -160,8 +168,29 @@ func (m *DaemonConfigurationStatus) validateAddressing(formats strfmt.Registry) 
 	return nil
 }
 
+func (m *DaemonConfigurationStatus) validateConfiguredDatapathMode(formats strfmt.Registry) error {
+	if typeutils.IsZero(m.ConfiguredDatapathMode) { // not required
+		return nil
+	}
+
+	if err := m.ConfiguredDatapathMode.Validate(formats); err != nil {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
+			return ve.ValidateName("configuredDatapathMode")
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
+			return ce.ValidateName("configuredDatapathMode")
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 func (m *DaemonConfigurationStatus) validateDatapathMode(formats strfmt.Registry) error {
-	if swag.IsZero(m.DatapathMode) { // not required
+	if typeutils.IsZero(m.DatapathMode) { // not required
 		return nil
 	}
 
@@ -182,7 +211,7 @@ func (m *DaemonConfigurationStatus) validateDatapathMode(formats strfmt.Registry
 }
 
 func (m *DaemonConfigurationStatus) validateImmutable(formats strfmt.Registry) error {
-	if swag.IsZero(m.Immutable) { // not required
+	if typeutils.IsZero(m.Immutable) { // not required
 		return nil
 	}
 
@@ -205,7 +234,7 @@ func (m *DaemonConfigurationStatus) validateImmutable(formats strfmt.Registry) e
 }
 
 func (m *DaemonConfigurationStatus) validateKvstoreConfiguration(formats strfmt.Registry) error {
-	if swag.IsZero(m.KvstoreConfiguration) { // not required
+	if typeutils.IsZero(m.KvstoreConfiguration) { // not required
 		return nil
 	}
 
@@ -228,7 +257,7 @@ func (m *DaemonConfigurationStatus) validateKvstoreConfiguration(formats strfmt.
 }
 
 func (m *DaemonConfigurationStatus) validateMasqueradeProtocols(formats strfmt.Registry) error {
-	if swag.IsZero(m.MasqueradeProtocols) { // not required
+	if typeutils.IsZero(m.MasqueradeProtocols) { // not required
 		return nil
 	}
 
@@ -251,7 +280,7 @@ func (m *DaemonConfigurationStatus) validateMasqueradeProtocols(formats strfmt.R
 }
 
 func (m *DaemonConfigurationStatus) validateNodeMonitor(formats strfmt.Registry) error {
-	if swag.IsZero(m.NodeMonitor) { // not required
+	if typeutils.IsZero(m.NodeMonitor) { // not required
 		return nil
 	}
 
@@ -274,7 +303,7 @@ func (m *DaemonConfigurationStatus) validateNodeMonitor(formats strfmt.Registry)
 }
 
 func (m *DaemonConfigurationStatus) validateRealized(formats strfmt.Registry) error {
-	if swag.IsZero(m.Realized) { // not required
+	if typeutils.IsZero(m.Realized) { // not required
 		return nil
 	}
 
@@ -301,6 +330,10 @@ func (m *DaemonConfigurationStatus) ContextValidate(ctx context.Context, formats
 	var res []error
 
 	if err := m.contextValidateAddressing(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateConfiguredDatapathMode(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -338,7 +371,7 @@ func (m *DaemonConfigurationStatus) contextValidateAddressing(ctx context.Contex
 
 	if m.Addressing != nil {
 
-		if swag.IsZero(m.Addressing) { // not required
+		if typeutils.IsZero(m.Addressing) { // not required
 			return nil
 		}
 
@@ -359,9 +392,31 @@ func (m *DaemonConfigurationStatus) contextValidateAddressing(ctx context.Contex
 	return nil
 }
 
+func (m *DaemonConfigurationStatus) contextValidateConfiguredDatapathMode(ctx context.Context, formats strfmt.Registry) error {
+
+	if typeutils.IsZero(m.ConfiguredDatapathMode) { // not required
+		return nil
+	}
+
+	if err := m.ConfiguredDatapathMode.ContextValidate(ctx, formats); err != nil {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
+			return ve.ValidateName("configuredDatapathMode")
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
+			return ce.ValidateName("configuredDatapathMode")
+		}
+
+		return err
+	}
+
+	return nil
+}
+
 func (m *DaemonConfigurationStatus) contextValidateDatapathMode(ctx context.Context, formats strfmt.Registry) error {
 
-	if swag.IsZero(m.DatapathMode) { // not required
+	if typeutils.IsZero(m.DatapathMode) { // not required
 		return nil
 	}
 
@@ -383,7 +438,7 @@ func (m *DaemonConfigurationStatus) contextValidateDatapathMode(ctx context.Cont
 
 func (m *DaemonConfigurationStatus) contextValidateImmutable(ctx context.Context, formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Immutable) { // not required
+	if typeutils.IsZero(m.Immutable) { // not required
 		return nil
 	}
 
@@ -407,7 +462,7 @@ func (m *DaemonConfigurationStatus) contextValidateKvstoreConfiguration(ctx cont
 
 	if m.KvstoreConfiguration != nil {
 
-		if swag.IsZero(m.KvstoreConfiguration) { // not required
+		if typeutils.IsZero(m.KvstoreConfiguration) { // not required
 			return nil
 		}
 
@@ -432,7 +487,7 @@ func (m *DaemonConfigurationStatus) contextValidateMasqueradeProtocols(ctx conte
 
 	if m.MasqueradeProtocols != nil {
 
-		if swag.IsZero(m.MasqueradeProtocols) { // not required
+		if typeutils.IsZero(m.MasqueradeProtocols) { // not required
 			return nil
 		}
 
@@ -457,7 +512,7 @@ func (m *DaemonConfigurationStatus) contextValidateNodeMonitor(ctx context.Conte
 
 	if m.NodeMonitor != nil {
 
-		if swag.IsZero(m.NodeMonitor) { // not required
+		if typeutils.IsZero(m.NodeMonitor) { // not required
 			return nil
 		}
 
@@ -482,7 +537,7 @@ func (m *DaemonConfigurationStatus) contextValidateRealized(ctx context.Context,
 
 	if m.Realized != nil {
 
-		if swag.IsZero(m.Realized) { // not required
+		if typeutils.IsZero(m.Realized) { // not required
 			return nil
 		}
 
@@ -508,13 +563,13 @@ func (m *DaemonConfigurationStatus) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
-	return swag.WriteJSON(m)
+	return jsonutils.WriteJSON(m)
 }
 
 // UnmarshalBinary interface implementation
 func (m *DaemonConfigurationStatus) UnmarshalBinary(b []byte) error {
 	var res DaemonConfigurationStatus
-	if err := swag.ReadJSON(b, &res); err != nil {
+	if err := jsonutils.ReadJSON(b, &res); err != nil {
 		return err
 	}
 	*m = res
@@ -548,13 +603,13 @@ func (m *DaemonConfigurationStatusMasqueradeProtocols) MarshalBinary() ([]byte, 
 	if m == nil {
 		return nil, nil
 	}
-	return swag.WriteJSON(m)
+	return jsonutils.WriteJSON(m)
 }
 
 // UnmarshalBinary interface implementation
 func (m *DaemonConfigurationStatusMasqueradeProtocols) UnmarshalBinary(b []byte) error {
 	var res DaemonConfigurationStatusMasqueradeProtocols
-	if err := swag.ReadJSON(b, &res); err != nil {
+	if err := jsonutils.ReadJSON(b, &res); err != nil {
 		return err
 	}
 	*m = res

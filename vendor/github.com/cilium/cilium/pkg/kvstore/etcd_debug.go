@@ -8,6 +8,9 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/asn1"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -149,6 +152,47 @@ func etcdDbgEndpoint(ctx context.Context, ep string, tlscfg *tls.Config, dialer 
 		tlscfg.ServerName = hostname
 	}
 
+	// We set InsecureSkipVerify and manually mimic the same validation through
+	// the VerifyPeerCertificate function in order to retrieve the certificates
+	// presented by the server, which would be otherwise possible only once the
+	// connection is successfully established. One difference compared to the
+	// validation normally performed by [Conn.verifyServerCertificate] when
+	// InsecureSkipVerify is not set is the lack of the FIPS allowed chains
+	// check, which looks a reasonable tradeoff in this context.
+	var certs []*x509.Certificate
+	tlscfg.InsecureSkipVerify = true
+	tlscfg.VerifyPeerCertificate = func(certificates [][]byte, _ [][]*x509.Certificate) error {
+		if len(certificates) == 0 {
+			return errors.New("the server presented no certificates")
+		}
+
+		for _, raw := range certificates {
+			cert, err := x509.ParseCertificate(raw)
+			if err != nil {
+				return fmt.Errorf("failed to parse server certificate: %w", err)
+			}
+
+			certs = append(certs, cert)
+		}
+
+		opts := x509.VerifyOptions{
+			Roots:         tlscfg.RootCAs,
+			DNSName:       tlscfg.ServerName,
+			Intermediates: x509.NewCertPool(),
+		}
+
+		for _, cert := range certs[1:] {
+			opts.Intermediates.AddCert(cert)
+		}
+
+		_, err := certs[0].Verify(opts)
+		if err != nil {
+			return &tls.CertificateVerificationError{UnverifiedCertificates: certs, Err: err}
+		}
+
+		return nil
+	}
+
 	// We use GetClientCertificate rather than Certificates to return an error
 	// in case the certificate does not match any of the requested CAs. One
 	// limitation, though, is that the match appears to be performed based on
@@ -169,32 +213,42 @@ func etcdDbgEndpoint(ctx context.Context, ep string, tlscfg *tls.Config, dialer 
 	tconn := tls.Client(conn, tlscfg)
 	defer tconn.Close()
 
+	var printTLSInfo = func(iw *indentedWriter) {
+		iw.Println("ℹ️  Negotiated TLS version: %s, ciphersuite %s",
+			tls.VersionName(tconn.ConnectionState().Version),
+			tls.CipherSuiteName(tconn.ConnectionState().CipherSuite))
+
+		if len(certs) > 0 {
+			iw.Println("ℹ️  TLS certificates presented by the server:")
+			iw = iw.WithExtraIndent(3)
+
+			for i, cert := range certs {
+				if i == 1 {
+					iw = iw.WithExtraIndent(2)
+					iw.Println("Intermediates:")
+				}
+
+				etcdDbgOutputCert(cert, iw)
+			}
+		}
+	}
+
 	err = tconn.HandshakeContext(ctx)
 	if err != nil {
 		iw.Println("❌ Cannot establish TLS connection to %s: %s", u.Host, err)
 		if len(acceptableCAs) > 0 {
-			// The output is suboptimal being DER-encoded, but there doesn't
-			// seem to be any easy way to parse it (the utility used by
-			// ParseCertificate is not exported). Better than nothing though.
-			var buf bytes.Buffer
-			for i, ca := range acceptableCAs {
-				if i != 0 {
-					buf.WriteString(", ")
-				}
-				buf.WriteRune('"')
-				buf.WriteString(string(ca))
-				buf.WriteRune('"')
+			iw.Println("ℹ️  Acceptable CAs:")
+			for _, ca := range acceptableCAs {
+				iw.Println("   - %s", etcdDbgParseDN(ca))
 			}
-
-			iw.Println("ℹ️  Acceptable CAs: %s", buf.String())
 		}
+
+		printTLSInfo(iw)
 		return
 	}
 
 	iw.Println("✅ TLS connection successfully established to %s", tconn.RemoteAddr())
-	iw.Println("ℹ️  Negotiated TLS version: %s, ciphersuite %s",
-		tls.VersionName(tconn.ConnectionState().Version),
-		tls.CipherSuiteName(tconn.ConnectionState().CipherSuite))
+	printTLSInfo(iw)
 
 	// With TLS 1.3, the server doesn't acknowledge whether client authentication
 	// succeeded, and a possible error is returned only when reading some data.
@@ -273,12 +327,14 @@ func etcdDbgCerts(cfgfile string, cfg *client.Config, iw *indentedWriter) {
 
 			// Print intermediate certificates, if any.
 			intermediates := x509.NewCertPool()
-			for _, cert := range cert.Certificate[1:] {
+			if len(cert.Certificate) > 1 {
 				iiw.Println("Intermediates:")
+			}
 
+			for _, cert := range cert.Certificate[1:] {
 				intermediate, err := x509.ParseCertificate(cert)
 				if err != nil {
-					iw.Println("❌ Failed to parse intermediate certificate: %s", err)
+					iiw.Println("❌ Failed to parse intermediate certificate: %s", err)
 					continue
 				}
 
@@ -311,6 +367,17 @@ func etcdDbgCerts(cfgfile string, cfg *client.Config, iw *indentedWriter) {
 
 		iw.Println("✅ Username set to %s, password is %s", cfg.Username, passwd)
 	}
+}
+
+func etcdDbgParseDN(der []byte) string {
+	var rdn pkix.RDNSequence
+	if _, err := asn1.Unmarshal(der, &rdn); err != nil {
+		return string(der)
+	}
+
+	var name pkix.Name
+	name.FillFromRDNSequence(&rdn)
+	return name.String()
 }
 
 func etcdDbgOutputIPs(ips []net.IP) string {
@@ -373,14 +440,42 @@ func etcdDbgRetrieveRootCAFile(cfgfile string) (certs [][]byte, err error) {
 }
 
 func etcdDbgOutputCert(cert *x509.Certificate, iw *indentedWriter) {
-	sn := cert.SerialNumber.Text(16)
-	for i := 2; i < len(sn); i += 3 {
-		sn = sn[:i] + ":" + sn[i:]
+	var hexfmt = func(str string) string {
+		// Pad the string, in case it contains an odd number of characters.
+		if len(str)%2 == 1 {
+			str = "0" + str
+		}
+
+		for i := 2; i < len(str); i += 3 {
+			str = str[:i] + ":" + str[i:]
+		}
+		return str
 	}
 
-	iw.Println("- Serial number:       %s", string(sn))
+	iw.Println("- Serial number:       %s", hexfmt(cert.SerialNumber.Text(16)))
+
 	iw.Println("  Subject:             %s", cert.Subject)
+	if len(cert.DNSNames)+len(cert.URIs)+len(cert.IPAddresses) > 0 {
+		iw.Println("  Subject alternative names:")
+		for _, name := range cert.DNSNames {
+			iw.Println("  - %s", name)
+		}
+		for _, uri := range cert.URIs {
+			iw.Println("  - %s", uri)
+		}
+		for _, ip := range cert.IPAddresses {
+			iw.Println("  - %s", ip)
+		}
+	}
+	if len(cert.SubjectKeyId) > 0 {
+		iw.Println("  Subject key ID:      %s", hexfmt(hex.EncodeToString(cert.SubjectKeyId)))
+	}
+
 	iw.Println("  Issuer:              %s", cert.Issuer)
+	if len(cert.AuthorityKeyId) > 0 {
+		iw.Println("  Authority key ID:    %s", hexfmt(hex.EncodeToString(cert.AuthorityKeyId)))
+	}
+
 	iw.Println("  Validity:")
 	iw.Println("    Not before:  %s", cert.NotBefore)
 	iw.Println("    Not after:   %s", cert.NotAfter)

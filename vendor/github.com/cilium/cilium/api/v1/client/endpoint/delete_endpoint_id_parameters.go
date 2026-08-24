@@ -23,24 +23,28 @@ import (
 //
 // To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewDeleteEndpointIDParams() *DeleteEndpointIDParams {
-	return &DeleteEndpointIDParams{
-		timeout: cr.DefaultTimeout,
-	}
+	return NewDeleteEndpointIDParamsWithTimeout(cr.DefaultTimeout)
 }
 
 // NewDeleteEndpointIDParamsWithTimeout creates a new DeleteEndpointIDParams object
 // with the ability to set a timeout on a request.
 func NewDeleteEndpointIDParamsWithTimeout(timeout time.Duration) *DeleteEndpointIDParams {
 	return &DeleteEndpointIDParams{
-		timeout: timeout,
+		inner: innerParams{
+			timeout: timeout,
+		},
 	}
 }
 
 // NewDeleteEndpointIDParamsWithContext creates a new DeleteEndpointIDParams object
 // with the ability to set a context for a request.
+//
+// Deprecated: use the operation call with context to pass the context instead of [DeleteEndpointIDParams].
 func NewDeleteEndpointIDParamsWithContext(ctx context.Context) *DeleteEndpointIDParams {
 	return &DeleteEndpointIDParams{
-		Context: ctx,
+		inner: innerParams{
+			ctx: ctx,
+		},
 	}
 }
 
@@ -72,18 +76,14 @@ type DeleteEndpointIDParams struct {
 	  - cilium-local: Local Cilium endpoint UUID, e.g. cilium-local:3389595
 	  - cilium-global: Global Cilium endpoint UUID, e.g. cilium-global:cluster1:nodeX:452343
 	  - cni-attachment-id: CNI attachment ID, e.g. cni-attachment-id:22222:eth0
-	  - container-id: Container runtime ID, e.g. container-id:22222 (deprecated, may not be unique)
-	  - container-name: Container name, e.g. container-name:foobar (deprecated, may not be unique)
-	  - pod-name: pod name for this container if K8s is enabled, e.g. pod-name:default:foobar (deprecated, may not be unique)
 	  - cep-name: cep name for this container if K8s is enabled, e.g. pod-name:default:foobar-net1
-	  - docker-endpoint: Docker libnetwork endpoint ID, e.g. docker-endpoint:4444
 
 	*/
 	ID string
 
-	timeout    time.Duration
-	Context    context.Context
 	HTTPClient *http.Client
+
+	inner innerParams
 }
 
 // WithDefaults hydrates default values in the delete endpoint ID params (not the query body).
@@ -101,54 +101,57 @@ func (o *DeleteEndpointIDParams) SetDefaults() {
 	// no default values defined for this parameter
 }
 
-// WithTimeout adds the timeout to the delete endpoint ID params
+// WithTimeout adds the timeout to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) WithTimeout(timeout time.Duration) *DeleteEndpointIDParams {
 	o.SetTimeout(timeout)
 	return o
 }
 
-// SetTimeout adds the timeout to the delete endpoint ID params
+// SetTimeout adds the timeout to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) SetTimeout(timeout time.Duration) {
-	o.timeout = timeout
+	o.inner.timeout = timeout
 }
 
-// WithContext adds the context to the delete endpoint ID params
+// WithContext adds the context to the delete endpoint ID params.
+//
+// Deprecated: use the operation call with context to pass the context instead of [DeleteEndpointIDParams].
 func (o *DeleteEndpointIDParams) WithContext(ctx context.Context) *DeleteEndpointIDParams {
 	o.SetContext(ctx)
 	return o
 }
 
-// SetContext adds the context to the delete endpoint ID params
+// SetContext adds the context to the delete endpoint ID params.
+//
+// Deprecated: use the operation call with context to pass the context instead of [DeleteEndpointIDParams].
 func (o *DeleteEndpointIDParams) SetContext(ctx context.Context) {
-	o.Context = ctx
+	o.inner.ctx = ctx
 }
 
-// WithHTTPClient adds the HTTPClient to the delete endpoint ID params
+// WithHTTPClient adds the HTTPClient to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) WithHTTPClient(client *http.Client) *DeleteEndpointIDParams {
 	o.SetHTTPClient(client)
 	return o
 }
 
-// SetHTTPClient adds the HTTPClient to the delete endpoint ID params
+// SetHTTPClient adds the HTTPClient to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithID adds the id to the delete endpoint ID params
+// WithID adds the id to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) WithID(id string) *DeleteEndpointIDParams {
 	o.SetID(id)
 	return o
 }
 
-// SetID adds the id to the delete endpoint ID params
+// SetID adds the id to the delete endpoint ID params.
 func (o *DeleteEndpointIDParams) SetID(id string) {
 	o.ID = id
 }
 
-// WriteToRequest writes these params to a swagger request
+// WriteToRequest writes these params to a [runtime.ClientRequest].
 func (o *DeleteEndpointIDParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
-
-	if err := r.SetTimeout(o.timeout); err != nil {
+	if err := r.SetTimeout(o.inner.timeout); err != nil {
 		return err
 	}
 	var res []error
