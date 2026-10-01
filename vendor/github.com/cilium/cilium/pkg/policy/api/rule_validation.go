@@ -117,7 +117,6 @@ func countL7Rules(ports []PortRule) map[string]int {
 		if !port.Rules.IsEmpty() {
 			result["DNS"] += len(port.Rules.DNS)
 			result["HTTP"] += len(port.Rules.HTTP)
-			result["Kafka"] += len(port.Rules.Kafka)
 		}
 	}
 	return result
@@ -126,9 +125,8 @@ func countL7Rules(ports []PortRule) map[string]int {
 func (i *IngressRule) sanitize(hostPolicy bool) error {
 	l7Members := countL7Rules(i.ToPorts)
 	l7IngressSupport := map[string]bool{
-		"DNS":   false,
-		"Kafka": true,
-		"HTTP":  true,
+		"DNS":  false,
+		"HTTP": true,
 	}
 
 	if err := i.IngressCommonRule.sanitize(); err != nil {
@@ -296,9 +294,8 @@ func (e *EgressRule) sanitize(hostPolicy bool) error {
 	l3DependentL4Support := e.l3DependentL4Support()
 	l7Members := countL7Rules(e.ToPorts)
 	l7EgressSupport := map[string]bool{
-		"DNS":   true,
-		"Kafka": !hostPolicy,
-		"HTTP":  !hostPolicy,
+		"DNS":  true,
+		"HTTP": !hostPolicy,
 	}
 
 	if err := e.EgressCommonRule.sanitize(l3Members); err != nil {
@@ -495,15 +492,6 @@ func (pr *L7Rules) sanitize(ports []PortProtocol) error {
 		}
 	}
 
-	if pr.Kafka != nil {
-		nTypes++
-		for i := range pr.Kafka {
-			if err := pr.Kafka[i].Sanitize(); err != nil {
-				return err
-			}
-		}
-	}
-
 	if pr.DNS != nil {
 		// Forthcoming TPROXY redirection restricts DNS proxy to the standard DNS port (53).
 		// Require the port 53 be explicitly configured, and disallow other port numbers.
@@ -514,18 +502,6 @@ func (pr *L7Rules) sanitize(ports []PortProtocol) error {
 		nTypes++
 		for i := range pr.DNS {
 			if err := pr.DNS[i].Sanitize(); err != nil {
-				return err
-			}
-		}
-	}
-
-	if pr.L7 != nil && pr.L7Proto == "" {
-		return fmt.Errorf("'l7' may only be specified when a 'l7proto' is also specified")
-	}
-	if pr.L7Proto != "" {
-		nTypes++
-		for i := range pr.L7 {
-			if err := pr.L7[i].Sanitize(); err != nil {
 				return err
 			}
 		}
@@ -584,10 +560,7 @@ func (pr *PortRule) sanitize(ingress bool) error {
 		if ingress && !TestAllowIngressListener {
 			return fmt.Errorf("Listener is not allowed on ingress (%s)", listener.Name)
 		}
-		// There is no quarantee that Listener will support Cilium policy enforcement.  Even
-		// now proxylib-based enforcement (e.g, Kafka) may work, but has not been tested.
-		// TODO (jrajahalme): Lift this limitation in follow-up work for proxylib based
-		// parsers if needed and when tested.
+		// There is no guarantee that Listener will support Cilium policy enforcement.
 		if !pr.Rules.IsEmpty() {
 			return fmt.Errorf("Listener is not allowed with L7 rules (%s)", listener.Name)
 		}
@@ -619,6 +592,18 @@ func (pr *PortDenyRule) sanitize() error {
 	return nil
 }
 
+// isExtendedIPProtocol returns true if the protocol is an extended IP protocol
+// that does not use transport-layer ports (e.g., VRRP, IGMP, GRE, IPIP, ESP, AH).
+func isExtendedIPProtocol(proto L4Proto) bool {
+	switch proto {
+	case ProtoVRRP, ProtoIGMP,
+		ProtoGRE, ProtoIPIP, ProtoIPv6, ProtoESP, ProtoAH:
+		return true
+	default:
+		return false
+	}
+}
+
 func (pp *PortProtocol) sanitize(hasDNSRules bool) (isZero bool, err error) {
 	if pp.Port == "" {
 		if !option.Config.EnableExtendedIPProtocols {
@@ -632,7 +617,9 @@ func (pp *PortProtocol) sanitize(hasDNSRules bool) (isZero bool, err error) {
 	if iana.IsSvcName(pp.Port) {
 		pp.Port = strings.ToLower(pp.Port) // Normalize for case insensitive comparison
 	} else if pp.Port != "" {
-		if pp.Port != "0" && (pp.Protocol == ProtoVRRP || pp.Protocol == ProtoIGMP) {
+		// Extended IP protocols and tunnel/encapsulation protocols do not have
+		// transport-layer ports. Require port to be empty or 0 for these protocols.
+		if pp.Port != "0" && isExtendedIPProtocol(pp.Protocol) {
 			return isZero, errors.New("port must be empty or 0")
 		}
 		p, err := strconv.ParseUint(pp.Port, 0, 16)
@@ -700,8 +687,9 @@ func (c *CIDRRule) sanitize() error {
 	}
 	if c.CIDRGroupSelector.LabelSelector != nil {
 		cnt++
-		if err := c.CIDRGroupSelector.SanitizeWithKeyExtender(labels.GetSourcePrefixKeyExtender(labels.LabelSourceCIDRGroupKeyPrefix)); err != nil {
-			return fmt.Errorf("failed to parse cidrGroupSelector %v: %w", c.CIDRGroupSelector.String(), err)
+		c.CIDRGroupSelector = NewESFromK8sLabelSelector(labels.LabelSourceCIDRGroupKeyPrefix, c.CIDRGroupSelector.LabelSelector)
+		if err := c.CIDRGroupSelector.Sanitize(); err != nil {
+			return fmt.Errorf("failed to sanitize cidrGroupSelector %v: %w", c.CIDRGroupSelector.String(), err)
 		}
 	}
 	if cnt == 0 {
@@ -738,7 +726,7 @@ func (c *CIDRRule) sanitize() error {
 
 		// Note: this also checks that the allow CIDR prefix and the exception
 		// CIDR prefixes are part of the same address family.
-		if !prefix.Contains(except.Addr()) {
+		if prefix.Bits() > except.Bits() || !prefix.Contains(except.Addr()) {
 			return fmt.Errorf("allow CIDR prefix %s does not contain "+
 				"exclude CIDR prefix %s", c.Cidr, p)
 		}

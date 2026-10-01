@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -156,7 +155,7 @@ func (wss *wqSyncStore) Run(ctx context.Context) {
 
 	wss.log.Info("Starting workqueue-based sync store", logfields.Workers, wss.workers)
 	wg.Add(int(wss.workers))
-	for i := uint(0); i < wss.workers; i++ {
+	for range wss.workers {
 		go func() {
 			defer wg.Done()
 			for wss.processNextItem(ctx) {
@@ -364,9 +363,9 @@ func (wss *wqSyncStore) handleExpiredLease(key string) {
 func (wss *wqSyncStore) keyPath(key string) string {
 	// WARNING - STABLE API: The composition of the absolute key path
 	// cannot be changed without breaking up and downgrades.
-	return path.Join(wss.prefix, key)
+	return kvstore.JoinKey(wss.prefix, key)
 }
 
 func (wss *wqSyncStore) getSyncedKey() string {
-	return path.Join(kvstore.SyncedPrefix, wss.source, wss.syncedKey)
+	return kvstore.JoinKey(kvstore.SyncedPrefix, wss.source, wss.syncedKey)
 }

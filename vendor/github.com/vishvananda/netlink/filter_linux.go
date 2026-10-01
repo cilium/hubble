@@ -197,7 +197,7 @@ func (filter *Flower) encode(parent *nl.RtAttr) error {
 	if filter.SkipSw {
 		flags |= nl.TCA_CLS_FLAGS_SKIP_SW
 	}
-	parent.AddRtAttr(nl.TCA_FLOWER_FLAGS, htonl(flags))
+	parent.AddRtAttr(nl.TCA_FLOWER_FLAGS, nl.Uint32Attr(flags))
 
 	actionsAttr := parent.AddRtAttr(nl.TCA_FLOWER_ACT, nil)
 	if err := EncodeActions(actionsAttr, filter.Actions); err != nil {
@@ -257,8 +257,8 @@ func (filter *Flower) decode(data []syscall.NetlinkRouteAttr) error {
 			}
 		case nl.TCA_FLOWER_FLAGS:
 			attr := nl.DeserializeUint32Bitfield(datum.Value)
-			skipSw := attr.Value & nl.TCA_CLS_FLAGS_SKIP_HW
-			skipHw := attr.Value & nl.TCA_CLS_FLAGS_SKIP_SW
+			skipSw := attr.Value & nl.TCA_CLS_FLAGS_SKIP_SW
+			skipHw := attr.Value & nl.TCA_CLS_FLAGS_SKIP_HW
 			if skipSw != 0 {
 				filter.SkipSw = true
 			}

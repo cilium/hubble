@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.2] - 2026-10-01
+[1.20.2]: https://github.com/cilium/cilium/compare/v1.19.4...v1.20.2
+
+**Bugfixes:**
+* Fix Hubble flow `compact` output for policy verdict events with default field masks (cilium/cilium#46672, @glrf)
+
+**Misc Changes:**
+* chore(deps): update actions/setup-go action to v7 (cilium/hubble#1809, @renovate[bot])
+* chore(deps): update azure/setup-helm action to v5.0.1 (cilium/hubble#1803, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.20.2 (cilium/hubble#1824, @renovate[bot])
+* chore(deps): update dependency helm/helm to v4.3.0 (cilium/hubble#1822, @renovate[bot])
+* chore(deps): update go toolchain directive to v1.26.6 (cilium/hubble#1813, @renovate[bot])
+* chore(deps): update golang to v1.27.1 (cilium/hubble#1820, @renovate[bot])
+* chore(deps): update library/golang:1.27.1-alpine docker digest to 8a5910f (cilium/hubble#1823, @renovate[bot])
+* chore(deps): update module github.com/google/cel-go to v0.29.0 [security] (cilium/hubble#1810, @renovate[bot])
+* chore(deps): update module go.mongodb.org/mongo-driver to v1.17.7 [security] (cilium/hubble#1797, @renovate[bot])
+* chore(deps): update module golang.org/x/net to v0.55.0 [security] (cilium/hubble#1805, @renovate[bot])
+* chore(deps): update module google.golang.org/grpc to v1.83.2 [security] (cilium/hubble#1821, @renovate[bot])
+
 ## [1.19.4] - 2026-06-04
 [1.19.4]: https://github.com/cilium/cilium/compare/v1.19.3...v1.19.4
 

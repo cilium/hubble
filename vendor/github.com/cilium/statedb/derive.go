@@ -23,8 +23,7 @@ type DeriveParams[In, Out any] struct {
 	cell.In
 
 	Lifecycle cell.Lifecycle
-	Jobs      job.Registry
-	Health    cell.Health
+	JobGroup  job.Group
 	DB        *DB
 	InTable   Table[In]
 	OutTable  RWTable[Out]
@@ -52,10 +51,13 @@ type DeriveParams[In, Out any] struct {
 //	)
 func Derive[In, Out any](jobName string, transform func(obj In, deleted bool) (Out, DeriveResult)) func(DeriveParams[In, Out]) {
 	return func(p DeriveParams[In, Out]) {
-		g := p.Jobs.NewGroup(p.Health, p.Lifecycle)
-		g.Add(job.OneShot(
+		wtxn := p.DB.WriteTxn(p.OutTable)
+		markInit := p.OutTable.RegisterInitializer(wtxn, jobName)
+		wtxn.Commit()
+
+		p.JobGroup.Add(job.OneShot(
 			jobName,
-			derive[In, Out]{p, jobName, transform}.loop),
+			derive[In, Out]{p, jobName, transform, markInit}.loop),
 		)
 	}
 }
@@ -64,6 +66,7 @@ type derive[In, Out any] struct {
 	DeriveParams[In, Out]
 	jobName   string
 	transform func(obj In, deleted bool) (Out, DeriveResult)
+	markInit  func(WriteTxn)
 }
 
 func (d derive[In, Out]) loop(ctx context.Context, _ cell.Health) error {
@@ -74,7 +77,11 @@ func (d derive[In, Out]) loop(ctx context.Context, _ cell.Health) error {
 	if err != nil {
 		return err
 	}
+	defer iter.Close()
+
 	for {
+		var init <-chan struct{}
+
 		wtxn := d.DB.WriteTxn(out)
 		changes, watch := iter.Next(wtxn)
 		for change := range changes {
@@ -96,10 +103,21 @@ func (d derive[In, Out]) loop(ctx context.Context, _ cell.Health) error {
 				return err
 			}
 		}
+
+		if d.markInit != nil {
+			if ok, ch := d.InTable.Initialized(wtxn); ok {
+				d.markInit(wtxn)
+				d.markInit = nil
+			} else {
+				init = ch
+			}
+		}
+
 		wtxn.Commit()
 
 		select {
 		case <-watch:
+		case <-init:
 		case <-ctx.Done():
 			return nil
 		}

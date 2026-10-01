@@ -5,6 +5,7 @@ package api
 
 import (
 	k8sapi "github.com/cilium/cilium/pkg/k8s/apis/cilium.io"
+	v1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
 	"github.com/cilium/cilium/pkg/labels"
 )
 
@@ -12,7 +13,7 @@ import (
 // individual identities.  Entities are used to describe "outside of cluster",
 // "host", etc.
 //
-// +kubebuilder:validation:Enum=all;world;cluster;host;init;ingress;unmanaged;remote-node;health;none;kube-apiserver
+// +kubebuilder:validation:Enum=all;world;cluster;cluster-mesh;host;init;ingress;unmanaged;remote-node;health;none;kube-apiserver
 type Entity string
 
 const (
@@ -36,6 +37,10 @@ const (
 	// EntityCluster is an entity that represents traffic within the
 	// endpoint's cluster, to endpoints not managed by cilium
 	EntityCluster Entity = "cluster"
+
+	// EntityClusterMesh is an entity that represents traffic within the
+	// complete clustermesh
+	EntityClusterMesh Entity = "cluster-mesh"
 
 	// EntityHost is an entity that represents traffic within endpoint host
 	EntityHost Entity = "host"
@@ -65,6 +70,8 @@ const (
 var (
 	endpointSelectorWorld = NewESFromLabels(labels.NewLabel(labels.IDNameWorld, "", labels.LabelSourceReserved))
 
+	endpointSelectorWorldAggregate = NewESFromLabels(labels.NewLabel(labels.IDNameAggregateWorld, "", labels.LabelSourceReserved))
+
 	endpointSelectorWorldIPv4 = NewESFromLabels(labels.NewLabel(labels.IDNameWorldIPv4, "", labels.LabelSourceReserved))
 
 	endpointSelectorWorldIPv6 = NewESFromLabels(labels.NewLabel(labels.IDNameWorldIPv6, "", labels.LabelSourceReserved))
@@ -77,6 +84,8 @@ var (
 
 	endpointSelectorRemoteNode = NewESFromLabels(labels.NewLabel(labels.IDNameRemoteNode, "", labels.LabelSourceReserved))
 
+	endpointSelectorRemoteNodeAggregate = NewESFromLabels(labels.NewLabel(labels.IDNameAggregateRemoteNode, "", labels.LabelSourceReserved))
+
 	endpointSelectorHealth = NewESFromLabels(labels.NewLabel(labels.IDNameHealth, "", labels.LabelSourceReserved))
 
 	EndpointSelectorNone = NewESFromLabels(labels.NewLabel(labels.IDNameNone, "", labels.LabelSourceReserved))
@@ -85,19 +94,35 @@ var (
 
 	endpointSelectorKubeAPIServer = NewESFromLabels(labels.LabelKubeAPIServer[labels.IDNameKubeAPIServer])
 
+	endpointSelectorClusterAggregate = NewESFromLabels(labels.NewLabel(labels.IDNameAggregateCluster, "", labels.LabelSourceReserved))
+
+	endpointSelectorClusterMeshAggregate = NewESFromLabels(labels.NewLabel(labels.IDNameAggregateClusterMesh, "", labels.LabelSourceReserved))
+
+	// used by both cluster and cluster-mesh entities
+	clusterSelectors = EndpointSelectorSlice{
+		endpointSelectorHost,
+		endpointSelectorRemoteNode,
+		endpointSelectorInit,
+		endpointSelectorIngress,
+		endpointSelectorHealth,
+		endpointSelectorUnmanaged,
+		endpointSelectorKubeAPIServer,
+		endpointSelectorClusterAggregate,
+	}
+
 	// EntitySelectorMapping maps special entity names that come in
 	// policies to selectors
 	// If you add an entry here, you must also update the CRD
 	// validation above.
 	EntitySelectorMapping = map[Entity]EndpointSelectorSlice{
 		EntityAll:           {WildcardEndpointSelector},
-		EntityWorld:         {endpointSelectorWorld, endpointSelectorWorldIPv4, endpointSelectorWorldIPv6},
+		EntityWorld:         {endpointSelectorWorld, endpointSelectorWorldIPv4, endpointSelectorWorldIPv6, endpointSelectorWorldAggregate},
 		EntityWorldIPv4:     {endpointSelectorWorldIPv4},
 		EntityWorldIPv6:     {endpointSelectorWorldIPv6},
 		EntityHost:          {endpointSelectorHost},
 		EntityInit:          {endpointSelectorInit},
 		EntityIngress:       {endpointSelectorIngress},
-		EntityRemoteNode:    {endpointSelectorRemoteNode},
+		EntityRemoteNode:    {endpointSelectorRemoteNode, endpointSelectorRemoteNodeAggregate},
 		EntityHealth:        {endpointSelectorHealth},
 		EntityUnmanaged:     {endpointSelectorUnmanaged},
 		EntityNone:          {EndpointSelectorNone},
@@ -112,6 +137,15 @@ var (
 		// initialized at runtime as it depends on user configuration
 		// such as the cluster name. See InitEntities() below.
 		EntityCluster: {},
+
+		// ClusterMesh can be initialized statically, as it selects all endpoints
+		// with the cluster mesh label set.
+		EntityClusterMesh: append(clusterSelectors,
+			endpointSelectorClusterMeshAggregate,
+			NewESFromMatchRequirements(nil, []v1.LabelSelectorRequirement{{
+				Key:      k8sapi.PolicyLabelCluster,
+				Operator: v1.LabelSelectorOpExists,
+			}})),
 	}
 )
 
@@ -133,14 +167,7 @@ func (s EntitySlice) GetAsEndpointSelectors() EndpointSelectorSlice {
 
 // InitEntities is called to initialize the policy API layer
 func InitEntities(clusterName string) {
-	EntitySelectorMapping[EntityCluster] = EndpointSelectorSlice{
-		endpointSelectorHost,
-		endpointSelectorRemoteNode,
-		endpointSelectorInit,
-		endpointSelectorIngress,
-		endpointSelectorHealth,
-		endpointSelectorUnmanaged,
-		endpointSelectorKubeAPIServer,
+	EntitySelectorMapping[EntityCluster] = append(clusterSelectors,
 		NewESFromLabels(labels.NewLabel(k8sapi.PolicyLabelCluster, clusterName, labels.LabelSourceK8s)),
-	}
+	)
 }

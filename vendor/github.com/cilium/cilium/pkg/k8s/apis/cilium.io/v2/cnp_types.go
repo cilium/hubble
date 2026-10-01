@@ -26,6 +26,7 @@ import (
 // +kubebuilder:printcolumn:JSONPath=".status.conditions[?(@.type=='Valid')].status",name="Valid",type=string
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
+// +kubebuilder:validation:XValidation:rule="has(self.spec) || has(self.specs)",message="spec or specs must be provided"
 
 // CiliumNetworkPolicy is a Kubernetes third-party resource with an extended
 // version of NetworkPolicy.
@@ -231,24 +232,6 @@ func (r *CiliumNetworkPolicy) GetIdentityLabels() labels.LabelArray {
 		derivedFrom = k8sCiliumUtils.ResourceTypeCiliumClusterwideNetworkPolicy
 	}
 	return k8sCiliumUtils.GetPolicyLabels(namespace, name, uid, derivedFrom)
-}
-
-// RequiresDerivative return true if the CNP has any rule that will create a new
-// derivative rule.
-func (r *CiliumNetworkPolicy) RequiresDerivative() bool {
-	if r.Spec != nil {
-		if r.Spec.RequiresDerivative() {
-			return true
-		}
-	}
-	if r.Specs != nil {
-		for _, rule := range r.Specs {
-			if rule.RequiresDerivative() {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

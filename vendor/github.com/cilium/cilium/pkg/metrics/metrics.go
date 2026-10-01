@@ -94,6 +94,9 @@ const (
 	// LabelOutcome indicates whether the outcome of the operation was successful or not
 	LabelOutcome = "outcome"
 
+	// LabelReason indicates the reason that triggered the operation.
+	LabelReason = "reason"
+
 	// LabelAttempts is the number of attempts it took to complete the operation
 	LabelAttempts = "attempts"
 
@@ -155,7 +158,7 @@ const (
 	// LabelPolicyEnforcement is the label used to see the enforcement status
 	LabelPolicyEnforcement = "enforcement"
 
-	// LabelPolicySource is the label used to see the enforcement status
+	// LabelPolicySource is the label used to see the source of policy.
 	LabelPolicySource = "source"
 
 	LabelSource = "source"
@@ -247,6 +250,12 @@ const (
 	LabelReachable          = "reachable"
 	LabelUnreachable        = "unreachable"
 	LabelUnknown            = "unknown"
+
+	LabelValueUpdateOperation = "update"
+	LabelValueDeleteOperation = "delete"
+
+	// LabelCIDR is the label for IPAM CIDR assigned to a node.
+	LabelCIDR = "cidr"
 )
 
 var (
@@ -261,9 +270,6 @@ var (
 	registryResolver, registry = promise.New[*Registry]()
 
 	BPFMapPressure = true
-
-	// BootstrapTimes is the durations of cilium-agent bootstrap sequence.
-	BootstrapTimes = NoOpGaugeVec
 
 	// APIInteractions is the total time taken to process an API call made
 	// to the cilium-agent
@@ -284,6 +290,14 @@ var (
 	// Endpoint is a function used to collect this metric.
 	// It must be thread-safe.
 	Endpoint metric.GaugeFunc
+
+	// EndpointComponentStatus is the metric to indicate number of endpoints in particular state of
+	// configured components(BPF, Policy).
+	EndpointComponentStatus = NoOpGaugeVec
+
+	// EndpointDetachedSelectorPolicyTimeStats is tracking the amount of time endpoints have had detached selector
+	// when various updates occur.
+	EndpointDetachedSelectorPolicyTimeStats = NoOpObserverVec
 
 	// EndpointRegenerationTotal is a count of the number of times any endpoint
 	// has been regenerated and success/fail outcome
@@ -308,8 +322,8 @@ var (
 	// PolicyRevision is the current policy revision number for this agent
 	PolicyRevision = NoOpGauge
 
-	// PolicyChangeTotal is a count of policy changes by outcome ("success" or
-	// "failure")
+	// PolicyChangeTotal is a count of policy changes by source, operation, and
+	// outcome.
 	PolicyChangeTotal = NoOpCounterVec
 
 	// PolicyEndpointStatus is the number of endpoints with policy labeled by enforcement type
@@ -326,6 +340,9 @@ var (
 	// to the policy engine. An incremental update is a newly-learned identity that can be
 	// directly added to policy maps without a full policy recalculation.
 	PolicyIncrementalUpdateDuration = NoOpObserverVec
+
+	// Total number of proxy redirects missing when calculating endpoint policies.
+	PolicyMissingProxyRedirects = NoOpGaugeVec
 
 	// Identity
 
@@ -418,6 +435,9 @@ var (
 	SubprocessStart = NoOpCounterVec
 
 	// Kubernetes Events
+
+	// KubernetesResourceSyncDuration is the Kubernetes resource sync duration labeled by scope.
+	KubernetesResourceSyncDuration = NoOpGaugeVec
 
 	// KubernetesEventProcessed is the number of Kubernetes events
 	// processed labeled by scope, action and execution result
@@ -617,92 +637,87 @@ var (
 )
 
 type LegacyMetrics struct {
-	BootstrapTimes                   metric.Vec[metric.Gauge]
-	APIInteractions                  metric.Vec[metric.Observer]
-	NodeHealthConnectivityStatus     metric.Vec[metric.Gauge]
-	NodeHealthConnectivityLatency    metric.Vec[metric.Observer]
-	Endpoint                         metric.GaugeFunc
-	EndpointRegenerationTotal        metric.Vec[metric.Counter]
-	EndpointStateCount               metric.Vec[metric.Gauge]
-	EndpointRegenerationTimeStats    metric.Vec[metric.Observer]
-	EndpointPropagationDelay         metric.Vec[metric.Observer]
-	Policy                           metric.Gauge
-	PolicyRevision                   metric.Gauge
-	PolicyChangeTotal                metric.Vec[metric.Counter]
-	PolicyEndpointStatus             metric.Vec[metric.Gauge]
-	PolicyImplementationDelay        metric.Vec[metric.Observer]
-	PolicyIncrementalUpdateDuration  metric.Vec[metric.Observer]
-	Identity                         metric.Vec[metric.Gauge]
-	IdentityLabelSources             metric.Vec[metric.Gauge]
-	EventTS                          metric.Vec[metric.Gauge]
-	EventLagK8s                      metric.Gauge
-	ProxyRedirects                   metric.Vec[metric.Gauge]
-	ProxyPolicyL7Total               metric.Vec[metric.Counter]
-	ProxyUpstreamTime                metric.Vec[metric.Observer]
-	ProxyDatapathUpdateTimeout       metric.Counter
-	ConntrackGCRuns                  metric.Vec[metric.Counter]
-	ConntrackGCKeyFallbacks          metric.Vec[metric.Counter]
-	ConntrackGCSize                  metric.Vec[metric.Gauge]
-	NatGCSize                        metric.Vec[metric.Gauge]
-	ConntrackGCDuration              metric.Vec[metric.Observer]
-	ConntrackInterval                metric.Vec[metric.Gauge]
-	ConntrackDumpResets              metric.Vec[metric.Counter]
-	SignalsHandled                   metric.Vec[metric.Counter]
-	ServicesEventsCount              metric.Vec[metric.Counter]
-	ServiceImplementationDelay       metric.Vec[metric.Observer]
-	ErrorsWarnings                   metric.Vec[metric.Counter]
-	ControllerRuns                   metric.Vec[metric.Counter]
-	ControllerRunsDuration           metric.Vec[metric.Observer]
-	SubprocessStart                  metric.Vec[metric.Counter]
-	KubernetesEventProcessed         metric.Vec[metric.Counter]
-	KubernetesEventReceived          metric.Vec[metric.Counter]
-	KubernetesAPIInteractions        metric.Vec[metric.Observer]
-	KubernetesAPIRateLimiterLatency  metric.Vec[metric.Observer]
-	KubernetesAPICallsTotal          metric.Vec[metric.Counter]
-	TerminatingEndpointsEvents       metric.Counter
-	IPAMEvent                        metric.Vec[metric.Counter]
-	IPAMCapacity                     metric.Vec[metric.Gauge]
-	KVStoreOperationsDuration        metric.Vec[metric.Observer]
-	KVStoreEventsQueueDuration       metric.Vec[metric.Observer]
-	KVStoreQuorumErrors              metric.Vec[metric.Counter]
-	FQDNGarbageCollectorCleanedTotal metric.Counter
-	FQDNActiveNames                  metric.Vec[metric.Gauge]
-	FQDNActiveIPs                    metric.Vec[metric.Gauge]
-	FQDNAliveZombieConnections       metric.Vec[metric.Gauge]
-	FQDNSelectors                    metric.Gauge
-	FQDNSemaphoreRejectedTotal       metric.Counter
-	IPCacheErrorsTotal               metric.Vec[metric.Counter]
-	IPCacheEventsTotal               metric.Vec[metric.Counter]
-	BPFSyscallDuration               metric.Vec[metric.Observer]
-	BPFMapOps                        metric.Vec[metric.Counter]
-	BPFMapCapacity                   metric.Vec[metric.Gauge]
-	VersionMetric                    metric.Vec[metric.Gauge]
-	APILimiterWaitHistoryDuration    metric.Vec[metric.Observer]
-	APILimiterWaitDuration           metric.Vec[metric.Gauge]
-	APILimiterProcessingDuration     metric.Vec[metric.Gauge]
-	APILimiterRequestsInFlight       metric.Vec[metric.Gauge]
-	APILimiterRateLimit              metric.Vec[metric.Gauge]
-	APILimiterAdjustmentFactor       metric.Vec[metric.Gauge]
-	APILimiterProcessedRequests      metric.Vec[metric.Counter]
-	WorkQueueDepth                   metric.Vec[metric.Gauge]
-	WorkQueueAddsTotal               metric.Vec[metric.Counter]
-	WorkQueueLatency                 metric.Vec[metric.Observer]
-	WorkQueueDuration                metric.Vec[metric.Observer]
-	WorkQueueUnfinishedWork          metric.Vec[metric.Gauge]
-	WorkQueueLongestRunningProcessor metric.Vec[metric.Gauge]
-	WorkQueueRetries                 metric.Vec[metric.Counter]
+	APIInteractions                         metric.Vec[metric.Observer]
+	NodeHealthConnectivityStatus            metric.Vec[metric.Gauge]
+	NodeHealthConnectivityLatency           metric.Vec[metric.Observer]
+	Endpoint                                metric.GaugeFunc
+	EndpointComponentStatus                 metric.Vec[metric.Gauge]
+	EndpointDetachedSelectorPolicyTimeStats metric.Vec[metric.Observer]
+	EndpointRegenerationTotal               metric.Vec[metric.Counter]
+	EndpointStateCount                      metric.Vec[metric.Gauge]
+	EndpointRegenerationTimeStats           metric.Vec[metric.Observer]
+	EndpointPropagationDelay                metric.Vec[metric.Observer]
+	Policy                                  metric.Gauge
+	PolicyRevision                          metric.Gauge
+	PolicyChangeTotal                       metric.Vec[metric.Counter]
+	PolicyEndpointStatus                    metric.Vec[metric.Gauge]
+	PolicyImplementationDelay               metric.Vec[metric.Observer]
+	PolicyIncrementalUpdateDuration         metric.Vec[metric.Observer]
+	PolicyMissingProxyRedirects             metric.Vec[metric.Gauge]
+	Identity                                metric.Vec[metric.Gauge]
+	IdentityLabelSources                    metric.Vec[metric.Gauge]
+	EventTS                                 metric.Vec[metric.Gauge]
+	EventLagK8s                             metric.Gauge
+	ProxyRedirects                          metric.Vec[metric.Gauge]
+	ProxyPolicyL7Total                      metric.Vec[metric.Counter]
+	ProxyUpstreamTime                       metric.Vec[metric.Observer]
+	ProxyDatapathUpdateTimeout              metric.Counter
+	ConntrackGCRuns                         metric.Vec[metric.Counter]
+	ConntrackGCKeyFallbacks                 metric.Vec[metric.Counter]
+	ConntrackGCSize                         metric.Vec[metric.Gauge]
+	NatGCSize                               metric.Vec[metric.Gauge]
+	ConntrackGCDuration                     metric.Vec[metric.Observer]
+	ConntrackInterval                       metric.Vec[metric.Gauge]
+	ConntrackDumpResets                     metric.Vec[metric.Counter]
+	SignalsHandled                          metric.Vec[metric.Counter]
+	ServicesEventsCount                     metric.Vec[metric.Counter]
+	ServiceImplementationDelay              metric.Vec[metric.Observer]
+	ErrorsWarnings                          metric.Vec[metric.Counter]
+	ControllerRuns                          metric.Vec[metric.Counter]
+	ControllerRunsDuration                  metric.Vec[metric.Observer]
+	SubprocessStart                         metric.Vec[metric.Counter]
+	KubernetesResourceSyncDuration          metric.Vec[metric.Gauge]
+	KubernetesEventProcessed                metric.Vec[metric.Counter]
+	KubernetesEventReceived                 metric.Vec[metric.Counter]
+	KubernetesAPIInteractions               metric.Vec[metric.Observer]
+	KubernetesAPIRateLimiterLatency         metric.Vec[metric.Observer]
+	KubernetesAPICallsTotal                 metric.Vec[metric.Counter]
+	TerminatingEndpointsEvents              metric.Counter
+	IPAMEvent                               metric.Vec[metric.Counter]
+	IPAMCapacity                            metric.Vec[metric.Gauge]
+	KVStoreOperationsDuration               metric.Vec[metric.Observer]
+	KVStoreEventsQueueDuration              metric.Vec[metric.Observer]
+	KVStoreQuorumErrors                     metric.Vec[metric.Counter]
+	FQDNGarbageCollectorCleanedTotal        metric.Counter
+	FQDNActiveNames                         metric.Vec[metric.Gauge]
+	FQDNActiveIPs                           metric.Vec[metric.Gauge]
+	FQDNAliveZombieConnections              metric.Vec[metric.Gauge]
+	FQDNSelectors                           metric.Gauge
+	FQDNSemaphoreRejectedTotal              metric.Counter
+	IPCacheErrorsTotal                      metric.Vec[metric.Counter]
+	IPCacheEventsTotal                      metric.Vec[metric.Counter]
+	BPFSyscallDuration                      metric.Vec[metric.Observer]
+	BPFMapOps                               metric.Vec[metric.Counter]
+	BPFMapCapacity                          metric.Vec[metric.Gauge]
+	VersionMetric                           metric.Vec[metric.Gauge]
+	APILimiterWaitHistoryDuration           metric.Vec[metric.Observer]
+	APILimiterWaitDuration                  metric.Vec[metric.Gauge]
+	APILimiterProcessingDuration            metric.Vec[metric.Gauge]
+	APILimiterRequestsInFlight              metric.Vec[metric.Gauge]
+	APILimiterRateLimit                     metric.Vec[metric.Gauge]
+	APILimiterAdjustmentFactor              metric.Vec[metric.Gauge]
+	APILimiterProcessedRequests             metric.Vec[metric.Counter]
+	WorkQueueDepth                          metric.Vec[metric.Gauge]
+	WorkQueueAddsTotal                      metric.Vec[metric.Counter]
+	WorkQueueLatency                        metric.Vec[metric.Observer]
+	WorkQueueDuration                       metric.Vec[metric.Observer]
+	WorkQueueUnfinishedWork                 metric.Vec[metric.Gauge]
+	WorkQueueLongestRunningProcessor        metric.Vec[metric.Gauge]
+	WorkQueueRetries                        metric.Vec[metric.Counter]
 }
 
 func NewLegacyMetrics() *LegacyMetrics {
 	lm := &LegacyMetrics{
-		BootstrapTimes: metric.NewGaugeVec(metric.GaugeOpts{
-			ConfigName: Namespace + "_" + SubsystemAgent + "_bootstrap_seconds",
-			Namespace:  Namespace,
-			Subsystem:  SubsystemAgent,
-			Name:       "bootstrap_seconds",
-			Help:       "Duration of bootstrap sequence",
-		}, []string{LabelScope, LabelOutcome}),
-
 		APIInteractions: metric.NewHistogramVec(metric.HistogramOpts{
 			ConfigName: Namespace + "_" + SubsystemAgent + "_api_process_time_seconds",
 
@@ -710,20 +725,35 @@ func NewLegacyMetrics() *LegacyMetrics {
 			Subsystem: SubsystemAgent,
 			Name:      "api_process_time_seconds",
 			Help:      "Duration of processed API calls labeled by path, method and return code.",
+			// default buckets extended to 2min
+			Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 20, 30, 60, 90, 120},
 		}, []string{LabelPath, LabelMethod, LabelAPIReturnCode}),
 
-		EndpointRegenerationTotal: metric.NewCounterVecWithLabels(metric.CounterOpts{
+		EndpointComponentStatus: metric.NewGaugeVec(metric.GaugeOpts{
+			ConfigName: Namespace + "_endpoint_component_status",
+			Namespace:  Namespace,
+			Name:       "endpoint_component_status",
+			Help:       "Number of endpoints tagged by different endpoint components type and their status",
+		},
+			[]string{LabelType, LabelStatus},
+		),
+
+		EndpointDetachedSelectorPolicyTimeStats: metric.NewHistogramVec(metric.HistogramOpts{
+			ConfigName: Namespace + "_endpoint_detached_selector_policy_time_stats_seconds",
+
+			Namespace: Namespace,
+			Name:      "endpoint_detached_selector_policy_time_stats_seconds",
+			Help:      "Endpoint detached selector policy time stats labeled by the scope",
+			Buckets:   prometheus.ExponentialBucketsRange(0.01, 60*10, 10),
+		}, []string{LabelScope}),
+
+		EndpointRegenerationTotal: metric.NewCounterVec(metric.CounterOpts{
 			ConfigName: Namespace + "_endpoint_regenerations_total",
 
 			Namespace: Namespace,
 			Name:      "endpoint_regenerations_total",
-			Help:      "Count of all endpoint regenerations that have completed, tagged by outcome",
-		}, metric.Labels{
-			{
-				Name:   LabelOutcome,
-				Values: metric.NewValues(LabelValueOutcomeSuccess, LabelValueOutcomeFail),
-			},
-		}),
+			Help:      "Count of all endpoint regenerations that have completed, tagged by reason, outcome and error",
+		}, []string{LabelReason, LabelOutcome, LabelError}),
 
 		EndpointStateCount: metric.NewGaugeVec(metric.GaugeOpts{
 			ConfigName: Namespace + "_endpoint_state",
@@ -762,11 +792,19 @@ func NewLegacyMetrics() *LegacyMetrics {
 
 			Namespace: Namespace,
 			Name:      "policy_change_total",
-			Help:      "Number of policy changes by outcome",
+			Help:      "Number of policy changes by source, operation and outcome",
 		}, metric.Labels{
 			{
+				Name:   LabelPolicySource,
+				Values: metric.NewValues(string(source.Kubernetes), string(source.CustomResource), string(source.Directory)),
+			},
+			{
+				Name:   LabelOperation,
+				Values: metric.NewValues(LabelValueUpdateOperation, LabelValueDeleteOperation),
+			},
+			{
 				Name:   LabelOutcome,
-				Values: metric.NewValues(LabelValueOutcomeSuccess, LabelValueOutcomeFailure),
+				Values: metric.NewValues(LabelValueOutcomeSuccess, LabelValueOutcomeFail),
 			},
 		}),
 
@@ -800,6 +838,14 @@ func NewLegacyMetrics() *LegacyMetrics {
 			Help:      "Time between learning about a new identity and it being fully added to all policies.",
 			Buckets:   prometheus.ExponentialBuckets(10e-6, 10, 8),
 		}, []string{"scope"}),
+
+		PolicyMissingProxyRedirects: metric.NewGaugeVec(metric.GaugeOpts{
+			ConfigName: Namespace + "_policy_missing_proxy_redirects",
+
+			Namespace: Namespace,
+			Name:      "policy_missing_proxy_redirects",
+			Help:      "Total number of proxy redirects missing in endpoint policies",
+		}, []string{}),
 
 		Identity: metric.NewGaugeVec(metric.GaugeOpts{
 			ConfigName: Namespace + "_identity",
@@ -982,6 +1028,13 @@ func NewLegacyMetrics() *LegacyMetrics {
 			Help:       "Number of times that Cilium has started a subprocess, labeled by subsystem",
 		}, []string{LabelSubsystem}),
 
+		KubernetesResourceSyncDuration: metric.NewGaugeVec(metric.GaugeOpts{
+			ConfigName: Namespace + "_kubernetes_resource_sync_duration",
+			Namespace:  Namespace,
+			Name:       "kubernetes_resource_sync_duration",
+			Help:       "Duration in seconds of a specific Kubernetes resource sync",
+		}, []string{LabelScope}),
+
 		KubernetesEventProcessed: metric.NewCounterVec(metric.CounterOpts{
 			ConfigName: Namespace + "_kubernetes_events_total",
 			Namespace:  Namespace,
@@ -1041,7 +1094,7 @@ func NewLegacyMetrics() *LegacyMetrics {
 			Namespace:  Namespace,
 			Name:       "ipam_capacity",
 			Help:       "Total number of IPs in the IPAM pool labeled by family",
-		}, []string{LabelDatapathFamily}),
+		}, []string{LabelDatapathFamily, LabelCIDR}),
 
 		KVStoreOperationsDuration: metric.NewHistogramVec(metric.HistogramOpts{
 			ConfigName: Namespace + "_" + SubsystemKVStore + "_operations_duration_seconds",
@@ -1269,11 +1322,12 @@ func NewLegacyMetrics() *LegacyMetrics {
 	lm.VersionMetric.WithLabelValues(v.Version, v.Revision, v.Arch)
 	lm.BPFMapCapacity.WithLabelValues("default").Set(DefaultMapCapacity)
 
-	BootstrapTimes = lm.BootstrapTimes
 	APIInteractions = lm.APIInteractions
 	NodeHealthConnectivityStatus = lm.NodeHealthConnectivityStatus
 	NodeHealthConnectivityLatency = lm.NodeHealthConnectivityLatency
 	Endpoint = lm.Endpoint
+	EndpointComponentStatus = lm.EndpointComponentStatus
+	EndpointDetachedSelectorPolicyTimeStats = lm.EndpointDetachedSelectorPolicyTimeStats
 	EndpointRegenerationTotal = lm.EndpointRegenerationTotal
 	EndpointStateCount = lm.EndpointStateCount
 	EndpointRegenerationTimeStats = lm.EndpointRegenerationTimeStats
@@ -1284,6 +1338,7 @@ func NewLegacyMetrics() *LegacyMetrics {
 	PolicyEndpointStatus = lm.PolicyEndpointStatus
 	PolicyImplementationDelay = lm.PolicyImplementationDelay
 	PolicyIncrementalUpdateDuration = lm.PolicyIncrementalUpdateDuration
+	PolicyMissingProxyRedirects = lm.PolicyMissingProxyRedirects
 	Identity = lm.Identity
 	IdentityLabelSources = lm.IdentityLabelSources
 	EventTS = lm.EventTS
@@ -1306,6 +1361,7 @@ func NewLegacyMetrics() *LegacyMetrics {
 	ControllerRuns = lm.ControllerRuns
 	ControllerRunsDuration = lm.ControllerRunsDuration
 	SubprocessStart = lm.SubprocessStart
+	KubernetesResourceSyncDuration = lm.KubernetesResourceSyncDuration
 	KubernetesEventProcessed = lm.KubernetesEventProcessed
 	KubernetesEventReceived = lm.KubernetesEventReceived
 	KubernetesAPIInteractions = lm.KubernetesAPIInteractions

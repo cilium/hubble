@@ -11,7 +11,8 @@ import (
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/jsonutils"
+	"github.com/go-openapi/swag/typeutils"
 	"github.com/go-openapi/validate"
 )
 
@@ -58,13 +59,13 @@ type StatusResponse struct {
 	// Status of the CNI configuration file
 	CniFile *Status `json:"cni-file,omitempty"`
 
-	// Status of local container runtime
-	ContainerRuntime *Status `json:"container-runtime,omitempty"`
+	// Status of configured datapath mode
+	ConfiguredDatapathMode ConfiguredDatapathMode `json:"configured-datapath-mode,omitempty"`
 
 	// Status of all endpoint controllers
 	Controllers ControllerStatuses `json:"controllers,omitempty"`
 
-	// Status of datapath mode
+	// Status of operational datapath mode
 	DatapathMode DatapathMode `json:"datapath-mode,omitempty"`
 
 	// Status of transparent encryption
@@ -163,7 +164,7 @@ func (m *StatusResponse) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateContainerRuntime(formats); err != nil {
+	if err := m.validateConfiguredDatapathMode(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -250,7 +251,7 @@ func (m *StatusResponse) Validate(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateAttachMode(formats strfmt.Registry) error {
-	if swag.IsZero(m.AttachMode) { // not required
+	if typeutils.IsZero(m.AttachMode) { // not required
 		return nil
 	}
 
@@ -271,7 +272,7 @@ func (m *StatusResponse) validateAttachMode(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateAuthCertificateProvider(formats strfmt.Registry) error {
-	if swag.IsZero(m.AuthCertificateProvider) { // not required
+	if typeutils.IsZero(m.AuthCertificateProvider) { // not required
 		return nil
 	}
 
@@ -294,7 +295,7 @@ func (m *StatusResponse) validateAuthCertificateProvider(formats strfmt.Registry
 }
 
 func (m *StatusResponse) validateBandwidthManager(formats strfmt.Registry) error {
-	if swag.IsZero(m.BandwidthManager) { // not required
+	if typeutils.IsZero(m.BandwidthManager) { // not required
 		return nil
 	}
 
@@ -317,7 +318,7 @@ func (m *StatusResponse) validateBandwidthManager(formats strfmt.Registry) error
 }
 
 func (m *StatusResponse) validateBpfMaps(formats strfmt.Registry) error {
-	if swag.IsZero(m.BpfMaps) { // not required
+	if typeutils.IsZero(m.BpfMaps) { // not required
 		return nil
 	}
 
@@ -340,7 +341,7 @@ func (m *StatusResponse) validateBpfMaps(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateCilium(formats strfmt.Registry) error {
-	if swag.IsZero(m.Cilium) { // not required
+	if typeutils.IsZero(m.Cilium) { // not required
 		return nil
 	}
 
@@ -363,7 +364,7 @@ func (m *StatusResponse) validateCilium(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateClockSource(formats strfmt.Registry) error {
-	if swag.IsZero(m.ClockSource) { // not required
+	if typeutils.IsZero(m.ClockSource) { // not required
 		return nil
 	}
 
@@ -386,7 +387,7 @@ func (m *StatusResponse) validateClockSource(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateCluster(formats strfmt.Registry) error {
-	if swag.IsZero(m.Cluster) { // not required
+	if typeutils.IsZero(m.Cluster) { // not required
 		return nil
 	}
 
@@ -409,7 +410,7 @@ func (m *StatusResponse) validateCluster(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateClusterMesh(formats strfmt.Registry) error {
-	if swag.IsZero(m.ClusterMesh) { // not required
+	if typeutils.IsZero(m.ClusterMesh) { // not required
 		return nil
 	}
 
@@ -432,7 +433,7 @@ func (m *StatusResponse) validateClusterMesh(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateCniChaining(formats strfmt.Registry) error {
-	if swag.IsZero(m.CniChaining) { // not required
+	if typeutils.IsZero(m.CniChaining) { // not required
 		return nil
 	}
 
@@ -455,7 +456,7 @@ func (m *StatusResponse) validateCniChaining(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateCniFile(formats strfmt.Registry) error {
-	if swag.IsZero(m.CniFile) { // not required
+	if typeutils.IsZero(m.CniFile) { // not required
 		return nil
 	}
 
@@ -477,31 +478,29 @@ func (m *StatusResponse) validateCniFile(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *StatusResponse) validateContainerRuntime(formats strfmt.Registry) error {
-	if swag.IsZero(m.ContainerRuntime) { // not required
+func (m *StatusResponse) validateConfiguredDatapathMode(formats strfmt.Registry) error {
+	if typeutils.IsZero(m.ConfiguredDatapathMode) { // not required
 		return nil
 	}
 
-	if m.ContainerRuntime != nil {
-		if err := m.ContainerRuntime.Validate(formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("container-runtime")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("container-runtime")
-			}
-
-			return err
+	if err := m.ConfiguredDatapathMode.Validate(formats); err != nil {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
+			return ve.ValidateName("configured-datapath-mode")
 		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
+			return ce.ValidateName("configured-datapath-mode")
+		}
+
+		return err
 	}
 
 	return nil
 }
 
 func (m *StatusResponse) validateControllers(formats strfmt.Registry) error {
-	if swag.IsZero(m.Controllers) { // not required
+	if typeutils.IsZero(m.Controllers) { // not required
 		return nil
 	}
 
@@ -522,7 +521,7 @@ func (m *StatusResponse) validateControllers(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateDatapathMode(formats strfmt.Registry) error {
-	if swag.IsZero(m.DatapathMode) { // not required
+	if typeutils.IsZero(m.DatapathMode) { // not required
 		return nil
 	}
 
@@ -543,7 +542,7 @@ func (m *StatusResponse) validateDatapathMode(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateEncryption(formats strfmt.Registry) error {
-	if swag.IsZero(m.Encryption) { // not required
+	if typeutils.IsZero(m.Encryption) { // not required
 		return nil
 	}
 
@@ -566,7 +565,7 @@ func (m *StatusResponse) validateEncryption(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateHostFirewall(formats strfmt.Registry) error {
-	if swag.IsZero(m.HostFirewall) { // not required
+	if typeutils.IsZero(m.HostFirewall) { // not required
 		return nil
 	}
 
@@ -589,7 +588,7 @@ func (m *StatusResponse) validateHostFirewall(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateHubble(formats strfmt.Registry) error {
-	if swag.IsZero(m.Hubble) { // not required
+	if typeutils.IsZero(m.Hubble) { // not required
 		return nil
 	}
 
@@ -612,7 +611,7 @@ func (m *StatusResponse) validateHubble(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateHubbleMetrics(formats strfmt.Registry) error {
-	if swag.IsZero(m.HubbleMetrics) { // not required
+	if typeutils.IsZero(m.HubbleMetrics) { // not required
 		return nil
 	}
 
@@ -635,7 +634,7 @@ func (m *StatusResponse) validateHubbleMetrics(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateIdentityRange(formats strfmt.Registry) error {
-	if swag.IsZero(m.IdentityRange) { // not required
+	if typeutils.IsZero(m.IdentityRange) { // not required
 		return nil
 	}
 
@@ -658,7 +657,7 @@ func (m *StatusResponse) validateIdentityRange(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateIpam(formats strfmt.Registry) error {
-	if swag.IsZero(m.Ipam) { // not required
+	if typeutils.IsZero(m.Ipam) { // not required
 		return nil
 	}
 
@@ -681,7 +680,7 @@ func (m *StatusResponse) validateIpam(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateIPv4BigTCP(formats strfmt.Registry) error {
-	if swag.IsZero(m.IPv4BigTCP) { // not required
+	if typeutils.IsZero(m.IPv4BigTCP) { // not required
 		return nil
 	}
 
@@ -704,7 +703,7 @@ func (m *StatusResponse) validateIPv4BigTCP(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateIPv6BigTCP(formats strfmt.Registry) error {
-	if swag.IsZero(m.IPv6BigTCP) { // not required
+	if typeutils.IsZero(m.IPv6BigTCP) { // not required
 		return nil
 	}
 
@@ -727,7 +726,7 @@ func (m *StatusResponse) validateIPv6BigTCP(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateKubeProxyReplacement(formats strfmt.Registry) error {
-	if swag.IsZero(m.KubeProxyReplacement) { // not required
+	if typeutils.IsZero(m.KubeProxyReplacement) { // not required
 		return nil
 	}
 
@@ -750,7 +749,7 @@ func (m *StatusResponse) validateKubeProxyReplacement(formats strfmt.Registry) e
 }
 
 func (m *StatusResponse) validateKubernetes(formats strfmt.Registry) error {
-	if swag.IsZero(m.Kubernetes) { // not required
+	if typeutils.IsZero(m.Kubernetes) { // not required
 		return nil
 	}
 
@@ -773,7 +772,7 @@ func (m *StatusResponse) validateKubernetes(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateKvstore(formats strfmt.Registry) error {
-	if swag.IsZero(m.Kvstore) { // not required
+	if typeutils.IsZero(m.Kvstore) { // not required
 		return nil
 	}
 
@@ -796,7 +795,7 @@ func (m *StatusResponse) validateKvstore(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateMasquerading(formats strfmt.Registry) error {
-	if swag.IsZero(m.Masquerading) { // not required
+	if typeutils.IsZero(m.Masquerading) { // not required
 		return nil
 	}
 
@@ -819,7 +818,7 @@ func (m *StatusResponse) validateMasquerading(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateNodeMonitor(formats strfmt.Registry) error {
-	if swag.IsZero(m.NodeMonitor) { // not required
+	if typeutils.IsZero(m.NodeMonitor) { // not required
 		return nil
 	}
 
@@ -842,7 +841,7 @@ func (m *StatusResponse) validateNodeMonitor(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateProxy(formats strfmt.Registry) error {
-	if swag.IsZero(m.Proxy) { // not required
+	if typeutils.IsZero(m.Proxy) { // not required
 		return nil
 	}
 
@@ -865,7 +864,7 @@ func (m *StatusResponse) validateProxy(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateRouting(formats strfmt.Registry) error {
-	if swag.IsZero(m.Routing) { // not required
+	if typeutils.IsZero(m.Routing) { // not required
 		return nil
 	}
 
@@ -888,7 +887,7 @@ func (m *StatusResponse) validateRouting(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateSrv6(formats strfmt.Registry) error {
-	if swag.IsZero(m.Srv6) { // not required
+	if typeutils.IsZero(m.Srv6) { // not required
 		return nil
 	}
 
@@ -911,7 +910,7 @@ func (m *StatusResponse) validateSrv6(formats strfmt.Registry) error {
 }
 
 func (m *StatusResponse) validateStale(formats strfmt.Registry) error {
-	if swag.IsZero(m.Stale) { // not required
+	if typeutils.IsZero(m.Stale) { // not required
 		return nil
 	}
 
@@ -970,7 +969,7 @@ func (m *StatusResponse) ContextValidate(ctx context.Context, formats strfmt.Reg
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateContainerRuntime(ctx, formats); err != nil {
+	if err := m.contextValidateConfiguredDatapathMode(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -1054,7 +1053,7 @@ func (m *StatusResponse) ContextValidate(ctx context.Context, formats strfmt.Reg
 
 func (m *StatusResponse) contextValidateAttachMode(ctx context.Context, formats strfmt.Registry) error {
 
-	if swag.IsZero(m.AttachMode) { // not required
+	if typeutils.IsZero(m.AttachMode) { // not required
 		return nil
 	}
 
@@ -1078,7 +1077,7 @@ func (m *StatusResponse) contextValidateAuthCertificateProvider(ctx context.Cont
 
 	if m.AuthCertificateProvider != nil {
 
-		if swag.IsZero(m.AuthCertificateProvider) { // not required
+		if typeutils.IsZero(m.AuthCertificateProvider) { // not required
 			return nil
 		}
 
@@ -1103,7 +1102,7 @@ func (m *StatusResponse) contextValidateBandwidthManager(ctx context.Context, fo
 
 	if m.BandwidthManager != nil {
 
-		if swag.IsZero(m.BandwidthManager) { // not required
+		if typeutils.IsZero(m.BandwidthManager) { // not required
 			return nil
 		}
 
@@ -1128,7 +1127,7 @@ func (m *StatusResponse) contextValidateBpfMaps(ctx context.Context, formats str
 
 	if m.BpfMaps != nil {
 
-		if swag.IsZero(m.BpfMaps) { // not required
+		if typeutils.IsZero(m.BpfMaps) { // not required
 			return nil
 		}
 
@@ -1153,7 +1152,7 @@ func (m *StatusResponse) contextValidateCilium(ctx context.Context, formats strf
 
 	if m.Cilium != nil {
 
-		if swag.IsZero(m.Cilium) { // not required
+		if typeutils.IsZero(m.Cilium) { // not required
 			return nil
 		}
 
@@ -1178,7 +1177,7 @@ func (m *StatusResponse) contextValidateClockSource(ctx context.Context, formats
 
 	if m.ClockSource != nil {
 
-		if swag.IsZero(m.ClockSource) { // not required
+		if typeutils.IsZero(m.ClockSource) { // not required
 			return nil
 		}
 
@@ -1203,7 +1202,7 @@ func (m *StatusResponse) contextValidateCluster(ctx context.Context, formats str
 
 	if m.Cluster != nil {
 
-		if swag.IsZero(m.Cluster) { // not required
+		if typeutils.IsZero(m.Cluster) { // not required
 			return nil
 		}
 
@@ -1228,7 +1227,7 @@ func (m *StatusResponse) contextValidateClusterMesh(ctx context.Context, formats
 
 	if m.ClusterMesh != nil {
 
-		if swag.IsZero(m.ClusterMesh) { // not required
+		if typeutils.IsZero(m.ClusterMesh) { // not required
 			return nil
 		}
 
@@ -1253,7 +1252,7 @@ func (m *StatusResponse) contextValidateCniChaining(ctx context.Context, formats
 
 	if m.CniChaining != nil {
 
-		if swag.IsZero(m.CniChaining) { // not required
+		if typeutils.IsZero(m.CniChaining) { // not required
 			return nil
 		}
 
@@ -1278,7 +1277,7 @@ func (m *StatusResponse) contextValidateCniFile(ctx context.Context, formats str
 
 	if m.CniFile != nil {
 
-		if swag.IsZero(m.CniFile) { // not required
+		if typeutils.IsZero(m.CniFile) { // not required
 			return nil
 		}
 
@@ -1299,26 +1298,23 @@ func (m *StatusResponse) contextValidateCniFile(ctx context.Context, formats str
 	return nil
 }
 
-func (m *StatusResponse) contextValidateContainerRuntime(ctx context.Context, formats strfmt.Registry) error {
+func (m *StatusResponse) contextValidateConfiguredDatapathMode(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.ContainerRuntime != nil {
+	if typeutils.IsZero(m.ConfiguredDatapathMode) { // not required
+		return nil
+	}
 
-		if swag.IsZero(m.ContainerRuntime) { // not required
-			return nil
+	if err := m.ConfiguredDatapathMode.ContextValidate(ctx, formats); err != nil {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
+			return ve.ValidateName("configured-datapath-mode")
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
+			return ce.ValidateName("configured-datapath-mode")
 		}
 
-		if err := m.ContainerRuntime.ContextValidate(ctx, formats); err != nil {
-			ve := new(errors.Validation)
-			if stderrors.As(err, &ve) {
-				return ve.ValidateName("container-runtime")
-			}
-			ce := new(errors.CompositeError)
-			if stderrors.As(err, &ce) {
-				return ce.ValidateName("container-runtime")
-			}
-
-			return err
-		}
+		return err
 	}
 
 	return nil
@@ -1344,7 +1340,7 @@ func (m *StatusResponse) contextValidateControllers(ctx context.Context, formats
 
 func (m *StatusResponse) contextValidateDatapathMode(ctx context.Context, formats strfmt.Registry) error {
 
-	if swag.IsZero(m.DatapathMode) { // not required
+	if typeutils.IsZero(m.DatapathMode) { // not required
 		return nil
 	}
 
@@ -1368,7 +1364,7 @@ func (m *StatusResponse) contextValidateEncryption(ctx context.Context, formats 
 
 	if m.Encryption != nil {
 
-		if swag.IsZero(m.Encryption) { // not required
+		if typeutils.IsZero(m.Encryption) { // not required
 			return nil
 		}
 
@@ -1393,7 +1389,7 @@ func (m *StatusResponse) contextValidateHostFirewall(ctx context.Context, format
 
 	if m.HostFirewall != nil {
 
-		if swag.IsZero(m.HostFirewall) { // not required
+		if typeutils.IsZero(m.HostFirewall) { // not required
 			return nil
 		}
 
@@ -1418,7 +1414,7 @@ func (m *StatusResponse) contextValidateHubble(ctx context.Context, formats strf
 
 	if m.Hubble != nil {
 
-		if swag.IsZero(m.Hubble) { // not required
+		if typeutils.IsZero(m.Hubble) { // not required
 			return nil
 		}
 
@@ -1443,7 +1439,7 @@ func (m *StatusResponse) contextValidateHubbleMetrics(ctx context.Context, forma
 
 	if m.HubbleMetrics != nil {
 
-		if swag.IsZero(m.HubbleMetrics) { // not required
+		if typeutils.IsZero(m.HubbleMetrics) { // not required
 			return nil
 		}
 
@@ -1468,7 +1464,7 @@ func (m *StatusResponse) contextValidateIdentityRange(ctx context.Context, forma
 
 	if m.IdentityRange != nil {
 
-		if swag.IsZero(m.IdentityRange) { // not required
+		if typeutils.IsZero(m.IdentityRange) { // not required
 			return nil
 		}
 
@@ -1493,7 +1489,7 @@ func (m *StatusResponse) contextValidateIpam(ctx context.Context, formats strfmt
 
 	if m.Ipam != nil {
 
-		if swag.IsZero(m.Ipam) { // not required
+		if typeutils.IsZero(m.Ipam) { // not required
 			return nil
 		}
 
@@ -1518,7 +1514,7 @@ func (m *StatusResponse) contextValidateIPv4BigTCP(ctx context.Context, formats 
 
 	if m.IPv4BigTCP != nil {
 
-		if swag.IsZero(m.IPv4BigTCP) { // not required
+		if typeutils.IsZero(m.IPv4BigTCP) { // not required
 			return nil
 		}
 
@@ -1543,7 +1539,7 @@ func (m *StatusResponse) contextValidateIPv6BigTCP(ctx context.Context, formats 
 
 	if m.IPv6BigTCP != nil {
 
-		if swag.IsZero(m.IPv6BigTCP) { // not required
+		if typeutils.IsZero(m.IPv6BigTCP) { // not required
 			return nil
 		}
 
@@ -1568,7 +1564,7 @@ func (m *StatusResponse) contextValidateKubeProxyReplacement(ctx context.Context
 
 	if m.KubeProxyReplacement != nil {
 
-		if swag.IsZero(m.KubeProxyReplacement) { // not required
+		if typeutils.IsZero(m.KubeProxyReplacement) { // not required
 			return nil
 		}
 
@@ -1593,7 +1589,7 @@ func (m *StatusResponse) contextValidateKubernetes(ctx context.Context, formats 
 
 	if m.Kubernetes != nil {
 
-		if swag.IsZero(m.Kubernetes) { // not required
+		if typeutils.IsZero(m.Kubernetes) { // not required
 			return nil
 		}
 
@@ -1618,7 +1614,7 @@ func (m *StatusResponse) contextValidateKvstore(ctx context.Context, formats str
 
 	if m.Kvstore != nil {
 
-		if swag.IsZero(m.Kvstore) { // not required
+		if typeutils.IsZero(m.Kvstore) { // not required
 			return nil
 		}
 
@@ -1643,7 +1639,7 @@ func (m *StatusResponse) contextValidateMasquerading(ctx context.Context, format
 
 	if m.Masquerading != nil {
 
-		if swag.IsZero(m.Masquerading) { // not required
+		if typeutils.IsZero(m.Masquerading) { // not required
 			return nil
 		}
 
@@ -1668,7 +1664,7 @@ func (m *StatusResponse) contextValidateNodeMonitor(ctx context.Context, formats
 
 	if m.NodeMonitor != nil {
 
-		if swag.IsZero(m.NodeMonitor) { // not required
+		if typeutils.IsZero(m.NodeMonitor) { // not required
 			return nil
 		}
 
@@ -1693,7 +1689,7 @@ func (m *StatusResponse) contextValidateProxy(ctx context.Context, formats strfm
 
 	if m.Proxy != nil {
 
-		if swag.IsZero(m.Proxy) { // not required
+		if typeutils.IsZero(m.Proxy) { // not required
 			return nil
 		}
 
@@ -1718,7 +1714,7 @@ func (m *StatusResponse) contextValidateRouting(ctx context.Context, formats str
 
 	if m.Routing != nil {
 
-		if swag.IsZero(m.Routing) { // not required
+		if typeutils.IsZero(m.Routing) { // not required
 			return nil
 		}
 
@@ -1743,7 +1739,7 @@ func (m *StatusResponse) contextValidateSrv6(ctx context.Context, formats strfmt
 
 	if m.Srv6 != nil {
 
-		if swag.IsZero(m.Srv6) { // not required
+		if typeutils.IsZero(m.Srv6) { // not required
 			return nil
 		}
 
@@ -1769,13 +1765,13 @@ func (m *StatusResponse) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
-	return swag.WriteJSON(m)
+	return jsonutils.WriteJSON(m)
 }
 
 // UnmarshalBinary interface implementation
 func (m *StatusResponse) UnmarshalBinary(b []byte) error {
 	var res StatusResponse
-	if err := swag.ReadJSON(b, &res); err != nil {
+	if err := jsonutils.ReadJSON(b, &res); err != nil {
 		return err
 	}
 	*m = res
