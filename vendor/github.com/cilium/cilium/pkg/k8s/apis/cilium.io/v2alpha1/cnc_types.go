@@ -7,11 +7,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//+genclient
+// Note: this type still exists in v2alpha1 until we perform a storage version
+// migration (see GH-47774), as some clusters were created with v2alpha1 as a
+// storage version. It is not allowed to remove a storage version until a migration
+// is complete.
+
 //+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 //+kubebuilder:resource:categories={cilium}
 //+kubebuilder:object:root=true
-//+kubebuilder:deprecatedversion:warning="cilium.io/v2alpha1 CiliumNodeConfig will be deprecated in cilium v1.16; use cilium.io/v2 CiliumNodeConfig"
+//+kubebuilder:deprecatedversion:warning="cilium.io/v2alpha1 is deprecated, use cilium.io/v2 CiliumNodeConfig"
 //+deepequal-gen=false
 
 // CiliumNodeConfig is a list of configuration key-value pairs. It is applied to

@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"time"
 
-	"github.com/cilium/statedb/part"
+	"github.com/cilium/statedb/index"
 )
 
 func (db *DB) HTTPHandler() http.Handler {
@@ -89,6 +90,11 @@ func (h dbHandler) query(w http.ResponseWriter, r *http.Request) {
 		enc.Encode(QueryResponse{Err: fmt.Sprintf("Table %q not found", req.Table)})
 		return
 	}
+	if req.Index != "" && req.Index != RevisionIndex && !slices.Contains(table.Indexes(), req.Index) {
+		w.WriteHeader(http.StatusBadRequest)
+		enc.Encode(QueryResponse{Err: fmt.Sprintf("Index %q not found", req.Index)})
+		return
+	}
 
 	indexPos := table.indexPos(req.Index)
 
@@ -122,31 +128,14 @@ type QueryResponse struct {
 	Err string `json:"err,omitempty"`
 }
 
-func runQuery(indexTxn indexReadTxn, lowerbound bool, queryKey []byte, onObject func(object) error) {
-	var iter *part.Iterator[object]
-	if !indexTxn.unique {
-		queryKey = encodeNonUniqueBytes(queryKey)
-	}
+func runQuery(reader tableIndexReader, lowerbound bool, queryKey index.Key, onObject func(object) error) {
+	var iter tableIndexIterator
 	if lowerbound {
-		iter = indexTxn.LowerBound(queryKey)
+		iter, _ = reader.lowerBound(queryKey)
 	} else {
-		iter, _ = indexTxn.Prefix(queryKey)
+		iter, _ = reader.list(queryKey)
 	}
-	var match func([]byte) bool
-	switch {
-	case lowerbound:
-		match = func([]byte) bool { return true }
-	case indexTxn.unique:
-		match = func(k []byte) bool { return len(k) == len(queryKey) }
-	default:
-		match = func(k []byte) bool {
-			return nonUniqueKey(k).secondaryLen() == len(queryKey)
-		}
-	}
-	for key, obj, ok := iter.Next(); ok; key, obj, ok = iter.Next() {
-		if !match(key) {
-			continue
-		}
+	for _, obj := range iter.All {
 		if err := onObject(obj); err != nil {
 			panic(err)
 		}

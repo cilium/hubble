@@ -699,7 +699,7 @@ func (h *Handle) LinkSetVfVlanQosProto(link Link, vf, vlan, qos, proto int) erro
 			Vlan: uint32(vlan),
 			Qos:  uint32(qos),
 		},
-		VlanProto: (uint16(proto)>>8)&0xFF | (uint16(proto)&0xFF)<<8,
+		VlanProto: nl.Swap16(uint16(proto)),
 	}
 
 	vfVlanList.AddRtAttr(nl.IFLA_VF_VLAN_INFO, vfmsg.Serialize())
@@ -1330,6 +1330,9 @@ func addVxlanAttrs(vxlan *Vxlan, linkInfo *nl.RtAttr) {
 	}
 	if vxlan.FlowBased {
 		data.AddRtAttr(nl.IFLA_VXLAN_FLOWBASED, boolAttr(vxlan.FlowBased))
+	}
+	if vxlan.VniFilter {
+		data.AddRtAttr(nl.IFLA_VXLAN_VNIFILTER, boolAttr(vxlan.VniFilter))
 	}
 	if vxlan.NoAge {
 		data.AddRtAttr(nl.IFLA_VXLAN_AGEING, nl.Uint32Attr(0))
@@ -2017,7 +2020,7 @@ func LinkByName(name string) (Link, error) {
 // filtering a dump of all link names. In this case, if the returned error is
 // [ErrDumpInterrupted] the result may be missing or outdated.
 func (h *Handle) LinkByName(name string) (Link, error) {
-	if h.options.lookupByDump {
+	if h.lookupByDump.Load() {
 		return h.linkByNameDump(name)
 	}
 
@@ -2026,9 +2029,8 @@ func (h *Handle) LinkByName(name string) (Link, error) {
 	msg := nl.NewIfInfomsg(unix.AF_UNSPEC)
 	req.AddData(msg)
 
-	if h.options.collectVFInfo {
-		attr := nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF))
-		req.AddData(attr)
+	if !h.options.DisableVFInfoCollection {
+		req.AddData(nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF)))
 	}
 
 	nameData := nl.NewRtAttr(unix.IFLA_IFNAME, nl.ZeroTerminated(name))
@@ -2041,7 +2043,7 @@ func (h *Handle) LinkByName(name string) (Link, error) {
 	if err == unix.EINVAL {
 		// older kernels don't support looking up via IFLA_IFNAME
 		// so fall back to dumping all links
-		h.options.lookupByDump = true
+		h.lookupByDump.Store(true)
 		return h.linkByNameDump(name)
 	}
 
@@ -2065,7 +2067,7 @@ func LinkByAlias(alias string) (Link, error) {
 // filtering a dump of all link names. In this case, if the returned error is
 // [ErrDumpInterrupted] the result may be missing or outdated.
 func (h *Handle) LinkByAlias(alias string) (Link, error) {
-	if h.options.lookupByDump {
+	if h.lookupByDump.Load() {
 		return h.linkByAliasDump(alias)
 	}
 
@@ -2074,9 +2076,8 @@ func (h *Handle) LinkByAlias(alias string) (Link, error) {
 	msg := nl.NewIfInfomsg(unix.AF_UNSPEC)
 	req.AddData(msg)
 
-	if h.options.collectVFInfo {
-		attr := nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF))
-		req.AddData(attr)
+	if !h.options.DisableVFInfoCollection {
+		req.AddData(nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF)))
 	}
 
 	nameData := nl.NewRtAttr(unix.IFLA_IFALIAS, nl.ZeroTerminated(alias))
@@ -2086,7 +2087,7 @@ func (h *Handle) LinkByAlias(alias string) (Link, error) {
 	if err == unix.EINVAL {
 		// older kernels don't support looking up via IFLA_IFALIAS
 		// so fall back to dumping all links
-		h.options.lookupByDump = true
+		h.lookupByDump.Store(true)
 		return h.linkByAliasDump(alias)
 	}
 
@@ -2105,9 +2106,9 @@ func (h *Handle) LinkByIndex(index int) (Link, error) {
 	msg := nl.NewIfInfomsg(unix.AF_UNSPEC)
 	msg.Index = int32(index)
 	req.AddData(msg)
-	if h.options.collectVFInfo {
-		attr := nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF))
-		req.AddData(attr)
+
+	if !h.options.DisableVFInfoCollection {
+		req.AddData(nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF)))
 	}
 
 	return execGetLink(req)
@@ -2185,6 +2186,8 @@ func LinkDeserialize(hdr *unix.NlMsghdr, m []byte) (Link, error) {
 						link = &Ifb{}
 					case "bridge":
 						link = &Bridge{}
+					case "openvswitch":
+						link = &OpenvSwitch{}
 					case "vlan":
 						link = &Vlan{}
 					case "netkit":
@@ -2305,6 +2308,8 @@ func LinkDeserialize(hdr *unix.NlMsghdr, m []byte) (Link, error) {
 						linkSlave = &BondSlave{}
 					case "vrf":
 						linkSlave = &VrfSlave{}
+					case "openvswitch":
+						linkSlave = &OpenvSwitchSlave{}
 					}
 
 				case nl.IFLA_INFO_SLAVE_DATA:
@@ -2522,8 +2527,10 @@ func (h *Handle) LinkList() ([]Link, error) {
 
 	msg := nl.NewIfInfomsg(unix.AF_UNSPEC)
 	req.AddData(msg)
-	attr := nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF))
-	req.AddData(attr)
+
+	if !h.options.DisableVFInfoCollection {
+		req.AddData(nl.NewRtAttr(unix.IFLA_EXT_MASK, nl.Uint32Attr(nl.RTEXT_FILTER_VF)))
+	}
 
 	msgs, executeErr := req.Execute(unix.NETLINK_ROUTE, unix.RTM_NEWLINK)
 	if executeErr != nil && !errors.Is(executeErr, ErrDumpInterrupted) {
@@ -2917,6 +2924,12 @@ func addNetkitAttrs(nk *Netkit, linkInfo *nl.RtAttr, flag int) error {
 	if nk.peerLinkAttrs.Name != "" {
 		peer.AddRtAttr(unix.IFLA_IFNAME, nl.ZeroTerminated(nk.peerLinkAttrs.Name))
 	}
+	if nk.peerLinkAttrs.NumRxQueues > 0 {
+		peer.AddRtAttr(unix.IFLA_NUM_RX_QUEUES, nl.Uint32Attr(uint32(nk.peerLinkAttrs.NumRxQueues)))
+	}
+	if nk.peerLinkAttrs.NumTxQueues > 0 {
+		peer.AddRtAttr(unix.IFLA_NUM_TX_QUEUES, nl.Uint32Attr(uint32(nk.peerLinkAttrs.NumTxQueues)))
+	}
 	if nk.peerLinkAttrs.MTU > 0 {
 		peer.AddRtAttr(unix.IFLA_MTU, nl.Uint32Attr(uint32(nk.peerLinkAttrs.MTU)))
 	}
@@ -3087,6 +3100,8 @@ func parseVxlanData(link Link, data []syscall.NetlinkRouteAttr) {
 			vxlan.GBP = true
 		case nl.IFLA_VXLAN_FLOWBASED:
 			vxlan.FlowBased = int8(datum.Value[0]) != 0
+		case nl.IFLA_VXLAN_VNIFILTER:
+			vxlan.VniFilter = int8(datum.Value[0]) != 0
 		case nl.IFLA_VXLAN_AGEING:
 			vxlan.Age = int(native.Uint32(datum.Value[0:4]))
 			vxlan.NoAge = vxlan.Age == 0

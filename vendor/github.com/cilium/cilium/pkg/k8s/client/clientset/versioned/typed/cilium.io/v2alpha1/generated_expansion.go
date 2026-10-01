@@ -17,6 +17,8 @@ type CiliumBGPPeerConfigExpansion interface{}
 
 type CiliumCIDRGroupExpansion interface{}
 
+type CiliumDatapathPluginExpansion interface{}
+
 type CiliumEndpointSliceExpansion interface{}
 
 type CiliumGatewayClassConfigExpansion interface{}
@@ -24,7 +26,5 @@ type CiliumGatewayClassConfigExpansion interface{}
 type CiliumL2AnnouncementPolicyExpansion interface{}
 
 type CiliumLoadBalancerIPPoolExpansion interface{}
-
-type CiliumNodeConfigExpansion interface{}
 
 type CiliumPodIPPoolExpansion interface{}

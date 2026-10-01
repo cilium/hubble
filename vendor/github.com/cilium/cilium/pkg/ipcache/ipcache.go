@@ -148,6 +148,8 @@ type IPCache struct {
 	// metadata is the ipcache identity metadata map, which maps IPs to labels.
 	metadata *metadata
 
+	cidrSelectorAllocators []CIDRSelectorAllocator
+
 	// prefixLengths tracks the unique set of prefix lengths for IPv4 and
 	// IPv6 addresses in order to optimize longest prefix match lookups.
 	prefixLengths *counter.PrefixLengthCounter
@@ -155,6 +157,21 @@ type IPCache struct {
 	// injectionStarted is a sync.Once so we can lazily start the prefix injection controller,
 	// but only once
 	injectionStarted sync.Once
+}
+
+// CIDRSelectorAllocator defines the interface to trigger identity resolution for
+// a CIDR selector (e.g. pod or node).
+type CIDRSelectorAllocator interface {
+	// UpdateCIDRLabels triggers identity resolution for all resources (e.g. pod endpoints)
+	// whose IPs are contained within the given prefix.
+	//
+	// Returns true if a matching local resource was found and had its identity resolution triggered.
+	UpdateCIDRLabels(ctx context.Context, prefix netip.Prefix) bool
+}
+
+// AddCIDRSelectorAllocator adds a CIDR selector allocator to this IPCache.
+func (ipc *IPCache) AddCIDRSelectorAllocator(allocator CIDRSelectorAllocator) {
+	ipc.cidrSelectorAllocators = append(ipc.cidrSelectorAllocators, allocator)
 }
 
 // NewIPCache returns a new IPCache with the mappings of endpoint IP to security
@@ -236,6 +253,22 @@ func (ipc *IPCache) GetK8sMetadata(ip netip.Addr) *K8sMetadata {
 	ipc.mutex.RLock()
 	defer ipc.mutex.RUnlock()
 	return ipc.getK8sMetadata(ip.String())
+}
+
+// GetMetadataLabels returns the merged labels for the given IP address from the metadata map.
+//
+// Callers must not call this while holding the IPCache mutex (such as via IPCache.RLock())
+//
+// Note: This returns all matching parent labels (including non-CIDR ones). The caller is
+// responsible for filtering labels if only specific label sources are needed (e.g. cidr).
+func (ipc *IPCache) GetMetadataLabels(ip netip.Addr) labels.Labels {
+	if !ip.IsValid() {
+		return nil
+	}
+	prefix := cmtypes.NewLocalPrefixCluster(netip.PrefixFrom(ip, ip.BitLen()))
+	lbls := labels.Labels{}
+	ipc.metadata.mergeLabels(lbls, prefix)
+	return lbls
 }
 
 // getK8sMetadata returns Kubernetes metadata for the given IP address.
@@ -463,7 +496,7 @@ func (ipc *IPCache) upsertLocked(
 
 	ipc.ipToEndpointFlags[ip] = endpointFlags
 
-	if !metaEqual {
+	if !metaEqual || found && cachedIdentity.ID != newIdentity.ID {
 		if k8sMeta == nil {
 			delete(ipc.ipToK8sMetadata, ip)
 		} else {
@@ -471,7 +504,12 @@ func (ipc *IPCache) upsertLocked(
 		}
 		// Update the named ports reference counting, but don't cause policy
 		// updates if no policy uses named ports.
-		namedPortsChanged = ipc.namedPorts.Update(oldK8sMeta.NamedPorts, newNamedPorts)
+		if found && cachedIdentity.ID != newIdentity.ID {
+			namedPortsChanged = ipc.namedPorts.Update(cachedIdentity.ID, oldK8sMeta.NamedPorts, nil)
+			namedPortsChanged = ipc.namedPorts.Update(newIdentity.ID, nil, newNamedPorts) || namedPortsChanged
+		} else {
+			namedPortsChanged = ipc.namedPorts.Update(newIdentity.ID, oldK8sMeta.NamedPorts, newNamedPorts)
+		}
 		namedPortsChanged = namedPortsChanged && ipc.needNamedPorts.Load()
 	}
 
@@ -494,6 +532,14 @@ func (ipc *IPCache) DumpToListener(listener IPIdentityMappingListener) {
 	ipc.dumpToListenerLocked(listener)
 	ipc.mutex.RUnlock()
 }
+
+type MetadataBatchAPI interface {
+	UpsertMetadataBatch(updates ...MU) (revision uint64)
+	RemoveMetadataBatch(updates ...MU) (revision uint64)
+	WaitForRevision(ctx context.Context, rev uint64) error
+}
+
+var _ MetadataBatchAPI = &IPCache{}
 
 // MU is a batched metadata update, the short name is to cut down on visual clutter.
 type MU struct {
@@ -526,7 +572,7 @@ func (ipc *IPCache) UpsertMetadataBatch(updates ...MU) (revision uint64) {
 	prefixes := make([]cmtypes.PrefixCluster, 0, len(updates))
 	ipc.metadata.Lock()
 	for _, upd := range updates {
-		if !upd.IsCIDR || ipc.metadata.prefixRefCounter.Add(upd.Prefix) {
+		if !upd.IsCIDR || ipc.metadata.prefixRefCounter.Add(canonicalPrefix(upd.Prefix)) {
 			resource := upd.Resource
 			if upd.IsCIDR {
 				resource = cidrResourceID
@@ -561,7 +607,7 @@ func (ipc *IPCache) RemoveMetadataBatch(updates ...MU) (revision uint64) {
 	prefixes := make([]cmtypes.PrefixCluster, 0, len(updates))
 	ipc.metadata.Lock()
 	for _, upd := range updates {
-		if !upd.IsCIDR || ipc.metadata.prefixRefCounter.Delete(upd.Prefix) {
+		if !upd.IsCIDR || ipc.metadata.prefixRefCounter.Delete(canonicalPrefix(upd.Prefix)) {
 			resource := upd.Resource
 			if upd.IsCIDR {
 				resource = cidrResourceID
@@ -678,9 +724,13 @@ func (ipc *IPCache) deleteLocked(ip string, source source.Source) (namedPortsCha
 	oldK8sMeta := ipc.getK8sMetadata(ip)
 	oldEndpointFlags := ipc.getEndpointFlagsRLocked(ip)
 	var newHostIP net.IP
+	var cidrEncryptKey uint8
 	var oldIdentity *Identity
 	newIdentity := cachedIdentity
 	callbackListeners := true
+	newK8sMeta := oldK8sMeta
+	newEndpointFlags := oldEndpointFlags
+	newEncryptKey := encryptKey
 
 	var err error
 	if cidrCluster, err = cmtypes.ParsePrefixCluster(ip); err == nil {
@@ -701,7 +751,7 @@ func (ipc *IPCache) deleteLocked(ip string, source source.Source) (namedPortsCha
 		// restore its mapping with the listeners if that was the case.
 		cidrClusterStr := cidrCluster.String()
 		if cidrIdentity, cidrFound := ipc.ipToIdentityCache[cidrClusterStr]; cidrFound {
-			newHostIP, _ = ipc.getHostIPCacheRLocked(cidrClusterStr)
+			newHostIP, cidrEncryptKey = ipc.getHostIPCacheRLocked(cidrClusterStr)
 			if cidrIdentity.ID != cachedIdentity.ID || !oldHostIP.Equal(newHostIP) {
 				ipc.logger.Debug(
 					"Removal of endpoint IP revives shadowed CIDR to identity mapping",
@@ -711,6 +761,12 @@ func (ipc *IPCache) deleteLocked(ip string, source source.Source) (namedPortsCha
 				ipc.ipToIdentityCache[cidrClusterStr] = cidrIdentity
 				oldIdentity = &cachedIdentity
 				newIdentity = cidrIdentity
+				// The revived mapping is the CIDR entry, not the deleted
+				// endpoint IP. Report the CIDR's current metadata/flags/key
+				// to listeners so they don't observe stale pod-scoped data.
+				newK8sMeta = ipc.getK8sMetadata(cidrClusterStr)
+				newEndpointFlags = ipc.getEndpointFlagsRLocked(cidrClusterStr)
+				newEncryptKey = cidrEncryptKey
 			} else {
 				// The endpoint IP and the CIDR were associated with the same
 				// identity and host IP. Nothing changes for the listeners.
@@ -744,7 +800,7 @@ func (ipc *IPCache) deleteLocked(ip string, source source.Source) (namedPortsCha
 	// Update named ports
 	namedPortsChanged = false
 	if oldK8sMeta != nil && len(oldK8sMeta.NamedPorts) > 0 {
-		namedPortsChanged = ipc.namedPorts.Update(oldK8sMeta.NamedPorts, nil)
+		namedPortsChanged = ipc.namedPorts.Update(cachedIdentity.ID, oldK8sMeta.NamedPorts, nil)
 		// Only trigger policy updates if named ports are used in policy.
 		namedPortsChanged = namedPortsChanged && ipc.needNamedPorts.Load()
 	}
@@ -752,7 +808,7 @@ func (ipc *IPCache) deleteLocked(ip string, source source.Source) (namedPortsCha
 	if callbackListeners {
 		for _, listener := range ipc.listeners {
 			listener.OnIPIdentityCacheChange(cacheModification, cidrCluster, oldHostIP, newHostIP,
-				oldIdentity, newIdentity, encryptKey, oldK8sMeta, oldEndpointFlags)
+				oldIdentity, newIdentity, newEncryptKey, newK8sMeta, newEndpointFlags)
 		}
 	}
 

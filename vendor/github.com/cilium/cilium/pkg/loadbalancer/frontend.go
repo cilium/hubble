@@ -25,6 +25,7 @@ import (
 // FrontendParams defines the static parameters of a frontend.
 // This is separate from [Frontend] to clearly separate which fields
 // can be manipulated and which are internally managed by [Writer].
+// +deepequal-gen=true
 type FrontendParams struct {
 	// Frontend address and port
 	Address L3n4Addr
@@ -42,7 +43,7 @@ type FrontendParams struct {
 	// ServicePort is the associated "ClusterIP" port of this frontend.
 	// Same as [Address.L4Addr.Port] except when [Type] NodePort or
 	// LoadBalancer. This is used to match frontends with the [Ports] of
-	// [Service.ProxyRedirect].
+	// [Service.ProxyRedirects].
 	ServicePort uint16
 }
 
@@ -61,10 +62,10 @@ type Frontend struct {
 	// HealthCheckBackends associated with the frontend that includes the ones that should be health checked.
 	HealthCheckBackends BackendsSeq2
 
-	// ID is the identifier allocated to this frontend. Used as the key
-	// in the services BPF map. This field is populated by the reconciler
-	// and is initially set to zero. It can be considered valid only when
-	// [Status] is set to done.
+	// ID is the identifier allocated to this frontend and used as the key in
+	// the services BPF map. It can be considered valid only when [Status] is
+	// set to done. When valid, a zero ID means the frontend is not a candidate
+	// for reconciliation; a non-zero ID identifies its datapath entry.
 	ID ServiceID
 
 	// RedirectTo if set selects the backends from this service name instead
@@ -79,21 +80,38 @@ type Frontend struct {
 	Service *Service `json:"-" yaml:"-"`
 }
 
+// IsFrontendUpdated returns true if the frontend needs to be updated given
+// the new parameters and service.
+func IsFrontendUpdated(fe *Frontend, newParams FrontendParams, newService *Service) bool {
+	return !newParams.DeepEqual(&fe.FrontendParams) || fe.Service != newService
+}
+
 // BackendsSeq2 is an iterator for sequence of backends that is also JSON and YAML
 // marshalable.
-type BackendsSeq2 iter.Seq2[BackendParams, statedb.Revision]
+type BackendsSeq2 iter.Seq2[*Backend, statedb.Revision]
 
 func (s BackendsSeq2) MarshalJSON() ([]byte, error) {
-	return json.Marshal(slices.Collect(statedb.ToSeq(iter.Seq2[BackendParams, statedb.Revision](s))))
+	return json.Marshal(slices.Collect(statedb.ToSeq(iter.Seq2[*Backend, statedb.Revision](s))))
 }
 
 func (s BackendsSeq2) MarshalYAML() (any, error) {
-	return slices.Collect(statedb.ToSeq(iter.Seq2[BackendParams, statedb.Revision](s))), nil
+	return slices.Collect(statedb.ToSeq(iter.Seq2[*Backend, statedb.Revision](s))), nil
 }
 
 func (fe *Frontend) Clone() *Frontend {
 	fe2 := *fe
 	return &fe2
+}
+
+// IsWildcardCandidate returns true if the frontend is structurally eligible
+// to parent a wildcard service entry.
+func IsWildcardCandidate(fe *Frontend) bool {
+	switch fe.Type {
+	case SVCTypeLoadBalancer, SVCTypeClusterIP:
+		return fe.Address.Scope() == ScopeExternal
+	default:
+		return false
+	}
 }
 
 func (fe *Frontend) TableHeader() []string {
@@ -160,7 +178,7 @@ func (fe *Frontend) ToModel() *models.Service {
 		spec.Flags.Cluster = svc.Name.Cluster()
 	}
 
-	backendModel := func(be BackendParams) *models.BackendAddress {
+	backendModel := func(be *Backend) *models.BackendAddress {
 		addrClusterStr := be.Address.AddrCluster().String()
 		state := be.State
 		if be.Unhealthy {
@@ -181,6 +199,22 @@ func (fe *Frontend) ToModel() *models.Service {
 
 	for be := range fe.Backends {
 		spec.BackendAddresses = append(spec.BackendAddresses, backendModel(be))
+	}
+
+	if pr := svc.ProxyRedirects.ForPort(fe.ServicePort); pr != nil {
+		state, _ := BackendStateActive.String()
+		localhost := "127.0.0.1"
+		if fe.Address.AddrCluster().Is6() {
+			localhost = "::1"
+		}
+
+		spec.BackendAddresses = append(spec.BackendAddresses, &models.BackendAddress{
+			IP:        &localhost,
+			Protocol:  fe.Address.Protocol(),
+			Port:      pr.ProxyPort,
+			State:     state,
+			Preferred: true,
+		})
 	}
 
 	return &models.Service{

@@ -192,11 +192,19 @@ const (
 	// EnableIPv6 is the default value for IPv6 enablement
 	EnableIPv6 = true
 
+	// PreferIpv6 is the default value for preferring IPv6 addresses
+	// over IPv4 when both are available.
+	PreferIpv6 = false
+
 	// EnableIPv6NDP is the default value for IPv6 NDP support enablement
 	EnableIPv6NDP = false
 
 	// EnableSRv6 is the default value for the SRv6 support enablement.
 	EnableSRv6 = false
+
+	// EnableFibTableIDAnnotation is the default value for the
+	// fib-table-id-annotation option.
+	EnableFibTableIDAnnotation = false
 
 	// SRv6EncapMode is the encapsulation mode for SRv6.
 	SRv6EncapMode = "reduced"
@@ -356,24 +364,12 @@ const (
 	// ENIGarbageCollectionTagClusterValue is part of the ENIGarbageCollectionTags default tag set
 	ENIGarbageCollectionTagClusterValue = ClusterName
 
-	// ENIGarbageCollectionInterval is the default interval for the ENIGarbageCollectionInterval operator flag
-	ENIGarbageCollectionInterval = 5 * time.Minute
-
 	// ENIGarbageCollectionMaxPerInterval is the maximum number of ENIs which might be garbage collected
 	// per GC interval
 	ENIGarbageCollectionMaxPerInterval = 25
 
 	// AWSResultsPerApiCall is the maximum number of objects to fetch per paginated API call
 	AWSResultsPerApiCall = 1000
-
-	// ParallelAllocWorkers is the default max number of parallel workers doing allocation in the operator
-	ParallelAllocWorkers = 50
-
-	// IPAMAPIBurst is the default burst value when rate limiting access to external APIs
-	IPAMAPIBurst = 20
-
-	// IPAMAPIQPSLimit is the default QPS limit when rate limiting access to external APIs
-	IPAMAPIQPSLimit = 4.0
 
 	// AutoCreateCiliumNodeResource enables automatic creation of a
 	// CiliumNode resource for the local node
@@ -449,7 +445,7 @@ const (
 	TunnelSourcePortRange = "0-0"
 
 	// UnderlayProtocol is the default IP family for the underlay.
-	UnderlayProtocol = "ipv4"
+	UnderlayProtocol = "auto"
 
 	// ServiceNoBackendResponse is the default response for services without backends
 	ServiceNoBackendResponse = "reject"
@@ -485,6 +481,9 @@ const (
 
 	// EnableK8sNetworkPolicy enables support for K8s NetworkPolicy.
 	EnableK8sNetworkPolicy = true
+
+	// EnableK8sClusterNetworkPolicy enables support for K8s ClusterNetworkPolicy.
+	EnableK8sClusterNetworkPolicy = false
 
 	// EnableCiliumNetworkPolicy enables support for Cilium Network Policy.
 	EnableCiliumNetworkPolicy = true
@@ -541,6 +540,12 @@ const (
 
 	// EnableCiliumNodeCRD is the default value for option.EnableCiliumNodeCRD
 	EnableCiliumNodeCRD = true
+
+	// PolicyAccouting is the default value for option.PolicyAccounting
+	PolicyAccounting = true
+
+	// EnableDatapathPlugins is the default value for option.EnableDatapathPlugins
+	EnableDatapathPlugins = false
 )
 
 var (

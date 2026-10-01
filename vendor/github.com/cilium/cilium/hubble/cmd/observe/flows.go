@@ -50,7 +50,6 @@ var protocols = []string{
 	// L7
 	"dns",
 	"http",
-	"kafka",
 }
 
 var verdicts = []string{
@@ -558,6 +557,12 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	filterFlags.Var(filterVar(
 		"unencrypted", ofilter,
 		"Show only unencrypted flows"))
+	filterFlags.Var(filterVar(
+		"reply", ofilter,
+		"Show only reply flows"))
+	filterFlags.Var(filterVar(
+		"not-reply", ofilter,
+		"Show only non-reply flows"))
 
 	rawFilterFlags.StringArray(allowlistFlag, []string{}, "Specify allowlist as JSON encoded FlowFilters")
 	rawFilterFlags.StringArray(denylistFlag, []string{}, "Specify denylist as JSON encoded FlowFilters")
@@ -665,6 +670,8 @@ func newFlowsCmdHelper(usage cmdUsage, vp *viper.Viper, ofilter *flowFilter) *co
 	flowsCmd.Flags().Lookup("not").NoOptDefVal = "true"
 	flowsCmd.Flags().Lookup("encrypted").NoOptDefVal = "true"
 	flowsCmd.Flags().Lookup("unencrypted").NoOptDefVal = "true"
+	flowsCmd.Flags().Lookup("reply").NoOptDefVal = "true"
+	flowsCmd.Flags().Lookup("not-reply").NoOptDefVal = "true"
 	template.RegisterFlagSets(flowsCmd, flagSets...)
 	return flowsCmd
 }

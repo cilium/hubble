@@ -252,24 +252,41 @@ func (c *controller) SetParams(params ControllerParams) {
 		params.RunInterval = maxInterval
 	}
 
+	old := c.params
+	c.params = params
+	c.updateContextLocked(old.Context, params.Context, old.CancelDoFuncOnUpdate)
+}
+
+// MaybeResetContext cancels the controller context if [CancelDoFuncOnUpdate] is
+// set, and replaces it with a new background context. It is a no-op otherwise.
+//
+// Manager's mutex must be held; controller.mutex must not be held
+func (c *controller) MaybeResetContext() {
+	c.paramMutex.Lock()
+	defer c.paramMutex.Unlock()
+
+	c.updateContextLocked(c.params.Context, nil, c.params.CancelDoFuncOnUpdate)
+}
+
+func (c *controller) updateContextLocked(curr, next context.Context, shouldCancel bool) {
 	// Save current context on update if not canceling
-	ctx := c.params.Context
+	ctx := curr
+
 	// Check if the current context needs to be cancelled
-	if c.params.CancelDoFuncOnUpdate && c.cancelDoFunc != nil {
+	if shouldCancel && c.cancelDoFunc != nil {
 		c.cancelDoFunc()
-		c.params.Context = nil
+		ctx = nil
 	}
 
 	// (re)set the context as the previous might have been cancelled
-	if c.params.Context == nil {
-		if params.Context == nil {
+	if ctx == nil {
+		if next == nil {
 			ctx, c.cancelDoFunc = context.WithCancel(context.Background())
 		} else {
-			ctx, c.cancelDoFunc = context.WithCancel(params.Context)
+			ctx, c.cancelDoFunc = context.WithCancel(next)
 		}
 	}
 
-	c.params = params
 	c.params.Context = ctx
 }
 
@@ -305,6 +322,9 @@ func (c *controller) GetLastErrorTimestamp() time.Time {
 	return c.lastErrorStamp
 }
 
+// timeAfter allows overriding time.After in unit tests.
+var timeAfter = time.After
+
 func (c *controller) runController() {
 	params := c.Params()
 	errorRetries := 1
@@ -320,7 +340,7 @@ func (c *controller) runController() {
 		if params.Jitter > 0 {
 			jitter = time.Duration(rand.Int64N(int64(params.Jitter)))
 			select {
-			case <-time.After(jitter):
+			case <-timeAfter(jitter):
 				// jitter sleep finished
 			case <-params.Context.Done():
 				// context cancelled, exit early but ensure shutdown logic runs
@@ -328,6 +348,9 @@ func (c *controller) runController() {
 			case <-c.stop:
 				// controller stopped during jitter sleep
 				goto shutdown
+			case <-c.update:
+				// woken up early by update, loop again to reload params and re-evaluate jitter
+				continue
 			}
 		}
 		err = params.DoFunc(params.Context)

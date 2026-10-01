@@ -183,8 +183,6 @@ func GetFlowType(f *flowpb.Flow) string {
 		case *flowpb.Layer7_Dns:
 			l7Protocol = "dns"
 			l7Type += " " + l7.GetDns().GetObservationSource()
-		case *flowpb.Layer7_Kafka:
-			l7Protocol = "kafka"
 		}
 		return l7Protocol + "-" + l7Type
 	}
@@ -203,7 +201,7 @@ func GetFlowType(f *flowpb.Flow) string {
 	case api.MessageTypeCapture:
 		return f.GetDebugCapturePoint().String()
 	case api.MessageTypeTraceSock:
-		switch f.GetSockXlatePoint() {
+		switch flowpb.SocketTranslationPoint(f.GetEventType().GetSubType()) {
 		case flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_FWD:
 			return "post-xlate-fwd"
 		case flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_POST_DIRECTION_REV:
@@ -213,7 +211,7 @@ func GetFlowType(f *flowpb.Flow) string {
 		case flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_PRE_DIRECTION_REV:
 			return "pre-xlate-rev"
 		}
-		return f.GetSockXlatePoint().String()
+		return flowpb.SocketTranslationPoint_SOCK_XLATE_POINT_UNKNOWN.String()
 	}
 
 	return "UNKNOWN"
@@ -250,6 +248,13 @@ func (p Printer) getVerdict(f *flowpb.Flow) string {
 	case flowpb.Verdict_AUDIT:
 		if f.GetEventType().GetType() == api.MessageTypePolicyVerdict {
 			msg = "AUDITED"
+			if p.opts.policyNames {
+				if f.GetTrafficDirection() == flowpb.TrafficDirection_EGRESS {
+					msg += formatPolicyNames(f.GetEgressDeniedBy())
+				} else if f.GetTrafficDirection() == flowpb.TrafficDirection_INGRESS {
+					msg += formatPolicyNames(f.GetIngressDeniedBy())
+				}
+			}
 		}
 		return p.color.verdictAudit(msg)
 	case flowpb.Verdict_TRACED:

@@ -357,6 +357,17 @@ message UDP {
 message SCTP {
     uint32 source_port = 1;
     uint32 destination_port = 2;
+    SCTPChunkType chunk_type = 3;
+}
+
+enum SCTPChunkType {
+    UNSUPPORTED = 0;
+    INIT = 1;
+    INIT_ACK = 2;
+    SHUTDOWN = 3;
+    SHUTDOWN_ACK = 4;
+    SHUTDOWN_COMPLETE = 5;
+    ABORT = 6;
 }
 
 message ICMPv4 {
@@ -513,6 +524,11 @@ enum DropReason {
     DROP_NO_EGRESS_IP = 204;
     // Punt packet to a user space proxy.
     DROP_PUNT_PROXY = 205;
+    // A non-first IP fragment from the world was dropped because its first
+    // fragment (carrying the L4 ports) was never seen, so host policy cannot
+    // be evaluated. Split from DROP_FRAG_NOT_FOUND to distinguish ambient
+    // external fragments from in-cluster fragment-tracking bugs.
+    DROP_FRAG_NOT_FOUND_WORLD = 207;
 }
 
 enum TrafficDirection {

@@ -6,6 +6,7 @@ package job
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -144,14 +145,17 @@ type jobTimer struct {
 	shutdown hive.Shutdowner
 }
 
-func (jt *jobTimer) start(ctx context.Context, wg *sync.WaitGroup, health cell.Health, options options) {
-	defer wg.Done()
+func (jt *jobTimer) info() string {
+	return fmt.Sprintf("%s (%s)", jt.name, internal.FuncNameAndLocation(jt.fn))
+}
 
+func (jt *jobTimer) start(ctx context.Context, health cell.Health, options options) {
 	for _, opt := range jt.opts {
 		opt(jt)
 	}
 
 	jt.health = health.NewScope("timer-job-" + jt.name)
+	defer jt.health.Close()
 
 	l := options.logger.With(
 		"name", jt.name,
@@ -169,13 +173,11 @@ func (jt *jobTimer) start(ctx context.Context, wg *sync.WaitGroup, health cell.H
 		triggerChan = jt.trigger.c
 	}
 
-	l.Debug("Starting timer job")
 	jt.health.OK("Primed")
 
 	for {
 		select {
 		case <-ctx.Done():
-			jt.health.Stopped("timer job context done")
 			return
 		case <-tickerChan:
 		case <-triggerChan:
@@ -199,8 +201,11 @@ func (jt *jobTimer) start(ctx context.Context, wg *sync.WaitGroup, health cell.H
 			jt.health.OK("OK (" + duration.String() + ")")
 			l.Debug("Timer job finished")
 		} else if !errors.Is(err, context.Canceled) {
-			jt.health.Degraded("timer job errored", err)
-			l.Error("Timer job errored", "error", err)
+			msg := fmt.Sprintf("Timer job failed (duration %s)", duration)
+			jt.health.Degraded(msg, err)
+			l.Error("Timer job failed",
+				"error", err,
+				"duration", duration)
 
 			if options.metrics != nil {
 				options.metrics.JobError(jt.name, err)

@@ -9,10 +9,10 @@ import (
 	"context"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/jsonutils"
 )
 
-// Label Label is the Cilium's representation of a container label
+// Label Label is Cilium's representation of a label
 //
 // swagger:model Label
 type Label struct {
@@ -20,7 +20,7 @@ type Label struct {
 	// key
 	Key string `json:"key,omitempty"`
 
-	// Source can be one of the above values (e.g. LabelSourceContainer)
+	// Source can be one of the above values (e.g. LabelSourceK8s)
 	Source string `json:"source,omitempty"`
 
 	// value
@@ -42,13 +42,13 @@ func (m *Label) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
-	return swag.WriteJSON(m)
+	return jsonutils.WriteJSON(m)
 }
 
 // UnmarshalBinary interface implementation
 func (m *Label) UnmarshalBinary(b []byte) error {
 	var res Label
-	if err := swag.ReadJSON(b, &res); err != nil {
+	if err := jsonutils.ReadJSON(b, &res); err != nil {
 		return err
 	}
 	*m = res

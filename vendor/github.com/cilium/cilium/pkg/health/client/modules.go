@@ -17,9 +17,7 @@ import (
 )
 
 const (
-	noPod    = "(/)"
 	rootNode = ""
-	noErr    = "<nil>"
 )
 
 // GetAndFormatModulesHealth retrieves modules health and formats output.
@@ -30,28 +28,11 @@ func GetAndFormatModulesHealth(w io.Writer, ss []types.Status, verbose bool, pre
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].ID.String() < ss[j].ID.String()
 	})
-	if verbose {
-		r := newRoot(rootNode)
-		for _, s := range ss {
-			stack := strings.Split(s.ID.String(), ".")
-			upsertTree(r, &s, stack)
-		}
-		if len(r.nodes) != 0 {
-			r = r.nodes[0]
-			r.parent = nil
-		} else {
-			return
-		}
-
-		body := strings.ReplaceAll(r.String(), "\n", "\n"+prefix)
-		fmt.Fprintln(w, prefix+body)
-		return
-	}
 	tally := make(map[types.Level]int, 4)
 	for _, s := range ss {
 		tally[types.Level(s.Level)] += 1
 	}
-	fmt.Fprintf(w, "\t%s(%d) %s(%d) %s(%d)\n",
+	fmt.Fprintf(w, "Modules Health:\t%s(%d) %s(%d) %s(%d)\n",
 		types.LevelStopped,
 		tally[types.LevelStopped],
 		types.LevelDegraded,
@@ -59,6 +40,33 @@ func GetAndFormatModulesHealth(w io.Writer, ss []types.Status, verbose bool, pre
 		types.LevelOK,
 		tally[types.LevelOK],
 	)
+	if verbose {
+		r := newRoot(rootNode)
+		for _, s := range ss {
+			stack := strings.Split(s.ID.String(), ".")
+			upsertTree(r, &s, stack)
+		}
+		if len(r.nodes) == 0 {
+			return
+		}
+
+		var body string
+		if len(r.nodes) == 1 {
+			r = r.nodes[0]
+			r.parent = nil
+			body = r.String()
+		} else {
+			var b strings.Builder
+			for _, n := range r.nodes {
+				n.parent = nil
+				b.WriteString(n.String())
+			}
+			body = b.String()
+		}
+
+		body = strings.ReplaceAll(body, "\n", "\n"+prefix)
+		fmt.Fprintln(w, prefix+body)
+	}
 }
 
 type TreeView struct {

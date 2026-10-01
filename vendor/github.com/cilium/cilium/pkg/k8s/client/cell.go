@@ -18,21 +18,17 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/connrotation"
 	mcsapi_clientset "sigs.k8s.io/mcs-api/pkg/client/clientset/versioned"
+	policy_clientset "sigs.k8s.io/network-policy-api/pkg/client/clientset/versioned"
 
 	"github.com/cilium/cilium/pkg/controller"
 	cilium_clientset "github.com/cilium/cilium/pkg/k8s/client/clientset/versioned"
 	k8smetrics "github.com/cilium/cilium/pkg/k8s/metrics"
-	slim_apiextclientsetscheme "github.com/cilium/cilium/pkg/k8s/slim/k8s/apiextensions-client/clientset/versioned/scheme"
-	slim_apiext_clientset "github.com/cilium/cilium/pkg/k8s/slim/k8s/apiextensions-clientset"
-	slim_metav1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1"
-	slim_metav1beta1 "github.com/cilium/cilium/pkg/k8s/slim/k8s/apis/meta/v1beta1"
 	slim_clientset "github.com/cilium/cilium/pkg/k8s/slim/k8s/client/clientset/versioned"
 	k8sversion "github.com/cilium/cilium/pkg/k8s/version"
 	"github.com/cilium/cilium/pkg/logging/logfields"
@@ -74,8 +70,9 @@ type (
 	MCSAPIClientset     = mcsapi_clientset.Clientset
 	KubernetesClientset = kubernetes.Clientset
 	SlimClientset       = slim_clientset.Clientset
-	APIExtClientset     = slim_apiext_clientset.Clientset
+	APIExtClientset     = apiext_clientset.Clientset
 	CiliumClientset     = cilium_clientset.Clientset
+	PolicyClientset     = policy_clientset.Clientset
 )
 
 // Clientset is a composition of the different client sets used by Cilium.
@@ -84,6 +81,7 @@ type Clientset interface {
 	kubernetes.Interface
 	apiext_clientset.Interface
 	cilium_clientset.Interface
+	policy_clientset.Interface
 	Getters
 
 	// Slim returns the slim client, which contains some of the same APIs as the
@@ -108,6 +106,7 @@ type compositeClientset struct {
 	*KubernetesClientset
 	*APIExtClientset
 	*CiliumClientset
+	*PolicyClientset
 	ClientsetGetters
 
 	controller        *controller.Manager
@@ -181,7 +180,7 @@ func newClientsetForUserAgent(params compositeClientsetParams, name string) (Cli
 		return nil, nil, fmt.Errorf("unable to create slim k8s client: %w", err)
 	}
 
-	client.APIExtClientset, err = slim_apiext_clientset.NewForConfigAndClient(rc, httpClient)
+	client.APIExtClientset, err = apiext_clientset.NewForConfigAndClient(rc, httpClient)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create apiext k8s client: %w", err)
 	}
@@ -194,6 +193,11 @@ func newClientsetForUserAgent(params compositeClientsetParams, name string) (Cli
 	client.KubernetesClientset, err = kubernetes.NewForConfigAndClient(rc, httpClient)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to create k8s client: %w", err)
+	}
+
+	client.PolicyClientset, err = policy_clientset.NewForConfigAndClient(rc, httpClient)
+	if err != nil {
+		return nil, nil, fmt.Errorf("unable to create policy k8s client: %w", err)
 	}
 
 	client.ClientsetGetters = ClientsetGetters{&client}
@@ -427,11 +431,4 @@ func NewClientBuilder(params compositeClientsetParams) ClientBuilderFunc {
 		}
 		return c, nil
 	}
-}
-
-func init() {
-	// Register the metav1.Table and metav1.PartialObjectMetadata for the
-	// apiextclientset.
-	utilruntime.Must(slim_metav1.AddMetaToScheme(slim_apiextclientsetscheme.Scheme))
-	utilruntime.Must(slim_metav1beta1.AddMetaToScheme(slim_apiextclientsetscheme.Scheme))
 }
