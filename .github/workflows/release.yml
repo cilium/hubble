@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: 'write'
-      id-token: 'write'
     steps:
       - name: Set tag
         id: tag
@@ -38,23 +37,16 @@ jobs:
           ref: ${{ steps.tag.outputs.tag }}
       - name: Generate artifacts
         run: make release
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@0cb9c9b65d5d1901c1f53e5e66eaf4afd303e70e # renovate: tag=v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      - name: Create draft release and upload artifacts
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          release_name: ${{ steps.tag.outputs.tag }}
-          draft: true # turn this to false once release notes are automatically added
+          name: ${{ steps.tag.outputs.tag }}
+          draft: true
           prerelease: false
+          fail_on_unmatched_files: true
           body: |
-            Note for maintainers:: Please, update the desciption with the actual release notes (see RELEASE.md for instructions).
-      - name: Upload artifacts
-        id: upload-release-artifacts
-        uses: skx/github-action-publish-binaries@44887b225ceca96efd8a912d39c09ad70312af31
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          releaseId: ${{ steps.create_release.outputs.id }}
-          args: 'release/*'
+            Note for maintainers: Please update the description with the
+            actual release notes (see RELEASE.md for instructions).
+          files: |
+            release/*
