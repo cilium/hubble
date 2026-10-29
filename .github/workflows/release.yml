@@ -19,7 +19,7 @@ jobs:
     name: Create Release
     environment: release
     if: github.repository == 'cilium/hubble'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: 'write'
     steps:
