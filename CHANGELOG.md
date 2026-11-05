@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Summary of Changes
+------------------
+
+## [1.20.4] - 2026-11-05
+[1.20.4]: https://github.com/cilium/cilium/compare/v1.20.2...v1.20.4
+
+**Misc Changes:**
+* chore(deps): update all github action dependencies (patch) (cilium/hubble#1831, @renovate[bot])
+* chore(deps): update dependency cilium/cilium to v1.20.4 (cilium/hubble#1833, @renovate[bot])
+* chore(deps): update dependency ubuntu to v26 (cilium/hubble#1834, @renovate[bot])
+* chore(deps): update go toolchain directive to v1.27.2 (cilium/hubble#1830, @renovate[bot])
+* chore(deps): update golang (patch) (cilium/hubble#1832, @renovate[bot])
+* chore(deps): update helm/kind-action action to v1.15.1 (cilium/hubble#1829, @renovate[bot])
+* chore(deps): update library/golang docker tag to v1.27.3 (cilium/hubble#1835, @renovate[bot])
+* ci: Move to a maintained release action (cilium/hubble#1827, @glibsm)
+* Update stable release to 1.20.2 (cilium/hubble#1828, @glibsm)
+
+
 ## [1.20.2] - 2026-10-01
 [1.20.2]: https://github.com/cilium/cilium/compare/v1.19.4...v1.20.2
 
