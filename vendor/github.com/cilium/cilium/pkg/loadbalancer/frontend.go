@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
+	"net/netip"
 	"slices"
 	"strings"
 	"unsafe"
@@ -74,10 +75,25 @@ type Frontend struct {
 	// is redirected to a local pod instead.
 	RedirectTo *ServiceName
 
+	// SourceRanges if non-empty will restrict access to the frontend for the specified client addresses.
+	SourceRanges []netip.Prefix
+
+	// SourceRangesPolicy enforces the source ranges associated with the frontend.
+	SourceRangesPolicy SVCSourceRangesPolicy
+
 	// Service associated with the frontend. If service is updated
 	// this pointer to the service will update as well and the
 	// frontend is marked for reconciliation.
 	Service *Service `json:"-" yaml:"-"`
+}
+
+func (fe *Frontend) GetSourceRangesEnabled(lbSourceRangeAllTypes bool) bool {
+	if lbSourceRangeAllTypes {
+		return len(fe.SourceRanges) > 0
+	}
+	// loadBalancerSourceRanges also applies to ExternalIPs frontends of a LoadBalancer service.
+	return len(fe.SourceRanges) > 0 &&
+		(fe.FrontendParams.Type == SVCTypeLoadBalancer || fe.FrontendParams.Type == SVCTypeExternalIPs)
 }
 
 // IsFrontendUpdated returns true if the frontend needs to be updated given
@@ -122,6 +138,7 @@ func (fe *Frontend) TableHeader() []string {
 		"PortName",
 		"Backends",
 		"RedirectTo",
+		"Flags",
 		"Status",
 		"Since",
 		"Error",
@@ -133,6 +150,19 @@ func (fe *Frontend) TableRow() []string {
 	if fe.RedirectTo != nil {
 		redirectTo = fe.RedirectTo.String()
 	}
+
+	var flags []string
+	if len(fe.SourceRanges) > 0 {
+		ranges := make([]string, len(fe.SourceRanges))
+		for i, sourceRange := range fe.SourceRanges {
+			ranges[i] = sourceRange.String()
+		}
+		flags = append(flags, "SourceRanges="+strings.Join(ranges, ", "))
+	}
+	if fe.SourceRangesPolicy == SVCSourceRangesPolicyDeny {
+		flags = append(flags, "SourceRangesPolicy=deny")
+	}
+
 	return []string{
 		fe.Address.StringWithProtocol(),
 		string(fe.Type),
@@ -140,6 +170,7 @@ func (fe *Frontend) TableRow() []string {
 		string(fe.PortName),
 		showBackends(fe.Backends),
 		redirectTo,
+		strings.Join(flags, ", "),
 		fe.Status.Kind.String(),
 		duration.HumanDuration(time.Since(fe.Status.UpdatedAt)),
 		fe.Status.GetError(),
